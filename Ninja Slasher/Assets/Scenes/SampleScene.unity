@@ -438,6 +438,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _playerView: {fileID: 946414045}
   _playerModel: {fileID: 946414044}
+  checkDistance: 0.6
+  obstacleLayer:
+    serializedVersion: 2
+    m_Bits: 64
+  minSwipeDistance: 50
 --- !u!50 &946414047
 Rigidbody2D:
   serializedVersion: 5
@@ -583,7 +588,7 @@ GameObject:
   - component: {fileID: 1094554896}
   - component: {fileID: 1094554895}
   - component: {fileID: 1094554894}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Wall
   m_TagString: Scenario
   m_Icon: {fileID: 0}
@@ -789,7 +794,7 @@ GameObject:
   - component: {fileID: 1599376668}
   - component: {fileID: 1599376667}
   - component: {fileID: 1599376666}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Wall (1)
   m_TagString: Scenario
   m_Icon: {fileID: 0}
@@ -951,7 +956,7 @@ GameObject:
   - component: {fileID: 1704408393}
   - component: {fileID: 1704408392}
   - component: {fileID: 1704408391}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Floor
   m_TagString: Scenario
   m_Icon: {fileID: 0}
@@ -1113,7 +1118,7 @@ GameObject:
   - component: {fileID: 2054328339}
   - component: {fileID: 2054328338}
   - component: {fileID: 2054328337}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Ceiling
   m_TagString: Scenario
   m_Icon: {fileID: 0}
