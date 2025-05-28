@@ -70,7 +70,11 @@ public class RangeEnemy : Enemy
     private void Attack()
     {
         _lastAttack = Time.time;
-        Instantiate(_projectilePrefab, transform.position, Quaternion.identity).GetComponent<Projectile>().SetTarget(_target);
+        var projectile = Instantiate(_projectilePrefab, transform.position, Quaternion.identity)
+            .GetComponent<Projectile>();
+
+        projectile.SetShooter(transform);
+
     }
 
 #if UNITY_EDITOR
