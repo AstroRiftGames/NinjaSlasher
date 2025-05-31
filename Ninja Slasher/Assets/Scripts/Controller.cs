@@ -128,7 +128,7 @@ public class Controller : MonoBehaviour
     {
         switch (collision.gameObject.tag)
         {
-            case "Scenario":
+            case "Scenario" or "Obstacle":
                 if (_currentSurface != null && collision.collider == _currentSurface)
                     return;
                 else

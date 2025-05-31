@@ -45,7 +45,7 @@ public class Projectile : MonoBehaviour
             }
             else
             {
-                DamagePlayer();
+                DamagePlayer(collision.gameObject);
             }
 
             ResetTime();
@@ -93,10 +93,10 @@ public class Projectile : MonoBehaviour
         Debug.Log("Proyectil reflejado hacia: " + target.name);
     }
 
-    void DamagePlayer()
+    void DamagePlayer(GameObject player)
     {
         Debug.Log("Game Over");
-        Destroy(gameObject);
+        Destroy(player);
     }
 
     void DamageEnemy(GameObject enemy)
