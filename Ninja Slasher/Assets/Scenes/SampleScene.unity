@@ -131,9 +131,9 @@ GameObject:
   - component: {fileID: 405047962}
   - component: {fileID: 405047961}
   - component: {fileID: 405047960}
-  m_Layer: 7
+  m_Layer: 6
   m_Name: Platform (1)
-  m_TagString: Scenario
+  m_TagString: Obstacle
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -556,7 +556,7 @@ GameObject:
   - component: {fileID: 946414044}
   m_Layer: 0
   m_Name: Player
-  m_TagString: Untagged
+  m_TagString: Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -575,6 +575,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _dashForce: 15
   _dashCD: 0.25
+  _parryWindow: 0.5
 --- !u!114 &946414045
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -602,11 +603,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _playerView: {fileID: 946414045}
   _playerModel: {fileID: 946414044}
+  minSwipeDistance: 50
   checkDistance: 0.6
   obstacleLayer:
     serializedVersion: 2
     m_Bits: 64
-  minSwipeDistance: 50
 --- !u!50 &946414047
 Rigidbody2D:
   serializedVersion: 5
@@ -1514,9 +1515,9 @@ GameObject:
   - component: {fileID: 2120155928}
   - component: {fileID: 2120155927}
   - component: {fileID: 2120155926}
-  m_Layer: 7
+  m_Layer: 6
   m_Name: Platform
-  m_TagString: Scenario
+  m_TagString: Obstacle
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
