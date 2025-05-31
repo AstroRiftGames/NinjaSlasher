@@ -11,16 +11,20 @@ public class Projectile : MonoBehaviour
         _rb = GetComponent<Rigidbody2D>();
     }
 
-    private void Start()
+    public void Initialize(Vector2 direction)
     {
-        _rb.AddForce(Vector2.right * _speed);
+        _rb.AddForce(direction * _speed);
     }
 
     public void SetTarget(Transform newTarget) => _target = newTarget;
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
-        if (collision.tag == "Player") Debug.Log("Player hit");
+        if (collision.tag == "Player")
+        {
+            Debug.Log("Game Over");
+            Destroy(collision.gameObject);
+        }
         Destroy(gameObject);
     }
 }

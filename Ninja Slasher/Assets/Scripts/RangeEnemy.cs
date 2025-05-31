@@ -39,7 +39,7 @@ public class RangeEnemy : Enemy
         if(_hasTarget)
         {
             _dirToTarget = _target.position - transform.position;
-            _hasLOS = CheckLOS(_dirToTarget);
+            _hasLOS = CheckLOS();
         }
     }
 
@@ -56,12 +56,15 @@ public class RangeEnemy : Enemy
         return Time.time >= _lastAttack + _cooldDown;
     }
 
-    private bool CheckLOS(Vector2 direction)
+    private bool CheckLOS()
     {
-        float distance = direction.magnitude;
+        float distance = _dirToTarget.magnitude;
         if (distance > _range) return false;
 
-        bool hit = Physics2D.Raycast(transform.position, direction.normalized, distance, _obstaclesLayer).collider != null;
+        bool hit = Physics2D.Raycast(transform.position, _dirToTarget.normalized, distance, _obstaclesLayer).collider != null;
+#if UNITY_EDITOR
+        Debug.DrawRay(transform.position, _dirToTarget.normalized*distance, Color.red, _cooldDown/2);
+#endif
         if (hit) return false;
 
         return true;
@@ -70,7 +73,7 @@ public class RangeEnemy : Enemy
     private void Attack()
     {
         _lastAttack = Time.time;
-        Instantiate(_projectilePrefab, transform.position, Quaternion.identity).GetComponent<Projectile>().SetTarget(_target);
+        Instantiate(_projectilePrefab, transform.position, Quaternion.identity).GetComponent<Projectile>().Initialize(_dirToTarget.normalized);
     }
 
 #if UNITY_EDITOR
