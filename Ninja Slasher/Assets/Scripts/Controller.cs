@@ -120,6 +120,7 @@ public class Controller : MonoBehaviour
     {
         _playerView.RB.linearVelocity = Vector2.zero;
         _playerView.RB.AddForce(_wishedDirection * _playerModel.DashForce, ForceMode2D.Impulse);
+        _playerView.CurrentVelocity = _playerView.RB.linearVelocity;
         _isOnSurface = false;
     }
 
@@ -141,6 +142,7 @@ public class Controller : MonoBehaviour
                 if (!_isOnSurface)
                 {
                     collision.gameObject.GetComponent<Enemy>().Die();
+                    _playerView.RB.linearVelocity = _playerView.CurrentVelocity;
                 }
                 else
                 {
