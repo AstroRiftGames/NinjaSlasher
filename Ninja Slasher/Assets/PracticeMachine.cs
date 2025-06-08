@@ -5,7 +5,7 @@ using UnityEngine;
 public class PracticeMachine : MonoBehaviour
 {
     [SerializeField] Transform _shootingPoint;
-    [SerializeField] float _cooldown;
+    [SerializeField] float _cooldown = 1f;
     [SerializeField] float _maxCadency;
     [SerializeField] LayerMask _obstaclesLayer;
     [SerializeField] GameObject[] _ammoTypes;
@@ -36,8 +36,6 @@ public class PracticeMachine : MonoBehaviour
             UpdateUI();
             _dirToTarget = _target.position - _shootingPoint.position;
 
-            Debug.Log(CheckLOS());
-
             TryShoot();
         }
     }
@@ -64,9 +62,6 @@ public class PracticeMachine : MonoBehaviour
         float distance = _dirToTarget.magnitude;
 
         bool hit = Physics2D.Raycast(_shootingPoint.position, _dirToTarget.normalized, distance, _obstaclesLayer).collider != null;
-#if UNITY_EDITOR
-        Debug.DrawRay(_shootingPoint.position, _dirToTarget.normalized * distance, Color.red, _cooldown / 2);
-#endif
         return !hit;
     }
 
@@ -75,7 +70,7 @@ public class PracticeMachine : MonoBehaviour
         _isActive = true;
         _currentAmmoType = _ammoTypes[0];
         _cadency = 1;
-        _cooldown = 1;
+        //_cooldown = 1;
         _lastShot = Time.time;
         UI.SetActive(true);
     }
@@ -90,23 +85,21 @@ public class PracticeMachine : MonoBehaviour
     {
         _cadency += .5f;
         if (_cadency > _maxCadency) _cadency = .5f;
-        _cooldown = 1 / _cadency;
+        //_cooldown = 1 / _cadency;
     }
 
     private void TryShoot()
     {
-        Debug.Log($"CD: {Time.time >= _lastShot + _cooldown}");
         if (CheckLOS() && Time.time >= _lastShot + _cooldown)
         {
             Shoot();
             _lastShot += Time.time;
-            Debug.Log("Shoot");
         }
     }
 
     private void Shoot()
     {
-        Projectile newProjectile = Instantiate(_currentAmmoType, transform.position, Quaternion.identity).GetComponent<Projectile>();
+        Projectile newProjectile = Instantiate(_currentAmmoType, _shootingPoint.position, Quaternion.identity).GetComponent<Projectile>();
         newProjectile.Initialize(_dirToTarget.normalized, transform);
     }
 
