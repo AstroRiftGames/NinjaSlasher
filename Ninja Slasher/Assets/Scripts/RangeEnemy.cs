@@ -65,9 +65,7 @@ public class RangeEnemy : Enemy
 #if UNITY_EDITOR
         Debug.DrawRay(transform.position, _dirToTarget.normalized*distance, Color.red, _cooldDown/2);
 #endif
-        if (hit) return false;
-
-        return true;
+        return !hit;
     }
 
     private void Attack()
