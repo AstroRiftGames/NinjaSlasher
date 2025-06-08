@@ -131,13 +131,16 @@ public class Controller : MonoBehaviour
             case "Scenario" or "Obstacle":
                 if (_currentSurface != null && collision.collider == _currentSurface)
                     return;
-                else
+
+                _currentSurface = collision.collider;
+                _isOnSurface = true;
+
+                if (collision.gameObject.GetComponent<PlatformBase>() == null)
                 {
-                    _currentSurface = collision.collider;
-                    _isOnSurface = true;
                     _playerView.RB.linearVelocity = Vector2.zero;
                 }
                 break;
+
             case "Enemy":
                 if (!_isOnSurface)
                 {
@@ -188,6 +191,8 @@ public class Controller : MonoBehaviour
 
     public bool IsParrying() => isParrying;
     public bool IsDashing() => !_isOnSurface;
+
+    public Vector2 GetDashDirection() => _wishedDirection;
 
     private void OnDrawGizmos()
     {
