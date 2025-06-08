@@ -180,6 +180,12 @@ public class Controller : MonoBehaviour
         }
     }
 
+    public void Die()
+    {
+        Debug.Log("Jugador muerto");
+        Destroy(gameObject);
+    }
+
     public bool IsParrying() => isParrying;
     public bool IsDashing() => !_isOnSurface;
 
