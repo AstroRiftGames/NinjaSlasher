@@ -10,6 +10,7 @@ public class Controller : MonoBehaviour
     private bool _isOnSurface = true;
     private float _lastDash;
     private Collider2D _currentSurface;
+    private Vector2 _lastDashDirection;
 
     private Vector2 _wishedDirection;
     private Vector2 lastSwipeDelta;
@@ -118,6 +119,7 @@ public class Controller : MonoBehaviour
 
     private void Dash()
     {
+        _lastDashDirection = _wishedDirection;
         _playerView.RB.linearVelocity = Vector2.zero;
         _playerView.RB.AddForce(_wishedDirection * _playerModel.DashForce, ForceMode2D.Impulse);
         _playerView.CurrentVelocity = _playerView.RB.linearVelocity;
@@ -131,25 +133,31 @@ public class Controller : MonoBehaviour
             case "Scenario" or "Obstacle":
                 if (_currentSurface != null && collision.collider == _currentSurface)
                     return;
-                else
+
+                _currentSurface = collision.collider;
+                _isOnSurface = true;
+
+                if (collision.gameObject.GetComponent<PlatformBase>() == null)
                 {
-                    _currentSurface = collision.collider;
-                    _isOnSurface = true;
                     _playerView.RB.linearVelocity = Vector2.zero;
                 }
                 break;
-            case "Enemy":
-                if (!_isOnSurface)
-                {
-                    collision.gameObject.GetComponent<Enemy>().Die();
-                    _playerView.RB.linearVelocity = _playerView.CurrentVelocity;
-                }
-                else
-                {
-                    Debug.Log("Game Over");
-                    Destroy(gameObject);
-                }
-                break;
+        }
+    }
+
+    private void OnTriggerEnter2D(Collider2D collision)
+    {
+        if(collision.CompareTag("Enemy"))
+        {
+            if (!_isOnSurface)
+            {
+                collision.GetComponent<Enemy>().Die();
+            }
+            else
+            {
+                Debug.Log("Game Over");
+                Destroy(gameObject);
+            }
         }
     }
 
@@ -169,7 +177,6 @@ public class Controller : MonoBehaviour
         }
     }
 
-
     private void HandleParryTimer()
     {
         if (isParrying)
@@ -180,8 +187,18 @@ public class Controller : MonoBehaviour
         }
     }
 
+    public void Die()
+    {
+        Debug.Log("Jugador muerto");
+        Destroy(gameObject);
+    }
+
     public bool IsParrying() => isParrying;
     public bool IsDashing() => !_isOnSurface;
+
+    public Vector2 GetDashDirection() => _wishedDirection;
+
+    public Vector2 GetLastDashDirection() => _lastDashDirection;
 
     private void OnDrawGizmos()
     {

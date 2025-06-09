@@ -14,6 +14,7 @@ public class RangeEnemy : Enemy
     [Header("Attack stats")]
     [SerializeField] private float _cooldDown;
     [SerializeField] private GameObject _projectilePrefab;
+    [SerializeField] private Transform _refPoint;
     private float _lastAttack;
 
     protected override void OnEnable()
@@ -38,7 +39,7 @@ public class RangeEnemy : Enemy
         _hasTarget = _target != null;
         if(_hasTarget)
         {
-            _dirToTarget = _target.position - transform.position;
+            _dirToTarget = _target.position - _refPoint.position;
             _hasLOS = CheckLOS();
         }
     }
@@ -61,19 +62,17 @@ public class RangeEnemy : Enemy
         float distance = _dirToTarget.magnitude;
         if (distance > _range) return false;
 
-        bool hit = Physics2D.Raycast(transform.position, _dirToTarget.normalized, distance, _obstaclesLayer).collider != null;
+        bool hit = Physics2D.Raycast(_refPoint.position, _dirToTarget.normalized, distance, _obstaclesLayer).collider != null;
 #if UNITY_EDITOR
-        Debug.DrawRay(transform.position, _dirToTarget.normalized*distance, Color.red, _cooldDown/2);
+        Debug.DrawRay(_refPoint.position, _dirToTarget.normalized*distance, Color.red, _cooldDown/2);
 #endif
-        if (hit) return false;
-
-        return true;
+        return !hit;
     }
 
     private void Attack()
     {
         _lastAttack = Time.time;
-        var projectile = Instantiate(_projectilePrefab, transform.position, Quaternion.identity)
+        var projectile = Instantiate(_projectilePrefab, _refPoint.position, Quaternion.identity)
             .GetComponent<Projectile>();
         projectile.Initialize(_dirToTarget.normalized, transform);
     }
