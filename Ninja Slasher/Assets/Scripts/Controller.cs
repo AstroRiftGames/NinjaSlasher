@@ -142,19 +142,22 @@ public class Controller : MonoBehaviour
                     _playerView.RB.linearVelocity = Vector2.zero;
                 }
                 break;
+        }
+    }
 
-            case "Enemy":
-                if (!_isOnSurface)
-                {
-                    collision.gameObject.GetComponent<Enemy>().Die();
-                    _playerView.RB.linearVelocity = _playerView.CurrentVelocity;
-                }
-                else
-                {
-                    Debug.Log("Game Over");
-                    Destroy(gameObject);
-                }
-                break;
+    private void OnTriggerEnter2D(Collider2D collision)
+    {
+        if(collision.CompareTag("Enemy"))
+        {
+            if (!_isOnSurface)
+            {
+                collision.GetComponent<Enemy>().Die();
+            }
+            else
+            {
+                Debug.Log("Game Over");
+                Destroy(gameObject);
+            }
         }
     }
 
