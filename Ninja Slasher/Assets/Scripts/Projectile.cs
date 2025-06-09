@@ -14,7 +14,7 @@ public class Projectile : MonoBehaviour
 
     private bool _timeSlowed = false;
     protected Controller _playerInZone;
-    [SerializeField] protected bool IsParryable = true;
+    [SerializeField] protected bool isParryable = true;
 
     private void OnEnable()
     {
@@ -39,46 +39,45 @@ public class Projectile : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
-        if (collision.CompareTag("ParryZone") && !_timeSlowed)
+        if (collision.CompareTag("ParryZone"))
         {
             _playerInZone = collision.GetComponentInParent<Controller>();
-            if (_playerInZone != null)
+            if (_playerInZone == null) return;
+
+            if (IsParryable && _playerInZone.IsParrying())
+            {
+                ReflectProjectile(_playerInZone.transform);
+            }
+            else if (!_timeSlowed)
             {
                 StartCoroutine(SlowTimeUntilParry());
             }
         }
-
-        ManageCollision(collision);
+        else
+        {
+            if (!_timeSlowed) ManageCollision(collision);
+        }
     }
 
     public virtual void ManageCollision(Collider2D collision)
     {
         if (!_hasBeenReflected)
         {
+            if (_timeSlowed) return;
+
             if (IsParryable && _playerInZone != null && _playerInZone.IsParrying())
             {
                 ReflectProjectile(_playerInZone.transform);
                 ResetTime();
             }
-            if (!collision.CompareTag("Enemy")) Collide(collision);
+            else if (!collision.CompareTag("Enemy"))
+            {
+                Collide(collision);
+            }
         }
         else if (!collision.CompareTag("Player"))
         {
             Collide(collision);
-        }
-    }
-
-    private void OnTriggerStay2D(Collider2D collision)
-    {
-        if (!_hasBeenReflected && collision.CompareTag("ParryZone") && _timeSlowed)
-        {
-            _playerInZone = collision.GetComponentInParent<Controller>();
-            if (IsParryable && _playerInZone != null && _playerInZone.IsParrying())
-            {
-                Debug.Log("Parry detected");
-                ReflectProjectile(_playerInZone.transform);
-                ResetTime();
-            }
         }
     }
 
@@ -155,6 +154,8 @@ public class Projectile : MonoBehaviour
         }
 
         ResetTime();
+
+        Collide(null);
     }
 
     protected void ResetTime()
@@ -183,4 +184,24 @@ public class Projectile : MonoBehaviour
 
         return closest;
     }
+
+    public void ReflectBackwards()
+    {
+        if (_hasBeenReflected) return;
+
+        Transform target = _shooter != null ? _shooter : FindClosestEnemy();
+        if (target == null)
+        {
+            Debug.Log("No target found to reflect");
+            return;
+        }
+
+        Vector2 direction = (target.position - transform.position).normalized;
+        _rb.linearVelocity = direction * _reflectedSpeed;
+        _hasBeenReflected = true;
+        transform.right = direction;
+    }
+
+    public bool HasBeenReflected => _hasBeenReflected;
+    public bool IsParryable => isParryable;
 }

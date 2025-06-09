@@ -35,14 +35,8 @@ public class Controller : MonoBehaviour
         if (_isOnSurface && !isParrying)
             GetSwipeInput();
 
-        if (Input.GetMouseButtonDown(0))
-        {
-            StartParry();
-        }
-
         HandleParryTimer();
     }
-
 
     private void GetSwipeInput()
     {
@@ -63,11 +57,6 @@ public class Controller : MonoBehaviour
             isSwiping = false;
             endTouchPosition = Input.mousePosition;
             TryDashFromSwipe(endTouchPosition - swipeStart);
-        }
-
-        if (Input.GetMouseButtonDown(0) && !isSwiping)
-        {
-            StartParry();
         }
 #else
         if (Input.touchCount > 0)
@@ -90,18 +79,13 @@ public class Controller : MonoBehaviour
                     TryDashFromSwipe(endTouchPosition - swipeStart);
                     break;
             }
-
-            if (Input.touchCount == 1 && !isSwiping && touch.phase == TouchPhase.Began)
-            {
-                StartParry();
-            }
         }
 #endif
     }
 
     private void TryDashFromSwipe(Vector2 swipeDelta)
     {
-        if (swipeDelta.magnitude >= minSwipeDistance && Time.time >= _lastDash + _playerModel.DashCD)
+        if (_isOnSurface && swipeDelta.magnitude >= minSwipeDistance && Time.time >= _lastDash + _playerModel.DashCD)
         {
             lastSwipeDelta = swipeDelta;
             _wishedDirection = -swipeDelta.normalized;
@@ -114,6 +98,10 @@ public class Controller : MonoBehaviour
 
             _lastDash = Time.time;
             Dash();
+        }
+        else if (_isOnSurface && !isParrying)
+        {
+            StartParry();
         }
     }
 
@@ -169,11 +157,22 @@ public class Controller : MonoBehaviour
 
     void StartParry()
     {
-        if (!isParrying)
+        if (isParrying) return;
+
+        isParrying = true;
+        parryTimer = _playerModel.ParryWindow;
+
+        Debug.Log("Parry activado");
+
+        Collider2D[] hits = Physics2D.OverlapCircleAll(transform.position, 2f, LayerMask.GetMask("Projectiles"));
+
+        foreach (var hit in hits)
         {
-            isParrying = true;
-            parryTimer = _playerModel.ParryWindow;
-            Debug.Log("Parry started");
+            Projectile proj = hit.GetComponent<Projectile>();
+            if (proj != null && proj.IsParryable && !proj.HasBeenReflected)
+            {
+                proj.ReflectBackwards();
+            }
         }
     }
 
@@ -209,8 +208,11 @@ public class Controller : MonoBehaviour
             Vector3 start = transform.position;
             Vector3 end = start + (Vector3)(-currentSwipe.normalized * 2f);
             Gizmos.DrawLine(start, end);
-            Gizmos.DrawSphere(end, 0.1f);
+            Gizmos.DrawSphere(end, 0.1f);    
         }
+        
+        Gizmos.color = Color.cyan;
+        Gizmos.DrawWireSphere(transform.position, 2f);
 #endif
     }
 }
