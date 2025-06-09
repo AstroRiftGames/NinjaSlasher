@@ -189,12 +189,18 @@ public class Projectile : MonoBehaviour
     {
         if (_hasBeenReflected) return;
 
-        Vector2 newDirection = -_rb.linearVelocity.normalized;
-        _rb.linearVelocity = newDirection * _reflectedSpeed;
-        _hasBeenReflected = true;
-        transform.right = newDirection;
-    }
+        Transform target = _shooter != null ? _shooter : FindClosestEnemy();
+        if (target == null)
+        {
+            Debug.Log("No target found to reflect");
+            return;
+        }
 
+        Vector2 direction = (target.position - transform.position).normalized;
+        _rb.linearVelocity = direction * _reflectedSpeed;
+        _hasBeenReflected = true;
+        transform.right = direction;
+    }
 
     public bool HasBeenReflected => _hasBeenReflected;
     public bool IsParryable => isParryable;
