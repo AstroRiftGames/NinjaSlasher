@@ -3,16 +3,18 @@ using UnityEngine;
 
 public class Projectile : MonoBehaviour
 {
-    [SerializeField] private float _speed;
+    [SerializeField] protected float _speed;
     [SerializeField] private float _reflectedSpeed;
-    [SerializeField] private Transform _shooter;
-    [SerializeField] private LayerMask enemyLayer;
+    [SerializeField] [HideInInspector] protected Transform _shooter;
+    [SerializeField] protected LayerMask enemyLayer;
+    [SerializeField] protected LayerMask playerLayer;
 
-    private Rigidbody2D _rb;
-    private bool _hasBeenReflected = false;
+    protected Rigidbody2D _rb;
+    protected bool _hasBeenReflected = false;
 
     private bool _timeSlowed = false;
-    private Controller _playerInZone;
+    protected Controller _playerInZone;
+    [SerializeField] protected bool IsParryable = true;
 
     private void OnEnable()
     {
@@ -21,13 +23,22 @@ public class Projectile : MonoBehaviour
 
     public void Initialize(Vector2 direction , Transform owner)
     {
-        _rb.AddForce(direction * _speed);
         SetOwner(owner);
+        SetDirection(direction);
+    }
+
+    public virtual void Update()
+    {
+
+    }
+
+    public virtual void SetDirection(Vector2 direction)
+    {
+        _rb.AddForce(direction* _speed);
     }
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
-
         if (collision.CompareTag("ParryZone") && !_timeSlowed)
         {
             _playerInZone = collision.GetComponentInParent<Controller>();
@@ -37,35 +48,32 @@ public class Projectile : MonoBehaviour
             }
         }
 
-        if (!_hasBeenReflected && collision.CompareTag("Player"))
-        {
-            if (_playerInZone != null && _playerInZone.IsParrying())
-            {
-                ReflectProjectile(_playerInZone.transform);
-            }
-            else
-            {
-                DamagePlayer(collision.gameObject);
-            }
-
-            ResetTime();
-            Destroy(gameObject);
-        }
-
-        if (_hasBeenReflected && collision.CompareTag("Enemy"))
-        {
-            DamageEnemy(collision.gameObject);
-            Destroy(gameObject);
-        }
+        ManageCollision(collision);
     }
 
+    public virtual void ManageCollision(Collider2D collision)
+    {
+        if (!_hasBeenReflected)
+        {
+            if (IsParryable && _playerInZone != null && _playerInZone.IsParrying())
+            {
+                ReflectProjectile(_playerInZone.transform);
+                ResetTime();
+            }
+            if (!collision.CompareTag("Enemy")) Collide(collision);
+        }
+        else if (!collision.CompareTag("Player"))
+        {
+            Collide(collision);
+        }
+    }
 
     private void OnTriggerStay2D(Collider2D collision)
     {
         if (!_hasBeenReflected && collision.CompareTag("ParryZone") && _timeSlowed)
         {
             _playerInZone = collision.GetComponentInParent<Controller>();
-            if (_playerInZone != null && _playerInZone.IsParrying())
+            if (IsParryable && _playerInZone != null && _playerInZone.IsParrying())
             {
                 Debug.Log("Parry detected");
                 ReflectProjectile(_playerInZone.transform);
@@ -74,7 +82,7 @@ public class Projectile : MonoBehaviour
         }
     }
 
-    void ReflectProjectile(Transform playerTransform)
+    protected void ReflectProjectile(Transform playerTransform)
     {
         if (_hasBeenReflected) return;
 
@@ -93,13 +101,27 @@ public class Projectile : MonoBehaviour
         Debug.Log("Proyectil reflejado hacia: " + target.name);
     }
 
-    void DamagePlayer(GameObject player)
+    public virtual void Collide(Collider2D collision)
+    {
+        if(collision.CompareTag("Player"))
+        {
+            DamagePlayer(collision.gameObject);
+        }
+        else if (collision.CompareTag("Enemy"))
+        {
+            DamageEnemy(collision.gameObject);
+        }
+
+        Destroy(gameObject);
+    }
+
+    protected void DamagePlayer(GameObject player)
     {
         Debug.Log("Game Over");
         Destroy(player);
     }
 
-    void DamageEnemy(GameObject enemy)
+    protected void DamageEnemy(GameObject enemy)
     {
         Destroy(enemy);
     }
@@ -135,7 +157,7 @@ public class Projectile : MonoBehaviour
         ResetTime();
     }
 
-    private void ResetTime()
+    protected void ResetTime()
     {
         if (Time.timeScale != 1f)
         {
