@@ -21,6 +21,7 @@ public class Controller : MonoBehaviour
     private Vector2 currentSwipe;
     private bool isSwiping = false;
     [SerializeField] private float minSwipeDistance;
+    private int _moveCount = 0;
 
     // Parry
     private bool isParrying = false;
@@ -107,11 +108,14 @@ public class Controller : MonoBehaviour
 
     private void Dash()
     {
+        MoveTracker.RegisterMove();
+        _moveCount++;
         _lastDashDirection = _wishedDirection;
         _playerView.RB.linearVelocity = Vector2.zero;
         _playerView.RB.AddForce(_wishedDirection * _playerModel.DashForce, ForceMode2D.Impulse);
         _playerView.CurrentVelocity = _playerView.RB.linearVelocity;
         _isOnSurface = false;
+        Debug.Log($"Movimientos actuales: {_moveCount}");
     }
 
     private void OnCollisionEnter2D(Collision2D collision)
