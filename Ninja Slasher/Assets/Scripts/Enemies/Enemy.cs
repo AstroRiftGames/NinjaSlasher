@@ -8,6 +8,10 @@ public class Enemy : MonoBehaviour
     [SerializeField] GameObject RearCol;
     [SerializeField] GameObject FrontCol;
 
+
+    protected Transform _player;
+    protected Rigidbody2D _rb;
+
     public virtual void OnEnable()
     {
         VulnerabilityCheck.OnVulnerabilityCheckColision += DetectCollision;
@@ -15,6 +19,14 @@ public class Enemy : MonoBehaviour
     public virtual void OnDisable()
     {
         VulnerabilityCheck.OnVulnerabilityCheckColision -= DetectCollision;
+    }
+
+    public virtual void Awake()
+    {
+        TryGetComponent(out Rigidbody2D rb);
+        _rb = rb;
+
+        _player = FindAnyObjectByType<Controller>().transform;
     }
 
     public virtual void Start()
