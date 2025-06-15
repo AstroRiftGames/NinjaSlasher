@@ -26,56 +26,39 @@ public class GuardBot : Enemy
     }
     public override void Update()
     {
-        if(!CheckTarget(_target))
+        if (!CheckTarget(_target)) 
         {
             Move();
         }
+
         if (!_isPushing)
         {
             if (CheckTarget())
             {
-                AlternatePush();
-                _target = GetPlayerPos();
-                Debug.Log("Push on");
+                StartCoroutine(Push());
             }
-            else
+            else if (_target == Vector2.zero || CheckTarget(_target))
             {
-                if (_target == Vector2.zero || CheckTarget(_target))
-                {
-                    SetPatrolTarget();
-                    Debug.Log($"Set Patrol {_target}");
-                }
-            }
-        }
-        else
-        {
-            if (CheckTarget(_target))
-            {
-                AlternatePush();
-                _target = GetPlayerPos();
-                Debug.Log("Push off");
+                SetPatrolTarget();
+                Debug.Log($"Set Patrol {_target}");
             }
         }
     }
 
     private void Move()
     {
-        transform.localScale = new Vector3(_target.x > transform.position.x ? 1 : -1, transform.localScale.y, transform.localScale.z);
+        transform.localScale = new Vector3(_target.x > transform.localToWorldMatrix.GetPosition().x ? 1 : -1, transform.localScale.y, transform.localScale.z);
 
         bool thereIsFloor = Physics2D.Raycast(transform.position + transform.right *.5f * _direction + Vector3.down, Vector3.down, .5f, _scenarioLayer);
         if(thereIsFloor)
         {
-            _rb.linearVelocity = transform.right * _direction * _currentSpeed;
-        }
-        else
-        {
-            _rb.linearVelocity = Vector2.zero;
+            _rb.linearVelocityX = _direction * _currentSpeed;
         }
     }
 
     private bool CheckTarget(Vector2 target)
     {
-        return Vector2.Distance(target, transform.position) <= .2f;
+        return Vector2.Distance(target, transform.localToWorldMatrix.GetPosition()) <= .5f;
     }
 
     private bool CheckTarget()
@@ -84,15 +67,21 @@ public class GuardBot : Enemy
         
     }
 
-    private void AlternatePush()
+    private IEnumerator Push()
     {
-        _isPushing = !_isPushing;
-        _currentSpeed = _speed * (_isPushing ? _speedMultiplier: 1);
+        _isPushing = true;
+        _target = GetPlayerPos();
+        _currentSpeed *= _speedMultiplier;
+        Debug.Log("Start Push");
+        yield return new WaitForSeconds(2f);
+        _currentSpeed = _speed;
+        _isPushing = false;
+        SetPatrolTarget();
     }
 
     private void SetPatrolTarget()
     {
-        _rb.linearVelocity = Vector2.zero;
+        _rb.linearVelocityX = 0;
         if (_target == (Vector2)_nodes[0].localToWorldMatrix.GetPosition())
         {
             _target = _nodes[1].localToWorldMatrix.GetPosition();
