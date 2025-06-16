@@ -1,5 +1,5 @@
 using UnityEngine;
 
-public class BlazeUnit : Enemy
+public class BlazeUnit : RangeEnemy
 {
 }

@@ -3,7 +3,9 @@ using UnityEngine;
 public class RangeEnemy : Enemy
 {
     private Transform _target;
-    private Vector2 _dirToTarget;
+    protected Vector2 _dirToTarget;
+
+    protected void SetDirToTarget(Vector2 dir) => _dirToTarget = dir;
 
     [Header("LOS Stats")]
     [SerializeField] private float _range;
@@ -43,7 +45,7 @@ public class RangeEnemy : Enemy
         }
     }
 
-    private void TryAttack()
+    protected void TryAttack()
     {
         if(CheckCooldown())
         {
@@ -68,7 +70,7 @@ public class RangeEnemy : Enemy
         return !hit;
     }
 
-    private void Attack()
+    public virtual void Attack()
     {
         _lastAttack = Time.time;
         var projectile = Instantiate(_data.Projectile, _refPoint.position, Quaternion.identity)
