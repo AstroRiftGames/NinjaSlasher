@@ -8,6 +8,7 @@ public enum EnemyType
     NanoSwarm,
     BlazeUnit,
     RicochetBot,
+    MiniSwarmBot,
 }
 [Serializable]
 public class VulnerabilityValues

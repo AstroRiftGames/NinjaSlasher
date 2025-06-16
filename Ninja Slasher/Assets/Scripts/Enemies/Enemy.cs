@@ -11,6 +11,7 @@ public class Enemy : MonoBehaviour
 
     protected Transform _player;
     protected Rigidbody2D _rb;
+    protected Collider2D _col;
 
     public virtual void OnEnable()
     {
@@ -25,6 +26,8 @@ public class Enemy : MonoBehaviour
     {
         TryGetComponent(out Rigidbody2D rb);
         _rb = rb;
+        TryGetComponent(out Collider2D col);
+        _col = col;
 
         _player = FindAnyObjectByType<Controller>().transform;
     }
@@ -54,7 +57,7 @@ public class Enemy : MonoBehaviour
         if(!_data.IsVulnerable.fromFront) FrontCol.SetActive(true);
     }
 
-    public void Die()
+    public virtual void Die()
     {
         Debug.Log($"{_data.Type} killed");
         Destroy(gameObject);
