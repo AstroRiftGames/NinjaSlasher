@@ -1,23 +1,19 @@
 using UnityEngine;
 using System.Collections.Generic;
 
-public class EnemyTracker : MonoBehaviour
+public class EnemyTracker : MonoBehaviour, ITracker
 {
     private List<Enemy> enemies = new();
     private float startTime;
     private int totalEnemies;
 
-    [SerializeField] private GameManager gameManager;
+    public static event System.Action<LevelStats> OnAllEnemiesDefeated;
 
     void Start()
     {
-        if (gameManager == null)
-            gameManager = FindObjectOfType<GameManager>();
-
         Enemy[] found = FindObjectsOfType<Enemy>();
         enemies.AddRange(found);
         totalEnemies = enemies.Count;
-
         startTime = Time.time;
     }
 
@@ -27,21 +23,21 @@ public class EnemyTracker : MonoBehaviour
 
         if (enemies.Count <= 0)
         {
-            CompleteLevel();
+            float elapsedTime = Time.time - startTime;
+            LevelStats stats = new LevelStats
+            {
+                timeTaken = elapsedTime,
+                enemiesDefeated = totalEnemies,
+                totalEnemies = totalEnemies
+            };
+            OnAllEnemiesDefeated?.Invoke(stats);
         }
     }
 
-    private void CompleteLevel()
+    public void ResetTracker()
     {
-        float elapsedTime = Time.time - startTime;
-
-        LevelStats stats = new LevelStats
-        {
-            timeTaken = elapsedTime,
-            enemiesDefeated = totalEnemies,
-            totalEnemies = totalEnemies
-        };
-
-        gameManager.OnLevelCompleted(stats);
+        enemies.Clear();
+        totalEnemies = 0;
+        startTime = 0;
     }
 }

@@ -7,6 +7,11 @@ public class GameManager : MonoBehaviour
 
     private LevelStats currentStats;
 
+    void Awake()
+    {
+        EnemyTracker.OnAllEnemiesDefeated += OnLevelCompleted;
+    }
+
     void Start()
     {
         if (levelController == null)
@@ -22,23 +27,23 @@ public class GameManager : MonoBehaviour
     public void OnLevelCompleted(LevelStats stats)
     {
         currentStats = stats;
-
         stats.timeTaken = levelController.TimeTaken;
         stats.movesUsed = MoveTracker.TotalMoves;
-
         stats.parryKillDone = ParryKillTracker.KillWithParryPerformed;
         ParryKillTracker.Reset();
-
         levelController.StopTimer();
-
         int starsEarned = levelController.Evaluate(stats);
-
         Debug.Log($"Nivel completado. Estrellas obtenidas: {starsEarned}");
     }
 
     public void RestartLevel()
     {
-        string currentScene = SceneManager.GetActiveScene().name;
-        SceneManager.LoadScene(currentScene);
+        string currentScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
+        UnityEngine.SceneManagement.SceneManager.LoadScene(currentScene);
+    }
+
+        void OnDestroy()
+    {
+        EnemyTracker.OnAllEnemiesDefeated -= OnLevelCompleted;
     }
 }
