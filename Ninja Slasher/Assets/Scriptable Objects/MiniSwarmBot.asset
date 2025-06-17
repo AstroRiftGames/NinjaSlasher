@@ -10,12 +10,13 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: e9ba99217e1a1cc4d9385fe5e36cd1f3, type: 3}
-  m_Name: Range Enemy
+  m_Name: MiniSwarmBot
   m_EditorClassIdentifier: 
-  _type: 1
-  _projectile: {fileID: 6157027327081663254, guid: ca508bd392c18ca4d9b9bbaf60106fb9, type: 3}
+  _type: 5
+  _projectile: {fileID: 0}
+  _range: 0
   _isVulnerable:
-    fromUp: 0
-    fromDown: 0
-    fromLeft: 0
-    fromRight: 0
+    fromUp: 1
+    fromDown: 1
+    fromBehind: 1
+    fromFront: 1
