@@ -42,7 +42,7 @@ public class GameManager : MonoBehaviour
         UnityEngine.SceneManagement.SceneManager.LoadScene(currentScene);
     }
 
-        void OnDestroy()
+    void OnDestroy()
     {
         EnemyTracker.OnAllEnemiesDefeated -= OnLevelCompleted;
     }

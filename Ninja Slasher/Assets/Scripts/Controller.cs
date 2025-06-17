@@ -34,12 +34,15 @@ public class Controller : MonoBehaviour
     private void Update()
     {
         if (_isOnSurface && !isParrying)
-            GetSwipeInput();
+        {
+            CheckSwipe();
+            CheckParryTap();
+        }
 
         HandleParryTimer();
     }
 
-    private void GetSwipeInput()
+    private void CheckSwipe()
     {
 #if UNITY_EDITOR
         if (Input.GetMouseButtonDown(0))
@@ -57,31 +60,82 @@ public class Controller : MonoBehaviour
         {
             isSwiping = false;
             endTouchPosition = Input.mousePosition;
-            TryDashFromSwipe(endTouchPosition - swipeStart);
+            Vector2 swipeDelta = endTouchPosition - swipeStart;
+            if (swipeDelta.magnitude >= minSwipeDistance)
+                TryDashFromSwipe(swipeDelta);
         }
 #else
-        if (Input.touchCount > 0)
-        {
-            Touch touch = Input.GetTouch(0);
+    if (Input.touchCount > 0)
+    {
+        Touch touch = Input.GetTouch(0);
 
-            switch (touch.phase)
+        switch (touch.phase)
+        {
+            case TouchPhase.Began:
+                swipeStart = touch.position;
+                isSwiping = true;
+                break;
+            case TouchPhase.Moved:
+            case TouchPhase.Stationary:
+                currentSwipe = touch.position - swipeStart;
+                break;
+            case TouchPhase.Ended:
+                isSwiping = false;
+                endTouchPosition = touch.position;
+                Vector2 swipeDelta = endTouchPosition - swipeStart;
+                if (swipeDelta.magnitude >= minSwipeDistance)
+                    TryDashFromSwipe(swipeDelta);
+                break;
+        }
+    }
+#endif
+    }
+
+    private void CheckParryTap()
+    {
+#if UNITY_EDITOR
+        if (Input.GetMouseButtonDown(0))
+        {
+            TryStartParry();
+        }
+#else
+    if (Input.touchCount > 0 && Input.GetTouch(0).phase == TouchPhase.Began)
+    {
+        TryStartParry();
+    }
+#endif
+    }
+
+    private void TryStartParry()
+    {
+        if (isParrying) return;
+
+        Collider2D[] hits = Physics2D.OverlapCircleAll(transform.position, 2f, LayerMask.GetMask("Projectiles"));
+        foreach (var hit in hits)
+        {
+            Projectile proj = hit.GetComponent<Projectile>();
+            if (proj != null && proj.IsParryable && !proj.HasBeenReflected)
             {
-                case TouchPhase.Began:
-                    swipeStart = touch.position;
-                    isSwiping = true;
-                    break;
-                case TouchPhase.Moved:
-                case TouchPhase.Stationary:
-                    currentSwipe = touch.position - swipeStart;
-                    break;
-                case TouchPhase.Ended:
-                    isSwiping = false;
-                    endTouchPosition = touch.position;
-                    TryDashFromSwipe(endTouchPosition - swipeStart);
-                    break;
+                StartParry(hits);
+                return;
             }
         }
-#endif
+    }
+
+    private void StartParry(Collider2D[] hits)
+    {
+        isParrying = true;
+        parryTimer = _playerModel.ParryWindow;
+        Debug.Log("Parry activado");
+
+        foreach (var hit in hits)
+        {
+            Projectile proj = hit.GetComponent<Projectile>();
+            if (proj != null && proj.IsParryable && !proj.HasBeenReflected)
+            {
+                proj.ReflectBackwards();
+            }
+        }
     }
 
     private void TryDashFromSwipe(Vector2 swipeDelta)
@@ -99,10 +153,6 @@ public class Controller : MonoBehaviour
 
             _lastDash = Time.time;
             Dash();
-        }
-        else if (_isOnSurface && !isParrying)
-        {
-            StartParry();
         }
     }
 
@@ -157,27 +207,6 @@ public class Controller : MonoBehaviour
     {
         RaycastHit2D hit = Physics2D.Raycast(transform.position, direction, checkDistance, obstacleLayer);
         return hit.collider != null;
-    }
-
-    void StartParry()
-    {
-        if (isParrying) return;
-
-        isParrying = true;
-        parryTimer = _playerModel.ParryWindow;
-
-        Debug.Log("Parry activado");
-
-        Collider2D[] hits = Physics2D.OverlapCircleAll(transform.position, 2f, LayerMask.GetMask("Projectiles"));
-
-        foreach (var hit in hits)
-        {
-            Projectile proj = hit.GetComponent<Projectile>();
-            if (proj != null && proj.IsParryable && !proj.HasBeenReflected)
-            {
-                proj.ReflectBackwards();
-            }
-        }
     }
 
     private void HandleParryTimer()
