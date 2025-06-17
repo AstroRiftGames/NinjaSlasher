@@ -1904,6 +1904,10 @@ PrefabInstance:
     m_TransformParent: {fileID: 0}
     m_Modifications:
     - target: {fileID: 2745514916792601724, guid: b8197bdfddfad294a8f4864bd204bd7b, type: 3}
+      propertyPath: delayBeforeActivation
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2745514916792601724, guid: b8197bdfddfad294a8f4864bd204bd7b, type: 3}
       propertyPath: 'turrets.Array.data[0]'
       value: 
       objectReference: {fileID: 5974687486823959275}
@@ -2008,6 +2012,14 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 7439062828302330217, guid: d54ba2233daf61a41940001f077860a2, type: 3}
+      propertyPath: laserLength
+      value: 25
+      objectReference: {fileID: 0}
+    - target: {fileID: 7439062828302330217, guid: d54ba2233daf61a41940001f077860a2, type: 3}
+      propertyPath: laserDuration
+      value: 0.5
+      objectReference: {fileID: 0}
     - target: {fileID: 8448839114845011301, guid: d54ba2233daf61a41940001f077860a2, type: 3}
       propertyPath: m_Name
       value: TurretTrap
@@ -2042,15 +2054,15 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 420521867908532352, guid: ab69bba73f2212d49b5ced2ea2cd8b5f, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 1052.9977
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 420521867908532352, guid: ab69bba73f2212d49b5ced2ea2cd8b5f, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 546.4575
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 420521867908532352, guid: ab69bba73f2212d49b5ced2ea2cd8b5f, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 3.7367978
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 420521867908532352, guid: ab69bba73f2212d49b5ced2ea2cd8b5f, type: 3}
       propertyPath: m_LocalRotation.w

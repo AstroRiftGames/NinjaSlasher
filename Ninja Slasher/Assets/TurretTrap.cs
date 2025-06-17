@@ -6,6 +6,7 @@ public class TurretTrap : MonoBehaviour
     [SerializeField] private float appearTime = 0.5f;
     [SerializeField] private float laserDuration = 1f;
     [SerializeField] private float hideTime = 0.5f;
+    [SerializeField] private float timeToShoot = 0.5f;
     [SerializeField] private Transform firePoint;
     [SerializeField] private float laserLength = 20f;
     [SerializeField] private LineRenderer lineRenderer;
@@ -34,6 +35,9 @@ public class TurretTrap : MonoBehaviour
         if (player != null)
         {
             Vector2 dir = (player.position - firePoint.position).normalized;
+
+            yield return new WaitForSeconds(timeToShoot);
+
             firePoint.right = dir;
 
             if (lineRenderer != null)
