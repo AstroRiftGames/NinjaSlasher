@@ -12,6 +12,7 @@ public class Enemy : MonoBehaviour
     protected Transform _player;
     protected Rigidbody2D _rb;
     protected Collider2D _col;
+    private EnemyTracker tracker;
 
     public virtual void OnEnable()
     {
@@ -30,6 +31,7 @@ public class Enemy : MonoBehaviour
         _col = col;
 
         _player = FindAnyObjectByType<Controller>().transform;
+        tracker = FindAnyObjectByType<EnemyTracker>();
     }
 
     public virtual void Start()
@@ -60,6 +62,7 @@ public class Enemy : MonoBehaviour
     public virtual void Die()
     {
         Debug.Log($"{_data.Type} killed");
+        tracker.OnEnemyKilled(this);
         Destroy(gameObject);
     }
 }

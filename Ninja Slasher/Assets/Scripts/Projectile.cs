@@ -122,6 +122,18 @@ public class Projectile : MonoBehaviour
 
     protected void DamageEnemy(GameObject enemy)
     {
+        if (_hasBeenReflected)
+        {
+            ParryKillTracker.RegisterParryKill();
+            Debug.Log("Parry kill registrada.");
+        }
+
+        EnemyTracker tracker = FindObjectOfType<EnemyTracker>();
+        if (tracker != null)
+        {
+            tracker.OnEnemyKilled(enemy.GetComponent<Enemy>());
+        }
+
         Destroy(enemy);
     }
 

@@ -8,6 +8,7 @@ public class SlipperyPlatform : PlatformBase
     private Controller playerController;
     private Vector2 slideDirection;
     private bool isSliding = false;
+    [SerializeField] private float falloffVelocity;
 
     public override void OnPlayerEnter(GameObject player)
     {
@@ -32,7 +33,7 @@ public class SlipperyPlatform : PlatformBase
     public override void OnPlayerExit(GameObject player)
     {
         isSliding = false;
-
+        playerRb.linearVelocityY = -falloffVelocity;
         playerRb = null;
         playerController = null;
     }
