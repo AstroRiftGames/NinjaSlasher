@@ -3,7 +3,9 @@ using UnityEngine;
 public class RangeEnemy : Enemy
 {
     private Transform _target;
-    private Vector2 _dirToTarget;
+    protected Vector2 _dirToTarget;
+
+    protected void SetDirToTarget(Vector2 dir) => _dirToTarget = dir;
 
     [Header("LOS Stats")]
     [SerializeField] private float _range;
@@ -13,16 +15,15 @@ public class RangeEnemy : Enemy
 
     [Header("Attack stats")]
     [SerializeField] private float _cooldDown;
-    [SerializeField] private GameObject _projectilePrefab;
     [SerializeField] private Transform _refPoint;
     private float _lastAttack;
 
-    protected override void OnEnable()
+    public override void OnEnable()
     {
         _target = FindAnyObjectByType<Controller>().transform;
     }
 
-    protected override void Update()
+    public override void Update()
     {
         base.Update();
 
@@ -44,7 +45,7 @@ public class RangeEnemy : Enemy
         }
     }
 
-    private void TryAttack()
+    protected void TryAttack()
     {
         if(CheckCooldown())
         {
@@ -69,10 +70,10 @@ public class RangeEnemy : Enemy
         return !hit;
     }
 
-    private void Attack()
+    public virtual void Attack()
     {
         _lastAttack = Time.time;
-        var projectile = Instantiate(_projectilePrefab, _refPoint.position, Quaternion.identity)
+        var projectile = Instantiate(_data.Projectile, _refPoint.position, Quaternion.identity)
             .GetComponent<Projectile>();
         projectile.Initialize(_dirToTarget.normalized, transform);
     }
