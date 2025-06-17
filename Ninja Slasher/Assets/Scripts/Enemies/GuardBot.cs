@@ -1,8 +1,5 @@
 using System.Collections;
-using TMPro.EditorUtilities;
-using UnityEditor.Tilemaps;
 using UnityEngine;
-using UnityEngine.Rendering;
 
 public class GuardBot : Enemy
 {
