@@ -9,6 +9,11 @@ public enum EnemyType
     BlazeUnit,
     RicochetBot,
     MiniSwarmBot,
+    SeekerUnit,
+    X0N3,
+    BL4ZT,
+    OM3GA,
+    KRUSH9,
 }
 [Serializable]
 public class VulnerabilityValues
