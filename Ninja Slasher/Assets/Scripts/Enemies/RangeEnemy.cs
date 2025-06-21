@@ -9,24 +9,23 @@ public class RangeEnemy : Enemy
 
     [Header("LOS Stats")]
     [SerializeField] private float _range;
-    [SerializeField] private LayerMask _obstaclesLayer;
-    private bool _hasLOS;
+    [SerializeField] protected LayerMask _obstaclesLayer;
+    protected bool _hasLOS;
     private bool _hasTarget;
 
     [Header("Attack stats")]
     [SerializeField] private float _cooldDown;
-    [SerializeField] private Transform _refPoint;
+    [SerializeField] protected Transform _refPoint;
     private float _lastAttack;
+    protected void SetLastAttack() => _lastAttack = Time.time;
 
     public override void OnEnable()
     {
         _target = FindAnyObjectByType<Controller>().transform;
     }
 
-    public override void Update()
+    public virtual void Update()
     {
-        base.Update();
-
         UpdateTarget();
 
         if (_hasTarget && _hasLOS)
@@ -35,7 +34,7 @@ public class RangeEnemy : Enemy
         }
     }
 
-    private void UpdateTarget()
+    protected void UpdateTarget()
     {
         _hasTarget = _target != null;
         if(_hasTarget)
@@ -45,7 +44,7 @@ public class RangeEnemy : Enemy
         }
     }
 
-    protected void TryAttack()
+    public virtual void TryAttack()
     {
         if(CheckCooldown())
         {
@@ -53,7 +52,7 @@ public class RangeEnemy : Enemy
         }
     }
 
-    private bool CheckCooldown()
+    protected bool CheckCooldown()
     {
         return Time.time >= _lastAttack + _cooldDown;
     }
@@ -72,9 +71,14 @@ public class RangeEnemy : Enemy
 
     public virtual void Attack()
     {
-        _lastAttack = Time.time;
+        SetLastAttack();
+        Shoot();
+    }
+
+    protected void Shoot()
+    {
         var projectile = Instantiate(_data.Projectile, _refPoint.position, Quaternion.identity)
-            .GetComponent<Projectile>();
+                    .GetComponent<Projectile>();
         projectile.Initialize(_dirToTarget.normalized, transform);
     }
 
