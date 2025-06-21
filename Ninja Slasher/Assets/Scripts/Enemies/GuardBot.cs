@@ -21,7 +21,7 @@ public class GuardBot : Enemy
         base.Awake();
         _currentSpeed = _speed;
     }
-    public override void Update()
+    public virtual void Update()
     {
         if (!CheckTarget(_target)) 
         {

@@ -17,9 +17,8 @@ public class FlyingEnemy : Enemy
         base.Start();
         UpdateTarget(transform.position);
     }
-    public override void Update()
+    public virtual void Update()
     {
-        base.Update();
         if(CheckLOS(_player.position)) UpdateTarget();
 
         if (CheckDistance())

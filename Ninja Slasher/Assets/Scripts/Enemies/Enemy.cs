@@ -46,11 +46,6 @@ public class Enemy : MonoBehaviour
 #endif
     }
 
-    public virtual void Update()
-    {
-
-    }
-
     protected void CheckVulnerability()
     {
         if(!_data.IsVulnerable.fromUp) UpperCol.SetActive(true);
