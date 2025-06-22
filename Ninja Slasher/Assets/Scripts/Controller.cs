@@ -209,6 +209,12 @@ public class Controller : MonoBehaviour
         if (swipeDelta.magnitude < minSwipeDistance)
             return;
 
+        if (_currentSurface == null)
+        {
+            Debug.Log("No puedes hacer dash en el aire");
+            return;
+        }
+
         Vector2 dashDir = -swipeDelta.normalized;
 
         if (Time.time < _lastDash + _playerModel.DashCD)
@@ -263,6 +269,13 @@ public class Controller : MonoBehaviour
         }
     }
 
+    private void OnCollisionExit2D(Collision2D collision)
+    {
+        if (collision.collider == _currentSurface)
+        {
+            _currentSurface = null;
+        }
+    }
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
