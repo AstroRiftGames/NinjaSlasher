@@ -1,5 +1,6 @@
 using System.Collections;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class Projectile : MonoBehaviour
 {
@@ -116,8 +117,8 @@ public class Projectile : MonoBehaviour
 
     protected void DamagePlayer(GameObject player)
     {
-        Debug.Log("Game Over");
-        Destroy(player);
+        player.TryGetComponent(out Controller controller);
+        controller.Die();
     }
 
     protected void DamageEnemy(GameObject enemy)

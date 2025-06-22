@@ -243,7 +243,6 @@ public class Controller : MonoBehaviour
         _playerView.CurrentVelocity = _playerView.RB.linearVelocity;
 
         _isDashing = true;
-        Debug.Log($"Dash ejecutado - Movimientos actuales: {_moveCount}");
     }
 
     private void OnCollisionEnter2D(Collision2D collision)
@@ -292,8 +291,15 @@ public class Controller : MonoBehaviour
 
     public void Die()
     {
-        Debug.Log("Jugador muerto");
-        Destroy(gameObject);
+        if (!_isInvincible)
+        {
+            Debug.Log("Jugador muerto");
+            Destroy(gameObject);
+        }
+        else
+        {
+            Debug.Log("IsInvincible");
+        }
     }
 
     public bool IsParrying() => isParrying;
@@ -302,6 +308,16 @@ public class Controller : MonoBehaviour
     public Vector2 GetDashDirection() => _wishedDirection;
 
     public Vector2 GetLastDashDirection() => _lastDashDirection;
+
+
+#if UNITY_EDITOR
+    private bool _isInvincible;
+    public void SetInvincibility(bool value)
+    {
+        _isInvincible = value;
+    }
+#endif
+
 
     private void OnDrawGizmos()
     {
