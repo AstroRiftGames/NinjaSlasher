@@ -1,21 +1,27 @@
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class CameraScript : MonoBehaviour
 {
-#if UNITY_EDITOR
     private Transform _player;
     private Vector3 _targetPosition;
     [SerializeField] Bounds _bounds;
 
     private void Awake()
     {
-        _player = FindFirstObjectByType<Controller>().transform;
+        _player = GodMenu.Player;
     }
-
 
     private void Update()
     {
-        FollowPlayer();
+        if(_player != null)
+        {
+            FollowPlayer();
+        }
+        else
+        {
+            _player = GodMenu.Player;
+        }
     }
 
     private void FollowPlayer()
@@ -27,5 +33,10 @@ public class CameraScript : MonoBehaviour
             transform.position = _targetPosition;
         }
     }
-#endif
+
+    private void OnDrawGizmos()
+    {
+        Gizmos.color = Color.yellow;
+        Gizmos.DrawWireCube(_bounds.center, _bounds.size);
+    }
 }

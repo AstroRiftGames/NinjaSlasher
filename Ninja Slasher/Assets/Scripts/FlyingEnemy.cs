@@ -19,7 +19,7 @@ public class FlyingEnemy : Enemy
     }
     public virtual void Update()
     {
-        if(CheckLOS(_player.position)) UpdateTarget();
+        if(_player != null && CheckLOS(_player.position)) UpdateTarget();
 
         if (CheckDistance())
         {
