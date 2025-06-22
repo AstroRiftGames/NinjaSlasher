@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public abstract class PlatformBase : MonoBehaviour
+public abstract class PlatformBase : MonoBehaviour, IPlatform
 {
     [Header("BASIC SETTINGS")]
     [SerializeField] protected bool isActive = true;
@@ -10,15 +10,17 @@ public abstract class PlatformBase : MonoBehaviour
         InitializePlatform();
     }
 
+    protected virtual void InitializePlatform() { }
+
     protected virtual void Update()
     {
         if (!isActive) return;
         OnPlatformUpdate();
     }
 
-    protected virtual void InitializePlatform() { }
-
-    protected virtual void OnPlatformUpdate() { }
+    public abstract void OnPlayerEnter(GameObject player);
+    public abstract void OnPlayerExit(GameObject player);
+    public abstract void OnPlatformUpdate();
 
     protected virtual void OnCollisionEnter2D(Collision2D collision)
     {
@@ -35,8 +37,4 @@ public abstract class PlatformBase : MonoBehaviour
             OnPlayerExit(collision.gameObject);
         }
     }
-
-    public abstract void OnPlayerEnter(GameObject player);
-
-    public abstract void OnPlayerExit(GameObject player);
 }

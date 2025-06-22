@@ -19,7 +19,7 @@ public class EnergyPlatform : PlatformBase
         SetPlatformState(true);
     }
 
-    protected override void OnPlatformUpdate()
+    public override void OnPlatformUpdate()
     {
         timer -= Time.deltaTime;
 
@@ -54,7 +54,7 @@ public class EnergyPlatform : PlatformBase
     {
         if (!isOn)
         {
-            Debug.Log("jugador aterrizo en la plataforma apagada");
+            Debug.Log("Jugador aterrizo en la plataforma apagada");
         }
     }
 

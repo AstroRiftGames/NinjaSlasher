@@ -4,9 +4,9 @@ public class BreakablePlatform : PlatformBase
 {
     [Header("SETTINGS")]
     [SerializeField] private int maxUses;
-
     [SerializeField] private float falloffVelocity;
-    Rigidbody2D playerRb;
+
+    private Rigidbody2D playerRb;
     private int remainingUses;
 
     protected override void InitializePlatform()
@@ -31,15 +31,18 @@ public class BreakablePlatform : PlatformBase
         }
     }
 
-    public override void OnPlayerExit(GameObject player)
-    {
+    public override void OnPlayerExit(GameObject player) { }
 
-    }
+    public override void OnPlatformUpdate() { }
 
     private void Break()
     {
         isActive = false;
-        playerRb.linearVelocityY = -falloffVelocity;
+        if (playerRb != null)
+            playerRb.linearVelocityY = -falloffVelocity;
         Destroy(gameObject);
     }
+
+    protected override void OnCollisionEnter2D(Collision2D collision) { }
+    protected override void OnCollisionExit2D(Collision2D collision) { }
 }

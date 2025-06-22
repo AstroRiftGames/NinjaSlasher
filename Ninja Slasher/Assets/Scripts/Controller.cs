@@ -263,6 +263,7 @@ public class Controller : MonoBehaviour
         }
     }
 
+
     private void OnTriggerEnter2D(Collider2D collision)
     {
         if (collision.CompareTag("Enemy"))
@@ -276,6 +277,12 @@ public class Controller : MonoBehaviour
                 Debug.Log("Game Over");
                 Destroy(gameObject);
             }
+        }
+
+        if (collision.gameObject.GetComponent<MovingPlatform>() != null)
+        {
+            Rigidbody2D rb = _playerView.RB;
+            rb.linearVelocity = new Vector2(0f, rb.linearVelocity.y);
         }
     }
 

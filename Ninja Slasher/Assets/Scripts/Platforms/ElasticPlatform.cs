@@ -2,7 +2,7 @@ using UnityEngine;
 
 public class ElasticPlatform : PlatformBase
 {
-    [SerializeField] private float bounceForce = 10f;
+    [SerializeField] private float bounceForce;
 
     public override void OnPlayerEnter(GameObject player)
     {
@@ -39,4 +39,6 @@ public class ElasticPlatform : PlatformBase
     }
 
     public override void OnPlayerExit(GameObject player) { }
+
+    public override void OnPlatformUpdate() { }
 }
