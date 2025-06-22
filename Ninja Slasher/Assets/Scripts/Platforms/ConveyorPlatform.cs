@@ -4,10 +4,9 @@ public class ConveyorPlatform : PlatformBase
 {
     [SerializeField] private float pushSpeed = 2f;
     [SerializeField] private bool pushRight = true;
-
-    private Rigidbody2D playerRb;
     [SerializeField] private float falloffVelocity;
 
+    private Rigidbody2D playerRb;
 
     public override void OnPlayerEnter(GameObject player)
     {
@@ -18,11 +17,12 @@ public class ConveyorPlatform : PlatformBase
 
     public override void OnPlayerExit(GameObject player)
     {
+        if (playerRb != null)
+            playerRb.linearVelocityY = -falloffVelocity;
         playerRb = null;
-        playerRb.linearVelocityY = -falloffVelocity;
     }
 
-    protected override void OnPlatformUpdate()
+    public override void OnPlatformUpdate()
     {
         if (!isActive || playerRb == null) return;
 

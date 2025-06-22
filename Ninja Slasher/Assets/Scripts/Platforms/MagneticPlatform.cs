@@ -10,7 +10,11 @@ public class MagneticPlatform : PlatformBase
     private void FixedUpdate()
     {
         if (!isActive) return;
+        OnPlatformUpdate();
+    }
 
+    public override void OnPlatformUpdate()
+    {
         Collider2D[] hits = Physics2D.OverlapCircleAll(transform.position, attractionRadius, playerLayer);
 
         foreach (var hit in hits)

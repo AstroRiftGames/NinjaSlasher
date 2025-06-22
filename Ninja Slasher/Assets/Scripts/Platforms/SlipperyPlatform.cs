@@ -3,12 +3,12 @@ using UnityEngine;
 public class SlipperyPlatform : PlatformBase
 {
     [SerializeField] private float slideSpeed = 4f;
+    [SerializeField] private float falloffVelocity;
 
     private Rigidbody2D playerRb;
     private Controller playerController;
     private Vector2 slideDirection;
     private bool isSliding = false;
-    [SerializeField] private float falloffVelocity;
 
     public override void OnPlayerEnter(GameObject player)
     {
@@ -24,21 +24,22 @@ public class SlipperyPlatform : PlatformBase
         Vector2 lastDir = playerController.GetLastDashDirection();
         slideDirection = new Vector2(Mathf.Sign(lastDir.x), 0f);
 
-
         playerRb.linearVelocity = Vector2.zero;
-
         isSliding = true;
     }
 
     public override void OnPlayerExit(GameObject player)
     {
         isSliding = false;
-        playerRb.linearVelocityY = -falloffVelocity;
+        if (playerRb != null)
+        {
+            playerRb.linearVelocityY = -falloffVelocity;
+        }
         playerRb = null;
         playerController = null;
     }
 
-    protected override void OnPlatformUpdate()
+    public override void OnPlatformUpdate()
     {
         if (!isSliding || playerRb == null || playerController == null) return;
 

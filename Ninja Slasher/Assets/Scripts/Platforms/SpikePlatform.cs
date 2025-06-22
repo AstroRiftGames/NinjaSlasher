@@ -5,7 +5,6 @@ public class SpikePlatform : PlatformBase
     [Header("Spike Settings")]
     [SerializeField] private float activationDelay;
     [SerializeField] private GameObject spikeObject;
-
     [SerializeField] private Animator animator;
 
     private float timer = -1f;
@@ -34,12 +33,11 @@ public class SpikePlatform : PlatformBase
             animator.SetBool("IsShaking", true);
     }
 
-    public override void OnPlayerExit(GameObject player)
-    {
+    public override void OnPlayerEnter(GameObject player) { }
 
-    }
+    public override void OnPlayerExit(GameObject player) { }
 
-    protected override void OnPlatformUpdate()
+    public override void OnPlatformUpdate()
     {
         if (!isActive || !isCounting) return;
 
@@ -66,6 +64,4 @@ public class SpikePlatform : PlatformBase
         currentPlayer = null;
         isActive = false;
     }
-
-    public override void OnPlayerEnter(GameObject player) { }
 }
