@@ -72,7 +72,6 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
         double secondsRemaining = _lifeRechargeSeconds - secondsSince;
 
         TimeSpan remaining = TimeSpan.FromSeconds(Mathf.Max(0, (float)secondsRemaining));
-        Debug.Log($"[LifeManager] Tiempo para próxima vida: {remaining.Minutes:D2}:{remaining.Seconds:D2}");
 
         if (secondsSince >= _lifeRechargeSeconds)
         {
