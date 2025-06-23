@@ -288,7 +288,7 @@ public class Controller : MonoBehaviour
             else
             {
                 Debug.Log("Game Over");
-                Destroy(gameObject);
+                Die();
             }
         }
 
@@ -314,7 +314,8 @@ public class Controller : MonoBehaviour
         if (!_isInvincible)
         {
             Debug.Log("Jugador muerto");
-            Destroy(gameObject);
+            GameManager.Instance.OnPlayerLose();
+            //Destroy(gameObject);
         }
         else
         {

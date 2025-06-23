@@ -1,4 +1,5 @@
 using System.Collections;
+using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -11,7 +12,7 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
 
     [Header("PANELS")]
     [SerializeField] private GameObject _splashPanel;
-    [SerializeField] private GameObject _levelsPanel;
+    [SerializeField] public GameObject _levelsPanel;
     [SerializeField] private GameObject _gameplayPanel;
     [SerializeField] private GameObject _creditsPanel;
     [SerializeField] private GameObject _pausePanel;
@@ -27,10 +28,28 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
     [SerializeField] Button _restartButton;
     [SerializeField] Button _quitButton;
 
+    [SerializeField] private TextMeshProUGUI _livesText;
+    [SerializeField] private GameObject _noLivesPanel;
+    [SerializeField] private TextMeshProUGUI _timerText;
+    private bool _noLivesActive = false;
 
     private void Start()
     {
         SetButtonsUp();
+        LifeManager.Instance.OnLivesChanged += OnLivesChanged;
+
+        ShowLevelSelector();
+
+        UpdateLivesUI(LifeManager.Instance.CurrentLives);
+    }
+
+    private void Update()
+    {
+        if (_noLivesPanel.activeSelf)
+        {
+            var time = LifeManager.Instance.GetTimeToNextLife();
+            _timerText.text = $"Próxima vida en: {time.Minutes:D2}:{time.Seconds:D2}";
+        }
     }
 
     private void SetButtonsUp()
@@ -69,6 +88,7 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
     public void ShowLevelSelector()
     {
         StartCoroutine(ShowLevelSelectorCo());
+        UpdateLivesUI(LifeManager.Instance.CurrentLives);
     }
 
     IEnumerator ShowLevelSelectorCo()
@@ -78,6 +98,9 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
         _splashPanel.SetActive(false);
         _levelsPanel.SetActive(true);
         _pausePanel.SetActive(false);
+        if (!LifeManager.Instance.CanPlay())
+            ShowNoLivesPanel();
+
         _transitionAnim.SetTrigger("End");
     }
 
@@ -109,15 +132,45 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
         ShowHidePanel(_splashPanel, isPanelActive);
         ShowHidePanel(_configPanel, isPanelActive);
     }
+
     public void ShowHideCreditsPanel()
     {
         bool isPanelActive = !_creditsPanel.activeInHierarchy;
         ShowHidePanel(_splashPanel, isPanelActive);
         ShowHidePanel(_creditsPanel, isPanelActive);
     }
+
     public void ShowHidePausePanel()
     {
         bool isPanelActive = !_pausePanel.activeInHierarchy;
         ShowHidePanel(_pausePanel, isPanelActive);
+    }
+
+    public void ShowNoLivesPanel()
+    {
+        _noLivesPanel.SetActive(true);
+        _noLivesActive = true;
+    }
+
+    public void HideNoLivesPanel()
+    {
+        _noLivesPanel.SetActive(false);
+    }
+
+    public void UpdateLivesUI(int lives)
+    {
+        if (_livesText != null)
+            _livesText.text = $"Vidas: {lives}";
+    }
+
+    private void OnLivesChanged(int lives)
+    {
+        UpdateLivesUI(lives);
+
+        if (_noLivesActive && lives > 0)
+        {
+            _noLivesActive = false;
+            HideNoLivesPanel();
+        }
     }
 }

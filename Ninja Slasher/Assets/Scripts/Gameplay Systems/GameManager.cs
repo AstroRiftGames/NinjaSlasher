@@ -1,14 +1,15 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-public class GameManager : MonoBehaviour
+public class GameManager : MonoBehaviourSingleton<GameManager>
 {
     public LevelController levelController;
 
     private LevelStats currentStats;
 
-    void Awake()
+    public override void Awake()
     {
+        base.Awake();
         EnemyTracker.OnAllEnemiesDefeated += OnLevelCompleted;
     }
 
@@ -16,12 +17,6 @@ public class GameManager : MonoBehaviour
     {
         if (levelController == null)
             levelController = FindObjectOfType<LevelController>();
-    }
-
-    private void Update()
-    {
-        if (Input.GetKeyDown(KeyCode.R))
-            RestartLevel();
     }
 
     public void OnLevelCompleted(LevelStats stats)
@@ -36,10 +31,28 @@ public class GameManager : MonoBehaviour
         Debug.Log($"Nivel completado. Estrellas obtenidas: {starsEarned}");
     }
 
+    public void OnPlayerLose()
+    {
+        LifeManager.Instance.UseLife();
+        UIManager.Instance.UpdateLivesUI(LifeManager.Instance.CurrentLives);
+
+        SceneManager.LoadScene("ScreenflowTest");
+        SceneManager.sceneLoaded += HandleScreenflowLoaded;
+    }
+
+    private void HandleScreenflowLoaded(Scene scene, LoadSceneMode mode)
+    {
+        if (scene.name != "ScreenflowTest") return;
+
+        UIManager.Instance.ShowLevelSelector();
+
+        SceneManager.sceneLoaded -= HandleScreenflowLoaded;
+    }
+
     public void RestartLevel()
     {
-        string currentScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
-        UnityEngine.SceneManagement.SceneManager.LoadScene(currentScene);
+        string currentScene = SceneManager.GetActiveScene().name;
+        SceneManager.LoadScene(currentScene);
     }
 
     void OnDestroy()
