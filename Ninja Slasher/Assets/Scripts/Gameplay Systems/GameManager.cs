@@ -35,9 +35,13 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
     {
         LifeManager.Instance.UseLife();
         UIManager.Instance.UpdateLivesUI(LifeManager.Instance.CurrentLives);
+        UIManager.Instance.ShowLifeLostPanel();
+    }
 
-        SceneManager.LoadScene("ScreenflowTest");
+    public void GoToLevelSelection()
+    {
         SceneManager.sceneLoaded += HandleScreenflowLoaded;
+        SceneManager.LoadScene("ScreenflowTest");
     }
 
     private void HandleScreenflowLoaded(Scene scene, LoadSceneMode mode)

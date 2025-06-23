@@ -35,6 +35,11 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
     [SerializeField] private TextMeshProUGUI _levelTimerText;
     [SerializeField] private TextMeshProUGUI _bonusTimeText;
 
+    [Header("LIFE LOST PANEL")]
+    [SerializeField] private GameObject _lifeLostPanel;
+    [SerializeField] private Button _retryButton;
+    [SerializeField] private Button _backToSelectionButton;
+
     private bool _noLivesActive = false;
     private LevelController _levelController;
     private ComboManager _comboManager;
@@ -50,6 +55,8 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
         _bonusTimeText.gameObject.SetActive(false);
 
         ShowLevelSelector();
+
+        _lifeLostPanel.SetActive(false);
     }
 
     private void OnEnable()
@@ -125,6 +132,8 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
         _resumeButton.onClick.AddListener(ShowHidePausePanel);
         _restartButton.onClick.AddListener(RestartLevel);
         _quitButton.onClick.AddListener(ShowLevelSelector);
+        _retryButton.onClick.AddListener(OnRetryPressed);
+        _backToSelectionButton.onClick.AddListener(OnBackToSelectionPressed);
     }
 
     public void LoadNextLevelScene()
@@ -264,10 +273,32 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
         _noLivesPanel.SetActive(false);
     }
 
+    public void ShowLifeLostPanel()
+    {
+        _lifeLostPanel.SetActive(true);
+    }
+
+    public void HideLifeLostPanel()
+    {
+        _lifeLostPanel.SetActive(false);
+    }
+
     public void UpdateLivesUI(int lives)
     {
         if (_livesText != null)
             _livesText.text = $"Vidas: {lives}";
+    }
+
+    private void OnRetryPressed()
+    {
+        HideLifeLostPanel();
+        GameManager.Instance.RestartLevel();
+    }
+
+    private void OnBackToSelectionPressed()
+    {
+        HideLifeLostPanel();
+        GameManager.Instance.GoToLevelSelection();
     }
 
     private void OnLivesChanged(int lives)
