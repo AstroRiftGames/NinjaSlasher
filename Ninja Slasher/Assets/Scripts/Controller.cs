@@ -330,19 +330,14 @@ public class Controller : MonoBehaviour
 
     public Vector2 GetLastDashDirection() => _lastDashDirection;
 
-
-#if UNITY_EDITOR
     private bool _isInvincible;
     public void SetInvincibility(bool value)
     {
         _isInvincible = value;
     }
-#endif
-
 
     private void OnDrawGizmos()
     {
-#if UNITY_EDITOR
         if (isSwiping && currentSwipe.magnitude >= minSwipeDistance)
         {
             Gizmos.color = Color.yellow;
@@ -354,6 +349,5 @@ public class Controller : MonoBehaviour
 
         Gizmos.color = Color.cyan;
         Gizmos.DrawWireSphere(transform.position, 2f);
-#endif
     }
 }

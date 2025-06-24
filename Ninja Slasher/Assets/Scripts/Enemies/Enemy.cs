@@ -58,7 +58,11 @@ public class Enemy : MonoBehaviour
     {
         Debug.Log($"{_data.Type} killed");
         tracker.OnEnemyKilled(this);
-        ComboManager.Instance.RegisterKill();
+
+        var combo = ComboManager.Instance;
+        if (combo != null)
+            combo.RegisterKill();
+
         Destroy(gameObject);
     }
 }

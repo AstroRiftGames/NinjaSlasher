@@ -54,8 +54,6 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
         _comboCountText.gameObject.SetActive(false);
         _bonusTimeText.gameObject.SetActive(false);
 
-        ShowLevelSelector();
-
         _lifeLostPanel.SetActive(false);
     }
 
