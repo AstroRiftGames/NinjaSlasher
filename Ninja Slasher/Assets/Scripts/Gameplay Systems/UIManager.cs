@@ -19,7 +19,6 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
     [SerializeField] private GameObject _configPanel;
 
     [Header("BUTTONS")]
-    [SerializeField] Button _playButton;
     [SerializeField] Button _levelButton;
     [SerializeField] Button _creditsButton;
     [SerializeField] Button _configButton;
@@ -46,7 +45,7 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
 
     private void Start()
     {
-        SetButtonsUp();
+        SetButtons();
         if (LifeManager.Instance != null)
             LifeManager.Instance.OnLivesChanged += OnLivesChanged;
 
@@ -99,7 +98,7 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
             _levelController.OnTimeExpired -= OnLevelTimeExpired;
         }
 
-        _levelController = FindObjectOfType<LevelController>();
+        _levelController = FindFirstObjectByType<LevelController>();
         if (_levelController != null)
         {
             _levelController.OnTimeChanged += OnLevelTimeChanged;
@@ -120,9 +119,8 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
         }
     }
 
-    private void SetButtonsUp()
+    private void SetButtons()
     {
-        _playButton.onClick.AddListener(ShowLevelSelector);
         _levelButton.onClick.AddListener(LoadNextLevelScene);
         _creditsButton.onClick.AddListener(ShowHideCreditsPanel);
         _configButton.onClick.AddListener(ShowHideConfigPanel);
@@ -243,14 +241,14 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
     public void ShowHideConfigPanel()
     {
         bool isPanelActive = !_configPanel.activeInHierarchy;
-        ShowHidePanel(_splashPanel, isPanelActive);
+        ShowHidePanel(_levelsPanel, isPanelActive);
         ShowHidePanel(_configPanel, isPanelActive);
     }
 
     public void ShowHideCreditsPanel()
     {
         bool isPanelActive = !_creditsPanel.activeInHierarchy;
-        ShowHidePanel(_splashPanel, isPanelActive);
+        ShowHidePanel(_levelsPanel, isPanelActive);
         ShowHidePanel(_creditsPanel, isPanelActive);
     }
 
