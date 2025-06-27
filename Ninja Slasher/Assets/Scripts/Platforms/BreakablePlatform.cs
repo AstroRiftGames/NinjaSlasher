@@ -21,7 +21,7 @@ public class BreakablePlatform : PlatformBase
             playerRb = view.RB;
         if (!isActive) return;
 
-        playerRb.linearVelocity = Vector2.zero;
+        playerRb.velocity = Vector2.zero;
 
         remainingUses--;
 
@@ -38,11 +38,27 @@ public class BreakablePlatform : PlatformBase
     private void Break()
     {
         isActive = false;
+
         if (playerRb != null)
-            playerRb.linearVelocityY = -falloffVelocity;
+        {
+            Debug.Log("[BREAK] Antes - Velocidad: " + playerRb.velocity + " Gravedad: " + playerRb.gravityScale);
+
+            playerRb.velocity = new Vector2(playerRb.velocity.x, -Mathf.Abs(falloffVelocity));
+
+            Debug.Log("[BREAK] Después - Velocidad: " + playerRb.velocity);
+
+            var controller = playerRb.GetComponent<Controller>();
+            if (controller != null)
+                controller.ForceExitSurface();
+        }
+
+        StartCoroutine(DestroyNextFrame());
+    }
+
+    private System.Collections.IEnumerator DestroyNextFrame()
+    {
+        yield return null;
         Destroy(gameObject);
     }
 
-    protected override void OnCollisionEnter2D(Collision2D collision) { }
-    protected override void OnCollisionExit2D(Collision2D collision) { }
 }

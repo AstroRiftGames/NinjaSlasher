@@ -10,6 +10,7 @@ public class Controller : MonoBehaviour
     private bool _isDashing = false;
     private float _lastDash;
     private Collider2D _currentSurface;
+    private bool _lastSurfaceWasElastic = false;
     private Vector2 _lastDashDirection;
 
     private Vector2 _wishedDirection;
@@ -90,6 +91,8 @@ public class Controller : MonoBehaviour
             Vector2 swipeDelta = endTouchPosition - swipeStart;
             if (swipeDelta.magnitude >= minSwipeDistance)
                 TryDashFromSwipe(swipeDelta);
+            else
+                Debug.Log("Swipe muy corto");
         }
 #else
         if (Input.touchCount > 0)
@@ -207,7 +210,10 @@ public class Controller : MonoBehaviour
     private void TryDashFromSwipe(Vector2 swipeDelta)
     {
         if (swipeDelta.magnitude < minSwipeDistance)
+        {
+            Debug.Log("Swipe muy corto");
             return;
+        }
 
         if (_currentSurface == null)
         {
@@ -219,7 +225,6 @@ public class Controller : MonoBehaviour
 
         if (Time.time < _lastDash + _playerModel.DashCD)
         {
-            Debug.Log("Dash en cooldown, espera un momento.");
             return;
         }
 
@@ -228,7 +233,7 @@ public class Controller : MonoBehaviour
 
         if (hit.collider != null)
         {
-            Debug.Log("Dash cancelado: obstáculo cercano en dirección.");
+            Debug.Log($"Dash cancelado: obstáculo en esa dirección: {hit.collider.name}");
             return;
         }
 
@@ -253,20 +258,52 @@ public class Controller : MonoBehaviour
 
     private void OnCollisionEnter2D(Collision2D collision)
     {
-        switch (collision.gameObject.tag)
+        if (collision.gameObject.CompareTag("Scenario") ||
+            collision.gameObject.CompareTag("Obstacle") ||
+            collision.gameObject.GetComponent<PlatformBase>() != null)
         {
-            case "Scenario" or "Obstacle":
-                if (_currentSurface != null && collision.collider == _currentSurface)
-                    return;
+            if (_currentSurface != null && collision.collider == _currentSurface)
+                return;
 
-                _currentSurface = collision.collider;
-                _isDashing = false;
+            _currentSurface = collision.collider;
+            _isDashing = false;
 
-                if (collision.gameObject.GetComponent<PlatformBase>() == null)
-                    _playerView.RB.linearVelocity = Vector2.zero;
+            ElasticPlatform elasticPlatform = collision.gameObject.GetComponent<ElasticPlatform>();
+            _lastSurfaceWasElastic = (elasticPlatform != null);
 
-                break;
+            if (!_lastSurfaceWasElastic)
+            {
+                _playerView.RB.velocity = Vector2.zero;
+            }
         }
+    }
+
+    private void FixedUpdate()
+    {
+        HandleFalling();
+    }
+
+    private void HandleFalling()
+    {
+        if (_currentSurface == null && !_isDashing)
+        {
+            var rb = _playerView.RB;
+            if (rb != null)
+            {
+                bool wasOnElasticPlatform = _lastSurfaceWasElastic;
+
+                if (!wasOnElasticPlatform && rb.velocity.y > -15f)
+                {
+                    float fallSpeed = 8f;
+                    rb.velocity = new Vector2(rb.velocity.x, -fallSpeed);
+                }
+            }
+        }
+    }
+
+    public bool HasCurrentSurface()
+    {
+        return _currentSurface != null;
     }
 
     private void OnCollisionExit2D(Collision2D collision)
@@ -274,7 +311,18 @@ public class Controller : MonoBehaviour
         if (collision.collider == _currentSurface)
         {
             _currentSurface = null;
+
+            if (_lastSurfaceWasElastic)
+            {
+                StartCoroutine(ResetElasticFlag());
+            }
         }
+    }
+
+    private System.Collections.IEnumerator ResetElasticFlag()
+    {
+        yield return new WaitForSeconds(0.5f);
+        _lastSurfaceWasElastic = false;
     }
 
     private void OnTriggerEnter2D(Collider2D collision)
@@ -325,6 +373,7 @@ public class Controller : MonoBehaviour
 
     public bool IsParrying() => isParrying;
     public bool IsDashing() => _isDashing;
+    public void ForceExitSurface() => _currentSurface = null;
 
     public Vector2 GetDashDirection() => _wishedDirection;
 

@@ -1,8 +1,9 @@
 using UnityEngine;
+using System.Collections;
 
 public class ElasticPlatform : PlatformBase
 {
-    [SerializeField] private float bounceForce;
+    [SerializeField] private float bounceForce = 15f;
 
     public override void OnPlayerEnter(GameObject player)
     {
@@ -18,27 +19,34 @@ public class ElasticPlatform : PlatformBase
         Vector2 dashDir = controller.GetDashDirection().normalized;
         if (dashDir == Vector2.zero) return;
 
-        Vector2 bounceDir;
+        StartCoroutine(ApplyBounceAfterCollision(rb, dashDir, controller));
+    }
 
-        if (Mathf.Abs(dashDir.x) > Mathf.Abs(dashDir.y))
+    private IEnumerator ApplyBounceAfterCollision(Rigidbody2D rb, Vector2 dashDir, Controller controller)
+    {
+        yield return new WaitForFixedUpdate();
+
+        Vector2 surfaceNormal = Vector2.up;
+
+        Vector2 bounceDir = dashDir - 2 * Vector2.Dot(dashDir, surfaceNormal) * surfaceNormal;
+
+        if (bounceDir.y < 0)
         {
-            bounceDir = new Vector2(dashDir.x, -Mathf.Sign(dashDir.x));
-        }
-        else
-        {
-            bounceDir = new Vector2(-Mathf.Sign(dashDir.y), dashDir.y);
+            bounceDir.y = -bounceDir.y;
         }
 
         bounceDir.Normalize();
 
-        rb.linearVelocity = Vector2.zero;
+        rb.velocity = Vector2.zero;
         rb.AddForce(bounceDir * bounceForce, ForceMode2D.Impulse);
 
+        controller.ForceExitSurface();
+
         Debug.Log($"ElasticPlatform: Entrada {dashDir}, Rebote {bounceDir}");
-        Debug.DrawRay(rb.position, bounceDir * 2f, Color.magenta, 1f);
+        Debug.DrawRay(rb.position, dashDir * 2f, Color.red, 2f);
+        Debug.DrawRay(rb.position, bounceDir * 2f, Color.green, 2f);
     }
 
     public override void OnPlayerExit(GameObject player) { }
-
     public override void OnPlatformUpdate() { }
 }
