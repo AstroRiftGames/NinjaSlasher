@@ -3,12 +3,12 @@ using System.Collections;
 
 public class TurretTrap : MonoBehaviour
 {
-    [SerializeField] private float appearTime = 0.5f;
-    [SerializeField] private float laserDuration = 1f;
-    [SerializeField] private float hideTime = 0.5f;
-    [SerializeField] private float timeToShoot = 0.5f;
+    [SerializeField] private float appearTime;
+    [SerializeField] private float laserDuration;
+    [SerializeField] private float hideTime;
+    [SerializeField] private float timeToShoot;
     [SerializeField] private Transform firePoint;
-    [SerializeField] private float laserLength = 20f;
+    [SerializeField] private float laserLength;
     [SerializeField] private LineRenderer lineRenderer;
     [SerializeField] private LayerMask playerLayer;
 
@@ -34,23 +34,24 @@ public class TurretTrap : MonoBehaviour
 
         if (player != null)
         {
+            Vector3 originalFirePosition = firePoint.position;
             Vector2 dir = (player.position - firePoint.position).normalized;
 
             yield return new WaitForSeconds(timeToShoot);
 
-            firePoint.right = dir;
-
             if (lineRenderer != null)
             {
                 lineRenderer.enabled = true;
-                lineRenderer.SetPosition(0, firePoint.position);
 
-                RaycastHit2D hit = Physics2D.Raycast(firePoint.position, dir, laserLength, playerLayer);
-                Vector3 endPoint = firePoint.position + (Vector3)dir * laserLength;
+                Vector3 endPoint = originalFirePosition + (Vector3)dir * laserLength;
+
+                lineRenderer.SetPosition(0, originalFirePosition);
+                lineRenderer.SetPosition(1, endPoint);
+
+                RaycastHit2D hit = Physics2D.Raycast(originalFirePosition, dir, laserLength, playerLayer);
 
                 if (hit.collider != null)
                 {
-                    endPoint = hit.point;
                     if (hit.collider.CompareTag("Player"))
                     {
                         Controller playerController = hit.collider.GetComponent<Controller>();
@@ -60,8 +61,6 @@ public class TurretTrap : MonoBehaviour
                         }
                     }
                 }
-
-                lineRenderer.SetPosition(1, endPoint);
             }
         }
 
@@ -71,7 +70,6 @@ public class TurretTrap : MonoBehaviour
             lineRenderer.enabled = false;
 
         yield return new WaitForSeconds(hideTime);
-
         gameObject.SetActive(false);
     }
 }
