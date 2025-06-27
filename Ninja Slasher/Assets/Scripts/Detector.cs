@@ -2,16 +2,17 @@ using UnityEngine;
 
 public class Detector : MonoBehaviour
 {
-    [SerializeField] private float delayBeforeActivation = 0.5f;
+    [SerializeField] private float delayBeforeActivation;
     [SerializeField] private TurretTrap[] turrets;
+    [SerializeField] private float cooldownTime;
 
-    private bool activated = false;
+    private bool isOnCooldown = false;
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
-        if (!activated && collision.CompareTag("Player"))
+        if (!isOnCooldown && collision.CompareTag("Player"))
         {
-            activated = true;
+            isOnCooldown = true;
             StartCoroutine(ActivateTrapRoutine());
         }
     }
@@ -19,9 +20,16 @@ public class Detector : MonoBehaviour
     private System.Collections.IEnumerator ActivateTrapRoutine()
     {
         yield return new WaitForSeconds(delayBeforeActivation);
+
         foreach (var turret in turrets)
         {
-            turret.Activate();
+            if (turret != null)
+            {
+                turret.Activate();
+            }
         }
+
+        yield return new WaitForSeconds(cooldownTime);
+        isOnCooldown = false;
     }
 }
