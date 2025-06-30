@@ -30,11 +30,11 @@ public class FlyingEnemy : Enemy
             _rb.linearVelocity = Vector2.zero;
         }
     }
-    
+
     private bool CheckDistance()
     {
         float distance = Vector2.Distance(transform.position, _target);
-        return distance >= .25f;
+        return distance >= .1f;
     }
 
     private bool CheckLOS(Vector2 target)

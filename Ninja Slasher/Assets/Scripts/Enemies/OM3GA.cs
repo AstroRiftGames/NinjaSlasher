@@ -5,7 +5,6 @@ using UnityEngine;
 public class OM3GA : RangeEnemy
 {
     [Header("Laser")]
-    [SerializeField] float _rayDuration;
     [SerializeField] float _laserDuration;
     [SerializeField] float _timeToShoot;
     [SerializeField] float _laserLength;

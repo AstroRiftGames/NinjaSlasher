@@ -23,7 +23,7 @@ public class GuardBot : Enemy
     }
     public virtual void Update()
     {
-        if (!CheckTarget(_target)) 
+        if (!CheckDistanceToTarget(_target)) 
         {
             Move();
         }
@@ -34,7 +34,7 @@ public class GuardBot : Enemy
             {
                 StartCoroutine(Push());
             }
-            else if (_target == Vector2.zero || CheckTarget(_target))
+            else if (_target == Vector2.zero || CheckDistanceToTarget(_target))
             {
                 SetPatrolTarget();
                 Debug.Log($"Set Patrol {_target}");
@@ -53,7 +53,7 @@ public class GuardBot : Enemy
         }
     }
 
-    private bool CheckTarget(Vector2 target)
+    private bool CheckDistanceToTarget(Vector2 target)
     {
         return Vector2.Distance(target, transform.localToWorldMatrix.GetPosition()) <= .5f;
     }
