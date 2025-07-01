@@ -24,7 +24,7 @@ public class ConveyorPlatform : PlatformBase
         {
             if (playerRb != null)
             {
-                playerRb.velocity = new Vector2(playerRb.velocity.x, -falloffVelocity);
+                playerRb.linearVelocity = new Vector2(playerRb.linearVelocity.x, -falloffVelocity);
             }
 
             playerRb = null;
@@ -37,9 +37,9 @@ public class ConveyorPlatform : PlatformBase
         if (!isActive || playerRb == null) return;
 
         float direction = pushRight ? 1f : -1f;
-        Vector2 velocity = playerRb.velocity;
+        Vector2 velocity = playerRb.linearVelocity;
         velocity.x = direction * pushSpeed;
-        playerRb.velocity = velocity;
+        playerRb.linearVelocity = velocity;
     }
 
     public void ToggleDirection()

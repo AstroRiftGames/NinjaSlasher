@@ -1,4 +1,3 @@
-using System;
 using UnityEngine;
 
 public class Controller : MonoBehaviour
@@ -201,8 +200,14 @@ public class Controller : MonoBehaviour
     private void StartParry(Collider2D[] hits)
     {
         isParrying = true;
-        parryTimer = _playerModel.ParryWindow;
-        Debug.Log("Parry activado");
+        float parryWindow = _playerModel.ParryWindow;
+
+        var context = PowerUpManager.Instance?.context;
+        if (context != null && context.ParryPerfectActive)
+            parryWindow += context.ParryBonusWindow;
+
+        parryTimer = parryWindow;
+        Debug.Log("Parry activado (ventana: " + parryWindow + ")");
 
         foreach (var hit in hits)
         {
@@ -230,7 +235,13 @@ public class Controller : MonoBehaviour
 
         Vector2 dashDir = -swipeDelta.normalized;
 
-        if (Time.time < _lastDash + _playerModel.DashCD)
+        float dashCD = _playerModel.DashCD;
+
+        var context = PowerUpManager.Instance?.context;
+        if (context != null && context.DashTurboActive)
+            dashCD *= context.DashCooldownMultiplier;
+
+        if (Time.time < _lastDash + dashCD)
         {
             return;
         }
@@ -240,7 +251,7 @@ public class Controller : MonoBehaviour
 
         if (hit.collider != null)
         {
-            Debug.Log($"Dash cancelado: obstáculo en esa dirección: {hit.collider.name}");
+            Debug.Log($"Dash cancelado: obstï¿½culo en esa direcciï¿½n: {hit.collider.name}");
             return;
         }
 
@@ -280,7 +291,7 @@ public class Controller : MonoBehaviour
 
             if (!_lastSurfaceWasElastic)
             {
-                _playerView.RB.velocity = Vector2.zero;
+                _playerView.RB.linearVelocity = Vector2.zero;
             }
         }
     }
@@ -299,10 +310,10 @@ public class Controller : MonoBehaviour
             {
                 bool wasOnElasticPlatform = _lastSurfaceWasElastic;
 
-                if (!wasOnElasticPlatform && rb.velocity.y > -15f)
+                if (!wasOnElasticPlatform && rb.linearVelocity.y > -15f)
                 {
                     float fallSpeed = 8f;
-                    rb.velocity = new Vector2(rb.velocity.x, -fallSpeed);
+                    rb.linearVelocity = new Vector2(rb.linearVelocity.x, -fallSpeed);
                 }
             }
         }

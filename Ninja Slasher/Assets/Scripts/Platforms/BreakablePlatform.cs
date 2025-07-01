@@ -21,7 +21,7 @@ public class BreakablePlatform : PlatformBase
             playerRb = view.RB;
         if (!isActive) return;
 
-        playerRb.velocity = Vector2.zero;
+        playerRb.linearVelocity = Vector2.zero;
 
         remainingUses--;
 
@@ -41,11 +41,11 @@ public class BreakablePlatform : PlatformBase
 
         if (playerRb != null)
         {
-            Debug.Log("[BREAK] Antes - Velocidad: " + playerRb.velocity + " Gravedad: " + playerRb.gravityScale);
+            Debug.Log("[BREAK] Antes - Velocidad: " + playerRb.linearVelocity + " Gravedad: " + playerRb.gravityScale);
 
-            playerRb.velocity = new Vector2(playerRb.velocity.x, -Mathf.Abs(falloffVelocity));
+            playerRb.linearVelocity = new Vector2(playerRb.linearVelocity.x, -Mathf.Abs(falloffVelocity));
 
-            Debug.Log("[BREAK] Después - Velocidad: " + playerRb.velocity);
+            Debug.Log("[BREAK] Despuï¿½s - Velocidad: " + playerRb.linearVelocity);
 
             var controller = playerRb.GetComponent<Controller>();
             if (controller != null)

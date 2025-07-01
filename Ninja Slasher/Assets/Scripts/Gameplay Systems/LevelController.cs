@@ -50,6 +50,15 @@ public class LevelController : MonoBehaviour
     {
         elapsedTime = 0f;
         timeRemaining = levelDuration;
+
+        var powerUpContext = PowerUpManager.Instance?.context;
+        if (powerUpContext != null && powerUpContext.ExtraTimeActive)
+        {
+            float extra = levelDuration * powerUpContext.ExtraTimePercent;
+            timeRemaining += extra;
+            Debug.Log($"[PowerUp] ExtraTime aplicado: +{extra:F2} segundos ({powerUpContext.ExtraTimePercent * 100}% del tiempo base).");
+        }
+
         isTrackingTime = true;
         OnTimeChanged?.Invoke(timeRemaining);
     }
@@ -104,5 +113,10 @@ public class LevelController : MonoBehaviour
             stars++;
 
         return Mathf.Min(stars, 3);
+    }
+
+    public float GetBaseLevelDuration()
+    {
+        return levelDuration;
     }
 }

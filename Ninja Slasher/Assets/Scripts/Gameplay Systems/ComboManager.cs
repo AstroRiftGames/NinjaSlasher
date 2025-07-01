@@ -52,11 +52,21 @@ public class ComboManager : MonoBehaviourSingleton<ComboManager>
     {
         float bonus = level switch
         {
-            2 => 10f,
+            2 => 1f,
             3 => 1.5f,
             4 => 2f,
             _ => 3f
         };
+
+        var context = PowerUpManager.Instance?.context;
+        if (context != null && context.ComboMasterActive)
+        {
+            float percent = context.ComboBonusPercent;
+            float bonusExtra = bonus * percent;
+            bonus += bonusExtra;
+            Debug.Log($"[PowerUp] ComboMaster: +{bonusExtra:F2}s extra en combo ({percent * 100}% adicional).");
+        }
+
         if (levelController != null)
         {
             levelController.AddTime(bonus);

@@ -47,6 +47,7 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
 
     [Header("DEBUG")]
     [SerializeField] private TextMeshProUGUI debugStarsText;
+    [SerializeField] private TextMeshProUGUI _powerUpsText;
 #if UNITY_EDITOR
     [SerializeField] private Button deleteSaveButton;
 #endif
@@ -103,6 +104,8 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
             var time = LifeManager.Instance.GetTimeToNextLife();
             _noLivesTimerText.text = $"Next life in: {time.Minutes:D2}:{time.Seconds:D2}";
         }
+
+        UpdatePowerUpsUI();
     }
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
@@ -369,6 +372,28 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
         SceneManager.LoadScene("TestScene");
         _transitionAnim.SetTrigger("End");
         _gameplayPanel.SetActive(true);
+    }
+
+    public void UpdatePowerUpsUI()
+    {
+        var context = PowerUpManager.Instance?.context;
+        if (_powerUpsText == null || context == null)
+            return;
+
+        string status = "";
+
+        if (context.ExtraTimeActive)
+            status += "Power up activo: Tiempo Extra\n";
+        if (context.DashTurboActive)
+            status += "Power up activo: Dash Turbo\n";
+        if (context.ParryPerfectActive)
+            status += "Power up activo: Parry Perfect\n";
+        if (context.ComboMasterActive)
+            status += "Power up activo: Combo Master\n";
+        if (context.SecondChanceActive)
+            status += "Power up activo: Second Chance\n";
+
+        _powerUpsText.text = status.Length > 0 ? status : "Sin Power Ups activos";
     }
 
 #if UNITY_EDITOR

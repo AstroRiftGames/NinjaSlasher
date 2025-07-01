@@ -54,7 +54,7 @@ public class ElasticPlatform : PlatformBase
 
         bounceDir.Normalize();
 
-        rb.velocity = Vector2.zero;
+        rb.linearVelocity = Vector2.zero;
         rb.AddForce(bounceDir * bounceForce, ForceMode2D.Impulse);
 
         controller.ForceExitSurface();

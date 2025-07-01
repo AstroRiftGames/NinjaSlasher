@@ -24,7 +24,7 @@ public class SlipperyPlatform : PlatformBase
         Vector2 lastDir = playerController.GetLastDashDirection();
         slideDirection = new Vector2(Mathf.Sign(lastDir.x), 0f);
 
-        playerRb.velocity = Vector2.zero;
+        playerRb.linearVelocity = Vector2.zero;
         isSliding = true;
     }
 
@@ -33,7 +33,7 @@ public class SlipperyPlatform : PlatformBase
         isSliding = false;
         if (playerRb != null)
         {
-            playerRb.velocityY = -falloffVelocity;
+            playerRb.linearVelocityY = -falloffVelocity;
         }
         playerRb = null;
         playerController = null;
@@ -49,6 +49,6 @@ public class SlipperyPlatform : PlatformBase
             return;
         }
 
-        playerRb.velocity = slideDirection * slideSpeed;
+        playerRb.linearVelocity = slideDirection * slideSpeed;
     }
 }

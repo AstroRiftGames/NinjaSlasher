@@ -12,6 +12,7 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
     private DateTime _lastLifeUsed;
 
     public event Action<int> OnLivesChanged;
+    private bool _secondChanceUsed = false;
 
     private void Start()
     {
@@ -92,12 +93,20 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
 
     public void UseLife()
     {
+        var context = PowerUpManager.Instance?.context;
+        if (context != null && context.SecondChanceActive)
+        {
+            Debug.Log("[PowerUp] Second Chance: vida NO restada.");
+            return;
+        }
+
         if (CurrentLives <= 0) return;
         CurrentLives--;
         _lastLifeUsed = DateTime.Now;
         SaveManager.Instance.UpdateLives(CurrentLives, _lastLifeUsed, CurrentLives < _maxLives);
         OnLivesChanged?.Invoke(CurrentLives);
     }
+
 
     public void AddLife()
     {
