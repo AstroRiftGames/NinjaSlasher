@@ -33,10 +33,17 @@ public class Controller : MonoBehaviour
     [SerializeField] private float checkDistance;
     [SerializeField] private LayerMask obstacleLayer;
 
+    private bool _isDead = false;
+
     private void Start()
     {
         if (swipeIndicator != null)
             swipeIndicator.enabled = false;
+    }
+
+    void OnEnable()
+    {
+        _isDead = false;
     }
 
     private void Update()
@@ -361,9 +368,10 @@ public class Controller : MonoBehaviour
     {
         if (!_isInvincible)
         {
+            if (_isDead) return;
+            _isDead = true;
             Debug.Log("Jugador muerto");
             GameManager.Instance.OnPlayerLose();
-            //Destroy(gameObject);
         }
         else
         {

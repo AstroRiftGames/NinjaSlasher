@@ -4,8 +4,8 @@ using UnityEngine;
 public class LifeManager : MonoBehaviourSingleton<LifeManager>
 {
     [Header("Ajustes de vidas")]
-    [SerializeField] private int _maxLives = 5;
-    [SerializeField] private int _startingLives = 5;
+    [SerializeField] private int _maxLives;
+    [SerializeField] private int _startingLives;
     [SerializeField] private int _lifeRechargeSeconds = 1800; // 30 min por vida
 
     public int CurrentLives { get; private set; }

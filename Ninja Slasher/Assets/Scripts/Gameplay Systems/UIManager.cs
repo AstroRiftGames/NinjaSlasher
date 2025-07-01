@@ -19,14 +19,16 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
     [SerializeField] private GameObject _configPanel;
 
     [Header("BUTTONS")]
-    [SerializeField] Button _levelButton;
+    [SerializeField] private Button[] levelButtons;
     [SerializeField] Button _creditsButton;
     [SerializeField] Button _configButton;
     [SerializeField] Button _pauseButton;
     [SerializeField] Button _resumeButton;
     [SerializeField] Button _restartButton;
     [SerializeField] Button _quitButton;
+    [SerializeField] private Button _testLevelButton;
 
+    [SerializeField] private string[] sceneNames;
     [SerializeField] private TextMeshProUGUI _livesText;
     [SerializeField] private GameObject _noLivesPanel;
     [SerializeField] private TextMeshProUGUI _noLivesTimerText;
@@ -43,6 +45,12 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
     private LevelController _levelController;
     private ComboManager _comboManager;
 
+    [Header("DEBUG")]
+    [SerializeField] private TextMeshProUGUI debugStarsText;
+#if UNITY_EDITOR
+    [SerializeField] private Button deleteSaveButton;
+#endif
+
     private void Start()
     {
         SetButtons();
@@ -54,6 +62,13 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
         _bonusTimeText.gameObject.SetActive(false);
 
         _lifeLostPanel.SetActive(false);
+
+        for (int i = 0; i < levelButtons.Length; i++)
+        {
+            int idx = i + 1;
+            levelButtons[i].onClick.RemoveAllListeners();
+            levelButtons[i].onClick.AddListener(() => LoadLevelScene($"Level{idx}"));
+        }
     }
 
     private void OnEnable()
@@ -121,7 +136,6 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
 
     private void SetButtons()
     {
-        _levelButton.onClick.AddListener(LoadNextLevelScene);
         _creditsButton.onClick.AddListener(ShowHideCreditsPanel);
         _configButton.onClick.AddListener(ShowHideConfigPanel);
         _pauseButton.onClick.AddListener(ShowHidePausePanel);
@@ -130,26 +144,38 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
         _quitButton.onClick.AddListener(ShowLevelSelector);
         _retryButton.onClick.AddListener(OnRetryPressed);
         _backToSelectionButton.onClick.AddListener(OnBackToSelectionPressed);
+        _testLevelButton.onClick.AddListener(LoadDebugTestScene);
+
+#if UNITY_EDITOR
+        if (deleteSaveButton != null)
+            deleteSaveButton.onClick.AddListener(DeleteSaveDataFromUI);
+#endif
     }
 
-    public void LoadNextLevelScene()
+    public void LoadLevelScene(string sceneName)
     {
-        StartCoroutine(LoadNextLevelSceneCo(SceneManager.GetActiveScene().buildIndex + 1));
+        StartCoroutine(LoadLevelSceneCo(sceneName));
     }
 
-    IEnumerator LoadNextLevelSceneCo(int levelIndex)
+    private IEnumerator LoadLevelSceneCo(string sceneName)
     {
         _transitionAnim.SetTrigger("Start");
         yield return new WaitForSeconds(_transitionTime);
         _levelsPanel.SetActive(false);
-        SceneManager.LoadScene(levelIndex);
+        SceneManager.LoadScene(sceneName);
         _transitionAnim.SetTrigger("End");
         _gameplayPanel.SetActive(true);
     }
 
     public void RestartLevel()
     {
-        StartCoroutine(LoadNextLevelSceneCo(SceneManager.GetActiveScene().buildIndex));
+        if (!LifeManager.Instance.CanPlay())
+        {
+            ShowNoLivesPanel();
+            return;
+        }
+        string sceneName = SceneManager.GetActiveScene().name;
+        LoadLevelScene(sceneName);
         ShowHidePausePanel();
     }
 
@@ -157,6 +183,7 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
     {
         StartCoroutine(ShowLevelSelectorCo());
         UpdateLivesUI(LifeManager.Instance.CurrentLives);
+        ShowStarsDebug();
     }
 
     IEnumerator ShowLevelSelectorCo()
@@ -288,6 +315,13 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
     private void OnRetryPressed()
     {
         HideLifeLostPanel();
+
+        if (!LifeManager.Instance.CanPlay())
+        {
+            ShowNoLivesPanel();
+            return;
+        }
+
         GameManager.Instance.RestartLevel();
     }
 
@@ -307,4 +341,42 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
             HideNoLivesPanel();
         }
     }
+
+    public void ShowStarsDebug()
+    {
+        var data = SaveManager.Instance.GetGameData();
+        System.Text.StringBuilder sb = new System.Text.StringBuilder();
+        sb.AppendLine($"Total estrellas: {data.totalStars}");
+
+        foreach (var kvp in data.levelStars)
+        {
+            sb.AppendLine($"Nivel {kvp.Key}: {kvp.Value} estrellas");
+        }
+
+        debugStarsText.text = sb.ToString();
+    }
+
+    public void LoadDebugTestScene()
+    {
+        StartCoroutine(LoadDebugTestLevel());
+    }
+
+    public IEnumerator LoadDebugTestLevel()
+    {
+        _transitionAnim.SetTrigger("Start");
+        yield return new WaitForSeconds(_transitionTime);
+        _levelsPanel.SetActive(false);
+        SceneManager.LoadScene("TestScene");
+        _transitionAnim.SetTrigger("End");
+        _gameplayPanel.SetActive(true);
+    }
+
+#if UNITY_EDITOR
+    public void DeleteSaveDataFromUI()
+    {
+        SaveManager.Instance.DeleteSaveData();
+        ShowStarsDebug();
+        Debug.Log("[UIManager] Progreso borrado.");
+    }
+#endif
 }

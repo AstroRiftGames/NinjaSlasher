@@ -15,9 +15,6 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
 
     void Start()
     {
-        if (levelController == null)
-            levelController = FindObjectOfType<LevelController>();
-
         if (LifeManager.Instance != null)
         {
             LifeManager.Instance.OnLivesChanged += OnLivesChanged;
@@ -26,6 +23,9 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
 
     public void OnLevelCompleted(LevelStats stats)
     {
+        if (levelController == null)
+            levelController = FindObjectOfType<LevelController>();
+
         currentStats = stats;
         stats.timeTaken = levelController.TimeTaken;
         stats.movesUsed = MoveTracker.TotalMoves;
@@ -38,21 +38,16 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
 
         int currentLevelId = GetCurrentLevelId();
         SaveManager.Instance.UpdateStars(currentLevelId, starsEarned);
-    }
 
+        GoToLevelSelection();
+    }
 
     public void OnPlayerLose()
     {
-        LifeManager.Instance.UseLife();
+        if (LifeManager.Instance.CurrentLives > 0)
+            LifeManager.Instance.UseLife();
 
-        if (!LifeManager.Instance.CanPlay())
-        {
-            UIManager.Instance.ShowNoLivesPanel();
-        }
-        else
-        {
-            UIManager.Instance.ShowLifeLostPanel();
-        }
+        UIManager.Instance.ShowLifeLostPanel();
     }
 
     private void OnLivesChanged(int newLives)
