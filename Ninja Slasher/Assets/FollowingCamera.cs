@@ -1,7 +1,7 @@
 using Unity.VisualScripting;
 using UnityEngine;
 
-public class CameraScript : MonoBehaviour
+public class FollowingCamera : MonoBehaviour
 {
     private Transform _player;
     private Vector3 _targetPosition;
