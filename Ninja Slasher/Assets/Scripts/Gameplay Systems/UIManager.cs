@@ -8,15 +8,15 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
 {
     [Header("TRANSITION ANIM")]
     [SerializeField] private Animator _transitionAnim;
-    [SerializeField] private float _transitionTime;
+    [SerializeField] private float _transitionTime;    
 
     [Header("PANELS")]
-    [SerializeField] private GameObject _splashPanel;
-    [SerializeField] public GameObject _levelsPanel;
-    [SerializeField] private GameObject _gameplayPanel;
-    [SerializeField] private GameObject _creditsPanel;
-    [SerializeField] private GameObject _pausePanel;
-    [SerializeField] private GameObject _configPanel;
+    [SerializeField] private Canvas _splashCanvas;
+    [SerializeField] public Canvas _levelsCanvas;
+    [SerializeField] private Canvas _gameplayCanvas;
+    [SerializeField] private Canvas _creditsCanvas;
+    [SerializeField] private Canvas _pauseCanvas;
+    [SerializeField] private Canvas _configCanvas;
 
     [Header("BUTTONS")]
     [SerializeField] private Button[] levelButtons;
@@ -164,10 +164,10 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
     {
         _transitionAnim.SetTrigger("Start");
         yield return new WaitForSeconds(_transitionTime);
-        _levelsPanel.SetActive(false);
+        _levelsCanvas.enabled = false;
         SceneManager.LoadScene(sceneName);
         _transitionAnim.SetTrigger("End");
-        _gameplayPanel.SetActive(true);
+        _gameplayCanvas.enabled = true;
     }
 
     public void RestartLevel()
@@ -191,11 +191,11 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
 
     IEnumerator ShowLevelSelectorCo()
     {
-        _transitionAnim.SetTrigger("Start");
+        _transitionAnim.SetTrigger("OpeningStart");
         yield return new WaitForSeconds(_transitionTime);
-        _splashPanel.SetActive(false);
-        _levelsPanel.SetActive(true);
-        _pausePanel.SetActive(false);
+        _splashCanvas.enabled = false;
+        _levelsCanvas.enabled = true;
+        _pauseCanvas.enabled = false;
         if (!LifeManager.Instance.CanPlay())
             ShowNoLivesPanel();
 
@@ -246,46 +246,46 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
             _levelTimerText.text = "00:00";
     }
 
-    public void OpenPanel(GameObject panel)
+    public void OpenPanel(Canvas canvas)
     {
-        panel.SetActive(true);
+        canvas.enabled = true;
     }
 
-    public void ClosePanel(GameObject panel)
+    public void ClosePanel(Canvas canvas)
     {
-        panel.SetActive(false);
+        canvas.enabled = false;
     }
 
-    public void ShowHidePanel(GameObject panel, bool state)
+    public void ShowHidePanel(Canvas canvas, bool state)
     {
         if (state)
         {
-            OpenPanel(panel);
+            OpenPanel(canvas);
         }
         else
         {
-            ClosePanel(panel);
+            ClosePanel(canvas);
         }
     }
 
     public void ShowHideConfigPanel()
     {
-        bool isPanelActive = !_configPanel.activeInHierarchy;
-        ShowHidePanel(_levelsPanel, isPanelActive);
-        ShowHidePanel(_configPanel, isPanelActive);
+        bool isPanelActive = !_configCanvas.enabled;
+        ShowHidePanel(_levelsCanvas, isPanelActive);
+        ShowHidePanel(_configCanvas, isPanelActive);
     }
 
     public void ShowHideCreditsPanel()
     {
-        bool isPanelActive = !_creditsPanel.activeInHierarchy;
-        ShowHidePanel(_levelsPanel, isPanelActive);
-        ShowHidePanel(_creditsPanel, isPanelActive);
+        bool isPanelActive = !_creditsCanvas.enabled;
+        ShowHidePanel(_levelsCanvas, isPanelActive);
+        ShowHidePanel(_creditsCanvas, isPanelActive);
     }
 
     public void ShowHidePausePanel()
     {
-        bool isPanelActive = !_pausePanel.activeInHierarchy;
-        ShowHidePanel(_pausePanel, isPanelActive);
+        bool isPanelActive = !_pauseCanvas.enabled;
+        ShowHidePanel(_pauseCanvas, isPanelActive);
     }
 
     public void ShowNoLivesPanel()
@@ -312,7 +312,7 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
     public void UpdateLivesUI(int lives)
     {
         if (_livesText != null)
-            _livesText.text = $"Vidas: {lives}";
+            _livesText.text = $"{lives}";
     }
 
     private void OnRetryPressed()
@@ -368,10 +368,10 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
     {
         _transitionAnim.SetTrigger("Start");
         yield return new WaitForSeconds(_transitionTime);
-        _levelsPanel.SetActive(false);
+        _levelsCanvas.enabled = false;
         SceneManager.LoadScene("TestScene");
         _transitionAnim.SetTrigger("End");
-        _gameplayPanel.SetActive(true);
+        _gameplayCanvas.enabled = true;
     }
 
     public void UpdatePowerUpsUI()

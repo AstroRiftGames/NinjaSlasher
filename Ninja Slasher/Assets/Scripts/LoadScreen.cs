@@ -2,14 +2,18 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
+using TMPro;
 
 public class LoadManager : MonoBehaviour
 {
     [SerializeField] private Slider _loadbar;
+    [SerializeField] private TextMeshProUGUI _text;
+    [SerializeField] private Animator _anim;
 
     private void Start()
     {
         SceneLoad(SceneManager.GetActiveScene().buildIndex);
+        _text.text = "LOADING...";
     }
     public void SceneLoad(int sceneIndex)
     {
@@ -18,18 +22,37 @@ public class LoadManager : MonoBehaviour
 
     IEnumerator LoadAsync(int sceneIndex)
     {
-        yield return new WaitForSeconds(2f);
+        yield return new WaitForSeconds(5f);
         AsyncOperation asyncOperation = SceneManager.LoadSceneAsync(sceneIndex);
         asyncOperation.allowSceneActivation = false;
 
         while (!asyncOperation.isDone)
         {
-            _loadbar.value = asyncOperation.progress/0.9f;
-            if (asyncOperation.progress >= 0.89)
+            _loadbar.value += Mathf.Lerp(0f, 1f, 0.2f) * Time.deltaTime;
+            if (_loadbar.value >= 1)
             {
-                UIManager.Instance.ShowLevelSelector();
-                yield return new WaitForSeconds(2);
-                asyncOperation.allowSceneActivation = true;
+                _text.text = "TAP TO CONTINUE";
+                _anim.SetTrigger("Tap");
+                if (Input.touchCount > 0)
+                {
+                    Touch touch = Input.GetTouch(0);
+
+                    if (touch.phase == TouchPhase.Began)
+                    {
+                        UIManager.Instance.ShowLevelSelector();
+                        yield return new WaitForSeconds(2);
+                        asyncOperation.allowSceneActivation = true;
+                    }
+                }
+
+#if UNITY_EDITOR
+                if (Input.anyKeyDown)
+                {
+                    UIManager.Instance.ShowLevelSelector();
+                    yield return new WaitForSeconds(2);
+                    asyncOperation.allowSceneActivation = true;
+                }
+#endif
             }
 
             yield return null;
