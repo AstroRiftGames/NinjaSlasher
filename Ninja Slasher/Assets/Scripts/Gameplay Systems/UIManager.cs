@@ -6,9 +6,9 @@ using UnityEngine.UI;
 
 public class UIManager : MonoBehaviourSingleton<UIManager>
 {
-    [Header("TRANSITION ANIM")]
+    [Header("SCREEN TRANSITION")]
     [SerializeField] private Animator _transitionAnim;
-    [SerializeField] private float _transitionTime;    
+    [SerializeField] private float _transitionTime;
 
     [Header("PANELS")]
     [SerializeField] private Canvas _splashCanvas;
@@ -18,15 +18,21 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
     [SerializeField] private Canvas _pauseCanvas;
     [SerializeField] private Canvas _configCanvas;
 
-    [Header("BUTTONS")]
+    [Header("LEVEL SELECTOR BUTTONS")]
     [SerializeField] private Button[] levelButtons;
-    [SerializeField] Button _creditsButton;
-    [SerializeField] Button _configButton;
-    [SerializeField] Button _pauseButton;
-    [SerializeField] Button _resumeButton;
-    [SerializeField] Button _restartButton;
-    [SerializeField] Button _quitButton;
     [SerializeField] private Button _testLevelButton;
+    [SerializeField] private Button _configButton;
+    [SerializeField] private Button _musicButton;
+    [SerializeField] private Button _sfxButton;
+    [SerializeField] private Button _creditsButton;
+    [SerializeField] private Animator _configPanelAnim;
+    [SerializeField] bool _isOpen = false;
+
+    [Header("GAMEPLAY BUTTONS")]
+    [SerializeField] private Button _pauseButton;
+    [SerializeField] private Button _resumeButton;
+    [SerializeField] private Button _restartButton;
+    [SerializeField] private Button _quitButton;
 
     [SerializeField] private string[] sceneNames;
     [SerializeField] private TextMeshProUGUI _livesText;
@@ -52,9 +58,11 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
     [SerializeField] private Button deleteSaveButton;
 #endif
 
+    AudioToggle _audioToggle;
     private void Start()
     {
         SetButtons();
+        _audioToggle = GetComponent<AudioToggle>();
         if (LifeManager.Instance != null)
             LifeManager.Instance.OnLivesChanged += OnLivesChanged;
 
@@ -139,8 +147,8 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
 
     private void SetButtons()
     {
+        _configButton.onClick.AddListener(OpenCloseConfigPanel);
         _creditsButton.onClick.AddListener(ShowHideCreditsPanel);
-        _configButton.onClick.AddListener(ShowHideConfigPanel);
         _pauseButton.onClick.AddListener(ShowHidePausePanel);
         _resumeButton.onClick.AddListener(ShowHidePausePanel);
         _restartButton.onClick.AddListener(RestartLevel);
@@ -148,6 +156,9 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
         _retryButton.onClick.AddListener(OnRetryPressed);
         _backToSelectionButton.onClick.AddListener(OnBackToSelectionPressed);
         _testLevelButton.onClick.AddListener(LoadDebugTestScene);
+        _musicButton.onClick.AddListener(MusicOnOff);
+        _sfxButton.onClick.AddListener(SFXOnOff);
+        
 
 #if UNITY_EDITOR
         if (deleteSaveButton != null)
@@ -246,46 +257,62 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
             _levelTimerText.text = "00:00";
     }
 
-    public void OpenPanel(Canvas canvas)
+    public void OpenCanvas(Canvas canvas)
     {
         canvas.enabled = true;
     }
 
-    public void ClosePanel(Canvas canvas)
+    public void CloseCanvas(Canvas canvas)
     {
         canvas.enabled = false;
     }
 
-    public void ShowHidePanel(Canvas canvas, bool state)
+    public void ShowHideCanvas(Canvas canvas, bool state)
     {
         if (state)
         {
-            OpenPanel(canvas);
+            OpenCanvas(canvas);
         }
         else
         {
-            ClosePanel(canvas);
+            CloseCanvas(canvas);
         }
     }
 
-    public void ShowHideConfigPanel()
+    public void OpenCloseConfigPanel()
     {
-        bool isPanelActive = !_configCanvas.enabled;
-        ShowHidePanel(_levelsCanvas, isPanelActive);
-        ShowHidePanel(_configCanvas, isPanelActive);
+        if (_isOpen)
+        {
+            _configPanelAnim.SetTrigger("Close");
+            _isOpen = !_isOpen;
+        }
+        else
+        {
+            _configPanelAnim.SetTrigger("Open");
+            _isOpen = !_isOpen;
+        }
     }
 
+    public void MusicOnOff()
+    {
+        _audioToggle.MusicButtonClicked();
+    }
+
+    public void SFXOnOff()
+    {
+        _audioToggle.SFXButtonClicked();
+    }
     public void ShowHideCreditsPanel()
     {
         bool isPanelActive = !_creditsCanvas.enabled;
-        ShowHidePanel(_levelsCanvas, isPanelActive);
-        ShowHidePanel(_creditsCanvas, isPanelActive);
+        ShowHideCanvas(_levelsCanvas, isPanelActive);
+        ShowHideCanvas(_creditsCanvas, isPanelActive);
     }
 
     public void ShowHidePausePanel()
     {
         bool isPanelActive = !_pauseCanvas.enabled;
-        ShowHidePanel(_pauseCanvas, isPanelActive);
+        ShowHideCanvas(_pauseCanvas, isPanelActive);
     }
 
     public void ShowNoLivesPanel()
