@@ -148,9 +148,9 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
     private void SetButtons()
     {
         _configButton.onClick.AddListener(OpenCloseConfigPanel);
-        _creditsButton.onClick.AddListener(ShowHideCreditsPanel);
-        _pauseButton.onClick.AddListener(ShowHidePausePanel);
-        _resumeButton.onClick.AddListener(ShowHidePausePanel);
+        _creditsButton.onClick.AddListener(ShowHideCreditsCanvas);
+        _pauseButton.onClick.AddListener(ShowHidePauseCanvas);
+        _resumeButton.onClick.AddListener(ShowHidePauseCanvas);
         _restartButton.onClick.AddListener(RestartLevel);
         _quitButton.onClick.AddListener(ShowLevelSelector);
         _retryButton.onClick.AddListener(OnRetryPressed);
@@ -190,7 +190,7 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
         }
         string sceneName = SceneManager.GetActiveScene().name;
         LoadLevelScene(sceneName);
-        ShowHidePausePanel();
+        ShowHidePauseCanvas();
     }
 
     public void ShowLevelSelector()
@@ -302,17 +302,28 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
     {
         _audioToggle.SFXButtonClicked();
     }
-    public void ShowHideCreditsPanel()
+
+    public void ShowHideCreditsCanvas()
     {
-        bool isPanelActive = !_creditsCanvas.enabled;
-        ShowHideCanvas(_levelsCanvas, isPanelActive);
-        ShowHideCanvas(_creditsCanvas, isPanelActive);
+        bool isCanvasActive = !_creditsCanvas.enabled;
+        ShowHideCanvas(_levelsCanvas, isCanvasActive);
+        ShowHideCanvas(_creditsCanvas, isCanvasActive);
     }
 
-    public void ShowHidePausePanel()
+
+
+    public void ShowHidePauseCanvas()
     {
-        bool isPanelActive = !_pauseCanvas.enabled;
-        ShowHideCanvas(_pauseCanvas, isPanelActive);
+        bool isCanvasActive = !_pauseCanvas.enabled;
+        ShowHideCanvas(_pauseCanvas, isCanvasActive);
+        if (!isCanvasActive)
+        {
+            Time.timeScale = 1;
+        }
+        else
+        {
+            Time.timeScale = 0;
+        }
     }
 
     public void ShowNoLivesPanel()
