@@ -10,9 +10,10 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
     [SerializeField] private Animator _transitionAnim;
     [SerializeField] private float _transitionTime;
 
-    [Header("PANELS")]
+    [Header("CANVAS")]
     [SerializeField] private Canvas _splashCanvas;
-    [SerializeField] public Canvas _levelsCanvas;
+    [SerializeField] private Canvas _levelsCanvas;
+    [SerializeField] private Canvas _preGameCanvas;
     [SerializeField] private Canvas _gameplayCanvas;
     [SerializeField] private Canvas _creditsCanvas;
     [SerializeField] private Canvas _pauseCanvas;
@@ -27,6 +28,12 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
     [SerializeField] private Button _creditsButton;
     [SerializeField] private Animator _configPanelAnim;
     [SerializeField] bool _isOpen = false;
+
+    [Header("PREGAME BUTTONS")]
+    [SerializeField] private Button _closeButton;
+    [SerializeField] private Button _powerupButton;
+    [SerializeField] private Button _playButton;
+    [SerializeField] private string _pendingSceneName;
 
     [Header("GAMEPLAY BUTTONS")]
     [SerializeField] private Button _pauseButton;
@@ -61,7 +68,6 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
     AudioToggle _audioToggle;
     private void Start()
     {
-        SetButtons();
         _audioToggle = GetComponent<AudioToggle>();
         if (LifeManager.Instance != null)
             LifeManager.Instance.OnLivesChanged += OnLivesChanged;
@@ -70,19 +76,13 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
         _comboCountText.gameObject.SetActive(false);
         _bonusTimeText.gameObject.SetActive(false);
 
-        _lifeLostPanel.SetActive(false);
-
-        for (int i = 0; i < levelButtons.Length; i++)
-        {
-            int idx = i + 1;
-            levelButtons[i].onClick.RemoveAllListeners();
-            levelButtons[i].onClick.AddListener(() => LoadLevelScene($"Level{idx}"));
-        }
+        _lifeLostPanel.SetActive(false);        
     }
 
     private void OnEnable()
     {
         SceneManager.sceneLoaded += OnSceneLoaded;
+        SetButtons();
     }
 
     private void OnDisable()
@@ -114,6 +114,11 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
         }
 
         UpdatePowerUpsUI();
+
+        if (Input.GetKeyDown(KeyCode.F))
+        {
+            ShowHidePauseCanvas();
+        }
     }
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
@@ -147,25 +152,62 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
 
     private void SetButtons()
     {
+        //Levels Scene
         _configButton.onClick.AddListener(OpenCloseConfigPanel);
+        _musicButton.onClick.AddListener(MusicOnOff);
+        _sfxButton.onClick.AddListener(SFXOnOff);
         _creditsButton.onClick.AddListener(ShowHideCreditsCanvas);
+        _testLevelButton.onClick.AddListener(LoadDebugTestScene);
+
+        //Pre-Game
+        _closeButton.onClick.AddListener(ShowHidePreGameCanvas);
+        //_powerUpButton.onClick.AddListener(ShowHidePowerUpsCanvas);
+        _playButton.onClick.AddListener(ShowHidePreGameCanvas);
+        
+        
+        //Gameplay
         _pauseButton.onClick.AddListener(ShowHidePauseCanvas);
         _resumeButton.onClick.AddListener(ShowHidePauseCanvas);
         _restartButton.onClick.AddListener(RestartLevel);
         _quitButton.onClick.AddListener(ShowLevelSelector);
         _retryButton.onClick.AddListener(OnRetryPressed);
         _backToSelectionButton.onClick.AddListener(OnBackToSelectionPressed);
-        _testLevelButton.onClick.AddListener(LoadDebugTestScene);
-        _musicButton.onClick.AddListener(MusicOnOff);
-        _sfxButton.onClick.AddListener(SFXOnOff);
         
+        for (int i = 0; i < levelButtons.Length; i++)
+        {
+            string sceneName = sceneNames[i];
+            levelButtons[i].onClick.AddListener(() => ShowConfirmationPanel(sceneName));
+        }
 
 #if UNITY_EDITOR
         if (deleteSaveButton != null)
             deleteSaveButton.onClick.AddListener(DeleteSaveDataFromUI);
 #endif
     }
+    
+    public void ShowConfirmationPanel(string sceneName)
+    {
+        _pendingSceneName = sceneName;
+        ShowHidePreGameCanvas();
 
+        _playButton.onClick.RemoveAllListeners();
+        _playButton.onClick.AddListener(OnConfirmLevelSelection);
+
+        _closeButton.onClick.RemoveAllListeners();
+        _closeButton.onClick.AddListener(CancelLevelSelection);
+    }
+
+    private void OnConfirmLevelSelection()
+    {
+        ShowHidePreGameCanvas();
+        LoadLevelScene(_pendingSceneName);
+    }
+
+    private void CancelLevelSelection()
+    {
+        ShowHidePreGameCanvas();
+        _pendingSceneName = null;
+    }
     public void LoadLevelScene(string sceneName)
     {
         StartCoroutine(LoadLevelSceneCo(sceneName));
@@ -310,20 +352,25 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
         ShowHideCanvas(_creditsCanvas, isCanvasActive);
     }
 
-
+    public void ShowHidePreGameCanvas()
+    {
+        bool isCanvasActive = !_preGameCanvas.enabled;
+        ShowHideCanvas(_preGameCanvas, isCanvasActive);
+    }
 
     public void ShowHidePauseCanvas()
     {
+        Debug.Log("CanvasHidden");
         bool isCanvasActive = !_pauseCanvas.enabled;
         ShowHideCanvas(_pauseCanvas, isCanvasActive);
-        if (!isCanvasActive)
-        {
-            Time.timeScale = 1;
-        }
-        else
-        {
-            Time.timeScale = 0;
-        }
+        //if (!isCanvasActive)
+        //{
+        //    Time.timeScale = 1;
+        //}
+        //else
+        //{
+        //    Time.timeScale = 0;
+        //}
     }
 
     public void ShowNoLivesPanel()
