@@ -83,6 +83,17 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
         SaveData();
     }
 
+    public void SaveDailyRewardData(string dailyRewardJson)
+    {
+        gameData.dailyRewardData = dailyRewardJson;
+        SaveData();
+    }
+
+    public string GetDailyRewardData()
+    {
+        return gameData.dailyRewardData;
+    }
+
     public void DeleteSaveData()
     {
         if (File.Exists(saveFilePath)) File.Delete(saveFilePath);

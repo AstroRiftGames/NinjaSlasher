@@ -18,6 +18,7 @@ public class GameData
 
     // Otros datos de juego
     public List<PowerUpData> activePowerUps = new List<PowerUpData>();
+    public string dailyRewardData = "";
     public float musicVolume = 1f;
     public float sfxVolume = 1f;
     public bool tutorialCompleted = false;
@@ -38,11 +39,17 @@ public class PowerUpData
     public float duration;
 }
 
-public enum PowerUpType
+[Serializable]
+public class PowerUpInventoryItem
 {
-    ExtraTime,
-    DashTurbo,
-    ParryPerfect,
-    ComboMaster,
-    SecondChance
+    public PowerUpType type;
+    public int quantity;
+    public DateTime lastUpdated;
+
+    public PowerUpInventoryItem(PowerUpType powerUpType, int qty)
+    {
+        type = powerUpType;
+        quantity = qty;
+        lastUpdated = DateTime.Now;
+    }
 }

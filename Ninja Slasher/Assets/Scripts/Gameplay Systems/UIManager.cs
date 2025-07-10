@@ -29,6 +29,9 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
     [SerializeField] private Animator _configPanelAnim;
     [SerializeField] bool _isOpen = false;
 
+    [Header("DAILY REWARDS")]
+    [SerializeField] private DailyRewardUI _dailyRewardUI;
+
     [Header("PREGAME BUTTONS")]
     [SerializeField] private Button _closeButton;
     [SerializeField] private Button _powerupButton;
@@ -68,6 +71,8 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
     AudioToggle _audioToggle;
     private void Start()
     {
+        _dailyRewardUI = GetComponentInChildren<DailyRewardUI>();
+        SetButtons();
         _audioToggle = GetComponent<AudioToggle>();
         if (LifeManager.Instance != null)
             LifeManager.Instance.OnLivesChanged += OnLivesChanged;
@@ -82,7 +87,7 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
     private void OnEnable()
     {
         SceneManager.sceneLoaded += OnSceneLoaded;
-        SetButtons();
+
     }
 
     private void OnDisable()
@@ -240,6 +245,8 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
         StartCoroutine(ShowLevelSelectorCo());
         UpdateLivesUI(LifeManager.Instance.CurrentLives);
         ShowStarsDebug();
+
+        CheckAndShowDailyRewards();
     }
 
     IEnumerator ShowLevelSelectorCo()
@@ -253,6 +260,47 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
             ShowNoLivesPanel();
 
         _transitionAnim.SetTrigger("End");
+    }
+
+    void CheckAndShowDailyRewards()
+    {
+        Debug.Log("[UIManager] CheckAndShowDailyRewards() llamado");
+
+        if (DailyRewardSystem.Instance == null)
+        {
+            Debug.LogError("[UIManager] DailyRewardSystem.Instance null");
+            return;
+        }
+
+        bool canClaim = DailyRewardSystem.Instance.CanClaimToday();
+        Debug.Log($"[UIManager] CanClaimToday: {canClaim}");
+
+        if (canClaim)
+        {
+            StartCoroutine(ShowDailyRewardsAfterDelay(1f));
+        }
+    }
+
+    public void ShowDailyRewards()
+    {
+        if (_dailyRewardUI != null)
+        {
+            _dailyRewardUI.ShowDailyRewardPanel();
+        }
+    }
+
+    IEnumerator ShowDailyRewardsAfterDelay(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+
+        if (_dailyRewardUI == null)
+        {
+            Debug.LogError("[UIManager] _dailyRewardUI null. Asigna la referencia");
+            yield break;
+        }
+
+        Debug.Log("[UIManager] Llamando ShowDailyRewardPanel");
+        _dailyRewardUI.ShowDailyRewardPanel();
     }
 
     private void OnComboUpdated(int comboLevel)
@@ -360,17 +408,16 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
 
     public void ShowHidePauseCanvas()
     {
-        Debug.Log("CanvasHidden");
         bool isCanvasActive = !_pauseCanvas.enabled;
         ShowHideCanvas(_pauseCanvas, isCanvasActive);
-        //if (!isCanvasActive)
-        //{
-        //    Time.timeScale = 1;
-        //}
-        //else
-        //{
-        //    Time.timeScale = 0;
-        //}
+        if (!isCanvasActive)
+        {
+            Time.timeScale = 1;
+        }
+        else
+        {
+            Time.timeScale = 0;
+        }
     }
 
     public void ShowNoLivesPanel()
