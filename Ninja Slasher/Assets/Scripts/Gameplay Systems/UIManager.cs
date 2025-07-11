@@ -1,4 +1,6 @@
+using System;
 using System.Collections;
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -34,9 +36,12 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
 
     [Header("PREGAME BUTTONS")]
     [SerializeField] private Button _closeButton;
-    [SerializeField] private Button _powerupButton;
     [SerializeField] private Button _playButton;
     [SerializeField] private string _pendingSceneName;
+
+    [SerializeField] private Transform _powerUpsPanel;
+    [SerializeField] private PowerUpSlotUI _powerUpSlotPrefab;
+    private List<PowerUpSlotUI> _slots = new List<PowerUpSlotUI>();
 
     [Header("GAMEPLAY BUTTONS")]
     [SerializeField] private Button _pauseButton;
@@ -60,6 +65,7 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
     private bool _noLivesActive = false;
     private LevelController _levelController;
     private ComboManager _comboManager;
+    [SerializeField] private PowerUpBase[] allPowerUpBases;
 
     [Header("DEBUG")]
     [SerializeField] private TextMeshProUGUI debugStarsText;
@@ -166,9 +172,7 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
 
         //Pre-Game
         _closeButton.onClick.AddListener(ShowHidePreGameCanvas);
-        //_powerUpButton.onClick.AddListener(ShowHidePowerUpsCanvas);
         _playButton.onClick.AddListener(ShowHidePreGameCanvas);
-        
         
         //Gameplay
         _pauseButton.onClick.AddListener(ShowHidePauseCanvas);
@@ -404,6 +408,55 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
     {
         bool isCanvasActive = !_preGameCanvas.enabled;
         ShowHideCanvas(_preGameCanvas, isCanvasActive);
+        if (isCanvasActive)
+            ShowPreGamePowerUps();
+    }
+
+    public void ShowPreGamePowerUps()
+    {
+        foreach (var slot in _slots)
+            Destroy(slot.gameObject);
+        _slots.Clear();
+
+        var inventory = SaveManager.Instance.GetGameData().powerUpInventory;
+
+        foreach (var powerUpBase in allPowerUpBases)
+        {
+            var item = inventory.Find(i => i.type == powerUpBase.powerUpType);
+            if (item == null)
+                item = new PowerUpInventoryItem(powerUpBase.powerUpType, 0);
+
+            var slot = Instantiate(_powerUpSlotPrefab, _powerUpsPanel);
+            slot.Setup(item, powerUpBase, OnPowerUpActivateClicked);
+            _slots.Add(slot);
+        }
+    }
+
+    private void OnPowerUpActivateClicked(PowerUpInventoryItem item)
+    {
+        if (item.quantity > 0)
+        {
+            item.quantity--;
+            var powerUpBase = GetPowerUpBaseByType(item.type);
+            var powerUpData = new PowerUpData
+            {
+                type = item.type,
+                activationTime = DateTime.Now,
+                duration = powerUpBase != null ? powerUpBase.duration : 3600f
+            };
+            SaveManager.Instance.GetGameData().activePowerUps.Add(powerUpData);
+            SaveManager.Instance.SaveData();
+            ShowPreGamePowerUps();
+        }
+    }
+
+    private PowerUpBase GetPowerUpBaseByType(PowerUpType type)
+    {
+        foreach (var pu in allPowerUpBases)
+            if (pu.powerUpType == type)
+                return pu;
+        Debug.LogWarning("No se encontró PowerUpBase para el tipo: " + type);
+        return null;
     }
 
     public void ShowHidePauseCanvas()
