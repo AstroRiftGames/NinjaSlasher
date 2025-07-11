@@ -14,6 +14,7 @@ public enum EnemyType
     BL4ZT,
     OM3GA,
     KRUSH9,
+    DemolitionSentinel,
 }
 [Serializable]
 public class VulnerabilityValues
