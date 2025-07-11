@@ -156,7 +156,7 @@ public class DailyRewardSystem : MonoBehaviourSingleton<DailyRewardSystem>
 
         DailyReward claimedReward = weeklyRewards[rewardData.currentWeekDay];
 
-        AddPowerUpToGameData(claimedReward);
+        AddPowerUpToInventory(claimedReward);
 
         SaveRewardData();
 
@@ -167,28 +167,23 @@ public class DailyRewardSystem : MonoBehaviourSingleton<DailyRewardSystem>
         return true;
     }
 
-    void AddPowerUpToGameData(DailyReward reward)
+    void AddPowerUpToInventory(DailyReward reward)
     {
         var gameData = SaveManager.Instance.GetGameData();
+        var inventory = gameData.powerUpInventory;
+        var item = inventory.Find(i => i.type == reward.powerUpType);
 
-        PowerUpData powerUpData = new PowerUpData
+        if (item != null)
         {
-            type = reward.powerUpType,
-            activationTime = DateTime.Now,
-            duration = GetPowerUpDuration(reward.powerUpType)
-        };
-
-        for (int i = 0; i < reward.quantity; i++)
+            item.quantity += reward.quantity;
+            item.lastUpdated = DateTime.Now;
+        }
+        else
         {
-            gameData.activePowerUps.Add(powerUpData);
+            inventory.Add(new PowerUpInventoryItem(reward.powerUpType, reward.quantity));
         }
 
         SaveManager.Instance.SaveData();
-    }
-
-    float GetPowerUpDuration(PowerUpType type)
-    {
-        return 3600f;
     }
 
     public bool CanClaimToday()

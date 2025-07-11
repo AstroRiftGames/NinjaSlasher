@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using UnityEngine;
 
 [Serializable]
 public class GameData
@@ -18,6 +17,7 @@ public class GameData
 
     // Otros datos de juego
     public List<PowerUpData> activePowerUps = new List<PowerUpData>();
+    public List<PowerUpInventoryItem> powerUpInventory = new List<PowerUpInventoryItem>();
     public string dailyRewardData = "";
     public float musicVolume = 1f;
     public float sfxVolume = 1f;

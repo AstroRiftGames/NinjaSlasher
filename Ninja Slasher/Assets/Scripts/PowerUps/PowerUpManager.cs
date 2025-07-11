@@ -138,26 +138,6 @@ public class PowerUpManager : MonoBehaviourSingleton<PowerUpManager>
 #endif
     }
 
-#if UNITY_EDITOR
-    [ContextMenu("Activar Todos los PowerUps")]
-    public void ActivateAll()
-    {
-        foreach (var pu in activePowerUps)
-        {
-            pu.Activate(context);
-        }
-    }
-
-    [ContextMenu("Desactivar Todos los PowerUps")]
-    public void DeactivateAll()
-    {
-        foreach (var pu in activePowerUps)
-        {
-            pu.Deactivate(context);
-        }
-    }
-#endif
-
     public void ActivatePowerUp(PowerUpBase powerUp)
     {
         if (!activePowerUps.Contains(powerUp))
@@ -208,7 +188,7 @@ public class PowerUpManager : MonoBehaviourSingleton<PowerUpManager>
         var gameData = SaveManager.Instance.GetGameData();
         var currentTime = DateTime.Now;
 
-        var powerUpCounts = new Dictionary<PowerUpType, System.Collections.Generic.List<PowerUpData>>();
+        var powerUpCounts = new Dictionary<PowerUpType, List<PowerUpData>>();
 
         foreach (var powerUp in gameData.activePowerUps)
         {
@@ -216,7 +196,7 @@ public class PowerUpManager : MonoBehaviourSingleton<PowerUpManager>
             if (timeElapsed < powerUp.duration)
             {
                 if (!powerUpCounts.ContainsKey(powerUp.type))
-                    powerUpCounts[powerUp.type] = new System.Collections.Generic.List<PowerUpData>();
+                    powerUpCounts[powerUp.type] = new List<PowerUpData>();
 
                 powerUpCounts[powerUp.type].Add(powerUp);
             }
@@ -245,4 +225,39 @@ public class PowerUpManager : MonoBehaviourSingleton<PowerUpManager>
             });
         }
     }
+
+    public void DebugPrintPowerUpInventory()
+    {
+        var inventory = SaveManager.Instance.GetGameData().powerUpInventory;
+        foreach (var item in inventory)
+        {
+            Debug.Log($"PowerUp: {item.type} | Cantidad: {item.quantity} | Última vez: {item.lastUpdated}");
+        }
+    }
+
+#if UNITY_EDITOR
+    [ContextMenu("Activar Todos los PowerUps")]
+    public void ActivateAll()
+    {
+        foreach (var pu in activePowerUps)
+        {
+            pu.Activate(context);
+        }
+    }
+
+    [ContextMenu("Desactivar Todos los PowerUps")]
+    public void DeactivateAll()
+    {
+        foreach (var pu in activePowerUps)
+        {
+            pu.Deactivate(context);
+        }
+    }
+
+    [ContextMenu("Imprimir inventario de power-ups")]
+    public void PrintInventory()
+    {
+        DebugPrintPowerUpInventory();
+    }
+#endif
 }
