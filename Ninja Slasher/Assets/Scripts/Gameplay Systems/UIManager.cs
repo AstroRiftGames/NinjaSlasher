@@ -438,6 +438,10 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
         {
             item.quantity--;
             var powerUpBase = GetPowerUpBaseByType(item.type);
+
+            if (powerUpBase != null)
+                PowerUpManager.Instance.ActivatePowerUp(powerUpBase);
+
             var powerUpData = new PowerUpData
             {
                 type = item.type,
@@ -449,6 +453,7 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
             ShowPreGamePowerUps();
         }
     }
+
 
     private PowerUpBase GetPowerUpBaseByType(PowerUpType type)
     {
