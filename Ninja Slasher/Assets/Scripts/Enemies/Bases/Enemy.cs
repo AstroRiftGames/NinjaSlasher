@@ -12,6 +12,7 @@ public class Enemy : MonoBehaviour
     protected Transform _player;
     protected Rigidbody2D _rb;
     protected Collider2D _col;
+    protected Animator _animator;
     private EnemyTracker tracker;
 
     public virtual void OnEnable()
@@ -29,6 +30,8 @@ public class Enemy : MonoBehaviour
         _rb = rb;
         TryGetComponent(out Collider2D col);
         _col = col;
+        TryGetComponent(out Animator anim);
+        _animator = anim;
 
         _player = FindAnyObjectByType<Controller>().transform;
         tracker = FindAnyObjectByType<EnemyTracker>();

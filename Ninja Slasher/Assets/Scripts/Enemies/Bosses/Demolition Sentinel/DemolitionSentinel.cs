@@ -19,6 +19,9 @@ public class DemolitionSentinel : BossEnemy
     [Header("Area Attack")]
     [SerializeField] float _chargingTime;
 
+    [Header("SweepAttack")]
+    [SerializeField] float _sweepDuration;
+
 
     public override void Awake()
     {
@@ -42,6 +45,11 @@ public class DemolitionSentinel : BossEnemy
                 _lastAttack = Time.time;
                 SetTarget();
                 StartCoroutine(HeavyAttack());
+            }
+            if(Input.GetKeyDown(KeyCode.J))
+            {
+                _lastAttack = Time.time;
+                SweepAttack();
             }
         }
     }
@@ -72,6 +80,13 @@ public class DemolitionSentinel : BossEnemy
     {
         yield return new WaitForSeconds(_chargingTime);
         _currentBall.HeavyThrow(_targetDir);
+        ChangeBall();
+    }
+
+    private void SweepAttack()
+    {
+        _animator.SetFloat("SpeedMultiplier", 1/ _sweepDuration);
+        _animator.SetTrigger(_isRightBallTurn ? "SweepAttack-Right" : "SweepAttack-Left");
         ChangeBall();
     }
 }
