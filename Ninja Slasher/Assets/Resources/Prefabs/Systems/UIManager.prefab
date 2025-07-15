@@ -275,6 +275,14 @@ GameObject:
   - component: {fileID: 6391668477862170959}
   - component: {fileID: 2234693890108503027}
   - component: {fileID: 8005450151810578804}
+  - component: {fileID: 1342354987368541441}
+  - component: {fileID: 737437187067326278}
+  - component: {fileID: 8174576930485009954}
+  - component: {fileID: 539905384003771168}
+  - component: {fileID: 8007740839878991477}
+  - component: {fileID: 27275853345417353}
+  - component: {fileID: 2013167558497469319}
+  - component: {fileID: 7492949325675682685}
   m_Layer: 0
   m_Name: UIManager
   m_TagString: Untagged
@@ -319,58 +327,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 722aa2e224178e54298c554e738e3c65, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _transitionAnim: {fileID: 6112901547984425599}
-  _transitionTime: 2
-  _splashCanvas: {fileID: 7762386988858909236}
-  _levelsCanvas: {fileID: 4745703502684929409}
-  _preGameCanvas: {fileID: 318391166573766104}
-  _gameplayCanvas: {fileID: 1311593216982150831}
-  _creditsCanvas: {fileID: 1919922176285574090}
-  _pauseCanvas: {fileID: 8475121805399561183}
-  _configCanvas: {fileID: 2340487673457490833}
-  levelButtons:
-  - {fileID: 4759691868073545259}
-  - {fileID: 5061167977425267991}
-  - {fileID: 2160209701018410882}
-  _testLevelButton: {fileID: 792299531764488867}
-  _configButton: {fileID: 1935182036560053602}
-  _musicButton: {fileID: 1345238725875134053}
-  _sfxButton: {fileID: 441457048859768854}
-  _creditsButton: {fileID: 2581173366529607533}
-  _configPanelAnim: {fileID: 7933717316268963555}
-  _isOpen: 0
-  _dailyRewardUI: {fileID: 9047742293519097377}
-  _closeButton: {fileID: 7464928544108716947}
-  _playButton: {fileID: 3651492796806255843}
-  _pendingSceneName: 
-  _powerUpsPanel: {fileID: 2519505135229408647}
-  _powerUpSlotPrefab: {fileID: 1070284004972134539, guid: d5b8070a37d500a4a8392b02924a3fea, type: 3}
-  _pauseButton: {fileID: 2339429470945048186}
-  _resumeButton: {fileID: 5418209600753689247}
-  _restartButton: {fileID: 623757647382231476}
-  _quitButton: {fileID: 7176478184289864605}
-  sceneNames:
-  - Level1
-  - Level2
-  - Level3
-  _livesText: {fileID: 3443593198509865514}
-  _noLivesPanel: {fileID: 910462403177874311}
-  _noLivesTimerText: {fileID: 5210611965157185658}
-  _comboCountText: {fileID: 4755572638596567355}
-  _levelTimerText: {fileID: 3250700708126626020}
-  _bonusTimeText: {fileID: 8657406034820787390}
-  _lifeLostPanel: {fileID: 3150805457132935333}
-  _retryButton: {fileID: 2699599212305255478}
-  _backToSelectionButton: {fileID: 7398403889087604999}
-  allPowerUpBases:
-  - {fileID: 11400000, guid: 385d3b4c60ae4b24cbdeea00019a917e, type: 2}
-  - {fileID: 11400000, guid: 4f05f79e853dc7640ba75fc6b30312a7, type: 2}
-  - {fileID: 11400000, guid: bff273489657ffe469249c56fa2c0acc, type: 2}
-  - {fileID: 11400000, guid: 43b48f112c7e57a40858197b28030398, type: 2}
-  - {fileID: 11400000, guid: 143677b89037a4e40b5a4d3259336dd6, type: 2}
-  debugStarsText: {fileID: 2046399674442836817}
-  _powerUpsText: {fileID: 5200392819029049022}
-  deleteSaveButton: {fileID: 46443166469604056}
 --- !u!114 &2234693890108503027
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -406,6 +362,208 @@ MonoBehaviour:
   _sfxImage: {fileID: 2899433265878094987}
   _musicOn: 0
   _sfxOn: 0
+--- !u!114 &1342354987368541441
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 52824968843742465}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0dfd5c6ee04a77f448087083fd324c79, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  levelButtons:
+  - {fileID: 4759691868073545259}
+  - {fileID: 5061167977425267991}
+  - {fileID: 2160209701018410882}
+  _testLevelButton: {fileID: 792299531764488867}
+  _configButton: {fileID: 1935182036560053602}
+  _musicButton: {fileID: 1345238725875134053}
+  _sfxButton: {fileID: 441457048859768854}
+  _creditsButton: {fileID: 2581173366529607533}
+  _closeButton: {fileID: 7464928544108716947}
+  _playButton: {fileID: 3651492796806255843}
+  _pauseButton: {fileID: 2339429470945048186}
+  _resumeButton: {fileID: 5418209600753689247}
+  _restartButton: {fileID: 623757647382231476}
+  _quitButton: {fileID: 7176478184289864605}
+  _retryButton: {fileID: 2699599212305255478}
+  _backToSelectionButton: {fileID: 7398403889087604999}
+  sceneNames:
+  - Level1
+  - Level2
+  - Level3
+  deleteSaveButton: {fileID: 46443166469604056}
+--- !u!114 &737437187067326278
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 52824968843742465}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 563566811dd08164b8aca688d7a76d5f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _splashCanvas: {fileID: 7762386988858909236}
+  _levelsCanvas: {fileID: 4745703502684929409}
+  _preGameCanvas: {fileID: 318391166573766104}
+  _gameplayCanvas: {fileID: 1311593216982150831}
+  _creditsCanvas: {fileID: 1919922176285574090}
+  _pauseCanvas: {fileID: 8475121805399561183}
+  _configCanvas: {fileID: 2340487673457490833}
+--- !u!114 &8174576930485009954
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 52824968843742465}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cee1724a425c86942b5bb3ca8367e870, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _configPanelAnim: {fileID: 7933717316268963555}
+  _isOpen: 0
+--- !u!114 &539905384003771168
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 52824968843742465}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3b9e6d4d572c35544b6ba4cf5e96cca3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  debugStarsText: {fileID: 2046399674442836817}
+--- !u!114 &8007740839878991477
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 52824968843742465}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fb4cb6ba5b51a904ca53ba62459ad627, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _livesText: {fileID: 3443593198509865514}
+  _noLivesPanel: {fileID: 910462403177874311}
+  _noLivesTimerText: {fileID: 5210611965157185658}
+  _comboCountText: {fileID: 4755572638596567355}
+  _levelTimerText: {fileID: 3250700708126626020}
+  _bonusTimeText: {fileID: 8657406034820787390}
+  _lifeLostPanel: {fileID: 3150805457132935333}
+  _powerUpsText: {fileID: 5200392819029049022}
+--- !u!114 &27275853345417353
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 52824968843742465}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 686f3ee7215f85246a2d3a226ad014cb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _closeButton: {fileID: 7464928544108716947}
+  _playButton: {fileID: 3651492796806255843}
+  _pendingSceneName: 
+  _powerUpsContainer: {fileID: 2519505135229408647}
+  _powerUpSlotPrefab: {fileID: 1070284004972134539, guid: d5b8070a37d500a4a8392b02924a3fea, type: 3}
+  allPowerUpBases:
+  - {fileID: 11400000, guid: 385d3b4c60ae4b24cbdeea00019a917e, type: 2}
+  - {fileID: 11400000, guid: 4f05f79e853dc7640ba75fc6b30312a7, type: 2}
+  - {fileID: 11400000, guid: bff273489657ffe469249c56fa2c0acc, type: 2}
+  - {fileID: 11400000, guid: 43b48f112c7e57a40858197b28030398, type: 2}
+  - {fileID: 11400000, guid: 143677b89037a4e40b5a4d3259336dd6, type: 2}
+--- !u!114 &2013167558497469319
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 52824968843742465}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ad057275d0c9485438f195e1ddd8a575, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _transitionAnim: {fileID: 6112901547984425599}
+  _transitionTime: 0
+  _dailyRewardUI: {fileID: 7492949325675682685}
+--- !u!114 &7492949325675682685
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 52824968843742465}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ec311b6f19fc6204f8a2cf8855b6520e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  dailyRewardPanel: {fileID: 4519224275132427223}
+  closeButton: {fileID: 5014227754626231904}
+  nextRewardTimeText: {fileID: 7857730428860584185}
+  weeklyRewardDays:
+  - dayContainer: {fileID: 6921221823662701539}
+    dayLabel: {fileID: 7516338758391795401}
+    rewardIcon: {fileID: 8429934795204617763}
+    quantityText: {fileID: 2442959273874377850}
+    backgroundImage: {fileID: 414159979936108278}
+    rewardNameText: {fileID: 7940055452435476698}
+  - dayContainer: {fileID: 2086222291014243868}
+    dayLabel: {fileID: 2624249305101822132}
+    rewardIcon: {fileID: 5182020311163034303}
+    quantityText: {fileID: 3270203623790001275}
+    backgroundImage: {fileID: 9134768120147679163}
+    rewardNameText: {fileID: 4917115604187683651}
+  - dayContainer: {fileID: 6940734040443281284}
+    dayLabel: {fileID: 5268874908243918527}
+    rewardIcon: {fileID: 4470194744645886377}
+    quantityText: {fileID: 2097377890506968015}
+    backgroundImage: {fileID: 8528276427762400620}
+    rewardNameText: {fileID: 3788126394302514359}
+  - dayContainer: {fileID: 2204729219668687207}
+    dayLabel: {fileID: 6825684994861471690}
+    rewardIcon: {fileID: 1026534358780297601}
+    quantityText: {fileID: 5447257125149454150}
+    backgroundImage: {fileID: 2855827804918206300}
+    rewardNameText: {fileID: 4357253976342245647}
+  - dayContainer: {fileID: 3526420784924685316}
+    dayLabel: {fileID: 5322259304961069254}
+    rewardIcon: {fileID: 7137060782318336167}
+    quantityText: {fileID: 8352583558038458026}
+    backgroundImage: {fileID: 3210575758976871718}
+    rewardNameText: {fileID: 2878346723003508023}
+  - dayContainer: {fileID: 7253835395175034354}
+    dayLabel: {fileID: 4710120802474927906}
+    rewardIcon: {fileID: 2448255495922340689}
+    quantityText: {fileID: 2494929269768253902}
+    backgroundImage: {fileID: 5196697782606281275}
+    rewardNameText: {fileID: 8634167162263922953}
+  - dayContainer: {fileID: 4871645116502697007}
+    dayLabel: {fileID: 7746004472626905390}
+    rewardIcon: {fileID: 570121815981085989}
+    quantityText: {fileID: 7847771628030659483}
+    backgroundImage: {fileID: 6067218855534230011}
+    rewardNameText: {fileID: 5397336510474430204}
+  claimButton: {fileID: 5301516457828102620}
+  claimButtonText: {fileID: 7412434794142890482}
+  availableColor: {r: 1, g: 1, b: 1, a: 1}
+  claimedColor: {r: 0, g: 1, b: 0, a: 1}
+  lockedColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+  todayColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
 --- !u!1 &142718726391743490
 GameObject:
   m_ObjectHideFlags: 0
@@ -16794,7 +16952,6 @@ GameObject:
   - component: {fileID: 1998993559515070088}
   - component: {fileID: 294262896209971036}
   - component: {fileID: 8229351980316519670}
-  - component: {fileID: 9047742293519097377}
   m_Layer: 0
   m_Name: RewardsCanvas
   m_TagString: Untagged
@@ -16885,70 +17042,6 @@ MonoBehaviour:
   m_BlockingMask:
     serializedVersion: 2
     m_Bits: 4294967295
---- !u!114 &9047742293519097377
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4849208457430818380}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ec311b6f19fc6204f8a2cf8855b6520e, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  dailyRewardPanel: {fileID: 4519224275132427223}
-  closeButton: {fileID: 5014227754626231904}
-  nextRewardTimeText: {fileID: 7857730428860584185}
-  weeklyRewardDays:
-  - dayContainer: {fileID: 6921221823662701539}
-    dayLabel: {fileID: 7516338758391795401}
-    rewardIcon: {fileID: 8429934795204617763}
-    quantityText: {fileID: 2442959273874377850}
-    backgroundImage: {fileID: 414159979936108278}
-    rewardNameText: {fileID: 7940055452435476698}
-  - dayContainer: {fileID: 2086222291014243868}
-    dayLabel: {fileID: 2624249305101822132}
-    rewardIcon: {fileID: 5182020311163034303}
-    quantityText: {fileID: 3270203623790001275}
-    backgroundImage: {fileID: 9134768120147679163}
-    rewardNameText: {fileID: 4917115604187683651}
-  - dayContainer: {fileID: 6940734040443281284}
-    dayLabel: {fileID: 5268874908243918527}
-    rewardIcon: {fileID: 4470194744645886377}
-    quantityText: {fileID: 2097377890506968015}
-    backgroundImage: {fileID: 8528276427762400620}
-    rewardNameText: {fileID: 3788126394302514359}
-  - dayContainer: {fileID: 2204729219668687207}
-    dayLabel: {fileID: 6825684994861471690}
-    rewardIcon: {fileID: 1026534358780297601}
-    quantityText: {fileID: 5447257125149454150}
-    backgroundImage: {fileID: 2855827804918206300}
-    rewardNameText: {fileID: 4357253976342245647}
-  - dayContainer: {fileID: 3526420784924685316}
-    dayLabel: {fileID: 5322259304961069254}
-    rewardIcon: {fileID: 7137060782318336167}
-    quantityText: {fileID: 8352583558038458026}
-    backgroundImage: {fileID: 3210575758976871718}
-    rewardNameText: {fileID: 2878346723003508023}
-  - dayContainer: {fileID: 7253835395175034354}
-    dayLabel: {fileID: 4710120802474927906}
-    rewardIcon: {fileID: 2448255495922340689}
-    quantityText: {fileID: 2494929269768253902}
-    backgroundImage: {fileID: 5196697782606281275}
-    rewardNameText: {fileID: 8634167162263922953}
-  - dayContainer: {fileID: 4871645116502697007}
-    dayLabel: {fileID: 7746004472626905390}
-    rewardIcon: {fileID: 570121815981085989}
-    quantityText: {fileID: 7847771628030659483}
-    backgroundImage: {fileID: 6067218855534230011}
-    rewardNameText: {fileID: 5397336510474430204}
-  claimButton: {fileID: 5301516457828102620}
-  claimButtonText: {fileID: 7412434794142890482}
-  availableColor: {r: 1, g: 1, b: 1, a: 1}
-  claimedColor: {r: 0, g: 1, b: 0, a: 1}
-  lockedColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
-  todayColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
 --- !u!1 &4871645116502697007
 GameObject:
   m_ObjectHideFlags: 0

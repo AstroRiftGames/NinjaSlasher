@@ -3,7 +3,7 @@ using UnityEngine.UI;
 using TMPro;
 using System.Collections;
 
-public class DailyRewardUI : MonoBehaviour
+public class DailyRewardUIManager : MonoBehaviour
 {
     [Header("Panel Principal")]
     public GameObject dailyRewardPanel;
