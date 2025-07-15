@@ -13,6 +13,7 @@ public class Enemy : MonoBehaviour
     protected Rigidbody2D _rb;
     protected Collider2D _col;
     protected Animator _animator;
+    public Animator Animator => _animator;
     private EnemyTracker tracker;
 
     public virtual void OnEnable()
