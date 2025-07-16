@@ -36,7 +36,8 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
         {
             CurrentLives = _startingLives;
             _lastLifeUsed = DateTime.Now;
-            SaveManager.Instance.UpdateLives(CurrentLives, _lastLifeUsed, CurrentLives < _maxLives);
+
+            SaveLivesViaAutoSave();
         }
         else
         {
@@ -66,8 +67,10 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
             _lastLifeUsed = _lastLifeUsed.AddSeconds(vidasAGenerar * _lifeRechargeSeconds);
             CurrentLives = newLives;
 
-            SaveManager.Instance.UpdateLives(CurrentLives, _lastLifeUsed, CurrentLives < _maxLives);
+            SaveLivesViaAutoSave("Vida regenerada");
             OnLivesChanged?.Invoke(CurrentLives);
+
+            Debug.Log($"[LifeManager] Regeneradas {vidasAGenerar} vidas. Total: {CurrentLives}");
         }
     }
 
@@ -84,8 +87,10 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
             _lastLifeUsed = _lastLifeUsed.AddSeconds(vidasAGenerar * _lifeRechargeSeconds);
             CurrentLives = newLives;
 
-            SaveManager.Instance.UpdateLives(CurrentLives, _lastLifeUsed, CurrentLives < _maxLives);
+            SaveLivesViaAutoSave("Vidas offline regeneradas");
             OnLivesChanged?.Invoke(CurrentLives);
+
+            Debug.Log($"[LifeManager] Regeneración offline: {vidasAGenerar} vidas. Total: {CurrentLives}");
         }
     }
 
@@ -101,19 +106,40 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
         }
 
         if (CurrentLives <= 0) return;
+
         CurrentLives--;
         _lastLifeUsed = DateTime.Now;
-        SaveManager.Instance.UpdateLives(CurrentLives, _lastLifeUsed, CurrentLives < _maxLives);
-        OnLivesChanged?.Invoke(CurrentLives);
-    }
 
+        SaveLivesViaAutoSave("Vida perdida");
+        OnLivesChanged?.Invoke(CurrentLives);
+
+        Debug.Log($"[LifeManager] Vida usada. Restantes: {CurrentLives}");
+    }
 
     public void AddLife()
     {
         if (CurrentLives >= _maxLives) return;
+
         CurrentLives++;
-        SaveManager.Instance.UpdateLives(CurrentLives, _lastLifeUsed, CurrentLives < _maxLives);
+
+        SaveLivesViaAutoSave("Vida ganada");
         OnLivesChanged?.Invoke(CurrentLives);
+
+        Debug.Log($"[LifeManager] Vida agregada. Total: {CurrentLives}");
+    }
+
+    public void FillAllLives()
+    {
+        if (CurrentLives >= _maxLives) return;
+
+        int previousLives = CurrentLives;
+        CurrentLives = _maxLives;
+        _lastLifeUsed = DateTime.Now;
+
+        SaveLivesViaAutoSave("Vidas completas");
+        OnLivesChanged?.Invoke(CurrentLives);
+
+        Debug.Log($"[LifeManager] Vidas llenadas: {previousLives} -> {CurrentLives}");
     }
 
     public float GetRechargeProgress()
@@ -129,6 +155,19 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
         double seconds = (DateTime.Now - _lastLifeUsed).TotalSeconds;
         double secondsLeft = _lifeRechargeSeconds - seconds;
         return TimeSpan.FromSeconds(Mathf.Max(0, (float)secondsLeft));
+    }
+
+    private void SaveLivesViaAutoSave(string message = "Guardando vidas...")
+    {
+        if (AutoSaveManager.Instance != null)
+        {
+            AutoSaveManager.Instance.OnLivesChanged(CurrentLives, _lastLifeUsed, CurrentLives < _maxLives);
+        }
+        else
+        {
+            SaveManager.Instance.UpdateLives(CurrentLives, _lastLifeUsed, CurrentLives < _maxLives);
+            Debug.LogWarning("[LifeManager] AutoSaveManager no encontrado, guardando directamente");
+        }
     }
 
 #if UNITY_EDITOR
