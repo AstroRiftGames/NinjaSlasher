@@ -6,7 +6,7 @@ public class AutoSaveManager : MonoBehaviourSingleton<AutoSaveManager>
 
     void Start()
     {
-        saveManager = SaveManager.Instance;
+        InitializeSaveManager();
 
         if (SaveIndicatorUI.Instance != null)
         {
@@ -18,6 +18,33 @@ public class AutoSaveManager : MonoBehaviourSingleton<AutoSaveManager>
         }
 
         Application.focusChanged += OnApplicationFocusChanged;
+    }
+
+    private void InitializeSaveManager()
+    {
+        if (SaveManager.Instance != null)
+        {
+            saveManager = SaveManager.Instance;
+            Debug.Log("[AutoSaveManager] SaveManager inicializado correctamente");
+        }
+        else
+        {
+            Debug.LogError("[AutoSaveManager] SaveManager.Instance no está disponible en Start");
+        }
+    }
+
+    private bool CheckSaveManager()
+    {
+        if (saveManager == null)
+        {
+            saveManager = SaveManager.Instance;
+            if (saveManager == null)
+            {
+                Debug.LogError("[AutoSaveManager] SaveManager no disponible");
+                return false;
+            }
+        }
+        return true;
     }
 
     void OnDestroy()
@@ -40,7 +67,7 @@ public class AutoSaveManager : MonoBehaviourSingleton<AutoSaveManager>
     {
         ShowSaveIndicator("Guardando...");
         saveManager?.SaveOnApplicationEvent();
-        Debug.Log("[AutoSaveManager] Guardado automatico al cerrar aplicacion");
+        Debug.Log("[AutoSaveManager] Guardado automático al cerrar aplicación");
     }
 
     void OnApplicationPause(bool pauseStatus)
@@ -49,95 +76,96 @@ public class AutoSaveManager : MonoBehaviourSingleton<AutoSaveManager>
         {
             ShowSaveIndicator("Guardando...");
             saveManager?.SaveOnApplicationEvent();
-            Debug.Log("[AutoSaveManager] Guardado automatico al pausar aplicacion");
+            Debug.Log("[AutoSaveManager] Guardado automático al pausar aplicación");
         }
     }
 
     #endregion
 
     #region GAMEPLAY_EVENTS
+
     public void OnLevelCompleted(int levelId, int starsEarned, int enemiesKilled, int maxCombo, float playTime)
     {
-        ShowSaveIndicator("Guardando...");
+        if (!CheckSaveManager()) return;
 
-        saveManager.UpdateLevelProgress(levelId + 1); // Desbloquear siguiente nivel
+        ShowSaveIndicator("Guardando...");
+        saveManager.UpdateLevelProgress(levelId + 1);
         saveManager.UpdateStars(levelId, starsEarned);
         saveManager.UpdateGameStats(enemiesKilled, maxCombo, playTime, true);
-
-        Debug.Log($"[AutoSaveManager] Nivel {levelId} completado - guardado automatico");
+        Debug.Log($"[AutoSaveManager] Nivel {levelId} completado - guardado automático");
     }
 
     public void OnLevelFailed(int enemiesKilled, int maxCombo, float playTime)
     {
+        if (!CheckSaveManager()) return;
+
         ShowSaveIndicator("Guardando...", 1f);
-
         saveManager.UpdateGameStats(enemiesKilled, maxCombo, playTime, false);
-
-        Debug.Log("[AutoSaveManager] Nivel fallado - guardado automatico");
+        Debug.Log("[AutoSaveManager] Nivel fallado - guardado automático");
     }
 
     public void OnAreaUnlocked(int areaId)
     {
-        ShowSaveIndicator("area desbloqueada!");
+        if (!CheckSaveManager()) return;
 
+        ShowSaveIndicator("Área desbloqueada!");
         saveManager.UnlockArea(areaId);
-
-        Debug.Log($"[AutoSaveManager] area {areaId} desbloqueada - guardado automatico");
+        Debug.Log($"[AutoSaveManager] Área {areaId} desbloqueada - guardado automático");
     }
 
     public void OnPowerUpObtained(PowerUpType powerUpType, int quantity = 1)
     {
+        if (!CheckSaveManager()) return;
+
         ShowSaveIndicator("Guardando...", 1f);
-
         saveManager.AddPowerUpToInventory(powerUpType, quantity);
-
-        Debug.Log($"[AutoSaveManager] Power up {powerUpType} obtenido - guardado automatico");
+        Debug.Log($"[AutoSaveManager] Power up {powerUpType} obtenido - guardado automático");
     }
 
     public void OnPowerUpActivated(PowerUpType powerUpType, float duration = 1800f)
     {
-        ShowSaveIndicator("Guardando...!");
+        if (!CheckSaveManager()) return;
 
+        ShowSaveIndicator("Guardando...");
         saveManager.ActivatePowerUp(powerUpType, duration);
-
-        Debug.Log($"[AutoSaveManager] Power-up {powerUpType} activado - guardado automatico");
+        Debug.Log($"[AutoSaveManager] Power-up {powerUpType} activado - guardado automático");
     }
 
     public void OnDailyRewardClaimed(string rewardData)
     {
+        if (!CheckSaveManager()) return;
+
         ShowSaveIndicator("Guardando...");
-
         saveManager.SaveDailyRewardData(rewardData);
-
-        Debug.Log("[AutoSaveManager] Recompensa diaria reclamada - guardado automatico");
+        Debug.Log("[AutoSaveManager] Recompensa diaria reclamada - guardado automático");
     }
 
     public void OnLivesChanged(int newLives, System.DateTime lastRegenTime, bool canRegen)
     {
+        if (!CheckSaveManager()) return;
+
         ShowSaveIndicator("Guardando...", 1f);
-
         saveManager.UpdateLives(newLives, lastRegenTime, canRegen);
-
-        Debug.Log($"[AutoSaveManager] Vidas actualizadas a {newLives} - guardado automatico");
+        Debug.Log($"[AutoSaveManager] Vidas actualizadas a {newLives} - guardado automático");
     }
 
     public void OnAudioSettingsChanged(float musicVolume, float sfxVolume)
     {
-        ShowSaveIndicator("Guardando...", 1f);
+        if (!CheckSaveManager()) return;
 
+        ShowSaveIndicator("Guardando...", 1f);
         saveManager.SetMusicVolume(musicVolume);
         saveManager.SetSFXVolume(sfxVolume);
-
-        Debug.Log("[AutoSaveManager] Configuracion de audio cambiada - guardado automatico");
+        Debug.Log("[AutoSaveManager] Configuración de audio cambiada - guardado automático");
     }
 
     public void OnPowerUpDeactivated(PowerUpType powerUpType)
     {
+        if (!CheckSaveManager()) return;
+
         ShowSaveIndicator("Guardando...");
-
         saveManager.DeactivatePowerUp(powerUpType);
-
-        Debug.Log($"[AutoSaveManager] Power-up {powerUpType} desactivado - guardado automatico");
+        Debug.Log($"[AutoSaveManager] Power-up {powerUpType} desactivado - guardado automático");
     }
 
     #endregion
@@ -158,9 +186,10 @@ public class AutoSaveManager : MonoBehaviourSingleton<AutoSaveManager>
 
     public void ForceSave()
     {
-        ShowSaveIndicator("Guardando datos...");
+        if (!CheckSaveManager()) return;
 
-        saveManager?.SaveData();
+        ShowSaveIndicator("Guardando datos...");
+        saveManager.SaveData();
         Debug.Log("[AutoSaveManager] Guardado manual forzado");
     }
 

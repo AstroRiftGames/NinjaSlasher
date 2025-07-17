@@ -157,7 +157,7 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
         return TimeSpan.FromSeconds(Mathf.Max(0, (float)secondsLeft));
     }
 
-    private void SaveLivesViaAutoSave(string message = "Guardando vidas...")
+    private void SaveLivesViaAutoSave(string message = "Guardando...")
     {
         if (AutoSaveManager.Instance != null)
         {

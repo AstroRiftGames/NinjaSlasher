@@ -4,13 +4,16 @@ using UnityEngine.SceneManagement;
 public class GameManager : MonoBehaviourSingleton<GameManager>
 {
     public LevelController levelController;
-
+    private string[] testingScenes = { "TestScene" };
     private LevelStats currentStats;
 
     public override void Awake()
     {
         base.Awake();
-        EnemyTracker.OnAllEnemiesDefeated += OnLevelCompleted;
+        if (!IsTestingScene())
+        {
+            EnemyTracker.OnAllEnemiesDefeated += OnLevelCompleted;
+        }
     }
 
     void Start()
@@ -23,6 +26,9 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
 
     public void OnLevelCompleted(LevelStats stats)
     {
+        if (IsTestingScene())     
+            return;
+
         if (levelController == null)
             levelController = FindObjectOfType<LevelController>();
 
@@ -106,4 +112,18 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
             LifeManager.Instance.OnLivesChanged -= OnLivesChanged;
         }
     }
+
+    private bool IsTestingScene()
+    {
+        string currentScene = SceneManager.GetActiveScene().name;
+
+        foreach (string testScene in testingScenes)
+        {
+            if (currentScene == testScene)
+                return true;
+        }
+
+        return false;
+    }
+
 }
