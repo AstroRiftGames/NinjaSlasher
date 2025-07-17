@@ -50,10 +50,26 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
 
     public void OnPlayerLose()
     {
-        if (LifeManager.Instance.CurrentLives > 0)
-            LifeManager.Instance.UseLife();
+        Debug.Log("[GameManager] Jugador perdió el nivel");
+        if (LifeManager.Instance.CurrentLives <= 0)
+        {
+            Debug.Log("[GameManager] Sin vidas disponibles, regresando al selector");
+            GoToLevelSelection();
+            return;
+        }
 
-        UIManager.Instance.ShowLifeLostPanel();
+        LifeManager.Instance.UseLife();
+
+        if (LifeManager.Instance.CanPlay())
+        {
+            Debug.Log("[GameManager] Vidas restantes, mostrando panel de reintento");
+            UIManager.Instance.ShowLifeLostPanel();
+        }
+        else
+        {
+            Debug.Log("[GameManager] Sin vidas después de usar una, mostrando panel de espera");
+            UIManager.Instance.ShowNoLivesPanel();
+        }
     }
 
     private void OnLivesChanged(int newLives)
@@ -64,6 +80,15 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
         }
 
         Debug.Log($"[GameManager] Vidas actualizadas: {newLives}");
+
+        if (newLives > 0)
+        {
+            var gameplayUI = FindObjectOfType<GameplayUIManager>();
+            if (gameplayUI != null)
+            {
+                Debug.Log("[GameManager] Vidas recuperadas, UI se actualizará automáticamente");
+            }
+        }
     }
 
     public void GoToLevelSelection()
