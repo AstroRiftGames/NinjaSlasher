@@ -228,7 +228,10 @@ public class DailyRewardDayUI
             dayLabel.text = GetDayName(index);
 
         if (rewardIcon != null && reward.icon != null)
+        {
             rewardIcon.sprite = reward.icon;
+            rewardIcon.preserveAspect = true;
+        }
 
         if (quantityText != null)
             quantityText.text = $"x{reward.quantity}";
