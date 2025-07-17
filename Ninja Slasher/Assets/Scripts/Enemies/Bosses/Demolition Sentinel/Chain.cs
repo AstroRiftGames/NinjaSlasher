@@ -9,18 +9,19 @@ public class Chain : MonoBehaviour
     private bool _isActive = true;
 
     SpriteRenderer _renderer;
-    Collider2D _collider;
+    BoxCollider2D _collider;
 
     private void Awake()
     {
         TryGetComponent(out SpriteRenderer r);
         _renderer = r;
-        TryGetComponent(out Collider2D col);
+        TryGetComponent(out BoxCollider2D col);
         _collider = col;
     }
     private void Start()
     {
         transform.position = _anchor.position;
+        Debug.Log($"Col: {_collider != null}");
     }
     private void Update()
     {
@@ -32,11 +33,19 @@ public class Chain : MonoBehaviour
         }
     }
 
+
+    private Vector2 GetSize(bool _isRenderer)
+    {
+        float scale = _renderer.flipX ? -1 : 1;
+        return  new Vector2(CalculateLength() * (_isRenderer ? scale : 1), .553f);
+    }
+
     private void AdjustSize()
     {
-        Vector2 newSize = new Vector2 (CalculateLength() * CheckScale(), .553f);
-        _renderer.size = newSize;
-        _collider.bounds.SetMinMax(newSize, newSize);
+        _renderer.size = GetSize(true);
+
+        _collider.size = GetSize(false);
+        _collider.offset = new Vector2(_collider.size.x / 2, 0);
         
     }
 
@@ -52,7 +61,6 @@ public class Chain : MonoBehaviour
         transform.rotation = Quaternion.Euler(0, 0, angle);
     }
 
-    private float CheckScale() => _renderer.flipX ? -1:1;
 
     float CalculateLength()
     {
