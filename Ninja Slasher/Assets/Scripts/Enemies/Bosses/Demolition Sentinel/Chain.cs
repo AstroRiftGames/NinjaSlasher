@@ -21,7 +21,6 @@ public class Chain : MonoBehaviour
     private void Start()
     {
         transform.position = _anchor.position;
-        Debug.Log($"Col: {_collider != null}");
     }
     private void Update()
     {
