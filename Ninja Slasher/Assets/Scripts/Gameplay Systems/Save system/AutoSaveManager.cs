@@ -47,7 +47,7 @@ public class AutoSaveManager : MonoBehaviourSingleton<AutoSaveManager>
     {
         if (pauseStatus)
         {
-            ShowSaveIndicator("Guardando al pausar...");
+            ShowSaveIndicator("Guardando...");
             saveManager?.SaveOnApplicationEvent();
             Debug.Log("[AutoSaveManager] Guardado automatico al pausar aplicacion");
         }
@@ -58,7 +58,7 @@ public class AutoSaveManager : MonoBehaviourSingleton<AutoSaveManager>
     #region GAMEPLAY_EVENTS
     public void OnLevelCompleted(int levelId, int starsEarned, int enemiesKilled, int maxCombo, float playTime)
     {
-        ShowSaveIndicator("Guardando progreso...");
+        ShowSaveIndicator("Guardando...");
 
         saveManager.UpdateLevelProgress(levelId + 1); // Desbloquear siguiente nivel
         saveManager.UpdateStars(levelId, starsEarned);
@@ -69,7 +69,7 @@ public class AutoSaveManager : MonoBehaviourSingleton<AutoSaveManager>
 
     public void OnLevelFailed(int enemiesKilled, int maxCombo, float playTime)
     {
-        ShowSaveIndicator("Guardando estadisticas...", 1f);
+        ShowSaveIndicator("Guardando...", 1f);
 
         saveManager.UpdateGameStats(enemiesKilled, maxCombo, playTime, false);
 
@@ -87,7 +87,7 @@ public class AutoSaveManager : MonoBehaviourSingleton<AutoSaveManager>
 
     public void OnPowerUpObtained(PowerUpType powerUpType, int quantity = 1)
     {
-        ShowSaveIndicator("Power up obtenido", 1f);
+        ShowSaveIndicator("Guardando...", 1f);
 
         saveManager.AddPowerUpToInventory(powerUpType, quantity);
 
@@ -96,7 +96,7 @@ public class AutoSaveManager : MonoBehaviourSingleton<AutoSaveManager>
 
     public void OnPowerUpActivated(PowerUpType powerUpType, float duration = 1800f)
     {
-        ShowSaveIndicator("Power up activado!");
+        ShowSaveIndicator("Guardando...!");
 
         saveManager.ActivatePowerUp(powerUpType, duration);
 
@@ -105,7 +105,7 @@ public class AutoSaveManager : MonoBehaviourSingleton<AutoSaveManager>
 
     public void OnDailyRewardClaimed(string rewardData)
     {
-        ShowSaveIndicator("Recompensa guardada!");
+        ShowSaveIndicator("Guardando...");
 
         saveManager.SaveDailyRewardData(rewardData);
 
@@ -123,12 +123,21 @@ public class AutoSaveManager : MonoBehaviourSingleton<AutoSaveManager>
 
     public void OnAudioSettingsChanged(float musicVolume, float sfxVolume)
     {
-        ShowSaveIndicator("Configuracion guardada", 1f);
+        ShowSaveIndicator("Guardando...", 1f);
 
         saveManager.SetMusicVolume(musicVolume);
         saveManager.SetSFXVolume(sfxVolume);
 
         Debug.Log("[AutoSaveManager] Configuracion de audio cambiada - guardado automatico");
+    }
+
+    public void OnPowerUpDeactivated(PowerUpType powerUpType)
+    {
+        ShowSaveIndicator("Guardando...");
+
+        saveManager.DeactivatePowerUp(powerUpType);
+
+        Debug.Log($"[AutoSaveManager] Power-up {powerUpType} desactivado - guardado automatico");
     }
 
     #endregion

@@ -161,6 +161,21 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
         SaveData();
     }
 
+    public void DeactivatePowerUp(PowerUpType powerUpType)
+    {
+        var powerUpToRemove = gameData.activePowerUps.Find(p => p.type == powerUpType);
+        if (powerUpToRemove != null)
+        {
+            gameData.activePowerUps.Remove(powerUpToRemove);
+            SaveData();
+            Debug.Log($"[SaveManager] Power-up {powerUpType} desactivado y removido del guardado");
+        }
+        else
+        {
+            Debug.LogWarning($"[SaveManager] No se encontró power-up activo {powerUpType} para desactivar");
+        }
+    }
+
     public void UpdateActivePowerUps()
     {
         bool hasChanges = false;
@@ -221,17 +236,5 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
         gameData = new GameData();
         SaveData();
         Debug.Log("[SaveManager] Save reseteado");
-    }
-
-    public void LogCurrentGameState()
-    {
-        Debug.Log($"[SaveManager] Estado actual:");
-        Debug.Log($"- Nivel más alto: {gameData.highestUnlockedLevel}");
-        Debug.Log($"- Área actual: {gameData.currentArea}");
-        Debug.Log($"- Estrellas totales: {gameData.totalStars}");
-        Debug.Log($"- Vidas actuales: {gameData.currentLives}");
-        Debug.Log($"- Power-ups activos: {gameData.activePowerUps.Count}");
-        Debug.Log($"- Power-ups en inventario: {gameData.powerUpInventory.Count}");
-        Debug.Log($"- Último guardado: {gameData.lastPlayDate}");
     }
 }

@@ -75,7 +75,16 @@ public class DailyRewardSystem : MonoBehaviourSingleton<DailyRewardSystem>
     void SaveRewardData()
     {
         string jsonData = JsonUtility.ToJson(rewardData);
-        SaveManager.Instance.SaveDailyRewardData(jsonData);
+
+        if (AutoSaveManager.Instance != null)
+        {
+            AutoSaveManager.Instance.OnDailyRewardClaimed(jsonData);
+        }
+        else
+        {
+            SaveManager.Instance.SaveDailyRewardData(jsonData);
+            Debug.LogWarning("[DailyRewardSystem] AutoSaveManager no encontrado");
+        }
     }
 
     void CheckDailyReward()
@@ -85,7 +94,8 @@ public class DailyRewardSystem : MonoBehaviourSingleton<DailyRewardSystem>
 
         if (string.IsNullOrEmpty(rewardData.lastClaimDate))
         {
-            // Primer dia - no hacer nada
+            // Primer día - no hacer nada
+            Debug.Log("[DailyRewardSystem] Primer día del sistema de recompensas");
         }
         else
         {
@@ -97,14 +107,17 @@ public class DailyRewardSystem : MonoBehaviourSingleton<DailyRewardSystem>
             if (daysDifference == 0)
             {
                 // Ya se reclamo hoy - no hacer nada
+                Debug.Log("[DailyRewardSystem] Recompensa ya reclamada hoy");
             }
             else if (daysDifference == 1)
             {
                 AdvanceDay();
+                Debug.Log($"[DailyRewardSystem] Avanzando al día {rewardData.currentWeekDay + 1}");
             }
             else if (daysDifference > 1)
             {
                 ResetWeeklyProgress();
+                Debug.Log($"[DailyRewardSystem] Racha perdida. Días sin jugar: {daysDifference}");
             }
         }
 
@@ -123,6 +136,7 @@ public class DailyRewardSystem : MonoBehaviourSingleton<DailyRewardSystem>
         if (rewardData.currentWeekDay == 0)
         {
             rewardData.claimedDays = new bool[7];
+            Debug.Log("[DailyRewardSystem] Nueva semana iniciada");
         }
 
         OnConsecutiveDaysUpdated?.Invoke(rewardData.consecutiveDays);
@@ -130,24 +144,27 @@ public class DailyRewardSystem : MonoBehaviourSingleton<DailyRewardSystem>
 
     void ResetWeeklyProgress()
     {
+        int previousDays = rewardData.consecutiveDays;
         rewardData.currentWeekDay = 0;
         rewardData.consecutiveDays = 0;
         rewardData.claimedDays = new bool[7];
 
         OnConsecutiveDaysUpdated?.Invoke(rewardData.consecutiveDays);
+
+        Debug.Log($"[DailyRewardSystem] Progreso reseteado. Días consecutivos perdidos: {previousDays}");
     }
 
     public bool ClaimReward()
     {
         if (!CanClaimToday())
         {
-            Debug.Log("No se puede reclamar la recompensa hoy");
+            Debug.LogWarning("[DailyRewardSystem] No se puede reclamar la recompensa hoy");
             return false;
         }
 
         if (rewardData.claimedDays[rewardData.currentWeekDay])
         {
-            Debug.Log("Recompensa ya reclamada");
+            Debug.LogWarning("[DailyRewardSystem] Recompensa ya reclamada");
             return false;
         }
 
@@ -156,18 +173,18 @@ public class DailyRewardSystem : MonoBehaviourSingleton<DailyRewardSystem>
 
         DailyReward claimedReward = weeklyRewards[rewardData.currentWeekDay];
 
-        AddPowerUpToInventory(claimedReward);
+        AddPowerUpToInventoryViaAutoSave(claimedReward);
 
         SaveRewardData();
 
         OnRewardClaimed?.Invoke(claimedReward);
         OnRewardAvailabilityChanged?.Invoke(false);
 
-        Debug.Log($"Recompensa reclamada {claimedReward.displayName} x{claimedReward.quantity}");
+        Debug.Log($"[DailyRewardSystem] Recompensa reclamada: {claimedReward.displayName} x{claimedReward.quantity}");
         return true;
     }
 
-    void AddPowerUpToInventory(DailyReward reward)
+    void AddPowerUpToInventoryDirect(DailyReward reward)
     {
         var gameData = SaveManager.Instance.GetGameData();
         var inventory = gameData.powerUpInventory;
@@ -184,6 +201,19 @@ public class DailyRewardSystem : MonoBehaviourSingleton<DailyRewardSystem>
         }
 
         SaveManager.Instance.SaveData();
+    }
+
+    void AddPowerUpToInventoryViaAutoSave(DailyReward reward)
+    {
+        if (AutoSaveManager.Instance != null)
+        {
+            AutoSaveManager.Instance.OnPowerUpObtained(reward.powerUpType, reward.quantity);
+        }
+        else
+        {
+            AddPowerUpToInventoryDirect(reward);
+            Debug.LogWarning("[DailyRewardSystem] AutoSaveManager no encontrado");
+        }
     }
 
     public bool CanClaimToday()
@@ -225,23 +255,5 @@ public class DailyRewardSystem : MonoBehaviourSingleton<DailyRewardSystem>
             return "Disponible ahora";
 
         return $"{timeUntilNext.Hours:D2}:{timeUntilNext.Minutes:D2}:{timeUntilNext.Seconds:D2}";
-    }
-
-    // METODOS PARA TESTING
-    [ContextMenu("Reset Reward Data")]
-    public void ResetRewardData()
-    {
-        SaveManager.Instance.SaveDailyRewardData("");
-        LoadRewardData();
-        CheckDailyReward();
-    }
-
-    [ContextMenu("Simular Día Siguiente")]
-    public void SimulateNextDay()
-    {
-        DateTime yesterday = DateTime.Now.AddDays(-1);
-        rewardData.lastClaimDate = yesterday.ToString("yyyy-MM-dd");
-        SaveRewardData();
-        CheckDailyReward();
     }
 }
