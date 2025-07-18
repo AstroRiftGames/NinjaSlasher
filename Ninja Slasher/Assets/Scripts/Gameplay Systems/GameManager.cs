@@ -32,12 +32,27 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
 
         if (!LifeManager.Instance.CanPlay())
         {
-            Debug.LogWarning("[GAMEMANAGER] Sin vidas disponibles al iniciar el nivel");
             GoToLevelSelection();
             return;
         }
+    }
 
-        StartLevel();
+    private void OnEnable()
+    {
+        SceneManager.sceneLoaded += OnSceneLoaded;
+    }
+
+    private void OnDisable()
+    {
+        SceneManager.sceneLoaded -= OnSceneLoaded;
+    }
+
+    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        if (scene.name.Contains("Level") && !_levelStarted && LifeManager.Instance.CanPlay())
+        {
+            StartLevel();
+        }
     }
 
     private void StartLevel()
@@ -46,7 +61,7 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
         {
             _levelStarted = true;
             LifeManager.Instance.OnLevelStart();
-            Debug.Log("[GAMEMANAGER] Nivel iniciado - descuento virtual aplicado");
+            Debug.Log("[GAMEMANAGER] Nivel iniciado, descuento virtual aplicado");
         }
     }
 

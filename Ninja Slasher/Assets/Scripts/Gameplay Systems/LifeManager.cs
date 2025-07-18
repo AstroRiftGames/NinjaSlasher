@@ -114,6 +114,12 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
 
     public void OnLevelStart()
     {
+        if (_hasVirtualDeduction)
+        {
+            Debug.LogWarning("[LifeManager] Ya hay una vida virtual descontada. Forzando reinicio del estado.");
+            _hasVirtualDeduction = false;
+        }
+
         if (CurrentLives > 0 && !_hasVirtualDeduction)
         {
             _virtualLives = CurrentLives - 1;

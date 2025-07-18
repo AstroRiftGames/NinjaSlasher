@@ -3,7 +3,7 @@ using UnityEngine;
 [CreateAssetMenu(fileName = "TimeChallenge", menuName = "Game/Objectives/Time Challenge")]
 public class TimeChallengeObjective : ObjectiveData
 {
-    [Header("Configuración de Tiempo")]
+    [Header("TIME LIMIT")]
     public float maxTimeAllowed = 30f;
 
     public override bool IsCompleted(LevelStats stats, LevelContext context)

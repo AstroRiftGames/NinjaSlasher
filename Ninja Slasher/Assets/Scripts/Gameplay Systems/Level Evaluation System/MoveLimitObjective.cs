@@ -3,7 +3,7 @@ using UnityEngine;
 [CreateAssetMenu(fileName = "MoveLimit", menuName = "Game/Objectives/Move Limit")]
 public class MoveLimitObjective : ObjectiveData
 {
-    [Header("Configuración de Movimientos")]
+    [Header("MOVEMENTS LIMIT")]
     public int maxAllowedMoves = 10;
 
     public override bool IsCompleted(LevelStats stats, LevelContext context)
