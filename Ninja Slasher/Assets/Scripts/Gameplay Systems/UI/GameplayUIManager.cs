@@ -151,9 +151,9 @@ public class GameplayUIManager : MonoBehaviour
         {
             float bonus = comboLevel switch
             {
-                2 => 10f,
-                3 => 1.5f,
-                4 => 2f,
+                2 => 3f,
+                3 => 4f,
+                4 => 6f,
                 _ => 3f
             };
             _bonusTimeText.text = $"+{bonus:F0}s";

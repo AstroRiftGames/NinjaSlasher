@@ -210,9 +210,10 @@ public class LevelController : MonoBehaviour
         return GameObject.FindGameObjectsWithTag("Enemy").Length;
     }
 
-    public void AddTime(float bonusTime)
+    public void AddTime(float timeToAdd)
     {
-        currentTime += bonusTime;
+        currentTime += timeToAdd;
+        Debug.Log($"[LevelController] Tiempo agregado: {timeToAdd:F2}s. Tiempo actual: {currentTime:F2}s");
 
         OnTimeChanged?.Invoke(currentTime);
     }
@@ -241,23 +242,5 @@ public class LevelController : MonoBehaviour
     {
         levelFailed = true;
         levelCompleted = true;
-    }
-
-    private void HandleTimeExpired()
-    {
-        Debug.Log("[LevelController] Tiempo agotado");
-
-        MarkLevelAsFailed();
-
-        var powerUpContext = PowerUpManager.Instance?.context;
-        if (powerUpContext != null && powerUpContext.SecondChanceActive)
-        {
-            Debug.Log("[LevelController] Segunda Oportunidad activa - no se pierde vida");
-            GameManager.Instance.GoToLevelSelection();
-        }
-        else
-        {
-            GameManager.Instance.OnPlayerLose();
-        }
     }
 }
