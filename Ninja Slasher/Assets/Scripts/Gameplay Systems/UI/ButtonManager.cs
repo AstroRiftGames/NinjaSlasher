@@ -82,7 +82,7 @@ public class ButtonManager : MonoBehaviour
     {
         _pauseButton.onClick.AddListener(UIManager.Instance.ShowHidePauseCanvas);
         _resumeButton.onClick.AddListener(UIManager.Instance.ShowHidePauseCanvas);
-        _restartButton.onClick.AddListener(UIManager.Instance.RestartLevel);
+        _restartButton.onClick.AddListener(OnRestartPressed);
         _quitButton.onClick.AddListener(UIManager.Instance.ShowLevelSelector);
         _retryButton.onClick.AddListener(GetComponent<GameplayUIManager>().OnRetryPressed);
         _backToSelectionButton.onClick.AddListener(GetComponent<GameplayUIManager>().OnBackToSelectionPressed);
@@ -141,6 +141,12 @@ public class ButtonManager : MonoBehaviour
     public void RefreshLevelProgression()
     {
         SetupLevelProgression();
+    }
+
+    private void OnRestartPressed()
+    {
+        GameManager.Instance.RestartLevel();
+        UIManager.Instance.ShowHidePauseCanvas();
     }
 
     private bool IsLevelUnlocked(int levelId)

@@ -7,6 +7,7 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
     private string[] testingScenes = { "TestScene" };
     private LevelStats currentStats;
     private bool _playerHasDied;
+    private bool _levelStarted = false;
 
     public bool PlayerHasDied => _playerHasDied;
 
@@ -27,11 +28,31 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
         }
 
         _playerHasDied = false;
+        _levelStarted = false;
+
+        if (!LifeManager.Instance.CanPlay())
+        {
+            Debug.LogWarning("[GAMEMANAGER] Sin vidas disponibles al iniciar el nivel");
+            GoToLevelSelection();
+            return;
+        }
+
+        StartLevel();
+    }
+
+    private void StartLevel()
+    {
+        if (!_levelStarted && LifeManager.Instance.CanPlay())
+        {
+            _levelStarted = true;
+            LifeManager.Instance.OnLevelStart();
+            Debug.Log("[GAMEMANAGER] Nivel iniciado - descuento virtual aplicado");
+        }
     }
 
     public void OnLevelCompleted(LevelStats stats)
     {
-        if (IsTestingScene())     
+        if (IsTestingScene())
             return;
 
         if (levelController == null)
@@ -55,6 +76,12 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
             LevelProgressionManager.Instance?.OnLevelCompleted(currentLevelId, starsEarned);
         }
 
+        if (_levelStarted)
+        {
+            LifeManager.Instance.OnLevelCompleted();
+            _levelStarted = false;
+        }
+
         GoToLevelSelection();
     }
 
@@ -62,13 +89,17 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
     {
         _playerHasDied = true;
 
-        if (LifeManager.Instance.CurrentLives <= 0)
+        if (_levelStarted)
+        {
+            LifeManager.Instance.UseLife();
+            _levelStarted = false;
+        }
+
+        if (LifeManager.Instance.GetRealLives() <= 0)
         {
             GoToLevelSelection();
             return;
         }
-
-        LifeManager.Instance.UseLife();
 
         if (LifeManager.Instance.CanPlay())
         {
@@ -92,17 +123,24 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
             var gameplayUI = FindObjectOfType<GameplayUIManager>();
             if (gameplayUI != null)
             {
-                Debug.Log("[GameManager] Vidas recuperadas");
+                Debug.Log("[GAMEMANAGER] Vidas recuperadas");
             }
         }
     }
 
     public void GoToLevelSelection()
     {
+        if (_levelStarted || LifeManager.Instance.HasPendingDeduction())
+        {
+            LifeManager.Instance.OnLevelExit();
+            _levelStarted = false;
+        }
+
         SaveManager.Instance.SaveData();
         SceneManager.sceneLoaded += HandleScreenflowLoaded;
         SceneManager.LoadScene("ScreenflowTest");
     }
+
 
     private void HandleScreenflowLoaded(Scene scene, LoadSceneMode mode)
     {
@@ -114,18 +152,29 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
 
     public void RestartLevel()
     {
+        if (_levelStarted || LifeManager.Instance.HasPendingDeduction())
+        {
+            LifeManager.Instance.OnLevelExit();
+            _levelStarted = false;
+        }
+
         if (!LifeManager.Instance.CanPlay())
         {
-            Debug.LogWarning("[GameManager] Intento de reiniciar nivel sin vidas disponibles");
             UIManager.Instance.ShowNoLivesPanel();
+            GoToLevelSelection();
             return;
         }
 
         _playerHasDied = false;
 
         string currentScene = SceneManager.GetActiveScene().name;
+
+        LifeManager.Instance.OnLevelStart();
+        _levelStarted = true;
+
         SceneManager.LoadScene(currentScene);
     }
+
 
     private int GetCurrentLevelId()
     {
@@ -166,4 +215,21 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
         return false;
     }
 
+    private void OnApplicationPause(bool pauseStatus)
+    {
+        if (pauseStatus && _levelStarted)
+        {
+            LifeManager.Instance.OnLevelExit();
+            _levelStarted = false;
+        }
+    }
+
+    private void OnApplicationFocus(bool hasFocus)
+    {
+        if (!hasFocus && _levelStarted)
+        {
+            LifeManager.Instance.OnLevelExit();
+            _levelStarted = false;
+        }
+    }
 }

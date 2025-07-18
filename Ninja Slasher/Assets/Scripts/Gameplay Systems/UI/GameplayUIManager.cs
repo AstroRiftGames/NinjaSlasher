@@ -23,7 +23,7 @@ public class GameplayUIManager : MonoBehaviour
         if (LifeManager.Instance != null)
             LifeManager.Instance.OnLivesChanged += OnLivesChanged;
 
-        UpdateLivesUI(LifeManager.Instance?.CurrentLives ?? 0);
+        UpdateLivesUI(LifeManager.Instance?.GetDisplayLives() ?? 0);
         _comboCountText.gameObject.SetActive(false);
         _bonusTimeText.gameObject.SetActive(false);
         _lifeLostPanel.SetActive(false);
@@ -118,11 +118,7 @@ public class GameplayUIManager : MonoBehaviour
     public void OnRetryPressed()
     {
         HideLifeLostPanel();
-        if (!LifeManager.Instance.CanPlay())
-        {
-            ShowNoLivesPanel();
-            return;
-        }
+
         GameManager.Instance.RestartLevel();
     }
 
@@ -135,7 +131,8 @@ public class GameplayUIManager : MonoBehaviour
     private void OnLivesChanged(int lives)
     {
         UpdateLivesUI(lives);
-        if (_noLivesActive && lives > 0)
+
+        if (_noLivesActive && LifeManager.Instance.GetRealLives() > 0)
         {
             _noLivesActive = false;
             HideNoLivesPanel();

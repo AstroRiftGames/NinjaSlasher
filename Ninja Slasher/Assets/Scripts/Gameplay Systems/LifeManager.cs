@@ -3,7 +3,7 @@ using UnityEngine;
 
 public class LifeManager : MonoBehaviourSingleton<LifeManager>
 {
-    [Header("Ajustes de vidas")]
+    [Header("LIVES SETTINGS")]
     [SerializeField] private int _maxLives;
     [SerializeField] private int _startingLives;
     [SerializeField] private int _lifeRechargeSeconds = 1800; // 30 min por vida
@@ -11,12 +11,18 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
     public int CurrentLives { get; private set; }
     private DateTime _lastLifeUsed;
 
+    [Header("VIRTUAL LIFE DISCOUNTING SYSTEM")]
+    private int _virtualLives;
+    private bool _hasVirtualDeduction = false;
+    private bool _levelInProgress = false;
+
     public event Action<int> OnLivesChanged;
     private bool _secondChanceUsed = false;
 
     private void Start()
     {
         LoadLivesFromSave();
+        _virtualLives = CurrentLives;
     }
 
     private void LoadLivesFromSave()
@@ -67,8 +73,17 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
             _lastLifeUsed = _lastLifeUsed.AddSeconds(vidasAGenerar * _lifeRechargeSeconds);
             CurrentLives = newLives;
 
+            if (!_hasVirtualDeduction)
+            {
+                _virtualLives = CurrentLives;
+            }
+
             SaveLivesViaAutoSave("Vida regenerada");
-            OnLivesChanged?.Invoke(CurrentLives);
+
+            if (!_hasVirtualDeduction)
+            {
+                OnLivesChanged?.Invoke(CurrentLives);
+            }
 
             Debug.Log($"[LifeManager] Regeneradas {vidasAGenerar} vidas. Total: {CurrentLives}");
         }
@@ -86,6 +101,7 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
 
             _lastLifeUsed = _lastLifeUsed.AddSeconds(vidasAGenerar * _lifeRechargeSeconds);
             CurrentLives = newLives;
+            _virtualLives = CurrentLives;
 
             SaveLivesViaAutoSave("Vidas offline regeneradas");
             OnLivesChanged?.Invoke(CurrentLives);
@@ -96,6 +112,20 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
 
     public bool CanPlay() => CurrentLives > 0;
 
+    public void OnLevelStart()
+    {
+        if (CurrentLives > 0 && !_hasVirtualDeduction)
+        {
+            _virtualLives = CurrentLives - 1;
+            _hasVirtualDeduction = true;
+            _levelInProgress = true;
+
+            Debug.Log($"[LifeManager] Nivel iniciado. Vidas reales: {CurrentLives}, Vidas virtuales: {_virtualLives}");
+
+            OnLivesChanged?.Invoke(_virtualLives);
+        }
+    }
+
     public void UseLife()
     {
         var context = PowerUpManager.Instance?.context;
@@ -105,15 +135,69 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
             return;
         }
 
-        if (CurrentLives <= 0) return;
+        if (_hasVirtualDeduction)
+        {
+            CurrentLives = _virtualLives;
+            _lastLifeUsed = DateTime.Now;
+            _hasVirtualDeduction = false;
+            _levelInProgress = false;
 
-        CurrentLives--;
-        _lastLifeUsed = DateTime.Now;
+            Debug.Log($"[LifeManager] Nivel perdido. Descuento confirmado. Vidas: {CurrentLives}");
 
-        SaveLivesViaAutoSave("Vida perdida");
-        OnLivesChanged?.Invoke(CurrentLives);
+            SaveLivesViaAutoSave("Vida perdida");
+        }
+        else
+        {
+            if (CurrentLives <= 0) return;
 
-        Debug.Log($"[LifeManager] Vida usada. Restantes: {CurrentLives}");
+            CurrentLives--;
+            _lastLifeUsed = DateTime.Now;
+            _virtualLives = CurrentLives;
+
+            SaveLivesViaAutoSave("Vida perdida");
+            OnLivesChanged?.Invoke(CurrentLives);
+
+            Debug.Log($"[LifeManager] Vida usada. Restantes: {CurrentLives}");
+        }
+    }
+
+    public void OnLevelCompleted()
+    {
+        if (_hasVirtualDeduction)
+        {
+            _virtualLives = CurrentLives;
+            _hasVirtualDeduction = false;
+            _levelInProgress = false;
+
+            Debug.Log($"[LifeManager] Nivel completado. Descuento cancelado. Vidas mantenidas: {CurrentLives}");
+
+            OnLivesChanged?.Invoke(CurrentLives);
+        }
+    }
+
+    public void OnLevelExit()
+    {
+        if (_hasVirtualDeduction)
+        {
+            CurrentLives = _virtualLives;
+            _lastLifeUsed = DateTime.Now;
+            _hasVirtualDeduction = false;
+            _levelInProgress = false;
+
+            Debug.Log($"[LifeManager] Nivel abandonado. Descuento confirmado. Vidas: {CurrentLives}");
+
+            SaveLivesViaAutoSave("Vida perdida por abandono");
+        }
+    }
+
+    public int GetDisplayLives()
+    {
+        return _hasVirtualDeduction ? _virtualLives : CurrentLives;
+    }
+
+    public int GetRealLives()
+    {
+        return CurrentLives;
     }
 
     public void AddLife()
@@ -122,8 +206,17 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
 
         CurrentLives++;
 
+        if (!_hasVirtualDeduction)
+        {
+            _virtualLives = CurrentLives;
+        }
+
         SaveLivesViaAutoSave("Vida ganada");
-        OnLivesChanged?.Invoke(CurrentLives);
+
+        if (!_hasVirtualDeduction)
+        {
+            OnLivesChanged?.Invoke(CurrentLives);
+        }
 
         Debug.Log($"[LifeManager] Vida agregada. Total: {CurrentLives}");
     }
@@ -136,8 +229,17 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
         CurrentLives = _maxLives;
         _lastLifeUsed = DateTime.Now;
 
+        if (!_hasVirtualDeduction)
+        {
+            _virtualLives = CurrentLives;
+        }
+
         SaveLivesViaAutoSave("Vidas completas");
-        OnLivesChanged?.Invoke(CurrentLives);
+
+        if (!_hasVirtualDeduction)
+        {
+            OnLivesChanged?.Invoke(CurrentLives);
+        }
 
         Debug.Log($"[LifeManager] Vidas llenadas: {previousLives} -> {CurrentLives}");
     }
@@ -170,17 +272,24 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
         }
     }
 
-#if UNITY_EDITOR
-    [ContextMenu("Usar Vida")]
-    public void DebugUseLife() => UseLife();
-
-    [ContextMenu("Agregar Vida")]
-    public void DebugAddLife() => AddLife();
-
-    [ContextMenu("Mostrar Estado")]
-    public void DebugShowState()
+    private void OnApplicationPause(bool pauseStatus)
     {
-        Debug.Log($"[LIFE MANAGER] \nVidas: {CurrentLives}\nUltima vida usada: {_lastLifeUsed}\nTiempo hasta la próxima vida: {GetTimeToNextLife()}");
+        if (pauseStatus && _levelInProgress && _hasVirtualDeduction)
+        {
+            OnLevelExit();
+        }
     }
-#endif
+
+    private void OnApplicationFocus(bool hasFocus)
+    {
+        if (!hasFocus && _levelInProgress && _hasVirtualDeduction)
+        {
+            OnLevelExit();
+        }
+    }
+
+    public bool HasPendingDeduction()
+    {
+        return _hasVirtualDeduction;
+    }
 }
