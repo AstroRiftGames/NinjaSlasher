@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections.Generic;
+using System;
 
 public class EnemyTracker : MonoBehaviour, ITracker
 {
@@ -7,7 +8,7 @@ public class EnemyTracker : MonoBehaviour, ITracker
     private float startTime;
     private int totalEnemies;
 
-    public static event System.Action<LevelStats> OnAllEnemiesDefeated;
+    public static event Action<LevelStats> OnAllEnemiesDefeated;
 
     void Start()
     {
@@ -23,6 +24,11 @@ public class EnemyTracker : MonoBehaviour, ITracker
 
         if (enemies.Count <= 0)
         {
+            if (GameManager.Instance != null && GameManager.Instance.PlayerHasDied)
+            {
+                return;
+            }
+
             float elapsedTime = Time.time - startTime;
             LevelStats stats = new LevelStats
             {
@@ -30,6 +36,7 @@ public class EnemyTracker : MonoBehaviour, ITracker
                 enemiesDefeated = totalEnemies,
                 totalEnemies = totalEnemies
             };
+
             OnAllEnemiesDefeated?.Invoke(stats);
         }
     }

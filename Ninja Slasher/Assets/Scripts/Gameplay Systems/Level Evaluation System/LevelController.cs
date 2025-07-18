@@ -6,10 +6,10 @@ using UnityEngine;
 [Serializable]
 public class LevelObjectives
 {
-    [Header("Objetivo Principal")]
+    [Header("PRIMARY")]
     public bool mustDefeatAllEnemies = true;
 
-    [Header("Objetivos Secundarios")]
+    [Header("SECONDARY")]
     public bool enableTimeChallenge;
     public float maxTimeAllowed = 30f;
 
@@ -18,7 +18,7 @@ public class LevelObjectives
 
     public bool enableParryKillChallenge;
 
-    [Header("Configuracion")]
+    [Header("SETTINGS")]
     public bool useScriptableObjectOverride = false;
     public ObjectiveData objectivesDataOverride;
 }
@@ -88,6 +88,7 @@ public class LevelController : MonoBehaviour
     private float currentTime;
     private float initialDuration;
     private bool levelCompleted = false;
+    private bool levelFailed = false;
 
     public Action<float> OnTimeChanged;
     public Action OnTimeExpired;
@@ -123,7 +124,7 @@ public class LevelController : MonoBehaviour
         StartCoroutine(TimerCoroutine());
 
         Debug.Log($"Nivel iniciado: {levelConfiguration.levelName}");
-        Debug.Log($"Duración base: {baseDuration}s, Duración modificada: {modifiedDuration}s");
+        Debug.Log($"Duracion base: {baseDuration}s, Duración modificada: {modifiedDuration}s");
     }
 
     private IEnumerator TimerCoroutine()
@@ -143,22 +144,29 @@ public class LevelController : MonoBehaviour
         }
     }
 
-    public void StopTimer()
+    public void StopTimer(bool failed = false)
     {
         levelCompleted = true;
+        levelFailed = failed;
     }
 
     public int Evaluate(LevelStats stats)
     {
         if (evaluator == null || levelConfiguration == null)
         {
-            Debug.LogError("Evaluador no inicializado correctamente");
+            Debug.LogError("Evaluador no inicializado");
+            return 0;
+        }
+
+        if (levelFailed)
+        {
+            Debug.Log("[LevelController] nivel fallido no se evaluan objetivos");
             return 0;
         }
 
         var result = evaluator.Evaluate(stats);
-
         Debug.Log($"Evaluación completada: {result.starsEarned} estrellas");
+
         foreach (var completed in result.completedObjectives)
         {
             Debug.Log($"Objetivo completado: {completed.objectiveName}");
@@ -205,7 +213,6 @@ public class LevelController : MonoBehaviour
     public void AddTime(float bonusTime)
     {
         currentTime += bonusTime;
-        Debug.Log($"[LevelController] Tiempo agregado: +{bonusTime:F1}s. Tiempo restante: {currentTime:F1}s");
 
         OnTimeChanged?.Invoke(currentTime);
     }
@@ -220,10 +227,37 @@ public class LevelController : MonoBehaviour
             float extraPercent = powerUpContext.ExtraTimePercent;
             float bonusTime = baseDuration * extraPercent;
             modifiedDuration += bonusTime;
-
-            Debug.Log($"[PowerUp] Tiempo Extra activo: +{bonusTime:F1}s ({extraPercent * 100}% extra)");
         }
 
         return modifiedDuration;
+    }
+
+    public bool CanEvaluateObjectives()
+    {
+        return levelCompleted && !levelFailed;
+    }
+
+    public void MarkLevelAsFailed()
+    {
+        levelFailed = true;
+        levelCompleted = true;
+    }
+
+    private void HandleTimeExpired()
+    {
+        Debug.Log("[LevelController] Tiempo agotado");
+
+        MarkLevelAsFailed();
+
+        var powerUpContext = PowerUpManager.Instance?.context;
+        if (powerUpContext != null && powerUpContext.SecondChanceActive)
+        {
+            Debug.Log("[LevelController] Segunda Oportunidad activa - no se pierde vida");
+            GameManager.Instance.GoToLevelSelection();
+        }
+        else
+        {
+            GameManager.Instance.OnPlayerLose();
+        }
     }
 }

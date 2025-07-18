@@ -6,6 +6,9 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
     public LevelController levelController;
     private string[] testingScenes = { "TestScene" };
     private LevelStats currentStats;
+    private bool _playerHasDied;
+
+    public bool PlayerHasDied => _playerHasDied;
 
     public override void Awake()
     {
@@ -22,6 +25,8 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
         {
             LifeManager.Instance.OnLivesChanged += OnLivesChanged;
         }
+
+        _playerHasDied = false;
     }
 
     public void OnLevelCompleted(LevelStats stats)
@@ -45,15 +50,20 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
         int currentLevelId = GetCurrentLevelId();
         SaveManager.Instance.UpdateStars(currentLevelId, starsEarned);
 
+        if (starsEarned >= 1)
+        {
+            LevelProgressionManager.Instance?.OnLevelCompleted(currentLevelId, starsEarned);
+        }
+
         GoToLevelSelection();
     }
 
     public void OnPlayerLose()
     {
-        Debug.Log("[GameManager] Jugador perdió el nivel");
+        _playerHasDied = true;
+
         if (LifeManager.Instance.CurrentLives <= 0)
         {
-            Debug.Log("[GameManager] Sin vidas disponibles, regresando al selector");
             GoToLevelSelection();
             return;
         }
@@ -62,12 +72,10 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
 
         if (LifeManager.Instance.CanPlay())
         {
-            Debug.Log("[GameManager] Vidas restantes, mostrando panel de reintento");
             UIManager.Instance.ShowLifeLostPanel();
         }
         else
         {
-            Debug.Log("[GameManager] Sin vidas después de usar una, mostrando panel de espera");
             UIManager.Instance.ShowNoLivesPanel();
         }
     }
@@ -79,14 +87,12 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
             UIManager.Instance.UpdateLivesUI(newLives);
         }
 
-        Debug.Log($"[GameManager] Vidas actualizadas: {newLives}");
-
         if (newLives > 0)
         {
             var gameplayUI = FindObjectOfType<GameplayUIManager>();
             if (gameplayUI != null)
             {
-                Debug.Log("[GameManager] Vidas recuperadas, UI se actualizará automáticamente");
+                Debug.Log("[GameManager] Vidas recuperadas");
             }
         }
     }
@@ -108,6 +114,15 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
 
     public void RestartLevel()
     {
+        if (!LifeManager.Instance.CanPlay())
+        {
+            Debug.LogWarning("[GameManager] Intento de reiniciar nivel sin vidas disponibles");
+            UIManager.Instance.ShowNoLivesPanel();
+            return;
+        }
+
+        _playerHasDied = false;
+
         string currentScene = SceneManager.GetActiveScene().name;
         SceneManager.LoadScene(currentScene);
     }

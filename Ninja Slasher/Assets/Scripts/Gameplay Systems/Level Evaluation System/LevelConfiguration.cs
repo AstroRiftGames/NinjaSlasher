@@ -1,5 +1,16 @@
 using UnityEngine;
 
+[System.Serializable]
+public class LevelUnlockRequirements
+{
+    [Header("UNLOCK REQUIREMENTS")]
+    public bool isInitiallyUnlocked = false;
+    public int previousLevelRequired = 0;
+    public int minimumStarsRequired = 0;
+    public bool isBossLevel = false;
+    public int areaId = 1;
+}
+
 [CreateAssetMenu(fileName = "LevelConfiguration", menuName = "Game/Level Configuration")]
 public class LevelConfiguration : ScriptableObject
 {
@@ -13,6 +24,9 @@ public class LevelConfiguration : ScriptableObject
 
     [Header("LEVEL CONTEXT")]
     public LevelContext levelContext;
+
+    [Header("UNLOCK REQUIREMENTS")]
+    public LevelUnlockRequirements unlockRequirements;
 
     private void OnValidate()
     {
@@ -28,7 +42,7 @@ public class LevelConfiguration : ScriptableObject
 
         if (!hasPrimary && objectives.Length > 0)
         {
-            Debug.LogWarning($"[{name}] No hay objetivos principales definidos. Se recomienda tener al menos uno.");
+            Debug.LogWarning($"[{name}] No hay objetivos principales definidos");
         }
     }
 
