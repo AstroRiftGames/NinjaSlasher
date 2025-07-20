@@ -81,11 +81,12 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
         levelController.StopTimer();
 
         int starsEarned = levelController.Evaluate(stats);
-        Debug.Log($"Nivel completado. Estrellas obtenidas: {starsEarned}");
-
         int currentLevelId = GetCurrentLevelId();
-        SaveManager.Instance.UpdateStars(currentLevelId, starsEarned);
 
+        Debug.Log($"Nivel completado. Estrellas obtenidas: {starsEarned}");
+#if UNITY_EDITOR
+        ShowLevelCompletionSummary(currentLevelId);
+#endif
         if (starsEarned >= 1)
         {
             LevelProgressionManager.Instance?.OnLevelCompleted(currentLevelId, starsEarned);
@@ -246,5 +247,19 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
             LifeManager.Instance.OnLevelExit();
             _levelStarted = false;
         }
+    }
+
+    private void ShowLevelCompletionSummary(int levelId)
+    {
+        var summary = levelController?.GetLevelProgressSummary();
+        if (summary == null) return;
+
+        Debug.Log($"[GameManager] Resumen del Nivel {levelId}:\n" +
+                  $"Completado: {summary.isCompleted}\n" +
+                  $"Estrellas: {summary.maxStarsEarned}/3\n" +
+                  $"Objetivos: {summary.completedObjectiveIds.Count}\n" +
+                  $"Mejor tiempo: {(summary.bestTimeSeconds < float.MaxValue ? summary.bestTimeSeconds.ToString("F2") + "s" : "N/A")}\n" +
+                  $"Mejores movimientos: {(summary.bestMoves < int.MaxValue ? summary.bestMoves.ToString() : "N/A")}\n" +
+                  $"Parry Kill logrado: {(summary.parryKillAchieved ? "Sí" : "No")}");
     }
 }

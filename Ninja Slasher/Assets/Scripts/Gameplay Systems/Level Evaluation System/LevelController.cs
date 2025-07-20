@@ -125,6 +125,8 @@ public class LevelController : MonoBehaviour
 
         Debug.Log($"Nivel iniciado: {levelConfiguration.levelName}");
         Debug.Log($"Duracion base: {baseDuration}s, Duración modificada: {modifiedDuration}s");
+
+        ShowPreviousProgress();
     }
 
     private IEnumerator TimerCoroutine()
@@ -165,6 +167,9 @@ public class LevelController : MonoBehaviour
         }
 
         var result = evaluator.Evaluate(stats);
+
+        SaveManager.Instance?.SaveLevelProgress(levelConfiguration.levelId, result, stats);
+
         Debug.Log($"Evaluación completada: {result.starsEarned} estrellas");
 
         foreach (var completed in result.completedObjectives)
@@ -242,5 +247,30 @@ public class LevelController : MonoBehaviour
     {
         levelFailed = true;
         levelCompleted = true;
+    }
+
+    public LevelProgressData GetLevelProgressSummary()
+    {
+        if (SaveManager.Instance == null || levelConfiguration == null)
+            return new LevelProgressData();
+
+        return SaveManager.Instance.GetLevelProgressData(levelConfiguration.levelId);
+    }
+
+    private void ShowPreviousProgress()
+    {
+        if (SaveManager.Instance == null || levelConfiguration == null) return;
+
+        var previousProgress = SaveManager.Instance.GetLevelProgressData(levelConfiguration.levelId);
+
+        if (previousProgress.completedObjectiveIds.Count > 0)
+        {
+            Debug.Log($"[LevelController] Objetivos previamente completados en nivel {levelConfiguration.levelId}:");
+            foreach (var objectiveId in previousProgress.completedObjectiveIds)
+            {
+                Debug.Log($"  - {objectiveId}");
+            }
+            Debug.Log($"Mejor puntuación: {previousProgress.maxStarsEarned}/3 estrellas");
+        }
     }
 }

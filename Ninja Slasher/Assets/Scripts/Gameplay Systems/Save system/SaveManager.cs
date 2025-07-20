@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 
@@ -23,16 +24,20 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
             try
             {
                 gameData = JsonUtility.FromJson<GameData>(json);
+
+                ValidateAndInitializeProgressionData();
             }
             catch
             {
                 Debug.LogWarning("Save corrupto. Se crea uno nuevo.");
                 gameData = new GameData();
+                InitializeNewGameData();
             }
         }
         else
         {
             gameData = new GameData();
+            InitializeNewGameData();
         }
     }
 
@@ -43,6 +48,65 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
         string json = JsonUtility.ToJson(gameData, true);
         File.WriteAllText(saveFilePath, json);
         Debug.Log($"[SaveManager] Datos guardados en: {saveFilePath} (vidas: {gameData.currentLives})");
+    }
+
+    private void ValidateAndInitializeProgressionData()
+    {
+        if (gameData == null) return;
+
+        if (gameData.highestUnlockedLevel <= 1 && gameData.levelStars != null && gameData.levelStars.Count > 0)
+        {
+            RecalculateProgressionFromStars();
+        }
+
+        if (gameData.highestUnlockedLevel < 1) gameData.highestUnlockedLevel = 1;
+        if (gameData.highestUnlockedArea < 1) gameData.highestUnlockedArea = 1;
+
+        if (gameData.levelProgressData == null)
+        {
+            gameData.levelProgressData = new Dictionary<int, LevelProgressData>();
+        }
+
+        Debug.Log($"[SaveManager] Datos de progresión validados: Nivel {gameData.highestUnlockedLevel}, Área {gameData.highestUnlockedArea}");
+    }
+
+    private void RecalculateProgressionFromStars()
+    {
+        if (gameData?.levelStars == null) return;
+
+        int highestCompletedLevel = 0;
+
+        foreach (var levelStar in gameData.levelStars)
+        {
+            if (levelStar.Value >= 1)
+            {
+                highestCompletedLevel = Mathf.Max(highestCompletedLevel, levelStar.Key);
+            }
+        }
+
+        if (highestCompletedLevel > 0)
+        {
+            gameData.highestUnlockedLevel = highestCompletedLevel + 1;
+            gameData.highestUnlockedArea = Mathf.Min(((highestCompletedLevel - 1) / 10) + 1, 5);
+
+            Debug.Log($"[SaveManager] Progresión recalculada desde estrellas existentes: Nivel {gameData.highestUnlockedLevel}, Área {gameData.highestUnlockedArea}");
+        }
+    }
+
+    private void InitializeNewGameData()
+    {
+        if (gameData == null) return;
+
+        gameData.highestUnlockedLevel = 1;
+        gameData.highestUnlockedArea = 1;
+        gameData.totalStars = 0;
+
+        if (gameData.levelProgressData == null)
+        {
+            gameData.levelProgressData = new Dictionary<int, LevelProgressData>();
+        }
+
+        Debug.Log("[SaveManager] Nuevos datos de juego inicializados");
     }
 
     public GameData GetGameData() => gameData;
@@ -57,10 +121,17 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
 
     public void UpdateStars(int level, int stars)
     {
+        if (gameData == null) return;
+
+        int previousStars = 0;
+
         if (gameData.levelStars.ContainsKey(level))
         {
+            previousStars = gameData.levelStars[level];
             if (gameData.levelStars[level] < stars)
+            {
                 gameData.totalStars += (stars - gameData.levelStars[level]);
+            }
             gameData.levelStars[level] = stars;
         }
         else
@@ -68,6 +139,33 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
             gameData.levelStars.Add(level, stars);
             gameData.totalStars += stars;
         }
+
+        if (stars >= 1 && previousStars == 0)
+        {
+            if (level >= gameData.highestUnlockedLevel)
+            {
+                gameData.highestUnlockedLevel = level + 1;
+            }
+
+            int highestCompletedLevel = 0;
+            foreach (var levelStar in gameData.levelStars)
+            {
+                if (levelStar.Value >= 1)
+                {
+                    highestCompletedLevel = Mathf.Max(highestCompletedLevel, levelStar.Key);
+                }
+            }
+
+            int calculatedArea = Mathf.Min(((highestCompletedLevel - 1) / 10) + 1, 5);
+            if (calculatedArea > gameData.highestUnlockedArea)
+            {
+                gameData.highestUnlockedArea = calculatedArea;
+                Debug.Log($"[SaveManager] Nueva área calculada desbloqueada: {calculatedArea}");
+            }
+
+            Debug.Log($"[SaveManager] Progresión actualizada: nivel {level} completado, siguiente nivel desbloqueado: {gameData.highestUnlockedLevel}");
+        }
+
         SaveData();
     }
 
@@ -101,6 +199,62 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
             gameData.highestUnlockedLevel = level;
         }
         SaveData();
+    }
+
+    public void SaveLevelProgress(int levelId, ObjectiveEvaluationResult result, LevelStats stats)
+    {
+        if (gameData == null) return;
+
+        gameData.UpdateLevelProgress(levelId, result, stats);
+
+        UpdateStars(levelId, result.starsEarned);
+
+        SaveData();
+
+        Debug.Log($"[SaveManager] Progreso completo del nivel {levelId} guardado: {result.starsEarned} estrellas, {result.completedObjectives.Count} objetivos");
+    }
+
+    public LevelProgressData GetLevelProgressData(int levelId)
+    {
+        if (gameData == null) return new LevelProgressData(levelId);
+        return gameData.GetLevelProgress(levelId);
+    }
+
+    public void UpdateLevelProgression(int levelId, int starsEarned)
+    {
+        if (gameData == null) return;
+
+        if (levelId >= gameData.highestUnlockedLevel)
+        {
+            gameData.highestUnlockedLevel = levelId + 1;
+        }
+
+        SaveData();
+        Debug.Log($"[SaveManager] Progresión actualizada: nivel más alto = {gameData.highestUnlockedLevel}");
+    }
+
+    public void UnlockNewArea(int areaId)
+    {
+        if (gameData == null) return;
+
+        if (areaId > gameData.highestUnlockedArea)
+        {
+            gameData.highestUnlockedArea = areaId;
+            SaveData();
+            Debug.Log($"[SaveManager] Nueva área desbloqueada: {areaId}");
+        }
+    }
+
+    public (int highestLevel, int highestArea, int totalStars) GetProgressionData()
+    {
+        if (gameData == null) return (1, 1, 0);
+        return (gameData.highestUnlockedLevel, gameData.highestUnlockedArea, gameData.totalStars);
+    }
+
+    public bool IsObjectiveCompleted(int levelId, ObjectiveData objective)
+    {
+        if (gameData == null || objective == null) return false;
+        return gameData.IsObjectiveCompleted(levelId, objective.name);
     }
 
     public void UnlockArea(int areaId)

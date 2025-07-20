@@ -40,16 +40,24 @@ public class ObjectiveEvaluator
         var secondaryObjectives = config.GetSecondaryObjectives();
         foreach (var objective in secondaryObjectives)
         {
-            if (objective.CanBeEvaluated(stats, config.levelContext) &&
-                objective.IsCompleted(stats, config.levelContext))
+            bool alreadyCompleted = SaveManager.Instance?.IsObjectiveCompleted(config.levelId, objective) ?? false;
+
+            if (alreadyCompleted)
+            {
+                result.completedObjectives.Add(objective);
+                result.starsEarned += objective.starValue;
+                Debug.Log($"[ObjectiveEvaluator] Objetivo '{objective.objectiveName}' ya completado previamente");
+            }
+            else if (objective.CanBeEvaluated(stats, config.levelContext) &&
+                     objective.IsCompleted(stats, config.levelContext))
             {
                 result.starsEarned += objective.starValue;
                 result.completedObjectives.Add(objective);
+                Debug.Log($"[ObjectiveEvaluator] ¡Nuevo objetivo completado! '{objective.objectiveName}'");
             }
         }
-        
-        result.starsEarned = Mathf.Min(result.starsEarned, 3);
 
+        result.starsEarned = Mathf.Min(result.starsEarned, 3);
         return result;
     }
 
@@ -63,11 +71,13 @@ public class ObjectiveEvaluator
         {
             if (objective == null) continue;
 
+            bool wasCompleted = SaveManager.Instance?.IsObjectiveCompleted(config.levelId, objective) ?? false;
+
             var progress = new SingleObjectiveProgress
             {
                 objective = objective,
-                progress = objective.GetProgress(stats, config.levelContext),
-                isCompleted = objective.IsCompleted(stats, config.levelContext),
+                progress = wasCompleted ? 1.0f : objective.GetProgress(stats, config.levelContext),
+                isCompleted = wasCompleted || objective.IsCompleted(stats, config.levelContext),
                 canBeEvaluated = objective.CanBeEvaluated(stats, config.levelContext)
             };
 
