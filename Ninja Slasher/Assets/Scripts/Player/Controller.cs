@@ -1,41 +1,116 @@
 using Unity.VisualScripting;
 using UnityEngine;
+using System.Collections;
+using System.Collections.Generic;
 
 public class Controller : MonoBehaviour
 {
     public View View => _playerView;
     [SerializeField] private View _playerView;
-    public Model Model=> _playerModel;
+    public Model Model => _playerModel;
     [SerializeField] private Model _playerModel;
 
-    // Movimiento
+    private FSM<NinjaStates> _fsm;
+    private ITreeNode _root;
+
+    [Space]
     private bool _isDashing = false;
     private float _lastDash;
     private Collider2D _currentSurface;
     private bool _lastSurfaceWasElastic = false;
     private Vector2 _lastDashDirection;
-
     private Vector2 _wishedDirection;
     private Vector2 lastSwipeDelta;
 
+    [Space]
     [SerializeField] private LineRenderer swipeIndicator;
-
-    // Swipe
     private Vector2 swipeStart;
     private Vector2 endTouchPosition;
     private Vector2 currentSwipe;
     private bool isSwiping = false;
     [SerializeField] private float minSwipeDistance;
-    private int _moveCount = 0;
 
-    // Parry
+    [Space]
     private bool isParrying = false;
     private float parryTimer;
 
+    [Space]
     [SerializeField] private float checkDistance;
     [SerializeField] private LayerMask obstacleLayer;
 
     private bool _isDead = false;
+    private bool _isInvincible;
+
+
+    #region FSM && DECISION TREE
+    public enum NinjaStates
+    {
+        Idle,
+        Dash,
+        Grab,
+        Parry,
+        KO
+    }
+
+    private void InitializeFSM()
+    {
+        var idle = new NinjaIdleState<NinjaStates>(this);
+        var dash = new NinjaDashState<NinjaStates>(this);
+        var grab = new NinjaGrabState<NinjaStates>(this);
+        var parry = new NinjaParryState<NinjaStates>(this);
+        var ko = new NinjaKOState<NinjaStates>(this);
+
+        idle.AddTransition(NinjaStates.Dash, dash);
+        idle.AddTransition(NinjaStates.Parry, parry);
+        idle.AddTransition(NinjaStates.KO, ko);
+        idle.AddTransition(NinjaStates.Grab, grab);
+
+        dash.AddTransition(NinjaStates.Grab, grab);
+        dash.AddTransition(NinjaStates.KO, ko);
+        dash.AddTransition(NinjaStates.Idle, idle);
+
+        grab.AddTransition(NinjaStates.Dash, dash);
+        grab.AddTransition(NinjaStates.Parry, parry);
+        grab.AddTransition(NinjaStates.KO, ko);
+        grab.AddTransition(NinjaStates.Idle, idle);
+
+        parry.AddTransition(NinjaStates.Idle, idle);
+        parry.AddTransition(NinjaStates.Grab, grab);
+        parry.AddTransition(NinjaStates.KO, ko);
+
+        _fsm = new FSM<NinjaStates>(idle);
+    }
+
+    private void InitializeTree()
+    {
+        ITreeNode idle = new ActionNode(() => { _fsm.Transition(NinjaStates.Idle); });
+        ITreeNode dash = new ActionNode(() => { _fsm.Transition(NinjaStates.Dash); });
+        ITreeNode grab = new ActionNode(() => { _fsm.Transition(NinjaStates.Grab); });
+        ITreeNode parry = new ActionNode(() => { _fsm.Transition(NinjaStates.Parry); });
+        ITreeNode KO = new ActionNode(() => { _fsm.Transition(NinjaStates.KO); });
+
+        ITreeNode rootQuestion = new QuestionNode(QKO, KO,
+                                 new QuestionNode(QDash, dash,
+                                 new QuestionNode(QParry, parry,
+                                 new QuestionNode(QGrab, grab, idle))));
+
+        _root = rootQuestion;
+    }
+
+    private bool QDash() => CanDashFromInput();
+    private bool QGrab() => _currentSurface != null && !_isDashing;
+    private bool QParry() => CanParryFromInput();
+    private bool QKO() => _isDead;
+
+    #endregion
+
+    #region MAGIC METHODS
+
+    private void Awake()
+    {
+        InitializeFSM();
+        InitializeTree();
+    }
 
     private void Start()
     {
@@ -50,15 +125,23 @@ public class Controller : MonoBehaviour
 
     private void Update()
     {
-        if (!isParrying)
-        {
-            CheckSwipe();
-            CheckParryTap();
-        }
+        _root.Execute();
+        _fsm.OnUpdate();
+
+        CheckSwipe();
+        CheckParryTap();
 
         HandleParryTimer();
     }
 
+    private void FixedUpdate()
+    {
+        // HandleFalling();
+    }
+
+    #endregion
+
+    #region INPUT DETECTION
     private void CheckSwipe()
     {
 #if UNITY_EDITOR
@@ -73,7 +156,6 @@ public class Controller : MonoBehaviour
         if (Input.GetMouseButton(0) && isSwiping)
         {
             currentSwipe = (Vector2)Input.mousePosition - swipeStart;
-
             if (currentSwipe.magnitude >= minSwipeDistance)
             {
                 if (swipeIndicator != null && !swipeIndicator.enabled)
@@ -100,8 +182,6 @@ public class Controller : MonoBehaviour
             Vector2 swipeDelta = endTouchPosition - swipeStart;
             if (swipeDelta.magnitude >= minSwipeDistance)
                 TryDashFromSwipe(swipeDelta);
-            else
-                Debug.Log("Swipe muy corto");
         }
 #else
         if (Input.touchCount > 0)
@@ -167,72 +247,20 @@ public class Controller : MonoBehaviour
 #endif
     }
 
-    private void CheckParryTap()
-    {
-        if (isSwiping) return;
+    private bool _dashInputDetected = false;
+    private bool _parryInputDetected = false;
+    #endregion
 
-#if UNITY_EDITOR
-        if (Input.GetMouseButtonDown(0))
-        {
-            TryStartParry();
-        }
-#else
-        if (Input.touchCount > 0 && Input.GetTouch(0).phase == TouchPhase.Began)
-        {
-            TryStartParry();
-        }
-#endif
-    }
-
-    private void TryStartParry()
-    {
-        if (isParrying) return;
-
-        Collider2D[] hits = Physics2D.OverlapCircleAll(transform.position, 2f, LayerMask.GetMask("Projectiles"));
-        foreach (var hit in hits)
-        {
-            Projectile proj = hit.GetComponent<Projectile>();
-            if (proj != null && proj.IsParryable && !proj.HasBeenReflected)
-            {
-                StartParry(hits);
-                return;
-            }
-        }
-    }
-
-    private void StartParry(Collider2D[] hits)
-    {
-        isParrying = true;
-        float parryWindow = _playerModel.ParryWindow;
-
-        var context = PowerUpManager.Instance?.context;
-        if (context != null && context.ParryPerfectActive)
-            parryWindow += context.ParryBonusWindow;
-
-        parryTimer = parryWindow;
-        Debug.Log("Parry activado (ventana: " + parryWindow + ")");
-
-        foreach (var hit in hits)
-        {
-            Projectile proj = hit.GetComponent<Projectile>();
-            if (proj != null && proj.IsParryable && !proj.HasBeenReflected)
-            {
-                proj.ReflectBackwards();
-            }
-        }
-    }
-
+    #region DASHING
     private void TryDashFromSwipe(Vector2 swipeDelta)
     {
         if (swipeDelta.magnitude < minSwipeDistance)
         {
-            Debug.Log("Swipe muy corto");
             return;
         }
 
         if (_currentSurface == null)
         {
-            Debug.Log("No puedes hacer dash en el aire");
             return;
         }
 
@@ -250,34 +278,112 @@ public class Controller : MonoBehaviour
         }
 
         RaycastHit2D hit = Physics2D.Raycast(transform.position, dashDir, checkDistance, obstacleLayer);
-        Debug.DrawRay(transform.position, dashDir * checkDistance, Color.magenta, 1f);
 
         if (hit.collider != null)
         {
-            Debug.Log($"Dash cancelado: obst�culo en esa direcci�n: {hit.collider.name}");
             return;
         }
 
         lastSwipeDelta = swipeDelta;
         _wishedDirection = dashDir;
-
         _lastDash = Time.time;
-        Dash();
+
+        _dashInputDetected = true;
     }
 
-    private void Dash()
+    public bool CanDashFromInput()
     {
+        if (_dashInputDetected)
+        {
+            _dashInputDetected = false;
+            return true;
+        }
+        return false;
+    }
+    public void Dash()
+    {
+        if (_playerView == null || _playerView.RB == null)
+        {
+            return;
+        }
+
         MoveTracker.RegisterMove();
-        _moveCount++;
         _lastDashDirection = _wishedDirection;
+
         _playerView.RB.linearVelocity = Vector2.zero;
         _playerView.RB.AddForce(_wishedDirection * _playerModel.DashForce, ForceMode2D.Impulse);
-        _playerView.SetVelocity(_playerView.RB.linearVelocity);
 
         _isDashing = true;
         _playerView.Animator.SetBool("IsGrounded", _isDashing);
     }
+    #endregion
 
+    #region PARRYING
+    private void CheckParryTap()
+    {
+        if (isSwiping) return;
+
+#if UNITY_EDITOR
+        if (Input.GetMouseButtonDown(0))
+        {
+            TryStartParryLogic();
+        }
+#else
+        if (Input.touchCount > 0 && Input.GetTouch(0).phase == TouchPhase.Began)
+        {
+            TryStartParryLogic();
+        }
+#endif
+    }
+
+    private void TryStartParryLogic()
+    {
+        if (isParrying) return;
+
+        Collider2D[] hits = Physics2D.OverlapCircleAll(transform.position, 2f, LayerMask.GetMask("Projectiles"));
+        foreach (var hit in hits)
+        {
+            Projectile proj = hit.GetComponent<Projectile>();
+            if (proj != null && proj.IsParryable && !proj.HasBeenReflected)
+            {
+                _parryInputDetected = true;
+                return;
+            }
+        }
+    }
+
+    public bool CanParryFromInput()
+    {
+        if (_parryInputDetected)
+        {
+            _parryInputDetected = false;
+            return true;
+        }
+        return false;
+    }
+    public void StartParry(Collider2D[] hits)
+    {
+        isParrying = true;
+        float parryWindow = _playerModel.ParryWindow;
+
+        var context = PowerUpManager.Instance?.context;
+        if (context != null && context.ParryPerfectActive)
+            parryWindow += context.ParryBonusWindow;
+
+        parryTimer = parryWindow;
+
+        foreach (var hit in hits)
+        {
+            Projectile proj = hit.GetComponent<Projectile>();
+            if (proj != null && proj.IsParryable && !proj.HasBeenReflected)
+            {
+                proj.ReflectBackwards();
+            }
+        }
+    }
+    #endregion
+
+    #region COLLISION DETECTION
     private void OnCollisionEnter2D(Collision2D collision)
     {
         if (collision.gameObject.CompareTag("Scenario") ||
@@ -285,13 +391,19 @@ public class Controller : MonoBehaviour
             collision.gameObject.GetComponent<PlatformBase>() != null)
         {
             if (_currentSurface != null && collision.collider == _currentSurface)
+            {
                 return;
+            }
 
             _currentSurface = collision.collider;
-            _isDashing = false;
-            
+
+            if (_fsm.CurrentState.GetType() != typeof(NinjaDashState<NinjaStates>))
+            {
+                SetIsDashing(false);
+            }
+
             _playerView.Animator.SetBool("IsGrounded", _isDashing);
-            
+
             Vector2 contactPoint = Vector2.zero;
             Vector2 point = collision.GetContact(0).point;
             contactPoint.x = point.x > transform.position.x ? 1 : -1;
@@ -308,15 +420,49 @@ public class Controller : MonoBehaviour
 
             if (!_lastSurfaceWasElastic)
             {
-                _playerView.RB.linearVelocity = Vector2.zero;
+                if (!_isDashing)
+                {
+                    _playerView.RB.linearVelocity = Vector2.zero;
+                }
             }
         }
     }
-
-    private void FixedUpdate()
+    private void OnCollisionExit2D(Collision2D collision)
     {
-        HandleFalling();
+        if (collision.collider == _currentSurface)
+        {
+            _currentSurface = null;
+
+            if (_lastSurfaceWasElastic)
+            {
+                StartCoroutine(ResetElasticFlag());
+            }
+        }
     }
+    private void OnTriggerEnter2D(Collider2D collision)
+    {
+        if (collision.CompareTag("Enemy"))
+        {
+            if (_isDashing)
+            {
+                collision.GetComponent<Enemy>().Die();
+            }
+            else
+            {
+                Die();
+            }
+        }
+
+        if (collision.gameObject.GetComponent<MovingPlatform>() != null)
+        {
+            Rigidbody2D rb = _playerView.RB;
+            if (rb != null)
+            {
+                rb.linearVelocity = new Vector2(0f, rb.linearVelocity.y);
+            }
+        }
+    }
+    #endregion
 
     private void HandleFalling()
     {
@@ -341,45 +487,10 @@ public class Controller : MonoBehaviour
         return _currentSurface != null;
     }
 
-    private void OnCollisionExit2D(Collision2D collision)
-    {
-        if (collision.collider == _currentSurface)
-        {
-            _currentSurface = null;
-
-            if (_lastSurfaceWasElastic)
-            {
-                StartCoroutine(ResetElasticFlag());
-            }
-        }
-    }
-
-    private System.Collections.IEnumerator ResetElasticFlag()
+    private IEnumerator ResetElasticFlag()
     {
         yield return new WaitForSeconds(0.5f);
         _lastSurfaceWasElastic = false;
-    }
-
-    private void OnTriggerEnter2D(Collider2D collision)
-    {
-        if (collision.CompareTag("Enemy"))
-        {
-            if (_isDashing)
-            {
-                collision.GetComponent<Enemy>().Die();
-            }
-            else
-            {
-                Debug.Log("Game Over");
-                Die();
-            }
-        }
-
-        if (collision.gameObject.GetComponent<MovingPlatform>() != null)
-        {
-            Rigidbody2D rb = _playerView.RB;
-            rb.linearVelocity = new Vector2(0f, rb.linearVelocity.y);
-        }
     }
 
     private void HandleParryTimer()
@@ -388,7 +499,9 @@ public class Controller : MonoBehaviour
         {
             parryTimer -= Time.deltaTime;
             if (parryTimer <= 0)
+            {
                 isParrying = false;
+            }
         }
     }
 
@@ -398,7 +511,6 @@ public class Controller : MonoBehaviour
         {
             if (_isDead) return;
             _isDead = true;
-            Debug.Log("Jugador muerto");
 
             var levelController = FindObjectOfType<LevelController>();
             if (levelController != null)
@@ -407,26 +519,25 @@ public class Controller : MonoBehaviour
             }
 
             GameManager.Instance.OnPlayerLose();
-        }
-        else
-        {
-            Debug.Log("IsInvincible");
+            _fsm.Transition(NinjaStates.KO);
         }
     }
 
+    #region RESOURCES
     public bool IsParrying() => isParrying;
+    public void SetIsParrying(bool value) => isParrying = value;
+    public float GetParryWindow() => _playerModel.ParryWindow;
+
     public bool IsDashing() => _isDashing;
+    public void SetIsDashing(bool value) => _isDashing = value;
+
     public void ForceExitSurface() => _currentSurface = null;
 
     public Vector2 GetDashDirection() => _wishedDirection;
-
     public Vector2 GetLastDashDirection() => _lastDashDirection;
 
-    private bool _isInvincible;
-    public void SetInvincibility(bool value)
-    {
-        _isInvincible = value;
-    }
+    public void SetInvincibility(bool value) => _isInvincible = value;
+    #endregion
 
     private void OnDrawGizmos()
     {

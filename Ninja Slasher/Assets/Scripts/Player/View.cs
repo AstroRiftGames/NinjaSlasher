@@ -9,9 +9,4 @@ public class View : MonoBehaviour
     [SerializeField] Animator _anim;
 
     public Portal LastUsedPortal { get; set; }
-
-    public Vector2 CurrentVelocity => _currentVelocity;
-    private Vector2 _currentVelocity;
-
-    public void SetVelocity(Vector2 newVel) => _currentVelocity = newVel;
 }
