@@ -44,6 +44,10 @@ public class PowerUpManager : MonoBehaviourSingleton<PowerUpManager>
     [Header("DEBUG - Power-ups Disponibles")]
     [SerializeField] private List<PowerUpDebugInfo> availablePowerUps = new List<PowerUpDebugInfo>();
 
+    public static event Action<PowerUpType> OnPowerUpActivated;
+    public static event Action<PowerUpType> OnPowerUpDeactivated;
+    public static event Action<PowerUpType, float> OnPowerUpTimeUpdated;
+
     void Start()
     {
         LoadActivePowerUpsFromGameData();
@@ -57,85 +61,85 @@ public class PowerUpManager : MonoBehaviourSingleton<PowerUpManager>
 
     private void Update()
     {
+        UpdatePowerUpTimers();
+        HandleTestingToggles();
+
+#if UNITY_EDITOR
+        if (Application.isPlaying)
+            UpdateDebugInfo();
+#endif
+    }
+
+    void UpdatePowerUpTimers()
+    {
         for (int i = _timers.Count - 1; i >= 0; i--)
         {
             var (pu, timeLeft) = _timers[i];
             timeLeft -= Time.deltaTime;
+
             if (timeLeft <= 0)
             {
-                pu.Deactivate(context);
+                DeactivatePowerUpInternal(pu);
                 _timers.RemoveAt(i);
             }
             else
             {
                 _timers[i] = (pu, timeLeft);
+
+                if (Mathf.FloorToInt(timeLeft) != Mathf.FloorToInt(timeLeft + Time.deltaTime))
+                {
+                    OnPowerUpTimeUpdated?.Invoke(GetPowerUpType(pu), timeLeft);
+                }
             }
         }
+    }
 
+    void HandleTestingToggles()
+    {
         if (useExtraTime != _wasExtraTime)
         {
             if (useExtraTime)
-                ActivatePowerUp(powerUpExtraTime);
+                ActivatePowerUpFromInventory(PowerUpType.ExtraTime);
             else
-            {
-                powerUpExtraTime.Deactivate(context);
-                activePowerUps.Remove(powerUpExtraTime);
-            }
+                DeactivatePowerUpByType(PowerUpType.ExtraTime);
             _wasExtraTime = useExtraTime;
         }
 
         if (useDashTurbo != _wasDashTurbo)
         {
             if (useDashTurbo)
-                ActivatePowerUp(powerUpDashTurbo);
+                ActivatePowerUpFromInventory(PowerUpType.DashTurbo);
             else
-            {
-                powerUpDashTurbo.Deactivate(context);
-                activePowerUps.Remove(powerUpDashTurbo);
-            }
+                DeactivatePowerUpByType(PowerUpType.DashTurbo);
             _wasDashTurbo = useDashTurbo;
         }
 
         if (useParryPerfect != _wasParryPerfect)
         {
             if (useParryPerfect)
-                ActivatePowerUp(powerUpParryPerfect);
+                ActivatePowerUpFromInventory(PowerUpType.ParryPerfect);
             else
-            {
-                powerUpParryPerfect.Deactivate(context);
-                activePowerUps.Remove(powerUpParryPerfect);
-            }
+                DeactivatePowerUpByType(PowerUpType.ParryPerfect);
             _wasParryPerfect = useParryPerfect;
         }
 
         if (useComboMaster != _wasComboMaster)
         {
             if (useComboMaster)
-                ActivatePowerUp(powerUpComboMaster);
+                ActivatePowerUpFromInventory(PowerUpType.ComboMaster);
             else
-            {
-                powerUpComboMaster.Deactivate(context);
-                activePowerUps.Remove(powerUpComboMaster);
-            }
+                DeactivatePowerUpByType(PowerUpType.ComboMaster);
             _wasComboMaster = useComboMaster;
         }
 
         if (useSecondChance != _wasSecondChance)
         {
             if (useSecondChance)
-                ActivatePowerUp(powerUpSecondChance);
+                ActivatePowerUpFromInventory(PowerUpType.SecondChance);
             else
-            {
-                powerUpSecondChance.Deactivate(context);
-                activePowerUps.Remove(powerUpSecondChance);
-            }
+                DeactivatePowerUpByType(PowerUpType.SecondChance);
             _wasSecondChance = useSecondChance;
         }
-
-#if UNITY_EDITOR
-        if (Application.isPlaying)
-            UpdateDebugInfo();
-#endif
     }
 
     public void ActivatePowerUp(PowerUpBase powerUp)
@@ -146,6 +150,37 @@ public class PowerUpManager : MonoBehaviourSingleton<PowerUpManager>
         _timers.Add((powerUp, powerUp.duration));
     }
 
+    public bool ActivatePowerUpFromInventory(PowerUpType powerUpType, float duration = 1800f)
+    {
+        var gameData = SaveManager.Instance.GetGameData();
+        var inventoryItem = gameData.powerUpInventory.Find(item => item.type == powerUpType);
+
+        if (inventoryItem == null || inventoryItem.quantity <= 0)
+        {
+            Debug.LogWarning($"[PowerUpManager] No hay {powerUpType} disponibles en el inventario");
+            return false;
+        }
+
+        if (AutoSaveManager.Instance != null)
+        {
+            AutoSaveManager.Instance.OnPowerUpActivated(powerUpType, duration);
+        }
+        else
+        {
+            ActivatePowerUpDirect(powerUpType, duration);
+            Debug.LogWarning("[PowerUpManager] AutoSaveManager no encontrado, activando directamente");
+        }
+
+        PowerUpBase powerUpToActivate = GetPowerUpReference(powerUpType);
+        if (powerUpToActivate != null)
+        {
+            ActivatePowerUpInternal(powerUpToActivate, duration);
+        }
+
+        Debug.Log($"[PowerUpManager] Power-up {powerUpType} activado por {duration} segundos");
+        return true;
+    }
+
     void LoadActivePowerUpsFromGameData()
     {
         var gameData = SaveManager.Instance.GetGameData();
@@ -154,32 +189,140 @@ public class PowerUpManager : MonoBehaviourSingleton<PowerUpManager>
         foreach (var powerUpData in gameData.activePowerUps)
         {
             var timeElapsed = (currentTime - powerUpData.activationTime).TotalSeconds;
-            if (timeElapsed < powerUpData.duration)
+            var timeRemaining = powerUpData.duration - timeElapsed;
+
+            if (timeRemaining > 0)
             {
-                switch (powerUpData.type)
+                PowerUpBase powerUpRef = GetPowerUpReference(powerUpData.type);
+                if (powerUpRef != null)
                 {
-                    case PowerUpType.ExtraTime:
-                        useExtraTime = true;
-                        break;
-                    case PowerUpType.DashTurbo:
-                        useDashTurbo = true;
-                        break;
-                    case PowerUpType.ParryPerfect:
-                        useParryPerfect = true;
-                        break;
-                    case PowerUpType.ComboMaster:
-                        useComboMaster = true;
-                        break;
-                    case PowerUpType.SecondChance:
-                        useSecondChance = true;
-                        break;
+                    ActivatePowerUpInternal(powerUpRef, (float)timeRemaining);
+
+                    SyncTestingToggle(powerUpData.type, true);
                 }
+
+                Debug.Log($"[PowerUpManager] Cargado {powerUpData.type} con {timeRemaining:F0} segundos restantes");
             }
         }
 
-        gameData.activePowerUps.RemoveAll(pu =>
-            (currentTime - pu.activationTime).TotalSeconds >= pu.duration);
-        SaveManager.Instance.SaveData();
+        if (AutoSaveManager.Instance != null)
+        {
+            SaveManager.Instance.UpdateActivePowerUps();
+        }
+    }
+
+    PowerUpBase GetPowerUpReference(PowerUpType type)
+    {
+        switch (type)
+        {
+            case PowerUpType.ExtraTime: return powerUpExtraTime;
+            case PowerUpType.DashTurbo: return powerUpDashTurbo;
+            case PowerUpType.ParryPerfect: return powerUpParryPerfect;
+            case PowerUpType.ComboMaster: return powerUpComboMaster;
+            case PowerUpType.SecondChance: return powerUpSecondChance;
+            default: return null;
+        }
+    }
+
+    PowerUpType GetPowerUpType(PowerUpBase powerUp)
+    {
+        if (powerUp == powerUpExtraTime) return PowerUpType.ExtraTime;
+        if (powerUp == powerUpDashTurbo) return PowerUpType.DashTurbo;
+        if (powerUp == powerUpParryPerfect) return PowerUpType.ParryPerfect;
+        if (powerUp == powerUpComboMaster) return PowerUpType.ComboMaster;
+        if (powerUp == powerUpSecondChance) return PowerUpType.SecondChance;
+        return PowerUpType.ExtraTime; // Default
+    }
+
+    public void DeactivatePowerUpByType(PowerUpType powerUpType)
+    {
+        PowerUpBase powerUpToDeactivate = GetPowerUpReference(powerUpType);
+        if (powerUpToDeactivate != null && activePowerUps.Contains(powerUpToDeactivate))
+        {
+            DeactivatePowerUpInternal(powerUpToDeactivate);
+            _timers.RemoveAll(timer => timer.Item1 == powerUpToDeactivate);
+        }
+    }
+
+    void DeactivatePowerUpInternal(PowerUpBase powerUp)
+    {
+        powerUp.Deactivate(context);
+        activePowerUps.Remove(powerUp);
+
+        PowerUpType type = GetPowerUpType(powerUp);
+
+        if (AutoSaveManager.Instance != null)
+        {
+            AutoSaveManager.Instance.OnPowerUpDeactivated(type);
+        }
+        else
+        {
+            SaveManager.Instance.DeactivatePowerUp(type);
+            Debug.LogWarning("[PowerUpManager] AutoSaveManager no encontrado, desactivando directamente en SaveManager");
+        }
+
+        SyncTestingToggle(type, false);
+
+        OnPowerUpDeactivated?.Invoke(type);
+
+        Debug.Log($"[PowerUpManager] {type} desactivado (tiempo expirado)");
+    }
+
+    void ActivatePowerUpInternal(PowerUpBase powerUp, float duration = 1800f)
+    {
+        if (!activePowerUps.Contains(powerUp))
+            activePowerUps.Add(powerUp);
+
+        powerUp.Activate(context);
+
+        _timers.RemoveAll(timer => timer.Item1 == powerUp);
+        _timers.Add((powerUp, duration));
+
+        PowerUpType type = GetPowerUpType(powerUp);
+        OnPowerUpActivated?.Invoke(type);
+
+        Debug.Log($"[PowerUpManager] {type} activado internamente");
+    }
+
+    void ActivatePowerUpDirect(PowerUpType powerUpType, float duration)
+    {
+        SaveManager.Instance.RemovePowerUpFromInventory(powerUpType, 1);
+
+        SaveManager.Instance.ActivatePowerUp(powerUpType, duration);
+    }
+
+    public bool IsPowerUpActive(PowerUpType type)
+    {
+        PowerUpBase powerUpRef = GetPowerUpReference(type);
+        return powerUpRef != null && activePowerUps.Contains(powerUpRef);
+    }
+
+    void SyncTestingToggle(PowerUpType type, bool active)
+    {
+        switch (type)
+        {
+            case PowerUpType.ExtraTime: useExtraTime = _wasExtraTime = active; break;
+            case PowerUpType.DashTurbo: useDashTurbo = _wasDashTurbo = active; break;
+            case PowerUpType.ParryPerfect: useParryPerfect = _wasParryPerfect = active; break;
+            case PowerUpType.ComboMaster: useComboMaster = _wasComboMaster = active; break;
+            case PowerUpType.SecondChance: useSecondChance = _wasSecondChance = active; break;
+        }
+    }
+
+    public float GetRemainingTime(PowerUpType type)
+    {
+        PowerUpBase powerUpRef = GetPowerUpReference(type);
+        if (powerUpRef == null) return 0f;
+
+        var timer = _timers.Find(t => t.Item1 == powerUpRef);
+        return timer.Item1 != null ? timer.Item2 : 0f;
+    }
+
+    public int GetInventoryCount(PowerUpType type)
+    {
+        var gameData = SaveManager.Instance.GetGameData();
+        var inventoryItem = gameData.powerUpInventory.Find(item => item.type == type);
+        return inventoryItem?.quantity ?? 0;
     }
 
     void UpdateDebugInfo()
@@ -234,30 +377,4 @@ public class PowerUpManager : MonoBehaviourSingleton<PowerUpManager>
             Debug.Log($"PowerUp: {item.type} | Cantidad: {item.quantity} | Última vez: {item.lastUpdated}");
         }
     }
-
-#if UNITY_EDITOR
-    [ContextMenu("Activar Todos los PowerUps")]
-    public void ActivateAll()
-    {
-        foreach (var pu in activePowerUps)
-        {
-            pu.Activate(context);
-        }
-    }
-
-    [ContextMenu("Desactivar Todos los PowerUps")]
-    public void DeactivateAll()
-    {
-        foreach (var pu in activePowerUps)
-        {
-            pu.Deactivate(context);
-        }
-    }
-
-    [ContextMenu("Imprimir inventario de power-ups")]
-    public void PrintInventory()
-    {
-        DebugPrintPowerUpInventory();
-    }
-#endif
 }

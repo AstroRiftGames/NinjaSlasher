@@ -14,7 +14,11 @@ public class ComboManager : MonoBehaviourSingleton<ComboManager>
     public override void Awake()
     {
         base.Awake();
-        levelController = FindObjectOfType<LevelController>();
+    }
+
+    void Start()
+    {
+        FindLevelController();
     }
 
     void Update()
@@ -24,6 +28,20 @@ public class ComboManager : MonoBehaviourSingleton<ComboManager>
         if (comboTimer <= 0f)
         {
             ResetCombo();
+        }
+    }
+
+    private void FindLevelController()
+    {
+        levelController = FindObjectOfType<LevelController>();
+
+        if (levelController == null)
+        {
+            Debug.LogError("[ComboManager] No se pudo encontrar LevelController en la escena!");
+        }
+        else
+        {
+            Debug.Log($"[ComboManager] LevelController encontrado: {levelController.name}");
         }
     }
 
@@ -52,9 +70,9 @@ public class ComboManager : MonoBehaviourSingleton<ComboManager>
     {
         float bonus = level switch
         {
-            2 => 1f,
-            3 => 1.5f,
-            4 => 2f,
+            2 => 3f,
+            3 => 4f,
+            4 => 6f,
             _ => 3f
         };
 
@@ -67,9 +85,20 @@ public class ComboManager : MonoBehaviourSingleton<ComboManager>
             Debug.Log($"[PowerUp] ComboMaster: +{bonusExtra:F2}s extra en combo ({percent * 100}% adicional).");
         }
 
+        if (levelController == null)
+        {
+            Debug.Log("[ComboManager] LevelController es null, intentando buscar de nuevo...");
+            FindLevelController();
+        }
+
         if (levelController != null)
         {
+            Debug.Log($"[ComboManager] Agregando {bonus:F2} segundos al timer");
             levelController.AddTime(bonus);
+        }
+        else
+        {
+            Debug.LogError("[ComboManager] LevelController sigue siendo NULL! Verificar que esté en la escena.");
         }
     }
 

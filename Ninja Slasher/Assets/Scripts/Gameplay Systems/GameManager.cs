@@ -4,13 +4,20 @@ using UnityEngine.SceneManagement;
 public class GameManager : MonoBehaviourSingleton<GameManager>
 {
     public LevelController levelController;
-
+    private string[] testingScenes = { "TestScene" };
     private LevelStats currentStats;
+    private bool _playerHasDied;
+    private bool _levelStarted = false;
+
+    public bool PlayerHasDied => _playerHasDied;
 
     public override void Awake()
     {
         base.Awake();
-        EnemyTracker.OnAllEnemiesDefeated += OnLevelCompleted;
+        if (!IsTestingScene())
+        {
+            EnemyTracker.OnAllEnemiesDefeated += OnLevelCompleted;
+        }
     }
 
     void Start()
@@ -19,10 +26,50 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
         {
             LifeManager.Instance.OnLivesChanged += OnLivesChanged;
         }
+
+        _playerHasDied = false;
+        _levelStarted = false;
+
+        if (!LifeManager.Instance.CanPlay())
+        {
+            GoToLevelSelection();
+            return;
+        }
+    }
+
+    private void OnEnable()
+    {
+        SceneManager.sceneLoaded += OnSceneLoaded;
+    }
+
+    private void OnDisable()
+    {
+        SceneManager.sceneLoaded -= OnSceneLoaded;
+    }
+
+    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        if (scene.name.Contains("Level") && !_levelStarted && LifeManager.Instance.CanPlay())
+        {
+            StartLevel();
+        }
+    }
+
+    private void StartLevel()
+    {
+        if (!_levelStarted && LifeManager.Instance.CanPlay())
+        {
+            _levelStarted = true;
+            LifeManager.Instance.OnLevelStart();
+            Debug.Log("[GAMEMANAGER] Nivel iniciado, descuento virtual aplicado");
+        }
     }
 
     public void OnLevelCompleted(LevelStats stats)
     {
+        if (IsTestingScene())
+            return;
+
         if (levelController == null)
             levelController = FindObjectOfType<LevelController>();
 
@@ -34,20 +81,50 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
         levelController.StopTimer();
 
         int starsEarned = levelController.Evaluate(stats);
-        Debug.Log($"Nivel completado. Estrellas obtenidas: {starsEarned}");
-
         int currentLevelId = GetCurrentLevelId();
-        SaveManager.Instance.UpdateStars(currentLevelId, starsEarned);
+
+        Debug.Log($"Nivel completado. Estrellas obtenidas: {starsEarned}");
+#if UNITY_EDITOR
+        ShowLevelCompletionSummary(currentLevelId);
+#endif
+        if (starsEarned >= 1)
+        {
+            LevelProgressionManager.Instance?.OnLevelCompleted(currentLevelId, starsEarned);
+        }
+
+        if (_levelStarted)
+        {
+            LifeManager.Instance.OnLevelCompleted();
+            _levelStarted = false;
+        }
 
         GoToLevelSelection();
     }
 
     public void OnPlayerLose()
     {
-        if (LifeManager.Instance.CurrentLives > 0)
-            LifeManager.Instance.UseLife();
+        _playerHasDied = true;
 
-        UIManager.Instance.ShowLifeLostPanel();
+        if (_levelStarted)
+        {
+            LifeManager.Instance.UseLife();
+            _levelStarted = false;
+        }
+
+        if (LifeManager.Instance.GetRealLives() <= 0)
+        {
+            GoToLevelSelection();
+            return;
+        }
+
+        if (LifeManager.Instance.CanPlay())
+        {
+            UIManager.Instance.ShowLifeLostPanel();
+        }
+        else
+        {
+            UIManager.Instance.ShowNoLivesPanel();
+        }
     }
 
     private void OnLivesChanged(int newLives)
@@ -57,15 +134,29 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
             UIManager.Instance.UpdateLivesUI(newLives);
         }
 
-        Debug.Log($"[GameManager] Vidas actualizadas: {newLives}");
+        if (newLives > 0)
+        {
+            var gameplayUI = FindObjectOfType<GameplayUIManager>();
+            if (gameplayUI != null)
+            {
+                Debug.Log("[GAMEMANAGER] Vidas recuperadas");
+            }
+        }
     }
 
     public void GoToLevelSelection()
     {
+        if (_levelStarted || LifeManager.Instance.HasPendingDeduction())
+        {
+            LifeManager.Instance.OnLevelExit();
+            _levelStarted = false;
+        }
+
         SaveManager.Instance.SaveData();
         SceneManager.sceneLoaded += HandleScreenflowLoaded;
         SceneManager.LoadScene("ScreenflowTest");
     }
+
 
     private void HandleScreenflowLoaded(Scene scene, LoadSceneMode mode)
     {
@@ -77,9 +168,29 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
 
     public void RestartLevel()
     {
+        if (_levelStarted || LifeManager.Instance.HasPendingDeduction())
+        {
+            LifeManager.Instance.OnLevelExit();
+            _levelStarted = false;
+        }
+
+        if (!LifeManager.Instance.CanPlay())
+        {
+            UIManager.Instance.ShowNoLivesPanel();
+            GoToLevelSelection();
+            return;
+        }
+
+        _playerHasDied = false;
+
         string currentScene = SceneManager.GetActiveScene().name;
+
+        LifeManager.Instance.OnLevelStart();
+        _levelStarted = true;
+
         SceneManager.LoadScene(currentScene);
     }
+
 
     private int GetCurrentLevelId()
     {
@@ -105,5 +216,50 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
         {
             LifeManager.Instance.OnLivesChanged -= OnLivesChanged;
         }
+    }
+
+    private bool IsTestingScene()
+    {
+        string currentScene = SceneManager.GetActiveScene().name;
+
+        foreach (string testScene in testingScenes)
+        {
+            if (currentScene == testScene)
+                return true;
+        }
+
+        return false;
+    }
+
+    private void OnApplicationPause(bool pauseStatus)
+    {
+        if (pauseStatus && _levelStarted)
+        {
+            LifeManager.Instance.OnLevelExit();
+            _levelStarted = false;
+        }
+    }
+
+    private void OnApplicationFocus(bool hasFocus)
+    {
+        if (!hasFocus && _levelStarted)
+        {
+            LifeManager.Instance.OnLevelExit();
+            _levelStarted = false;
+        }
+    }
+
+    private void ShowLevelCompletionSummary(int levelId)
+    {
+        var summary = levelController?.GetLevelProgressSummary();
+        if (summary == null) return;
+
+        Debug.Log($"[GameManager] Resumen del Nivel {levelId}:\n" +
+                  $"Completado: {summary.isCompleted}\n" +
+                  $"Estrellas: {summary.maxStarsEarned}/3\n" +
+                  $"Objetivos: {summary.completedObjectiveIds.Count}\n" +
+                  $"Mejor tiempo: {(summary.bestTimeSeconds < float.MaxValue ? summary.bestTimeSeconds.ToString("F2") + "s" : "N/A")}\n" +
+                  $"Mejores movimientos: {(summary.bestMoves < int.MaxValue ? summary.bestMoves.ToString() : "N/A")}\n" +
+                  $"Parry Kill logrado: {(summary.parryKillAchieved ? "Sí" : "No")}");
     }
 }

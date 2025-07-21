@@ -382,6 +382,13 @@ public class Controller : MonoBehaviour
             if (_isDead) return;
             _isDead = true;
             Debug.Log("Jugador muerto");
+
+            var levelController = FindObjectOfType<LevelController>();
+            if (levelController != null)
+            {
+                levelController.MarkLevelAsFailed();
+            }
+
             GameManager.Instance.OnPlayerLose();
         }
         else

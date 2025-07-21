@@ -1,0 +1,84 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &4488976924107227955
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1352451485437430393}
+  - component: {fileID: 217690871178387513}
+  m_Layer: 0
+  m_Name: DailyRewardSystem
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1352451485437430393
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4488976924107227955}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &217690871178387513
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4488976924107227955}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1042a27c9e76fea42b748e5a859e83c5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  weeklyRewards:
+  - powerUpType: 0
+    quantity: 1
+    icon: {fileID: -1320532788227407695, guid: 3b8c4652bf36a374784cf66e04d001d7, type: 3}
+    displayName: Extra Time
+    description: "Ampl\xEDa el tiempo de partida un 50% en los niveles "
+  - powerUpType: 1
+    quantity: 1
+    icon: {fileID: -8998890963567699831, guid: 3b8c4652bf36a374784cf66e04d001d7, type: 3}
+    displayName: Dash Turbo
+    description: "Reducci\xF3n del cooldown de dash un x% durante 1h. Ideal para
+      niveles con mucho reposicionamiento o plataformas m\xF3viles."
+  - powerUpType: 2
+    quantity: 1
+    icon: {fileID: 2506441984943119928, guid: 3b8c4652bf36a374784cf66e04d001d7, type: 3}
+    displayName: Parry Perfect
+    description: "Ampl\xEDa el tiempo para hacer parrys perfectos (0.3 seg.). Los
+      parrys perfectos no consumen stacks"
+  - powerUpType: 3
+    quantity: 1
+    icon: {fileID: -675932087886414562, guid: 3b8c4652bf36a374784cf66e04d001d7, type: 3}
+    displayName: Combo Master
+    description: Agrega un 50% tiempo adicional en cada nivel de combo
+  - powerUpType: 4
+    quantity: 1
+    icon: {fileID: -2962376198135823766, guid: 3b8c4652bf36a374784cf66e04d001d7, type: 3}
+    displayName: Second Chance
+    description: 'No pierdes vida durante 30 minutos. '
+  - powerUpType: 0
+    quantity: 2
+    icon: {fileID: -1320532788227407695, guid: 3b8c4652bf36a374784cf66e04d001d7, type: 3}
+    displayName: Extra Extra Time
+    description: "Ampl\xEDa el tiempo de partida un 50% en los niveles "
+  - powerUpType: 4
+    quantity: 2
+    icon: {fileID: -2962376198135823766, guid: 3b8c4652bf36a374784cf66e04d001d7, type: 3}
+    displayName: Second Chance Plus
+    description: 'No pierdes vida durante 30 minutos. '
