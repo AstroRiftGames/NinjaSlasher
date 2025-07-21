@@ -13,6 +13,8 @@ public class SentinelSweepAttackState<SentinelStates> : State<SentinelStates>
     public override void Enter()
     {
         _sentinel._isSweepAttacking = true;
+        _sentinel.SetIsAttacking(true);
+        _sentinel.ChooseAttack();
         _sentinel.StartCoroutine(SweepAttack());
     }
 
@@ -22,6 +24,8 @@ public class SentinelSweepAttackState<SentinelStates> : State<SentinelStates>
         _sentinel.Animator.SetTrigger(_sentinel.IsRightBallTurn ? "SweepAttack-Right" : "SweepAttack-Left");
         yield return new WaitForSeconds(_sentinel.SweepDuration);
         _sentinel._isSweepAttacking = false;
+        _sentinel.SetIsAttacking(false);
+        _sentinel.SetJustAttacked(true);
         _sentinel.ChangeBall();
     }
 }

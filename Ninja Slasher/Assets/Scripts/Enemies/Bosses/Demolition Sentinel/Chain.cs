@@ -1,3 +1,5 @@
+using System.Collections;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -5,6 +7,7 @@ public class Chain : MonoBehaviour
 {
     [SerializeField] Transform _anchor;
     [SerializeField] Transform _ball;
+    [SerializeField] DemolitionSentinel _sentinel;
 
     private bool _isActive = true;
 
@@ -29,6 +32,12 @@ public class Chain : MonoBehaviour
             AdjustRotation();
             AdjustPosition();
             AdjustSize();
+
+            if(Input.GetKeyDown(KeyCode.B))
+            {
+                BreakChain();
+                ReleaseBall();
+            }
         }
     }
 
@@ -71,16 +80,32 @@ public class Chain : MonoBehaviour
         if(collision.gameObject.CompareTag("Player"))
         {
             BreakChain();
+            ReleaseBall();
         }
     }
 
     private void BreakChain()
     {
         _isActive = false;
+        _renderer.enabled = false;
+        Destroy(gameObject, 2f);
+    }
+
+    private void ReleaseBall()
+    {
         _ball.TryGetComponent(out DemolitionBall ball);
         ball.enabled = false;
+        _sentinel.RemoveBall(ball);
+
         _ball.TryGetComponent(out Rigidbody2D rb);
         rb.gravityScale = 1;
+        rb.mass = 25;
+
+        _ball.TryGetComponent(out Collider2D col);
+        col.enabled = true;
+
         _ball.transform.SetParent(null);
+
+        Destroy(_ball.gameObject, 2f);
     }
 }

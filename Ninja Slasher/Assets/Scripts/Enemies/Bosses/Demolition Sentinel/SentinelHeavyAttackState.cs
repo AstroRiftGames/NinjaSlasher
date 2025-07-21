@@ -12,6 +12,8 @@ public class SentinelHeavyAttackState<SentinelStates> : State<SentinelStates>
     public override void Enter()
     {
         _sentinel._isHeavyAttacking = true;
+        _sentinel.SetIsAttacking(true);
+        _sentinel.ChooseAttack();
         _sentinel.StartCoroutine(HeavyAttack());
     }
 
@@ -22,5 +24,7 @@ public class SentinelHeavyAttackState<SentinelStates> : State<SentinelStates>
         _sentinel.CurrentBall.HeavyThrow(_sentinel.TargetDir);
         _sentinel.ChangeBall();
         _sentinel._isHeavyAttacking = false;
+        _sentinel.SetIsAttacking(false);
+        _sentinel.SetJustAttacked(true);
     }
 }

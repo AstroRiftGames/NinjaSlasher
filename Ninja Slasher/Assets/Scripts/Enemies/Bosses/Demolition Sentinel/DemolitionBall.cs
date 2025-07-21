@@ -41,8 +41,6 @@ public class DemolitionBall : MonoBehaviour
             _rb.linearVelocity = Vector2.zero;
             _isRetrieving = false;
         }
-
-        Debug.Log($"{name} is retrieving: {_isRetrieving}");
     }
 
     private bool IsMaxDistanceReached()

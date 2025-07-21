@@ -13,6 +13,8 @@ public class SentinelDoubleAttackState<SentinelStates> : State<SentinelStates>
     {
         _sentinel._isDoubleAttacking = true;
         _sentinel.StartCoroutine(DoubleAttack());
+        _sentinel.ChooseAttack();
+        _sentinel.SetIsAttacking(true);
     }
 
     private IEnumerator DoubleAttack()
@@ -25,5 +27,7 @@ public class SentinelDoubleAttackState<SentinelStates> : State<SentinelStates>
             yield return new WaitForSeconds(_sentinel.TimeBetweenAttacks);
         }
         _sentinel._isDoubleAttacking = false;
+        _sentinel.SetIsAttacking(false);
+        _sentinel.SetJustAttacked(true);
     }
 }
