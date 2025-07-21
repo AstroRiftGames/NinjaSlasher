@@ -3,7 +3,9 @@ using UnityEngine;
 
 public class Controller : MonoBehaviour
 {
+    public View View => _playerView;
     [SerializeField] private View _playerView;
+    public Model Model=> _playerModel;
     [SerializeField] private Model _playerModel;
 
     // Movimiento
