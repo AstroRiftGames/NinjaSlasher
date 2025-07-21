@@ -1,3 +1,4 @@
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class Controller : MonoBehaviour
@@ -269,9 +270,10 @@ public class Controller : MonoBehaviour
         _lastDashDirection = _wishedDirection;
         _playerView.RB.linearVelocity = Vector2.zero;
         _playerView.RB.AddForce(_wishedDirection * _playerModel.DashForce, ForceMode2D.Impulse);
-        _playerView.CurrentVelocity = _playerView.RB.linearVelocity;
+        _playerView.SetVelocity(_playerView.RB.linearVelocity);
 
         _isDashing = true;
+        _playerView.Animator.SetBool("IsGrounded", _isDashing);
     }
 
     private void OnCollisionEnter2D(Collision2D collision)
@@ -285,6 +287,19 @@ public class Controller : MonoBehaviour
 
             _currentSurface = collision.collider;
             _isDashing = false;
+            
+            _playerView.Animator.SetBool("IsGrounded", _isDashing);
+            
+            Vector2 contactPoint = Vector2.zero;
+            Vector2 point = collision.GetContact(0).point;
+            contactPoint.x = point.x > transform.position.x ? 1 : -1;
+            contactPoint.y = point.y >= transform.position.y ? 1 : -1;
+
+            int value = 0;
+            if (contactPoint.y > 0) value = 2;
+            else if (contactPoint.x > 0) value = 1;
+
+            _playerView.Animator.SetInteger("GrabType", value);
 
             ElasticPlatform elasticPlatform = collision.gameObject.GetComponent<ElasticPlatform>();
             _lastSurfaceWasElastic = (elasticPlatform != null);

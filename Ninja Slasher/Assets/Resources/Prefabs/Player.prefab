@@ -16,6 +16,7 @@ GameObject:
   - component: {fileID: 1105286285594654931}
   - component: {fileID: 6905579431728325560}
   - component: {fileID: 5760230160173246306}
+  - component: {fileID: 4405320211598690621}
   m_Layer: 10
   m_Name: Player
   m_TagString: Player
@@ -153,7 +154,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _rb: {fileID: 2870901090016681095}
-  CurrentVelocity: {x: 0, y: 0}
+  _anim: {fileID: 0}
 --- !u!70 &1105286285594654931
 CapsuleCollider2D:
   m_ObjectHideFlags: 0
@@ -313,3 +314,25 @@ LineRenderer:
   m_UseWorldSpace: 1
   m_Loop: 0
   m_ApplyActiveColorSpace: 1
+--- !u!95 &4405320211598690621
+Animator:
+  serializedVersion: 7
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1104090747853785710}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: e1e2f913011da534797afc83b0482e31, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_AnimatePhysics: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
