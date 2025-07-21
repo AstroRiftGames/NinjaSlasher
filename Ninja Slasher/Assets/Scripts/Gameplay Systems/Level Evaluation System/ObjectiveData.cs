@@ -26,8 +26,17 @@ public abstract class ObjectiveData : ScriptableObject
 [Serializable]
 public class LevelContext
 {
-    public float levelDuration;
+    [Header("LEVEL CONFIGURATION")]
+    [Tooltip("Se calcula automáticamente al inicio del nivel")]
     public int totalEnemiesInLevel;
+    [Header("LEVEL MECHANICS")]
+    [Tooltip("Indica si el nivel incluye enemigos que disparan proyectiles")]
     public bool hasParryMechanics;
+    [Tooltip("Indica si el nivel tiene restricciones especiales de movimiento")]
     public bool hasMovementRestrictions;
+
+    public void Initialize(int enemyCount)
+    {
+        totalEnemiesInLevel = enemyCount;
+    }
 }

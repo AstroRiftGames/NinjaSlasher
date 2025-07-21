@@ -8,7 +8,6 @@ public class LevelProgressionData
     public int highestUnlockedArea = 1;         // Última área desbloqueada
     public int totalStarsEarned = 0;            // Total de estrellas para jefes
 
-    // Constructor por defecto - solo nivel 1 desbloqueado
     public LevelProgressionData()
     {
         highestUnlockedLevel = 1;

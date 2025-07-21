@@ -4,10 +4,13 @@ using UnityEngine;
 public class LevelUnlockRequirements
 {
     [Header("UNLOCK REQUIREMENTS")]
+    [Tooltip("Solo nivel 1 debería tener esto en true")]
     public bool isInitiallyUnlocked = false;
-    public int previousLevelRequired = 0;
+    [Tooltip("Estrellas requeridas para acceder a este nivel (solo para jefes)")]
     public int minimumStarsRequired = 0;
+    [Tooltip("Solo niveles jefe (10, 20, 30, etc.) deben tener esto en true")]
     public bool isBossLevel = false;
+    [Tooltip("ID del área al que pertenece este nivel (1-5)")]
     public int areaId = 1;
 }
 
@@ -23,6 +26,7 @@ public class LevelConfiguration : ScriptableObject
     public ObjectiveData[] objectives;
 
     [Header("LEVEL CONTEXT")]
+    [Tooltip("Características específicas del nivel para evaluación de objetivos")]
     public LevelContext levelContext;
 
     [Header("UNLOCK REQUIREMENTS")]
