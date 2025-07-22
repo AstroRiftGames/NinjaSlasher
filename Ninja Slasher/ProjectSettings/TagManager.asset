@@ -5,6 +5,9 @@ TagManager:
   serializedVersion: 3
   tags:
   - Scenario
+  - ParryZone
+  - Enemy
+  - Obstacle
   layers:
   - Default
   - TransparentFX
@@ -12,12 +15,12 @@ TagManager:
   - 
   - Water
   - UI
-  - 
-  - 
-  - 
-  - 
-  - 
-  - 
+  - Obstacle
+  - Scenario
+  - Projectiles
+  - Enemies
+  - Player
+  - Ball
   - 
   - 
   - 
@@ -41,6 +44,15 @@ TagManager:
   m_SortingLayers:
   - name: Default
     uniqueID: 0
+    locked: 0
+  - name: Enemies
+    uniqueID: 2304730731
+    locked: 0
+  - name: Player
+    uniqueID: 4159333213
+    locked: 0
+  - name: Projectiles
+    uniqueID: 4168871513
     locked: 0
   m_RenderingLayers:
   - Default
