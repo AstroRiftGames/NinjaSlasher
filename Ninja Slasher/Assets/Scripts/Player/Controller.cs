@@ -97,7 +97,7 @@ public class Controller : MonoBehaviour
         _root = rootQuestion;
     }
 
-    private bool QDash() => CanDashFromInput();
+    private bool QDash() => _isDashing || CanDashFromInput();
     private bool QGrab() => _currentSurface != null && !_isDashing;
     private bool QParry() => CanParryFromInput();
     private bool QKO() => _isDead;
@@ -397,10 +397,11 @@ public class Controller : MonoBehaviour
 
             _currentSurface = collision.collider;
 
-            if (_fsm.CurrentState.GetType() != typeof(NinjaDashState<NinjaStates>))
-            {
+            //if (_fsm.CurrentState.GetType() != typeof(NinjaDashState<NinjaStates>))
+            //{
                 SetIsDashing(false);
-            }
+            //}
+
 
             _playerView.Animator.SetBool("IsGrounded", _isDashing);
 

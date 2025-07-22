@@ -52,10 +52,10 @@ public class Enemy : MonoBehaviour
 
     protected void CheckVulnerability()
     {
-        if(!_data.IsVulnerable.fromUp) UpperCol.SetActive(true);
-        if(!_data.IsVulnerable.fromDown) LowerCol.SetActive(true);
-        if(!_data.IsVulnerable.fromBehind) RearCol.SetActive(true);
-        if(!_data.IsVulnerable.fromFront) FrontCol.SetActive(true);
+        UpperCol.SetActive(!_data.IsVulnerable.fromUp);
+        LowerCol.SetActive(!_data.IsVulnerable.fromDown);
+        RearCol.SetActive(!_data.IsVulnerable.fromBehind);
+        FrontCol.SetActive(!_data.IsVulnerable.fromFront);
     }
 
     public virtual void Die()

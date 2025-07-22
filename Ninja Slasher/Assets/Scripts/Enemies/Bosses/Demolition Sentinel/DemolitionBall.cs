@@ -89,6 +89,11 @@ public class DemolitionBall : MonoBehaviour
 
     private void OnCollisionEnter2D(Collision2D collision)
     {
+        if(collision.gameObject.CompareTag("Player"))
+        {
+            collision.gameObject.TryGetComponent(out Controller player);
+            player.Die();
+        }
         if (_heavyAttack) CreateDamageArea(collision.transform.position);
         Retrieve();
     }

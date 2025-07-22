@@ -18,7 +18,6 @@ public class NinjaGrabState<NinjaStates> : State<NinjaStates>
 
 
         _controller.View.Animator.SetBool("IsGrounded", false);
-        Debug.Log("Entering Grab State");
     }
 
     public override void Execute()
@@ -30,7 +29,5 @@ public class NinjaGrabState<NinjaStates> : State<NinjaStates>
     {
         _controller.ForceExitSurface();
         _controller.View.Animator.SetInteger("GrabType", 0);
-        
-        Debug.Log("Exiting Grab State");
     }
 }

@@ -12,8 +12,6 @@ public class NinjaIdleState<NinjaStates> : State<NinjaStates>
     public override void Enter()
     {
         _controller.View.Animator.SetBool("IsGrounded", true);
-
-        Debug.Log("Entering Idle State");
     }
 
     public override void Execute()
@@ -24,7 +22,5 @@ public class NinjaIdleState<NinjaStates> : State<NinjaStates>
     public override void Sleep()
     {
         _controller.View.Animator.SetBool("IsGrounded", false);
-
-        Debug.Log("Exiting Idle State");
     }
 }
