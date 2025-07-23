@@ -95,8 +95,18 @@ public class ButtonManager : MonoBehaviour
 
     private void SetupDailyRewardButtons()
     {
-        _claimRewardButton.onClick.AddListener(() => { GetComponent<DailyRewardSystem>().ClaimReward(); });
-        _closeCalendarButton.onClick.AddListener(GetComponent<CanvasManager>().ShowHideDailyRewardCanvas);
+        _claimRewardButton.onClick.AddListener(() =>
+        {
+            if (DailyRewardSystem.Instance != null)
+            {
+                bool success = DailyRewardSystem.Instance.ClaimReward();
+            }
+        });
+
+        _closeCalendarButton.onClick.AddListener(() =>
+        {
+            GetComponent<CanvasManager>().ShowHideDailyRewardCanvas();
+        });
     }
 
     private void SetupLevelProgression()
