@@ -42,16 +42,6 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
         SceneManager.sceneLoaded -= OnSceneLoaded;
     }
 
-    private void Update()
-    {
-        _gameplayUIManager.UpdateUI();
-
-        if (Input.GetKeyDown(KeyCode.F))
-        {
-            _canvasManager.ShowHidePauseCanvas();
-        }
-    }
-
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
         if (_gameplayUIManager != null)

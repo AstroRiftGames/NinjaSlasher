@@ -10,6 +10,7 @@ public class CanvasManager : MonoBehaviour
     [SerializeField] private Canvas _creditsCanvas;
     [SerializeField] private Canvas _pauseCanvas;
     [SerializeField] private Canvas _configCanvas;
+    [SerializeField] private Canvas _dailyRewardCanvas;
 
     public void OpenCanvas(Canvas canvas) => canvas.enabled = true;
     public void CloseCanvas(Canvas canvas) => canvas.enabled = false;
@@ -18,6 +19,14 @@ public class CanvasManager : MonoBehaviour
     {
         if (state) OpenCanvas(canvas);
         else CloseCanvas(canvas);
+    }
+
+    public void ShowHideDailyRewardCanvas()
+    {
+        bool isCanvasActive = !_dailyRewardCanvas.enabled;
+        ShowHideCanvas(_dailyRewardCanvas, isCanvasActive);
+        if (isCanvasActive)
+            GetComponent<DailyRewardUIManager>().ShowDailyReward();
     }
 
     public void ShowHideCreditsCanvas()

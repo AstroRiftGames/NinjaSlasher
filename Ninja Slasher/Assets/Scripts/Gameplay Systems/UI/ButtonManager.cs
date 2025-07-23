@@ -10,9 +10,14 @@ public class ButtonManager : MonoBehaviour
     [SerializeField] private Button _musicButton;
     [SerializeField] private Button _sfxButton;
     [SerializeField] private Button _creditsButton;
+    [SerializeField] private Button _calendarButton;
+
+    [Header("DAILY REWARDS BUTTONS")]
+    [SerializeField] private Button _claimRewardButton;
+    [SerializeField] private Button _closeCalendarButton;
 
     [Header("PREGAME BUTTONS")]
-    [SerializeField] private Button _closeButton;
+    [SerializeField] private Button _closePregameButton;
     [SerializeField] private Button _playButton;
 
     [Header("GAMEPLAY BUTTONS")]
@@ -64,7 +69,7 @@ public class ButtonManager : MonoBehaviour
         SetupLevelSelectorButtons();
         SetupPreGameButtons();
         SetupGameplayButtons();
-
+        SetupDailyRewardButtons();
         SetupLevelProgression();
 
 #if UNITY_EDITOR
@@ -74,7 +79,7 @@ public class ButtonManager : MonoBehaviour
 
     private void SetupPreGameButtons()
     {
-        _closeButton.onClick.AddListener(UIManager.Instance.ShowHidePreGameCanvas);
+        _closePregameButton.onClick.AddListener(UIManager.Instance.ShowHidePreGameCanvas);
         _playButton.onClick.AddListener(UIManager.Instance.ShowHidePreGameCanvas);
     }
 
@@ -86,6 +91,12 @@ public class ButtonManager : MonoBehaviour
         _quitButton.onClick.AddListener(UIManager.Instance.ShowLevelSelector);
         _retryButton.onClick.AddListener(GetComponent<GameplayUIManager>().OnRetryPressed);
         _backToSelectionButton.onClick.AddListener(GetComponent<GameplayUIManager>().OnBackToSelectionPressed);
+    }
+
+    private void SetupDailyRewardButtons()
+    {
+        _claimRewardButton.onClick.AddListener(() => { GetComponent<DailyRewardSystem>().ClaimReward(); });
+        _closeCalendarButton.onClick.AddListener(GetComponent<CanvasManager>().ShowHideDailyRewardCanvas);
     }
 
     private void SetupLevelProgression()
@@ -112,6 +123,7 @@ public class ButtonManager : MonoBehaviour
         _musicButton.onClick.AddListener(_audioToggle.MusicButtonClicked);
         _sfxButton.onClick.AddListener(_audioToggle.SFXButtonClicked);
         _creditsButton.onClick.AddListener(GetComponent<CanvasManager>().ShowHideCreditsCanvas);
+        _calendarButton.onClick.AddListener(GetComponent<CanvasManager>().ShowHideDailyRewardCanvas);
         _testLevelButton.onClick.AddListener(() => GetComponent<SceneTransitionManager>().LoadDebugTestScene());
 
         for (int i = 0; i < levelButtons.Length; i++)

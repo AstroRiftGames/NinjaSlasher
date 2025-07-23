@@ -97,7 +97,7 @@ public class SceneTransitionManager : MonoBehaviour
         }
 
         Debug.Log("[UIManager] Llamando ShowDailyRewardPanel");
-        _dailyRewardUI.ShowDailyRewardPanel();
+        _dailyRewardUI.ShowDailyReward();
     }
 
     public void LoadDebugTestScene()
