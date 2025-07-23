@@ -69,11 +69,8 @@ public class SceneTransitionManager : MonoBehaviour
 
     private void CheckAndShowDailyRewards()
     {
-        Debug.Log("[UIManager] CheckAndShowDailyRewards() llamado");
-
         if (DailyRewardSystem.Instance == null)
         {
-            Debug.LogError("[UIManager] DailyRewardSystem.Instance null");
             return;
         }
 

@@ -48,15 +48,12 @@ public class LevelProgressionManager : MonoBehaviourSingleton<LevelProgressionMa
     private void Initialize()
     {
         isInitialized = true;
-
-        Debug.Log("[LevelProgressionManager] Inicializado con valores por defecto");
     }
 
     public bool IsLevelUnlocked(int levelId)
     {
         if (!isInitialized)
         {
-            Debug.LogWarning("[LevelProgressionManager] No inicializado - permitiendo nivel 1 solamente");
             return levelId == 1;
         }
 
@@ -76,7 +73,6 @@ public class LevelProgressionManager : MonoBehaviourSingleton<LevelProgressionMa
     {
         if (LevelConfigurationManager.Instance == null)
         {
-            Debug.LogWarning("[LevelProgressionManager] LevelConfigurationManager no disponible");
             var (highestLevel, _, _) = SaveManager.Instance?.GetProgressionData() ?? (1, 1, 0);
             return levelId <= highestLevel;
         }
@@ -84,7 +80,6 @@ public class LevelProgressionManager : MonoBehaviourSingleton<LevelProgressionMa
         var config = LevelConfigurationManager.Instance.GetConfigurationForLevel(levelId);
         if (config == null)
         {
-            Debug.LogWarning($"[LevelProgressionManager] No se encontró configuración para nivel {levelId}");
             var (highestLevel, _, _) = SaveManager.Instance?.GetProgressionData() ?? (1, 1, 0);
             return levelId <= highestLevel;
         }
@@ -112,8 +107,6 @@ public class LevelProgressionManager : MonoBehaviourSingleton<LevelProgressionMa
 
     public void OnLevelCompleted(int levelId, int starsEarned)
     {
-        Debug.Log($"[LevelProgressionManager] Nivel {levelId} completado con {starsEarned} estrellas");
-
         SaveManager.Instance?.UpdateLevelProgression(levelId, starsEarned);
 
         if (LevelConfigurationManager.Instance != null)
@@ -136,7 +129,6 @@ public class LevelProgressionManager : MonoBehaviourSingleton<LevelProgressionMa
         if (newAreaId <= totalAreas && newAreaId > currentHighestArea)
         {
             SaveManager.Instance?.UnlockNewArea(newAreaId);
-            Debug.Log($"[LevelProgressionManager] ¡Nueva área desbloqueada: {newAreaId}!");
 
             OnNewAreaUnlocked?.Invoke(newAreaId);
         }

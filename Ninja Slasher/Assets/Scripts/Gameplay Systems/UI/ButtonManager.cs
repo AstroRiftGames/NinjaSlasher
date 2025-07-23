@@ -122,8 +122,6 @@ public class ButtonManager : MonoBehaviour
             {
                 levelButtonImages[i].color = isUnlocked ? unlockedButtonColor : lockedButtonColor;
             }
-
-            Debug.Log($"[ButtonManager] Nivel {levelId}: {(isUnlocked ? "DESBLOQUEADO" : "BLOQUEADO")}");
         }
     }
 
@@ -175,7 +173,6 @@ public class ButtonManager : MonoBehaviour
     {
         if (LevelProgressionManager.Instance == null)
         {
-            Debug.LogWarning("[BUTTON MANAGER] LevelProgressionManager no encontrado");
             return true;
         }
 
