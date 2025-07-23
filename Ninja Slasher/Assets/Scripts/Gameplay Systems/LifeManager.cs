@@ -105,8 +105,6 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
 
             SaveLivesViaAutoSave("Vidas offline regeneradas");
             OnLivesChanged?.Invoke(CurrentLives);
-
-            Debug.Log($"[LifeManager] Regeneración offline: {vidasAGenerar} vidas. Total: {CurrentLives}");
         }
     }
 
@@ -116,7 +114,6 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
     {
         if (_hasVirtualDeduction)
         {
-            Debug.LogWarning("[LifeManager] Ya hay una vida virtual descontada. Forzando reinicio del estado.");
             _hasVirtualDeduction = false;
         }
 
@@ -125,8 +122,6 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
             _virtualLives = CurrentLives - 1;
             _hasVirtualDeduction = true;
             _levelInProgress = true;
-
-            Debug.Log($"[LifeManager] Nivel iniciado. Vidas reales: {CurrentLives}, Vidas virtuales: {_virtualLives}");
 
             OnLivesChanged?.Invoke(_virtualLives);
         }
@@ -274,7 +269,6 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
         else
         {
             SaveManager.Instance.UpdateLives(CurrentLives, _lastLifeUsed, CurrentLives < _maxLives);
-            Debug.LogWarning("[LifeManager] AutoSaveManager no encontrado, guardando directamente");
         }
     }
 
