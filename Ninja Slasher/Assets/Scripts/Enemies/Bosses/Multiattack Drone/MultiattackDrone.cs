@@ -1,8 +1,16 @@
 using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using Zenject.SpaceFighter;
+
+public enum AttackType
+{
+    Burst,
+    Cone,
+    Ricochet,
+}
 
 public class MultiattackDrone : BossEnemy
 {
@@ -15,10 +23,16 @@ public class MultiattackDrone : BossEnemy
 
     [Header("Bullet prefabs")]
     [SerializeField] GameObject _riccochetBullet;
-    [SerializeField] GameObject _regularBullet;
+    [SerializeField] GameObject _burstBullet;
+    [SerializeField] GameObject _coneShots;
 
     [Header("Attacking Parameters")]
     [SerializeField] float _cooldown;
+    [SerializeField] Transform _shootingPoint;
+    [Space]
+    [SerializeField] int _burstAmount;
+    [SerializeField] int _coneAmount;
+    [SerializeField] float _timeBetweenShots;
 
 
     private bool _flyingAway;
@@ -32,6 +46,74 @@ public class MultiattackDrone : BossEnemy
         }
     }
 
+    #region ATTACK METHODS
+
+    private void Attack(AttackType type)
+    {
+        Vector2 dirToPlayer = (_playerPos - (Vector2)_shootingPoint.position).normalized;
+        switch(type)
+        {
+            case AttackType.Burst:
+                StartCoroutine(ShootBurst(dirToPlayer));
+                break;
+            case AttackType.Cone:
+                StartCoroutine(ShootCone());
+                break;
+            case AttackType.Ricochet:
+                Shoot(AttackType.Ricochet, dirToPlayer);
+                Debug.Log("Ricochet Attack");
+                break;
+        };
+    }
+
+    private IEnumerator ShootBurst(Vector2 dir)
+    {
+        for (int n = 0; n < _burstAmount; n++)
+        {
+            Shoot(AttackType.Burst, dir);
+            yield return new WaitForSeconds(_timeBetweenShots);
+        }
+    }
+
+    private IEnumerator ShootCone()
+    {
+        for (int n = 0; n < _coneAmount; n++)
+        {
+            Shoot(AttackType.Cone, Vector2.zero);
+            yield return new WaitForSeconds(_timeBetweenShots);
+        }
+    }
+
+    private void Shoot(AttackType type, Vector2 dirToShoot)
+    {
+        GameObject prefab = type switch
+        {
+            AttackType.Burst => _burstBullet,
+            AttackType.Cone => _coneShots,
+            AttackType.Ricochet => _riccochetBullet,
+            _ => _burstBullet,
+        };
+
+        if(type == AttackType.Cone)
+        {
+            GameObject cone = Instantiate(prefab, _shootingPoint.position, Quaternion.identity);
+            for(int n = 0; n < cone.transform.childCount;n++)
+            {
+                cone.transform.GetChild(n).TryGetComponent(out Projectile newProjectile);
+                newProjectile.Initialize(transform);
+            }
+        }
+        else
+        {
+            Instantiate(prefab, _shootingPoint.position, Quaternion.identity).TryGetComponent(out Projectile newProjectile);
+            newProjectile.Initialize(dirToShoot, transform);
+            Debug.Log("Bullet Shot");
+        }
+    }
+
+    #endregion
+
+    #region EVASION && FLYING METHODS
     private bool CheckDisToPlayer()
     {
         _playerPos = _player.transform.position;
@@ -86,4 +168,6 @@ public class MultiattackDrone : BossEnemy
             yield return null;
         }
     }
+
+    #endregion
 }

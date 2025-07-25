@@ -28,6 +28,12 @@ public class Projectile : MonoBehaviour
         SetDirection(direction);
     }
 
+    public void Initialize(Transform owner)
+    {
+        SetOwner(owner);
+        SetDirection(transform.up);
+    }
+
     public virtual void Update()
     {
 

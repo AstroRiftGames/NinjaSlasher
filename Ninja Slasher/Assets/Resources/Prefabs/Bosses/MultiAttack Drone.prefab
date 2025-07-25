@@ -1,5 +1,36 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!1 &1300417525336439836
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1558874594981461993}
+  m_Layer: 9
+  m_Name: ShootingPoint
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1558874594981461993
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1300417525336439836}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0.364, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4780845576615125660}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1716103536618641620
 GameObject:
   m_ObjectHideFlags: 0
@@ -173,7 +204,7 @@ Transform:
   m_GameObject: {fileID: 1985604251439888502}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 6, y: 3, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -227,9 +258,9 @@ GameObject:
   - component: {fileID: 8129151992874081967}
   - component: {fileID: 2893625999367246447}
   - component: {fileID: 6716582800546593670}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: Drone
-  m_TagString: Untagged
+  m_TagString: Enemy
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -249,6 +280,7 @@ Transform:
   m_Children:
   - {fileID: 6843620628493475749}
   - {fileID: 5133468715822045953}
+  - {fileID: 1558874594981461993}
   m_Father: {fileID: 3432588361670782226}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &8129151992874081967
@@ -277,8 +309,13 @@ MonoBehaviour:
   - {fileID: 1221776311539793986}
   - {fileID: 4522081585450646964}
   _riccochetBullet: {fileID: 6157027327081663254, guid: baca8cb8f8f0be94e875eae0326f6674, type: 3}
-  _regularBullet: {fileID: 6157027327081663254, guid: ca508bd392c18ca4d9b9bbaf60106fb9, type: 3}
+  _burstBullet: {fileID: 6157027327081663254, guid: 54de905979fd25545aaf6bb5ca6fef95, type: 3}
+  _coneShots: {fileID: 2582621140438129882, guid: 0dad47c2623e80642bd6243ea79d9dcf, type: 3}
   _cooldown: 3
+  _shootingPoint: {fileID: 1558874594981461993}
+  _burstAmount: 5
+  _coneAmount: 4
+  _timeBetweenShots: 0.5
 --- !u!50 &2893625999367246447
 Rigidbody2D:
   serializedVersion: 5
@@ -368,7 +405,7 @@ Transform:
   m_GameObject: {fileID: 2695774136646159192}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: -6, y: -3, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -384,7 +421,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5133468715822045953}
   - component: {fileID: 6325884267849600853}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: Body
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -486,7 +523,7 @@ Transform:
   m_GameObject: {fileID: 5728161571344751961}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: -6, y: 3, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -680,7 +717,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6843620628493475749}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: VulnerabilityChecks
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1012,7 +1049,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3432588361670782226}
   m_Layer: 0
-  m_Name: MultiTask Drone
+  m_Name: MultiAttack Drone
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1060,7 +1097,7 @@ Transform:
   m_GameObject: {fileID: 7716627365564105093}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 6, y: -3, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
