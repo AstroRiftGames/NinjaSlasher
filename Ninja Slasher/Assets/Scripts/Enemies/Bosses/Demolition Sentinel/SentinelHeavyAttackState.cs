@@ -26,5 +26,6 @@ public class SentinelHeavyAttackState<SentinelStates> : State<SentinelStates>
         _sentinel._isHeavyAttacking = false;
         _sentinel.SetIsAttacking(false);
         _sentinel.SetJustAttacked(true);
+        _sentinel.StartCoroutine(_sentinel.ReturnBalls());
     }
 }
