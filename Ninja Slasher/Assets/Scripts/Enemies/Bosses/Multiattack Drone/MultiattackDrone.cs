@@ -28,11 +28,13 @@ public class MultiattackDrone : BossEnemy
 
     [Header("Attacking Parameters")]
     [SerializeField] float _cooldown;
+    private float _lastAttack;
     [SerializeField] Transform _shootingPoint;
     [Space]
     [SerializeField] int _burstAmount;
     [SerializeField] int _coneAmount;
     [SerializeField] float _timeBetweenShots;
+    private AttackType _nextAttack;
 
 
     private bool _flyingAway;
@@ -44,33 +46,55 @@ public class MultiattackDrone : BossEnemy
             if (_flyingAway) StopAllCoroutines();
             FlyAway();
         }
+
+        if(!_flyingAway && CheckCooldown())
+        {
+            ChooseAttack();
+            Attack(_nextAttack);
+        }
     }
+
+    private bool CheckCooldown() => Time.time >= _lastAttack + _cooldown;
 
     #region ATTACK METHODS
 
+    private void ChooseAttack()
+    {
+        int r = Random.Range(0, 3);
+        _nextAttack = r switch
+        {
+            0 => AttackType.Burst,
+            1 => AttackType.Cone,
+            2 => AttackType.Ricochet,
+            _ => AttackType.Burst,
+        };
+    }
+
+    private Vector2 GetDirToPlayer() => (_playerPos - (Vector2)_shootingPoint.position).normalized;
+
     private void Attack(AttackType type)
     {
-        Vector2 dirToPlayer = (_playerPos - (Vector2)_shootingPoint.position).normalized;
         switch(type)
         {
             case AttackType.Burst:
-                StartCoroutine(ShootBurst(dirToPlayer));
+                StartCoroutine(ShootBurst());
                 break;
             case AttackType.Cone:
                 StartCoroutine(ShootCone());
                 break;
             case AttackType.Ricochet:
-                Shoot(AttackType.Ricochet, dirToPlayer);
+                Shoot(AttackType.Ricochet);
                 Debug.Log("Ricochet Attack");
                 break;
         };
+        _lastAttack = Time.time;
     }
 
-    private IEnumerator ShootBurst(Vector2 dir)
+    private IEnumerator ShootBurst()
     {
         for (int n = 0; n < _burstAmount; n++)
         {
-            Shoot(AttackType.Burst, dir);
+            Shoot(AttackType.Burst);
             yield return new WaitForSeconds(_timeBetweenShots);
         }
     }
@@ -79,12 +103,12 @@ public class MultiattackDrone : BossEnemy
     {
         for (int n = 0; n < _coneAmount; n++)
         {
-            Shoot(AttackType.Cone, Vector2.zero);
+            Shoot(AttackType.Cone);
             yield return new WaitForSeconds(_timeBetweenShots);
         }
     }
 
-    private void Shoot(AttackType type, Vector2 dirToShoot)
+    private void Shoot(AttackType type)
     {
         GameObject prefab = type switch
         {
@@ -96,7 +120,7 @@ public class MultiattackDrone : BossEnemy
 
         if(type == AttackType.Cone)
         {
-            GameObject cone = Instantiate(prefab, _shootingPoint.position, Quaternion.identity);
+            GameObject cone = Instantiate(prefab, _shootingPoint.position, _shootingPoint.parent.rotation);
             for(int n = 0; n < cone.transform.childCount;n++)
             {
                 cone.transform.GetChild(n).TryGetComponent(out Projectile newProjectile);
@@ -106,7 +130,7 @@ public class MultiattackDrone : BossEnemy
         else
         {
             Instantiate(prefab, _shootingPoint.position, Quaternion.identity).TryGetComponent(out Projectile newProjectile);
-            newProjectile.Initialize(dirToShoot, transform);
+            newProjectile.Initialize(GetDirToPlayer(), transform);
             Debug.Log("Bullet Shot");
         }
     }
