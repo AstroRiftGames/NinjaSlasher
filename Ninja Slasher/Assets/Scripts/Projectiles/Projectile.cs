@@ -6,7 +6,8 @@ public class Projectile : MonoBehaviour
 {
     [SerializeField] protected float _speed;
     [SerializeField] private float _reflectedSpeed;
-    [SerializeField] [HideInInspector] protected Transform _shooter;
+    [SerializeField] protected Transform _shooter;
+    public Transform Shooter => _shooter;
     [SerializeField] protected LayerMask enemyLayer;
     [SerializeField] protected LayerMask playerLayer;
 

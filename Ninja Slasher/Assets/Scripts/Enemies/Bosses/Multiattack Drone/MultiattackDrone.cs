@@ -20,8 +20,9 @@ public class MultiattackDrone : BossEnemy
     [SerializeField] Transform[] Waypoints;
     private Transform _targetWaypoint;
     private Vector2 _playerPos;
+    private bool _flyingAway;
 
-    [Header("Bullet prefabs")]
+    [Header("Bullet Prefabs")]
     [SerializeField] GameObject _riccochetBullet;
     [SerializeField] GameObject _burstBullet;
     [SerializeField] GameObject _coneShots;
@@ -36,25 +37,61 @@ public class MultiattackDrone : BossEnemy
     [SerializeField] float _timeBetweenShots;
     private AttackType _nextAttack;
 
+    [Header("Vulnerability Parameters")]
+    [SerializeField] float _vulnerabilityTime;
+    private bool _isVulnerable;
 
-    private bool _flyingAway;
 
     private void Update()
     {
-        if(CheckDisToPlayer())
+        if(!_isVulnerable)
         {
-            if (_flyingAway) StopAllCoroutines();
-            FlyAway();
-        }
+            if(CheckDisToPlayer())
+            {
+                if (_flyingAway) StopAllCoroutines();
+                FlyAway();
+            }
 
-        if(!_flyingAway && CheckCooldown())
-        {
-            ChooseAttack();
-            Attack(_nextAttack);
+            if(!_flyingAway && CheckCooldown())
+            {
+                ChooseAttack();
+                Attack(_nextAttack);
+            }
         }
     }
 
     private bool CheckCooldown() => Time.time >= _lastAttack + _cooldown;
+
+    #region VULNERABILITY MANAGEMENT
+    private bool SetVulnerability(bool value) => _isVulnerable = value;
+
+    private void OnTriggerEnter2D(Collider2D collision)
+    {
+        if(collision.gameObject.layer == 8)
+        {
+            collision.TryGetComponent(out Projectile projectile);
+            Debug.Log(projectile);
+            if(projectile.Shooter.gameObject.CompareTag("Player"))
+            {
+                StartCoroutine(GetVulnerable());
+            }
+        }
+        else if(collision.gameObject.CompareTag("Player") && _isVulnerable)
+        {
+            Die();
+        }
+    }
+
+    private IEnumerator GetVulnerable()
+    {
+        SetVulnerability(true);
+        Debug.Log("Is now vulnerable");
+        yield return new WaitForSeconds(_vulnerabilityTime);
+        SetVulnerability(false);
+        Debug.Log("Is no longer vulnerable");
+    }
+
+    #endregion
 
     #region ATTACK METHODS
 
@@ -84,7 +121,6 @@ public class MultiattackDrone : BossEnemy
                 break;
             case AttackType.Ricochet:
                 Shoot(AttackType.Ricochet);
-                Debug.Log("Ricochet Attack");
                 break;
         };
         _lastAttack = Time.time;
@@ -131,7 +167,6 @@ public class MultiattackDrone : BossEnemy
         {
             Instantiate(prefab, _shootingPoint.position, Quaternion.identity).TryGetComponent(out Projectile newProjectile);
             newProjectile.Initialize(GetDirToPlayer(), transform);
-            Debug.Log("Bullet Shot");
         }
     }
 
@@ -161,14 +196,11 @@ public class MultiattackDrone : BossEnemy
         foreach(Transform t in Waypoints)
         {
             disToActual = Vector2.Distance(t.position, _playerPos);
-            Debug.Log($"Distance to {t} is {disToActual}");
 
             if(disToFurthest == 0 || disToActual > disToFurthest)
             {
                 disToFurthest = disToActual;
                 furthestWP = t;
-
-                Debug.Log($"TargetWP updateded ({furthestWP})");
             }
         }
         if(furthestWP != null) _targetWaypoint = furthestWP;
@@ -187,8 +219,6 @@ public class MultiattackDrone : BossEnemy
                 _rb.linearVelocity = Vector2.zero;
                 _flyingAway = false;
             }
-
-            Debug.Log("Flying away");
             yield return null;
         }
     }
