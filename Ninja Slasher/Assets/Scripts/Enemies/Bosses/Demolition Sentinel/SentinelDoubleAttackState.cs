@@ -29,5 +29,6 @@ public class SentinelDoubleAttackState<SentinelStates> : State<SentinelStates>
         _sentinel._isDoubleAttacking = false;
         _sentinel.SetIsAttacking(false);
         _sentinel.SetJustAttacked(true);
+        _sentinel.StartCoroutine(_sentinel.ReturnBalls());
     }
 }

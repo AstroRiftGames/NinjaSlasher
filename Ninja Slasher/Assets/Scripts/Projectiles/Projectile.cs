@@ -6,7 +6,8 @@ public class Projectile : MonoBehaviour
 {
     [SerializeField] protected float _speed;
     [SerializeField] private float _reflectedSpeed;
-    [SerializeField] [HideInInspector] protected Transform _shooter;
+    [SerializeField] protected Transform _shooter;
+    public Transform Shooter => _shooter;
     [SerializeField] protected LayerMask enemyLayer;
     [SerializeField] protected LayerMask playerLayer;
 
@@ -26,6 +27,12 @@ public class Projectile : MonoBehaviour
     {
         SetOwner(owner);
         SetDirection(direction);
+    }
+
+    public void Initialize(Transform owner)
+    {
+        SetOwner(owner);
+        SetDirection(transform.up);
     }
 
     public virtual void Update()

@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Linq;
 using UnityEngine;
 
@@ -44,6 +45,7 @@ public class DemolitionSentinel : BossEnemy
     public float Cooldown => _cooldown;
     [SerializeField] private float _cooldown;
     [SerializeField] private DemolitionBall[] _balls;
+    public DemolitionBall[] Balls => _balls;
 
     [Header("Double Attack")]
     public float TimeBetweenAttacks => _timeBetweenAttacks;
@@ -79,8 +81,6 @@ public class DemolitionSentinel : BossEnemy
     {
         _fsm.OnUpdate();
         _root.Execute();
-
-        Debug.Log(_fsm.CurrentState);
     }
 
     #endregion
@@ -96,9 +96,27 @@ public class DemolitionSentinel : BossEnemy
     public void ChangeBall()
     {
         _isRightBallTurn = !_isRightBallTurn;
-        _currentBall = _balls[_isRightBallTurn ? 0 : 1];
+        _currentBall = _balls[_isRightBallTurn ? 1 : 0];
     }
-    
+
+    public IEnumerator ReturnBalls()
+    {
+        foreach (var ball in _balls)
+        {
+            Vector3 initPos = ball.transform.position;
+            Vector3 targetPos = new Vector3(ball == _balls[0] ? -2.5f : 2.5f, 0, 0);
+
+            float t = 0;
+            while (t < 1)
+            {
+                t += Time.deltaTime / _timeBetweenAttacks;
+                ball.transform.position = Vector3.Lerp(initPos, targetPos, t);
+                yield return null;
+            }
+        }
+    }
+
+
     public void RemoveBall(DemolitionBall ball)
     {
         DemolitionBall[] list = new DemolitionBall[_balls.Length - 1];
@@ -168,8 +186,8 @@ public class DemolitionSentinel : BossEnemy
 
     #region QUESTIONS
     bool QDoubleAttack() => !_justAttacked && (_isDoubleAttacking || (!_isAttacking && _nextAttack == SentinelAttacks.Double));
-    bool QHeavyAttack() => !_justAttacked && (_isHeavyAttacking   || (!_isAttacking && _nextAttack == SentinelAttacks.Heavy));
-    bool QSweepAttack() => !_justAttacked && (_isSweepAttacking   || (!_isAttacking && _nextAttack == SentinelAttacks.Sweep));
+    bool QHeavyAttack() => !_justAttacked && (_isHeavyAttacking || (!_isAttacking && _nextAttack == SentinelAttacks.Heavy));
+    bool QSweepAttack() => !_justAttacked && (_isSweepAttacking || (!_isAttacking && _nextAttack == SentinelAttacks.Sweep));
     bool QVulnerable() => _balls.Length <= 0;
 
     #endregion

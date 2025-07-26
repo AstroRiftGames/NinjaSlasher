@@ -69,11 +69,8 @@ public class SceneTransitionManager : MonoBehaviour
 
     private void CheckAndShowDailyRewards()
     {
-        Debug.Log("[UIManager] CheckAndShowDailyRewards() llamado");
-
         if (DailyRewardSystem.Instance == null)
         {
-            Debug.LogError("[UIManager] DailyRewardSystem.Instance null");
             return;
         }
 
@@ -92,12 +89,12 @@ public class SceneTransitionManager : MonoBehaviour
 
         if (_dailyRewardUI == null)
         {
-            Debug.LogError("[UIManager] _dailyRewardUI null. Asigna la referencia");
             yield break;
         }
 
-        Debug.Log("[UIManager] Llamando ShowDailyRewardPanel");
-        _dailyRewardUI.ShowDailyRewardPanel();
+        _canvasManager.ShowHideDailyRewardCanvas();
+
+        _dailyRewardUI.ShowDailyReward();
     }
 
     public void LoadDebugTestScene()

@@ -25,11 +25,6 @@ public class AutoSaveManager : MonoBehaviourSingleton<AutoSaveManager>
         if (SaveManager.Instance != null)
         {
             saveManager = SaveManager.Instance;
-            Debug.Log("[AutoSaveManager] SaveManager inicializado correctamente");
-        }
-        else
-        {
-            Debug.LogError("[AutoSaveManager] SaveManager.Instance no está disponible en Start");
         }
     }
 
@@ -40,7 +35,6 @@ public class AutoSaveManager : MonoBehaviourSingleton<AutoSaveManager>
             saveManager = SaveManager.Instance;
             if (saveManager == null)
             {
-                Debug.LogError("[AutoSaveManager] SaveManager no disponible");
                 return false;
             }
         }
@@ -92,7 +86,6 @@ public class AutoSaveManager : MonoBehaviourSingleton<AutoSaveManager>
         saveManager.UpdateLevelProgress(levelId + 1);
         saveManager.UpdateStars(levelId, starsEarned);
         saveManager.UpdateGameStats(enemiesKilled, maxCombo, playTime, true);
-        Debug.Log($"[AutoSaveManager] Nivel {levelId} completado - guardado automático");
     }
 
     public void OnLevelFailed(int enemiesKilled, int maxCombo, float playTime)
@@ -101,7 +94,6 @@ public class AutoSaveManager : MonoBehaviourSingleton<AutoSaveManager>
 
         ShowSaveIndicator("Guardando...", 1f);
         saveManager.UpdateGameStats(enemiesKilled, maxCombo, playTime, false);
-        Debug.Log("[AutoSaveManager] Nivel fallado - guardado automático");
     }
 
     public void OnAreaUnlocked(int areaId)
@@ -110,7 +102,6 @@ public class AutoSaveManager : MonoBehaviourSingleton<AutoSaveManager>
 
         ShowSaveIndicator("Área desbloqueada!");
         saveManager.UnlockArea(areaId);
-        Debug.Log($"[AutoSaveManager] Área {areaId} desbloqueada - guardado automático");
     }
 
     public void OnPowerUpObtained(PowerUpType powerUpType, int quantity = 1)
@@ -119,7 +110,6 @@ public class AutoSaveManager : MonoBehaviourSingleton<AutoSaveManager>
 
         ShowSaveIndicator("Guardando...", 1f);
         saveManager.AddPowerUpToInventory(powerUpType, quantity);
-        Debug.Log($"[AutoSaveManager] Power up {powerUpType} obtenido - guardado automático");
     }
 
     public void OnPowerUpActivated(PowerUpType powerUpType, float duration = 1800f)
@@ -128,7 +118,6 @@ public class AutoSaveManager : MonoBehaviourSingleton<AutoSaveManager>
 
         ShowSaveIndicator("Guardando...");
         saveManager.ActivatePowerUp(powerUpType, duration);
-        Debug.Log($"[AutoSaveManager] Power-up {powerUpType} activado - guardado automático");
     }
 
     public void OnDailyRewardClaimed(string rewardData)
@@ -137,7 +126,6 @@ public class AutoSaveManager : MonoBehaviourSingleton<AutoSaveManager>
 
         ShowSaveIndicator("Guardando...");
         saveManager.SaveDailyRewardData(rewardData);
-        Debug.Log("[AutoSaveManager] Recompensa diaria reclamada - guardado automático");
     }
 
     public void OnLivesChanged(int newLives, System.DateTime lastRegenTime, bool canRegen)
@@ -146,7 +134,6 @@ public class AutoSaveManager : MonoBehaviourSingleton<AutoSaveManager>
 
         ShowSaveIndicator("Guardando...", 1f);
         saveManager.UpdateLives(newLives, lastRegenTime, canRegen);
-        Debug.Log($"[AutoSaveManager] Vidas actualizadas a {newLives} - guardado automático");
     }
 
     public void OnAudioSettingsChanged(float musicVolume, float sfxVolume)
@@ -156,7 +143,6 @@ public class AutoSaveManager : MonoBehaviourSingleton<AutoSaveManager>
         ShowSaveIndicator("Guardando...", 1f);
         saveManager.SetMusicVolume(musicVolume);
         saveManager.SetSFXVolume(sfxVolume);
-        Debug.Log("[AutoSaveManager] Configuración de audio cambiada - guardado automático");
     }
 
     public void OnPowerUpDeactivated(PowerUpType powerUpType)
@@ -165,7 +151,6 @@ public class AutoSaveManager : MonoBehaviourSingleton<AutoSaveManager>
 
         ShowSaveIndicator("Guardando...");
         saveManager.DeactivatePowerUp(powerUpType);
-        Debug.Log($"[AutoSaveManager] Power-up {powerUpType} desactivado - guardado automático");
     }
 
     #endregion
@@ -190,7 +175,6 @@ public class AutoSaveManager : MonoBehaviourSingleton<AutoSaveManager>
 
         ShowSaveIndicator("Guardando datos...");
         saveManager.SaveData();
-        Debug.Log("[AutoSaveManager] Guardado manual forzado");
     }
 
     [ContextMenu("Test Save Indicator")]

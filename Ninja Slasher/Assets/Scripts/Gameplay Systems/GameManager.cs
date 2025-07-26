@@ -101,6 +101,21 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
         GoToLevelSelection();
     }
 
+    public void OnLevelFailed()
+    {
+        Debug.Log("[GameManager] Nivel fallido - procesando derrota");
+
+        if (LifeManager.Instance != null)
+        {
+            LifeManager.Instance.UseLife();
+        }
+
+        if (UIManager.Instance != null)
+        {
+            UIManager.Instance.ShowLifeLostPanel();
+        }
+    }
+
     public void OnPlayerLose()
     {
         _playerHasDied = true;

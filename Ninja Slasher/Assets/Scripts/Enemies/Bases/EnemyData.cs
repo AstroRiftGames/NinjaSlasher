@@ -15,6 +15,7 @@ public enum EnemyType
     OM3GA,
     KRUSH9,
     DemolitionSentinel,
+    MultiTaskDrone,
 }
 [Serializable]
 public class VulnerabilityValues

@@ -109,7 +109,6 @@ public class LevelController : MonoBehaviour
 
         if (levelConfiguration == null)
         {
-            Debug.LogError("No se pudo cargar la configuracion del nivel");
             return;
         }
 
@@ -122,9 +121,6 @@ public class LevelController : MonoBehaviour
         initialDuration = baseDuration;
 
         StartCoroutine(TimerCoroutine());
-
-        Debug.Log($"Nivel iniciado: {levelConfiguration.levelName}");
-        Debug.Log($"Duracion base: {baseDuration}s, Duración modificada: {modifiedDuration}s");
 
         ShowPreviousProgress();
     }
@@ -156,21 +152,17 @@ public class LevelController : MonoBehaviour
     {
         if (evaluator == null || levelConfiguration == null)
         {
-            Debug.LogError("Evaluador no inicializado");
             return 0;
         }
 
         if (levelFailed)
         {
-            Debug.Log("[LevelController] nivel fallido no se evaluan objetivos");
             return 0;
         }
 
         var result = evaluator.Evaluate(stats);
 
         SaveManager.Instance?.SaveLevelProgress(levelConfiguration.levelId, result, stats);
-
-        Debug.Log($"Evaluación completada: {result.starsEarned} estrellas");
 
         foreach (var completed in result.completedObjectives)
         {
@@ -218,7 +210,6 @@ public class LevelController : MonoBehaviour
     public void AddTime(float timeToAdd)
     {
         currentTime += timeToAdd;
-        Debug.Log($"[LevelController] Tiempo agregado: {timeToAdd:F2}s. Tiempo actual: {currentTime:F2}s");
 
         OnTimeChanged?.Invoke(currentTime);
     }
@@ -265,12 +256,10 @@ public class LevelController : MonoBehaviour
 
         if (previousProgress.completedObjectiveIds.Count > 0)
         {
-            Debug.Log($"[LevelController] Objetivos previamente completados en nivel {levelConfiguration.levelId}:");
             foreach (var objectiveId in previousProgress.completedObjectiveIds)
             {
                 Debug.Log($"  - {objectiveId}");
             }
-            Debug.Log($"Mejor puntuación: {previousProgress.maxStarsEarned}/3 estrellas");
         }
     }
 }

@@ -29,7 +29,6 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
             }
             catch
             {
-                Debug.LogWarning("Save corrupto. Se crea uno nuevo.");
                 gameData = new GameData();
                 InitializeNewGameData();
             }
@@ -47,7 +46,6 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
         gameData.lastPlayDate = DateTime.Now;
         string json = JsonUtility.ToJson(gameData, true);
         File.WriteAllText(saveFilePath, json);
-        Debug.Log($"[SaveManager] Datos guardados en: {saveFilePath} (vidas: {gameData.currentLives})");
     }
 
     private void ValidateAndInitializeProgressionData()
@@ -66,8 +64,6 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
         {
             gameData.levelProgressData = new Dictionary<int, LevelProgressData>();
         }
-
-        Debug.Log($"[SaveManager] Datos de progresión validados: Nivel {gameData.highestUnlockedLevel}, Área {gameData.highestUnlockedArea}");
     }
 
     private void RecalculateProgressionFromStars()
@@ -88,8 +84,6 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
         {
             gameData.highestUnlockedLevel = highestCompletedLevel + 1;
             gameData.highestUnlockedArea = Mathf.Min(((highestCompletedLevel - 1) / 10) + 1, 5);
-
-            Debug.Log($"[SaveManager] Progresión recalculada desde estrellas existentes: Nivel {gameData.highestUnlockedLevel}, Área {gameData.highestUnlockedArea}");
         }
     }
 
@@ -105,8 +99,6 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
         {
             gameData.levelProgressData = new Dictionary<int, LevelProgressData>();
         }
-
-        Debug.Log("[SaveManager] Nuevos datos de juego inicializados");
     }
 
     public GameData GetGameData() => gameData;
@@ -160,10 +152,7 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
             if (calculatedArea > gameData.highestUnlockedArea)
             {
                 gameData.highestUnlockedArea = calculatedArea;
-                Debug.Log($"[SaveManager] Nueva área calculada desbloqueada: {calculatedArea}");
             }
-
-            Debug.Log($"[SaveManager] Progresión actualizada: nivel {level} completado, siguiente nivel desbloqueado: {gameData.highestUnlockedLevel}");
         }
 
         SaveData();
@@ -210,8 +199,6 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
         UpdateStars(levelId, result.starsEarned);
 
         SaveData();
-
-        Debug.Log($"[SaveManager] Progreso completo del nivel {levelId} guardado: {result.starsEarned} estrellas, {result.completedObjectives.Count} objetivos");
     }
 
     public LevelProgressData GetLevelProgressData(int levelId)
@@ -230,7 +217,6 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
         }
 
         SaveData();
-        Debug.Log($"[SaveManager] Progresión actualizada: nivel más alto = {gameData.highestUnlockedLevel}");
     }
 
     public void UnlockNewArea(int areaId)
@@ -241,7 +227,6 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
         {
             gameData.highestUnlockedArea = areaId;
             SaveData();
-            Debug.Log($"[SaveManager] Nueva área desbloqueada: {areaId}");
         }
     }
 
@@ -322,11 +307,6 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
         {
             gameData.activePowerUps.Remove(powerUpToRemove);
             SaveData();
-            Debug.Log($"[SaveManager] Power-up {powerUpType} desactivado y removido del guardado");
-        }
-        else
-        {
-            Debug.LogWarning($"[SaveManager] No se encontró power-up activo {powerUpType} para desactivar");
         }
     }
 

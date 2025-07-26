@@ -3,10 +3,10 @@ using UnityEngine.UI;
 using TMPro;
 using System.Collections;
 
-public class DailyRewardUIManager : MonoBehaviour
+public class DailyRewardUIManager : MonoBehaviourSingleton<DailyRewardUIManager>
 {
     [Header("Panel Principal")]
-    public GameObject dailyRewardPanel;
+    //public GameObject dailyRewardPanel;
     public Button closeButton;
     public TextMeshProUGUI nextRewardTimeText;
     public DailyRewardDayUI[] weeklyRewardDays = new DailyRewardDayUI[7];
@@ -26,13 +26,13 @@ public class DailyRewardUIManager : MonoBehaviour
     {
         dailyRewardSystem = DailyRewardSystem.Instance;
 
-        SetupButtons();
+        //SetupButtons();
 
         SubscribeToEvents();
         InitializeUI();
 
-        if (dailyRewardPanel != null)
-            dailyRewardPanel.SetActive(false);
+        //if (dailyRewardPanel != null)
+        //    dailyRewardPanel.SetActive(false);
     }
 
     void OnDestroy()
@@ -62,7 +62,7 @@ public class DailyRewardUIManager : MonoBehaviour
         if (dailyRewardSystem == null) return;
 
         SetupWeeklyRewards();
-        UpdateAllUI();
+        ShowDailyReward();
         isInitialized = true;
     }
 
@@ -77,27 +77,27 @@ public class DailyRewardUIManager : MonoBehaviour
         }
     }
 
-    public void ShowDailyRewardPanel()
-    {
-        if (dailyRewardPanel == null)
-        {
-            return;
-        }
+    //public void ShowDailyReward()
+    //{
+    //    //if (dailyRewardPanel == null)
+    //    //{
+    //    //    return;
+    //    //}
 
-        Debug.Log("[DailyRewardUI] Activando panel");
-        dailyRewardPanel.SetActive(true);
-        UpdateAllUI();
-    }
+    //    //Debug.Log("[DailyRewardUI] Activando panel");
+    //    //dailyRewardPanel.SetActive(true);
+    //    ShowUpdateWeeklyProgressUI();
+    //}
 
-    public void HideDailyRewardPanel()
-    {
-        if (dailyRewardPanel != null)
-        {
-            dailyRewardPanel.SetActive(false);
-        }
-    }
+    //public void HideDailyRewardPanel()
+    //{
+    //    if (dailyRewardPanel != null)
+    //    {
+    //        dailyRewardPanel.SetActive(false);
+    //    }
+    //}
 
-    void UpdateAllUI()
+    public void ShowDailyReward()
     {
         if (!isInitialized || dailyRewardSystem == null) return;
 
@@ -105,14 +105,14 @@ public class DailyRewardUIManager : MonoBehaviour
         UpdateClaimButton();
     }
 
-    void SetupButtons()
-    {
-        if (claimButton != null)
-            claimButton.onClick.AddListener(() => {dailyRewardSystem.ClaimReward();});
+    //void SetupButtons()
+    //{
+    //    if (claimButton != null)
+    //        claimButton.onClick.AddListener(() => {dailyRewardSystem.ClaimReward();});
 
-        if (closeButton != null)
-            closeButton.onClick.AddListener(HideDailyRewardPanel);
-    }
+    //    if (closeButton != null)
+    //        closeButton.onClick.AddListener(HideDailyRewardPanel);
+    //}
 
     void UpdateWeeklyProgress()
     {
@@ -169,7 +169,7 @@ public class DailyRewardUIManager : MonoBehaviour
 
     void OnRewardClaimed(DailyReward reward)
     {
-        UpdateAllUI();
+        ShowDailyReward();
         StartCoroutine(ShowRewardClaimedFeedback(reward));
     }
 
@@ -187,7 +187,7 @@ public class DailyRewardUIManager : MonoBehaviour
     {
         if (dailyRewardSystem != null && dailyRewardSystem.CanClaimToday())
         {
-            ShowDailyRewardPanel();
+            ShowDailyReward();
         }
     }
 

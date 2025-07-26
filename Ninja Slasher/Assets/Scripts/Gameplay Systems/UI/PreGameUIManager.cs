@@ -86,7 +86,6 @@ public class PreGameUIManager : MonoBehaviour
         foreach (var pu in allPowerUpBases)
             if (pu.powerUpType == type)
                 return pu;
-        Debug.LogWarning("No se encontró PowerUpBase para el tipo: " + type);
         return null;
     }
 }
