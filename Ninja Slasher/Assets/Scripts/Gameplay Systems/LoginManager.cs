@@ -8,7 +8,7 @@ public class LoginManager : MonoBehaviour
 
     void Start()
     {
-        PlayGamesPlatform.Activate();
+        //PlayGamesPlatform.Activate();
         Social.localUser.Authenticate(success =>
         {
             if (success)
