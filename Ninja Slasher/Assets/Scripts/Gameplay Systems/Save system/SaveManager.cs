@@ -158,6 +158,18 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
         SaveData();
     }
 
+    public void UpdateHighestUnlockedLevel(int newHighestLevel)
+    {
+        var gameData = GetGameData();
+
+        if (newHighestLevel > gameData.highestUnlockedLevel)
+        {
+            gameData.highestUnlockedLevel = newHighestLevel;
+
+            SaveData();
+        }
+    }
+
     public void SetMusicVolume(float volume)
     {
         gameData.musicVolume = Mathf.Clamp01(volume);
@@ -192,28 +204,28 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
 
     public void SaveLevelProgress(int levelId, ObjectiveEvaluationResult result, LevelStats stats)
     {
-        if (gameData == null) return;
+        var gameData = GetGameData();
 
         gameData.UpdateLevelProgress(levelId, result, stats);
-
-        UpdateStars(levelId, result.starsEarned);
 
         SaveData();
     }
 
     public LevelProgressData GetLevelProgressData(int levelId)
     {
-        if (gameData == null) return new LevelProgressData(levelId);
+        var gameData = GetGameData();
         return gameData.GetLevelProgress(levelId);
     }
 
     public void UpdateLevelProgression(int levelId, int starsEarned)
     {
-        if (gameData == null) return;
+        var gameData = GetGameData();
 
-        if (levelId >= gameData.highestUnlockedLevel)
+        gameData.totalStars += starsEarned;
+
+        if (!gameData.levelStars.ContainsKey(levelId) || gameData.levelStars[levelId] < starsEarned)
         {
-            gameData.highestUnlockedLevel = levelId + 1;
+            gameData.levelStars[levelId] = starsEarned;
         }
 
         SaveData();
@@ -221,18 +233,24 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
 
     public void UnlockNewArea(int areaId)
     {
-        if (gameData == null) return;
+        var gameData = GetGameData();
 
         if (areaId > gameData.highestUnlockedArea)
         {
             gameData.highestUnlockedArea = areaId;
+
+            if (!gameData.unlockedAreas.Contains(areaId))
+            {
+                gameData.unlockedAreas.Add(areaId);
+            }
+
             SaveData();
         }
     }
 
     public (int highestLevel, int highestArea, int totalStars) GetProgressionData()
     {
-        if (gameData == null) return (1, 1, 0);
+        var gameData = GetGameData();
         return (gameData.highestUnlockedLevel, gameData.highestUnlockedArea, gameData.totalStars);
     }
 
@@ -362,6 +380,16 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
     {
         UpdateActivePowerUps();
         SaveData();
+    }
+
+    public void ShowProgressionDebug()
+    {
+        var gameData = GetGameData();
+        Debug.Log($"[SaveManager] ESTADO ACTUAL:\n" +
+                  $"- Nivel más alto: {gameData.highestUnlockedLevel}\n" +
+                  $"- Área más alta: {gameData.highestUnlockedArea}\n" +
+                  $"- Estrellas totales: {gameData.totalStars}\n" +
+                  $"- Áreas desbloqueadas: [{string.Join(", ", gameData.unlockedAreas)}]");
     }
 
     public void DeleteSaveData()
