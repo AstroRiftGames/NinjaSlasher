@@ -1,7 +1,7 @@
 using System.Collections;
+using Unity.VisualScripting;
 using UnityEngine;
-using UnityEngine.Rendering;
-using Zenject.Asteroids;
+using UnityEngine.UIElements;
 
 public enum Surface
 {
@@ -14,52 +14,91 @@ public enum Surface
 
 public class Arachnomadre : BossEnemy
 {
-    [SerializeField] Surface _currentSurface = Surface.Floor;
+    [SerializeField] private Surface _currentSurface = Surface.None;
     [SerializeField] private LayerMask Scenariolayer;
-    //[SerializeField] Transform _body;
 
-    //[SerializeField] bool _movingRight;
-    //[SerializeField] bool _movingLeft;
-    //[SerializeField] float _speed;
+    [SerializeField] private GameObject _sprites;
+    [SerializeField] private Transform _body;
 
-    //bool rightSurface;
-    //bool leftSurface;
-    //bool _rotating;
-
-    [SerializeField] GameObject _sprites;
+    [Header("Movement Parameters")]
+    [SerializeField] private float _speed;
+    [SerializeField][Range(0f, 1f)] private float _dirChangeChance;
+    private bool _movingRight;
 
     [Header("Attack Parameters")]
+    private bool _isAttacking;
     private float _attackCD = 3f;
     private float _lastAttack = 0;
-    [SerializeField] float _minAttackCD;
-    [SerializeField] float _maxAttackCD;
+    [SerializeField] private float _minAttackCD;
+    [SerializeField] private float _maxAttackCD;
 
     [Header("SpawnAttack Parameters")]
-    [SerializeField] [Range(0f,1f)] float _spawnAttackChance;
-    [SerializeField] GameObject _blaztEgg;
-    [SerializeField] int _blaztEggsAmount;
-    [SerializeField] float _launchingBaseForce;
-
+    [SerializeField] private GameObject _blaztEgg;
+    [SerializeField] private int _blaztEggsAmount;
+    [SerializeField] private float _launchingBaseForce;
+    [SerializeField] private float _timeBetweenEggs;
+    [SerializeField] [Range(0f,1f)] private float _spawnAttackChance;
+    private int _blaztsAmount;
+    public void DecreaseEggsAmount() => _blaztsAmount--;
+    public void IncreaseEggsAmount() => _blaztsAmount++;
 
     [Header("FurtiveAttack Parameters")]
-    [SerializeField] float _hidingTime;
+    [SerializeField] private float _hidingTime;
 
     private void Update()
     {
-        //if(!_rotating) _currentSurface = CheckSurfaceChange();
-        //UpdateSurface();
-        //Move();
-
-        if (CheckAttackCooldown()) PrepareAttack();
+        if (CheckAttackCooldown())
+        {
+            PrepareAttack();
+            _animator.SetBool("IsMoving", false);
+        }
+        else if(!_isAttacking)
+        {
+            _animator.SetBool("IsMoving", true);
+            CheckSurface();
+            Move();
+        }
     }
 
+    #region MOVEMENT LOGIC
+    private void Move()
+    {
+        transform.position += transform.right * (_movingRight ? 1:-1) * _speed * Time.deltaTime;
+    }
+
+    private void CheckSurface()
+    {
+        bool _isNearSurface = Physics2D.Raycast(transform.position + transform.right * (_movingRight ? 1 : -1), transform.right * (_movingRight ? 1 : -1), .25f, Scenariolayer);
+
+#if UNITY_EDITOR
+        Debug.DrawRay(transform.position + transform.right * (_movingRight ? 1 : -1), transform.right * (_movingRight ? 1 : -1) * .25f);
+#endif
+
+        if (_isNearSurface) Rotate();
+    }
+
+    private void Rotate()
+    {
+        transform.Rotate(new Vector3(0, 0, (_movingRight ? 90 : -90)));
+        _animator.SetTrigger($"OnRotation{(_movingRight ? "Right" : "Left")}");
+    }
+
+    #endregion
 
     #region ATTACK LOGIC
     private void PrepareAttack()
     {
+        _isAttacking = true;
         _lastAttack = Time.time;
         SetCD();
+        SetMovementDirection();
         Attack();
+    }
+
+    private void SetMovementDirection()
+    {
+        float r = Random.Range(0f, 1f);
+        if (r < _dirChangeChance) _movingRight = !_movingRight;
     }
 
     private void SetCD() => _attackCD = Random.Range(_minAttackCD, _maxAttackCD);
@@ -67,19 +106,23 @@ public class Arachnomadre : BossEnemy
     private void Attack()
     {
         float r = Random.Range(0f, 1f);
-        float chance = _spawnAttackChance; //TODO: Adjust by amount of instantiated BLAZT's
-        if (r <= chance) SpawnAttack();
+        float chance = _spawnAttackChance / _blaztsAmount;
+        if (r <= chance) StartCoroutine(SpawnAttack());
         else StartCoroutine(FurtiveAttack());
     }
 
     #region SPAWN ATTACK
-    private void SpawnAttack()
+    private IEnumerator SpawnAttack()
     {
         for(int n = 0; n < _blaztEggsAmount; n++)
         {
             Instantiate(_blaztEgg, transform.position + transform.up, Quaternion.identity).TryGetComponent(out Rigidbody2D eggRB);
             eggRB.AddForce(SetDirection(n), ForceMode2D.Impulse);
+            eggRB.TryGetComponent(out BlaztEgg egg);
+            egg.SetArachnomadre(this);
+            yield return new WaitForSeconds(_timeBetweenEggs);
         }
+        _isAttacking = false;
     }
 
     private Vector2 SetDirection(int index)
@@ -120,13 +163,16 @@ public class Arachnomadre : BossEnemy
         _sprites.SetActive(false);
         Vector2 closestPoint = GetClosestPoint(_player.position);
         Turn(closestPoint);
-        transform.position = closestPoint;
-        yield return new WaitForSeconds(_hidingTime-.5f);
-        _sprites.SetActive(true);
+        transform.position = closestPoint + (Vector2)transform.up*.5f;
+        
+        yield return new WaitForSeconds(_hidingTime-1);
 
-        yield return new WaitForSeconds(.25f);
+        _sprites.SetActive(true);
         _animator.SetTrigger("OnEmerge");
         _col.enabled = true;
+
+        yield return new WaitForSeconds(.75f);
+        _isAttacking = false;
     }
 
     private void Turn(Vector2 point)
@@ -150,7 +196,7 @@ public class Arachnomadre : BossEnemy
             }
             else if(point.y > _player.transform.position.y)
             {
-                transform.rotation = Quaternion.Euler(0, 0, 180);
+                transform.rotation = Quaternion.Euler(0,0, 180);
                 _currentSurface = Surface.Ceiling;
             }
         }
@@ -164,7 +210,6 @@ public class Arachnomadre : BossEnemy
         {
             collision.gameObject.TryGetComponent(out Controller player);
             player.Die();
-            Debug.Log("Player Killed");
         }
     }
     #endregion
@@ -180,7 +225,6 @@ public class Arachnomadre : BossEnemy
         {
             Vector2 dirToCast = GetDirectionByIndex(n);
             RaycastHit2D hit = Physics2D.Raycast(origin, dirToCast, 15, Scenariolayer);
-            Debug.DrawRay(origin, dirToCast * 15, Color.yellow, 1);
             if(hit != false) Debug.DrawLine(origin, hit.point, Color.red, 1f);
             float disToCurrent = Vector2.Distance(origin, hit.point);
 
@@ -206,67 +250,4 @@ public class Arachnomadre : BossEnemy
     }
 
     #endregion
-
-    //private void Move()
-    //{
-    //    _rb.linearVelocity = _body.right * (_movingLeft ? -1 : (_movingRight ? 1 :0) * _speed);
-    //}
-
-    //private Surface CheckSurfaceChange()
-    //{
-    //    rightSurface = Physics2D.Raycast(_body.position + _body.right/2, _body.right, .5f, ScenarioLayer);
-    //    leftSurface = Physics2D.Raycast(_body.position + _body.right*-1/2, _body.right*-1, .5f, ScenarioLayer);
-
-    //    Surface targetSurface = _currentSurface;
-    //    if (_movingRight && rightSurface)
-    //    {
-    //        targetSurface = _currentSurface switch
-    //        {
-    //            Surface.Floor => Surface.Right_Wall,
-    //            Surface.Right_Wall => Surface.Ceiling,
-    //            Surface.Ceiling => Surface.Left_Wall,
-    //            Surface.Left_Wall => Surface.Floor,
-    //            _ => Surface.None,
-    //        };
-
-    //    }
-    //    else if (_movingLeft && leftSurface)
-    //    {
-    //        targetSurface = _currentSurface switch
-    //        {
-    //            Surface.Floor => Surface.Left_Wall,
-    //            Surface.Left_Wall => Surface.Ceiling,
-    //            Surface.Ceiling => Surface.Right_Wall,
-    //            Surface.Right_Wall => Surface.Floor,
-    //            _ => Surface.None,
-    //        };
-    //    }
-    //    if (targetSurface != Surface.None) _rotating = true;
-    //    return targetSurface;
-    //}
-
-
-    //private void UpdateSurface()
-    //{
-    //    Vector2 dirToLook = Vector2.up;
-
-    //    dirToLook = _currentSurface switch
-    //    {
-    //        Surface.Floor => Vector2.up,
-    //        Surface.Right_Wall => Vector2.left,
-    //        Surface.Ceiling => Vector2.down,
-    //        Surface.Left_Wall => Vector2.right,
-    //        _ => Vector2.up
-    //    };
-
-    //    _body.rotation = Quaternion.Euler(dirToLook);
-    //}
-
-    private void OnDrawGizmos()
-    {
-        Gizmos.color = Color.green;
-        Gizmos.DrawRay(transform.position, transform.up * 3);
-        //Gizmos.DrawRay(_body.position + _body.right * -1 /2, _body.right * -1 * .5f);
-        //Gizmos.DrawRay(_body.position + _body.right /2, _body.right * .5f);
-    }
 }

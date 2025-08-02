@@ -52,7 +52,11 @@ public class BL4ZT : RangeEnemy
             if (!_hasLOS)
             {
                 if (!CheckTarget(_destination)) Move();
-                else SetPatrolTarget();
+                else
+                {
+                    _animator.SetBool("IsMoving", false);
+                    SetPatrolTarget();
+                }
             }
             else Activate();
         }
@@ -62,9 +66,11 @@ public class BL4ZT : RangeEnemy
             {
                 if(CheckCooldown(_rayCD, _lastRay)) _destination = GetClosestPoint(_player.transform.position);
                 if(!CheckTarget(_destination)) Move();
+                else _animator.SetBool("IsMoving", false);
             }
             else Explode();
         }
+
     }
 
     private void Move()
@@ -82,6 +88,8 @@ public class BL4ZT : RangeEnemy
         {
             transform.position += transform.right * (MovingRight() ? 1 : -1) * _currentSpeed * Time.deltaTime;
         }
+        _animator.SetBool("IsMoving", true);
+
     }
     private void Rotate()
     {
@@ -117,6 +125,7 @@ public class BL4ZT : RangeEnemy
             _arachnomadre.DecreaseEggsAmount();
         }
         base.Die();
+        Destroy(transform.parent.gameObject,.5f);
     }
 
     private bool CheckTarget(Vector3 target)

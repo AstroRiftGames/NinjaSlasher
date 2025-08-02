@@ -10,9 +10,9 @@ GameObject:
   m_Component:
   - component: {fileID: 2088467865906145220}
   - component: {fileID: 8607561719970137758}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: Body
-  m_TagString: Untagged
+  m_TagString: Enemy
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -392,7 +392,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6226511508188920173}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: Sprites
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -574,9 +574,9 @@ GameObject:
   m_Component:
   - component: {fileID: 6457487314269917476}
   - component: {fileID: 5882454409091552943}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: Head
-  m_TagString: Untagged
+  m_TagString: Enemy
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -664,9 +664,9 @@ GameObject:
   - component: {fileID: 787835801535988425}
   - component: {fileID: 8366656279960303493}
   - component: {fileID: 3010128296452341866}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: Arachnomadre BL-KR
-  m_TagString: Untagged
+  m_TagString: Enemy
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -710,12 +710,16 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 128
   _sprites: {fileID: 1865460527175540360}
+  _body: {fileID: 6226511508188920173}
+  _speed: 1
+  _dirChangeChance: 0.65
   _minAttackCD: 3
   _maxAttackCD: 6
-  _spawnAttackChance: 0.75
   _blaztEgg: {fileID: 6022250673456354933, guid: 518b958d325789940a6a62a67f9b61d7, type: 3}
   _blaztEggsAmount: 3
   _launchingBaseForce: 5
+  _timeBetweenEggs: 0.3
+  _spawnAttackChance: 0.75
   _hidingTime: 1.5
 --- !u!50 &787835801535988425
 Rigidbody2D:
@@ -800,7 +804,7 @@ Animator:
   m_GameObject: {fileID: 5542172558527591836}
   m_Enabled: 1
   m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: 60114c22c7679fc49bc747bab9fac75f, type: 2}
   m_CullingMode: 0
   m_UpdateMode: 0
   m_ApplyRootMotion: 0
@@ -969,7 +973,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5979064885276074827}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: VulnerabilityChecks
   m_TagString: Untagged
   m_Icon: {fileID: 0}
