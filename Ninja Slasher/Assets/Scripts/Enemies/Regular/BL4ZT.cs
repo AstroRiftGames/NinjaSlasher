@@ -114,6 +114,10 @@ public class BL4ZT : RangeEnemy
                 col.TryGetComponent(out Controller player);
                 player.Die();
             }
+            else if (_arachnomadre != null && col.CompareTag("Boss"))
+            {
+                _arachnomadre.StartCoroutine(_arachnomadre.GetVulnerable());
+            }
         }
         Die();
     }

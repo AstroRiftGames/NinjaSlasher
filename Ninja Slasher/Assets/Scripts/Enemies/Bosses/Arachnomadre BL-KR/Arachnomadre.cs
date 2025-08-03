@@ -45,18 +45,25 @@ public class Arachnomadre : BossEnemy
     [Header("FurtiveAttack Parameters")]
     [SerializeField] private float _hidingTime;
 
+    [Header("Vulnerability Parameters")]
+    [SerializeField] float _vulnerabilityTime;
+    private bool _isVulnerable;
+
     private void Update()
     {
-        if (CheckAttackCooldown())
+        if (!_isVulnerable) 
         {
-            PrepareAttack();
-            _animator.SetBool("IsMoving", false);
-        }
-        else if(!_isAttacking)
-        {
-            _animator.SetBool("IsMoving", true);
-            CheckSurface();
-            Move();
+            if (CheckAttackCooldown())
+            {
+                PrepareAttack();
+                _animator.SetBool("IsMoving", false);
+            }
+            else if(!_isAttacking)
+            {
+                _animator.SetBool("IsMoving", true);
+                CheckSurface();
+                Move();
+            }
         }
     }
 
@@ -206,11 +213,31 @@ public class Arachnomadre : BossEnemy
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
-        if(collision.gameObject.CompareTag("Player"))
+        if (collision.gameObject.CompareTag("Player"))
         {
-            collision.gameObject.TryGetComponent(out Controller player);
-            player.Die();
+            if (_isVulnerable)
+            {
+                Die();
+            }
+            else
+            {
+                collision.gameObject.TryGetComponent(out Controller player);
+                player.Die();
+            }
         }
+    }
+    #endregion
+
+    #region VULNERABILITY MANAGEMENT
+    private bool SetVulnerability(bool value) => _isVulnerable = value;
+
+    public IEnumerator GetVulnerable()
+    {
+        SetVulnerability(true);
+        Debug.Log("Is now vulnerable");
+        yield return new WaitForSeconds(_vulnerabilityTime);
+        SetVulnerability(false);
+        Debug.Log("Is no longer vulnerable");
     }
     #endregion
 
@@ -248,6 +275,5 @@ public class Arachnomadre : BossEnemy
             _ => throw new System.IndexOutOfRangeException(),
         };
     }
-
     #endregion
 }
