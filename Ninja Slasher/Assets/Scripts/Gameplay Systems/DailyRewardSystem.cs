@@ -94,7 +94,6 @@ public class DailyRewardSystem : MonoBehaviourSingleton<DailyRewardSystem>
 
         if (string.IsNullOrEmpty(rewardData.lastClaimDate))
         {
-            // Primer día - no hacer nada
             Debug.Log("[DailyRewardSystem] Primer día del sistema de recompensas");
         }
         else
@@ -106,18 +105,15 @@ public class DailyRewardSystem : MonoBehaviourSingleton<DailyRewardSystem>
 
             if (daysDifference == 0)
             {
-                // Ya se reclamo hoy - no hacer nada
                 Debug.Log("[DailyRewardSystem] Recompensa ya reclamada hoy");
             }
             else if (daysDifference == 1)
             {
                 AdvanceDay();
-                Debug.Log($"[DailyRewardSystem] Avanzando al día {rewardData.currentWeekDay + 1}");
             }
             else if (daysDifference > 1)
             {
                 ResetWeeklyProgress();
-                Debug.Log($"[DailyRewardSystem] Racha perdida. Días sin jugar: {daysDifference}");
             }
         }
 
@@ -136,7 +132,6 @@ public class DailyRewardSystem : MonoBehaviourSingleton<DailyRewardSystem>
         if (rewardData.currentWeekDay == 0)
         {
             rewardData.claimedDays = new bool[7];
-            Debug.Log("[DailyRewardSystem] Nueva semana iniciada");
         }
 
         OnConsecutiveDaysUpdated?.Invoke(rewardData.consecutiveDays);
@@ -150,21 +145,17 @@ public class DailyRewardSystem : MonoBehaviourSingleton<DailyRewardSystem>
         rewardData.claimedDays = new bool[7];
 
         OnConsecutiveDaysUpdated?.Invoke(rewardData.consecutiveDays);
-
-        Debug.Log($"[DailyRewardSystem] Progreso reseteado. Días consecutivos perdidos: {previousDays}");
     }
 
     public bool ClaimReward()
     {
         if (!CanClaimToday())
         {
-            Debug.LogWarning("[DailyRewardSystem] No se puede reclamar la recompensa hoy");
             return false;
         }
 
         if (rewardData.claimedDays[rewardData.currentWeekDay])
         {
-            Debug.LogWarning("[DailyRewardSystem] Recompensa ya reclamada");
             return false;
         }
 
@@ -180,7 +171,6 @@ public class DailyRewardSystem : MonoBehaviourSingleton<DailyRewardSystem>
         OnRewardClaimed?.Invoke(claimedReward);
         OnRewardAvailabilityChanged?.Invoke(false);
 
-        Debug.Log($"[DailyRewardSystem] Recompensa reclamada: {claimedReward.displayName} x{claimedReward.quantity}");
         return true;
     }
 
@@ -212,7 +202,6 @@ public class DailyRewardSystem : MonoBehaviourSingleton<DailyRewardSystem>
         else
         {
             AddPowerUpToInventoryDirect(reward);
-            Debug.LogWarning("[DailyRewardSystem] AutoSaveManager no encontrado");
         }
     }
 

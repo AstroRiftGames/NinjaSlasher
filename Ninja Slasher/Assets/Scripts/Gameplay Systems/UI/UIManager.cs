@@ -10,6 +10,7 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
     private GameplayUIManager _gameplayUIManager;
     private PreGameUIManager _preGameUIManager;
     private SceneTransitionManager _sceneTransitionManager;
+    private LifeManagerUI _lifeManagerUI;
 
     public override void Awake()
     {
@@ -30,6 +31,7 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
         _gameplayUIManager = GetComponent<GameplayUIManager>();
         _preGameUIManager = GetComponent<PreGameUIManager>();
         _sceneTransitionManager = GetComponent<SceneTransitionManager>();
+        _lifeManagerUI = GetComponent<LifeManagerUI>();
     }
 
     private void OnEnable()
@@ -58,4 +60,6 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
     public void HideLifeLostPanel() => _gameplayUIManager.HideLifeLostPanel();
     public void UpdateLivesUI(int lives) => _gameplayUIManager.UpdateLivesUI(lives);
     public void ShowNoLivesPanel() => _gameplayUIManager.ShowNoLivesPanel();
+    public void SetCounter(int time) => _lifeManagerUI.SetCounter(time);
+    public void OnTimerEnd() => _lifeManagerUI.OnCounterEnd();
 }

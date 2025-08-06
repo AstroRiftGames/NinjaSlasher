@@ -61,7 +61,6 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
         {
             _levelStarted = true;
             LifeManager.Instance.OnLevelStart();
-            Debug.Log("[GAMEMANAGER] Nivel iniciado, descuento virtual aplicado");
         }
     }
 
@@ -83,14 +82,9 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
         int starsEarned = levelController.Evaluate(stats);
         int currentLevelId = GetCurrentLevelId();
 
-        Debug.Log($"Nivel completado. Estrellas obtenidas: {starsEarned}");
 #if UNITY_EDITOR
         ShowLevelCompletionSummary(currentLevelId);
 #endif
-        if (starsEarned >= 1)
-        {
-            LevelProgressionManager.Instance?.OnLevelCompleted(currentLevelId, starsEarned);
-        }
 
         if (_levelStarted)
         {
@@ -103,8 +97,6 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
 
     public void OnLevelFailed()
     {
-        Debug.Log("[GameManager] Nivel fallido - procesando derrota");
-
         if (LifeManager.Instance != null)
         {
             LifeManager.Instance.UseLife();
@@ -172,7 +164,6 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
         SceneManager.LoadScene("ScreenflowTest");
     }
 
-
     private void HandleScreenflowLoaded(Scene scene, LoadSceneMode mode)
     {
         if (scene.name != "ScreenflowTest") return;
@@ -197,7 +188,6 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
         }
 
         _playerHasDied = false;
-
         string currentScene = SceneManager.GetActiveScene().name;
 
         LifeManager.Instance.OnLevelStart();
@@ -205,7 +195,6 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
 
         SceneManager.LoadScene(currentScene);
     }
-
 
     private int GetCurrentLevelId()
     {

@@ -2,6 +2,8 @@ using Unity.VisualScripting;
 using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using System.Transactions;
+using System.Collections.Concurrent;
 
 public class Controller : MonoBehaviour
 {
@@ -14,6 +16,7 @@ public class Controller : MonoBehaviour
     private ITreeNode _root;
 
     [Space]
+    [SerializeField] float _maxAngle = 70f;
     private bool _isDashing = false;
     private float _lastDash;
     private Collider2D _currentSurface;
@@ -25,6 +28,7 @@ public class Controller : MonoBehaviour
     [Space]
     [SerializeField] private LineRenderer swipeIndicator;
     private Vector2 swipeStart;
+    private bool _startedSwipe;
     private Vector2 endTouchPosition;
     private Vector2 currentSwipe;
     private bool isSwiping = false;
@@ -36,7 +40,7 @@ public class Controller : MonoBehaviour
 
     [Space]
     [SerializeField] private float checkDistance;
-    [SerializeField] private LayerMask obstacleLayer;
+    [SerializeField] private LayerMask _scenarioLayer;
 
     private bool _isDead = false;
     private bool _isInvincible;
@@ -129,7 +133,6 @@ public class Controller : MonoBehaviour
         _fsm.OnUpdate();
 
         CheckSwipe();
-        CheckParryTap();
 
         HandleParryTimer();
     }
@@ -147,24 +150,27 @@ public class Controller : MonoBehaviour
 #if UNITY_EDITOR
         if (Input.GetMouseButtonDown(0))
         {
+            TryStartParryLogic();
             swipeStart = Input.mousePosition;
-            isSwiping = true;
-            if (swipeIndicator != null)
-                swipeIndicator.enabled = true;
+            _startedSwipe = true;
         }
 
-        if (Input.GetMouseButton(0) && isSwiping)
+        if (Input.GetMouseButton(0))
         {
             currentSwipe = (Vector2)Input.mousePosition - swipeStart;
-            if (currentSwipe.magnitude >= minSwipeDistance)
+
+            Vector3 start = transform.position;
+
+            if (_startedSwipe && currentSwipe.magnitude >= minSwipeDistance)
             {
                 if (swipeIndicator != null && !swipeIndicator.enabled)
+                {
                     swipeIndicator.enabled = true;
+                }
+                isSwiping = true;
 
-                Vector2 dir = -currentSwipe.normalized;
-                Vector3 start = transform.position;
-                Vector3 end = start + (Vector3)(dir * 2f);
-
+                Vector2 clampedDir = -currentSwipe.normalized; //GetClampedSwipeDirection(currentSwipe.normalized);
+                Vector3 end = start + (Vector3)(clampedDir * 2f);
                 if (swipeIndicator != null)
                 {
                     swipeIndicator.SetPosition(0, start);
@@ -176,49 +182,55 @@ public class Controller : MonoBehaviour
         if (Input.GetMouseButtonUp(0) && isSwiping)
         {
             isSwiping = false;
+            _startedSwipe = false;
             if (swipeIndicator != null)
+            {
                 swipeIndicator.enabled = false;
+            }
             endTouchPosition = Input.mousePosition;
-            Vector2 swipeDelta = endTouchPosition - swipeStart;
+            Vector2 swipeDelta = endTouchPosition - swipeStart; // GetClampedSwipeDirection(endTouchPosition - swipeStart);
             if (swipeDelta.magnitude >= minSwipeDistance)
+            {
                 TryDashFromSwipe(swipeDelta);
+            }
         }
 #else
         if (Input.touchCount > 0)
         {
+            TryStartParryLogic();
             Touch touch = Input.GetTouch(0);
             switch (touch.phase)
             {
                 case TouchPhase.Began:
                     swipeStart = touch.position;
-                    isSwiping = true;
-                    if (swipeIndicator != null)
-                        swipeIndicator.enabled = true;
+                    _startedSwipe = true;
                     break;
 
                 case TouchPhase.Moved:
                 case TouchPhase.Stationary:
-                    if (isSwiping)
+                    currentSwipe = touch.position - swipeStart;
+
+                    Vector3 start = transform.position;
+
+                    if (_startedSwipe &&  currentSwipe.magnitude >= minSwipeDistance)
                     {
-                        currentSwipe = touch.position - swipeStart;
-
-                        if (currentSwipe.magnitude >= minSwipeDistance)
+                        if (swipeIndicator != null && !swipeIndicator.enabled)
                         {
-                            if (swipeIndicator != null && !swipeIndicator.enabled)
-                                swipeIndicator.enabled = true;
+                            swipeIndicator.enabled = true;
+                        }
+                        isSwiping = true;
 
-                            Vector2 dir = -currentSwipe.normalized;
-                            Vector3 start = transform.position;
-                            Vector3 end = start + (Vector3)(dir * 2f);
+                        Vector2 clampedDir = -currentSwipe.normalized; //GetClampedSwipeDirection(currentSwipe.normalized);
 
-                            if (swipeIndicator != null)
-                            {
-                                swipeIndicator.SetPosition(0, start);
-                                swipeIndicator.SetPosition(1, end);
-                            }
+                        Vector3 end = start + (Vector3)(clampedDir * 2f);
+
+                        if (swipeIndicator != null)
+                        {
+                            swipeIndicator.SetPosition(0, start);
+                            swipeIndicator.SetPosition(1, end);
                         }
                     }
-                    break;
+                break;
 
                 case TouchPhase.Ended:
                 case TouchPhase.Canceled:
@@ -226,11 +238,15 @@ public class Controller : MonoBehaviour
                     {
                         isSwiping = false;
                         if (swipeIndicator != null)
+                        {
                             swipeIndicator.enabled = false;
+                        }
                         endTouchPosition = touch.position;
                         Vector2 swipeDelta = endTouchPosition - swipeStart;
                         if (swipeDelta.magnitude >= minSwipeDistance)
+                        {
                             TryDashFromSwipe(swipeDelta);
+                        }
                     }
                     break;
             }
@@ -247,6 +263,36 @@ public class Controller : MonoBehaviour
 #endif
     }
 
+    //private Vector2 GetClampedSwipeDirection(Vector2 swipeDelta)
+    //{
+    //    Vector2 dashDir = -swipeDelta.normalized;
+
+    //    Vector2 surfaceNormal = Vector2.up;
+    //    float dis = 0;
+
+    //    for (int n = 0; n < 4; n++)
+    //    {
+    //        RaycastHit2D currentHit = Physics2D.Raycast(transform.position, GetDirectionByIndex(n), checkDistance, _scenarioLayer);
+    //        if (currentHit && (dis == 0 || currentHit.distance < dis))
+    //        {
+    //            dis = currentHit.distance;
+    //            surfaceNormal = currentHit.normal;
+    //            Debug.DrawLine(transform.position, currentHit.point, Color.magenta);
+    //        }
+    //    }
+    //    Debug.DrawRay(transform.position, surfaceNormal, Color.yellow);
+
+    //    float angle = Vector2.Angle(dashDir, surfaceNormal);
+
+    //    if (angle > _maxAngle)
+    //    {
+    //        Vector3 rotationAxis = Vector3.Cross(surfaceNormal, dashDir);
+    //        dashDir = Quaternion.AngleAxis(_maxAngle, rotationAxis) * surfaceNormal;
+    //    }
+
+    //    return dashDir;
+    //}
+
     private bool _dashInputDetected = false;
     private bool _parryInputDetected = false;
     #endregion
@@ -259,7 +305,7 @@ public class Controller : MonoBehaviour
             return;
         }
 
-        if (_currentSurface == null)
+        if(_isDashing)
         {
             return;
         }
@@ -277,7 +323,7 @@ public class Controller : MonoBehaviour
             return;
         }
 
-        RaycastHit2D hit = Physics2D.Raycast(transform.position, dashDir, checkDistance, obstacleLayer);
+        RaycastHit2D hit = Physics2D.Raycast(transform.position, dashDir, checkDistance, _scenarioLayer);
 
         if (hit.collider != null)
         {
@@ -319,23 +365,6 @@ public class Controller : MonoBehaviour
     #endregion
 
     #region PARRYING
-    private void CheckParryTap()
-    {
-        if (isSwiping) return;
-
-#if UNITY_EDITOR
-        if (Input.GetMouseButtonDown(0))
-        {
-            TryStartParryLogic();
-        }
-#else
-        if (Input.touchCount > 0 && Input.GetTouch(0).phase == TouchPhase.Began)
-        {
-            TryStartParryLogic();
-        }
-#endif
-    }
-
     private void TryStartParryLogic()
     {
         if (isParrying) return;
@@ -432,7 +461,7 @@ public class Controller : MonoBehaviour
     {
         if (collision.collider == _currentSurface)
         {
-            _currentSurface = null;
+            ForceExitSurface();
 
             if (_lastSurfaceWasElastic)
             {
@@ -538,6 +567,18 @@ public class Controller : MonoBehaviour
     public Vector2 GetLastDashDirection() => _lastDashDirection;
 
     public void SetInvincibility(bool value) => _isInvincible = value;
+
+    //private Vector2 GetDirectionByIndex(int i)
+    //{
+    //    return i switch
+    //    {
+    //        0 => Vector2.right,
+    //        1 => Vector2.down,
+    //        2 => Vector2.left,
+    //        3 => Vector2.up,
+    //        _ => throw new System.IndexOutOfRangeException($"{i} was out of range"),
+    //    };
+    //}
     #endregion
 
     private void OnDrawGizmos()

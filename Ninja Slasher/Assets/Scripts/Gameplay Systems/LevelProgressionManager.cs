@@ -2,21 +2,6 @@ using System;
 using UnityEngine;
 
 [Serializable]
-public class LevelProgressionData
-{
-    public int highestUnlockedLevel = 1;        // Último nivel desbloqueado
-    public int highestUnlockedArea = 1;         // Última área desbloqueada
-    public int totalStarsEarned = 0;            // Total de estrellas para jefes
-
-    public LevelProgressionData()
-    {
-        highestUnlockedLevel = 1;
-        highestUnlockedArea = 1;
-        totalStarsEarned = 0;
-    }
-}
-
-[Serializable]
 public class LevelProgressionInfo
 {
     public int highestUnlockedLevel;
@@ -41,6 +26,7 @@ public class LevelProgressionManager : MonoBehaviourSingleton<LevelProgressionMa
 
     public override void Awake()
     {
+        var _ = SaveManager.Instance;
         base.Awake();
         Initialize();
     }
@@ -54,19 +40,15 @@ public class LevelProgressionManager : MonoBehaviourSingleton<LevelProgressionMa
     {
         if (!isInitialized)
         {
-            return levelId == 1;
+            Initialize();
         }
 
         if (levelId == 1) return true;
 
         var (highestLevel, _, _) = SaveManager.Instance?.GetProgressionData() ?? (1, 1, 0);
+        bool isUnlocked = levelId <= highestLevel && IsLevelAccessible(levelId);
 
-        if (levelId <= highestLevel)
-        {
-            return IsLevelAccessible(levelId);
-        }
-
-        return false;
+        return isUnlocked;
     }
 
     private bool IsLevelAccessible(int levelId)
@@ -88,7 +70,8 @@ public class LevelProgressionManager : MonoBehaviourSingleton<LevelProgressionMa
         {
             int requiredStars = config.unlockRequirements.minimumStarsRequired;
             var (_, _, totalStars) = SaveManager.Instance?.GetProgressionData() ?? (1, 1, 0);
-            return totalStars >= requiredStars;
+            bool hasEnoughStars = totalStars >= requiredStars;
+            return hasEnoughStars;
         }
 
         return true;
@@ -103,22 +86,6 @@ public class LevelProgressionManager : MonoBehaviourSingleton<LevelProgressionMa
 
         var (_, highestArea, _) = SaveManager.Instance?.GetProgressionData() ?? (1, 1, 0);
         return areaId <= highestArea;
-    }
-
-    public void OnLevelCompleted(int levelId, int starsEarned)
-    {
-        SaveManager.Instance?.UpdateLevelProgression(levelId, starsEarned);
-
-        if (LevelConfigurationManager.Instance != null)
-        {
-            var config = LevelConfigurationManager.Instance.GetConfigurationForLevel(levelId);
-            if (config?.unlockRequirements != null && config.unlockRequirements.isBossLevel)
-            {
-                CheckAreaUnlock(config.unlockRequirements.areaId);
-            }
-        }
-
-        OnProgressionUpdated?.Invoke();
     }
 
     private void CheckAreaUnlock(int completedAreaId)
@@ -156,6 +123,65 @@ public class LevelProgressionManager : MonoBehaviourSingleton<LevelProgressionMa
             totalStars = totalStars,
             nextBossRequirement = GetNextBossStarRequirement(highestArea)
         };
+    }
+
+    public void HandleLevelCompletion(int levelId, int starsEarned)
+    {
+        SaveManager.Instance?.ShowProgressionDebug();
+
+        SaveManager.Instance?.UpdateLevelProgression(levelId, starsEarned);
+
+        var (currentHighest, currentArea, totalStars) = SaveManager.Instance?.GetProgressionData() ?? (1, 1, 0);
+
+        if (levelId >= currentHighest)
+        {
+            int nextLevel = levelId + 1;
+
+            if (ShouldUnlockNextLevel(nextLevel))
+            {
+                SaveManager.Instance?.UpdateHighestUnlockedLevel(nextLevel);
+            }
+        }
+
+        if (LevelConfigurationManager.Instance != null)
+        {
+            var config = LevelConfigurationManager.Instance.GetConfigurationForLevel(levelId);
+            if (config?.unlockRequirements != null && config.unlockRequirements.isBossLevel)
+            {
+                CheckAreaUnlock(config.unlockRequirements.areaId);
+            }
+        }
+
+        OnProgressionUpdated?.Invoke();
+
+        SaveManager.Instance?.ShowProgressionDebug();
+    }
+
+    private bool ShouldUnlockNextLevel(int nextLevel)
+    {
+        int maxLevel = levelsPerArea * totalAreas;
+        if (nextLevel > maxLevel)
+        {
+            return false;
+        }
+
+        if (LevelConfigurationManager.Instance != null)
+        {
+            var config = LevelConfigurationManager.Instance.GetConfigurationForLevel(nextLevel);
+            if (config == null)
+            {
+                return false;
+            }
+
+            if (config.unlockRequirements != null && config.unlockRequirements.isBossLevel)
+            {
+                var (_, _, totalStars) = SaveManager.Instance?.GetProgressionData() ?? (1, 1, 0);
+                bool hasEnoughStars = totalStars >= config.unlockRequirements.minimumStarsRequired;
+                return hasEnoughStars;
+            }
+        }
+
+        return true;
     }
 
     private int GetNextBossStarRequirement(int currentArea)

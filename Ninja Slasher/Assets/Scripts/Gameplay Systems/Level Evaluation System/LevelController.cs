@@ -163,6 +163,7 @@ public class LevelController : MonoBehaviour
         var result = evaluator.Evaluate(stats);
 
         SaveManager.Instance?.SaveLevelProgress(levelConfiguration.levelId, result, stats);
+        LevelProgressionManager.Instance?.HandleLevelCompletion(levelConfiguration.levelId, result.starsEarned);
 
         foreach (var completed in result.completedObjectives)
         {

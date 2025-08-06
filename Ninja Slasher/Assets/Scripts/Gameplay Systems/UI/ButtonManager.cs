@@ -54,6 +54,10 @@ public class ButtonManager : MonoBehaviour
         {
             LevelProgressionManager.Instance.OnProgressionUpdated += RefreshLevelProgression;
         }
+        else
+        {
+            StartCoroutine(DelayedSubscription());
+        }
     }
 
     private void OnDisable()
@@ -61,6 +65,16 @@ public class ButtonManager : MonoBehaviour
         if (LevelProgressionManager.Instance != null)
         {
             LevelProgressionManager.Instance.OnProgressionUpdated -= RefreshLevelProgression;
+        }
+    }
+
+    private System.Collections.IEnumerator DelayedSubscription()
+    {
+        yield return null;
+
+        if (LevelProgressionManager.Instance != null)
+        {
+            LevelProgressionManager.Instance.OnProgressionUpdated += RefreshLevelProgression;
         }
     }
 
@@ -160,7 +174,31 @@ public class ButtonManager : MonoBehaviour
 
     public void RefreshLevelProgression()
     {
-        SetupLevelProgression();
+        var progressionInfo = LevelProgressionManager.Instance?.GetProgressionInfo();
+        if (progressionInfo == null)
+        {
+            return;
+        }
+
+        int unlockedCount = 0;
+        int lockedCount = 0;
+
+        for (int i = 0; i < levelButtons.Length; i++)
+        {
+            int levelId = i + 1;
+            bool wasInteractable = levelButtons[i].interactable;
+            bool isUnlocked = IsLevelUnlocked(levelId);
+
+            levelButtons[i].interactable = isUnlocked;
+
+            if (levelButtonImages != null && i < levelButtonImages.Length && levelButtonImages[i] != null)
+            {
+                levelButtonImages[i].color = isUnlocked ? unlockedButtonColor : lockedButtonColor;
+            }
+
+            if (isUnlocked) unlockedCount++;
+            else lockedCount++;
+        }
     }
 
     private void OnRestartPressed()
@@ -173,10 +211,11 @@ public class ButtonManager : MonoBehaviour
     {
         if (LevelProgressionManager.Instance == null)
         {
-            return true;
+            return levelId == 1;
         }
 
-        return LevelProgressionManager.Instance.IsLevelUnlocked(levelId);
+        bool isUnlocked = LevelProgressionManager.Instance.IsLevelUnlocked(levelId);
+        return isUnlocked;
     }
 
 #if UNITY_EDITOR
