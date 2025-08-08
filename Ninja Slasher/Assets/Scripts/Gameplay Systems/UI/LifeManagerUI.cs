@@ -4,10 +4,10 @@ using TMPro;
 public class LifeManagerUI : MonoBehaviour
 {
     
-    [SerializeField] private GameObject _textObject;
+    //[SerializeField] private GameObject _textObject;
     private float remainingTime;
     private bool running;
-    public TMP_Text uiText;
+    //public TMP_Text uiText;
 
 
     void Update()
@@ -33,22 +33,22 @@ public class LifeManagerUI : MonoBehaviour
         {
             remainingTime = 0f;
             running = false;
-            OnCounterEnd();
+            //OnCounterEnd();
         }
 
     }
 
     void UpdateDisplay()
     {
-        _textObject.SetActive(true);
+        //_textObject.SetActive(true);
         int minutes = Mathf.FloorToInt(remainingTime / 60);
         int seconds = Mathf.FloorToInt(remainingTime % 60);
-        uiText.text = $"{minutes:00}:{seconds:00}";
+        //uiText.text = $"{minutes:00}:{seconds:00}";
     }
 
-    public void OnCounterEnd()
-    {
-        _textObject.SetActive(false);
-        Debug.Log("Termino");
-    }
+    //public void OnCounterEnd()
+    //{
+    //    _textObject.SetActive(false);
+    //    Debug.Log("Termino");
+    //}
 }

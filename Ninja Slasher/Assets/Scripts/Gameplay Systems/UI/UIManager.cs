@@ -44,6 +44,11 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
         SceneManager.sceneLoaded -= OnSceneLoaded;
     }
 
+    private void Update()
+    {
+        _gameplayUIManager.UpdateUI();
+    }
+
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
         if (_gameplayUIManager != null)
@@ -56,10 +61,11 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
     public void ShowConfirmationPanel(string sceneName) => _preGameUIManager.ShowConfirmationPanel(sceneName);
     public void ShowHidePreGameCanvas() => _canvasManager.ShowHidePreGameCanvas();
     public void ShowHidePauseCanvas() => _canvasManager.ShowHidePauseCanvas();
+    public void ShowHideCreditsCanvas() => _canvasManager.ShowHideCreditsCanvas();
+    public void ShowHideDailyRewardCanvas() => _canvasManager.ShowHideDailyRewardCanvas();
+    public void ShowHideNoLivesCanvas() => _canvasManager.ShowHideNoLivesCanvas();
     public void ShowLifeLostPanel() => _gameplayUIManager.ShowLifeLostPanel();
     public void HideLifeLostPanel() => _gameplayUIManager.HideLifeLostPanel();
     public void UpdateLivesUI(int lives) => _gameplayUIManager.UpdateLivesUI(lives);
     public void ShowNoLivesPanel() => _gameplayUIManager.ShowNoLivesPanel();
-    public void SetCounter(int time) => _lifeManagerUI.SetCounter(time);
-    public void OnTimerEnd() => _lifeManagerUI.OnCounterEnd();
 }

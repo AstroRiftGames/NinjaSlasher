@@ -29,6 +29,11 @@ public class PreGameUIManager : MonoBehaviour
 
     private void OnConfirmLevelSelection()
     {
+        if (!LifeManager.Instance.CanPlay())
+        {
+            GetComponent<GameplayUIManager>().ShowNoLivesPanel();
+            return;
+        }
         UIManager.Instance.ShowHidePreGameCanvas();
         UIManager.Instance.LoadLevelScene(_pendingSceneName);
     }

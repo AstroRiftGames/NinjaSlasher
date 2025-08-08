@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class ConfigPanelManager : MonoBehaviour
+public class ConfigDropdown : MonoBehaviour
 {
     [SerializeField] private Animator _configPanelAnim;
     [SerializeField] private bool _isOpen = false;

@@ -182,7 +182,7 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
 
         if (!LifeManager.Instance.CanPlay())
         {
-            UIManager.Instance.ShowNoLivesPanel();
+            //UIManager.Instance.ShowNoLivesPanel();
             GoToLevelSelection();
             return;
         }

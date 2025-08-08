@@ -36,11 +36,11 @@ public class SceneTransitionManager : MonoBehaviour
 
     public void RestartLevel()
     {
-        if (!LifeManager.Instance.CanPlay())
-        {
-            GetComponent<GameplayUIManager>().ShowNoLivesPanel();
-            return;
-        }
+        //if (!LifeManager.Instance.CanPlay())
+        //{
+        //    GetComponent<GameplayUIManager>().ShowNoLivesPanel();
+        //    return;
+        //}
         string sceneName = SceneManager.GetActiveScene().name;
         LoadLevelScene(sceneName);
         UIManager.Instance.ShowHidePauseCanvas();
@@ -56,13 +56,14 @@ public class SceneTransitionManager : MonoBehaviour
 
     private IEnumerator ShowLevelSelectorCo()
     {
+        Time.timeScale = 1;
         _transitionAnim.SetTrigger("OpeningStart");
         yield return new WaitForSeconds(_transitionTime);
         _canvasManager.SetSplashCanvasEnabled(false);
         _canvasManager.SetLevelsCanvasEnabled(true);
         _canvasManager.SetPauseCanvasEnabled(false);
-        if (!LifeManager.Instance.CanPlay())
-            GetComponent<GameplayUIManager>().ShowNoLivesPanel();
+        //if (!LifeManager.Instance.CanPlay())
+        //    GetComponent<GameplayUIManager>().ShowNoLivesPanel();
 
         _transitionAnim.SetTrigger("End");
     }

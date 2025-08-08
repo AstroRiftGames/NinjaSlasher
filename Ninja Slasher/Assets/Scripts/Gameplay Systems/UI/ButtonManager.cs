@@ -28,6 +28,10 @@ public class ButtonManager : MonoBehaviour
     [SerializeField] private Button _retryButton;
     [SerializeField] private Button _backToSelectionButton;
 
+    [Header("NO LIVES PANEL BUTTONS")]
+    [SerializeField] private Button _closeNoLivesPanelButton;
+    [SerializeField] private Button _adForMoreLifeButton;
+
     [Header("PROGRESSION UI")]
     [SerializeField] private Image[] levelButtonImages;
     [SerializeField] private Color lockedButtonColor = Color.gray;
@@ -40,12 +44,12 @@ public class ButtonManager : MonoBehaviour
 #endif
 
     private AudioToggle _audioToggle;
-    private ConfigPanelManager _configPanelManager;
+    private ConfigDropdown _configPanelManager;
 
     private void Awake()
     {
         _audioToggle = GetComponent<AudioToggle>();
-        _configPanelManager = GetComponent<ConfigPanelManager>();
+        _configPanelManager = GetComponent<ConfigDropdown>();
     }
 
     private void OnEnable()
@@ -144,8 +148,11 @@ public class ButtonManager : MonoBehaviour
         _configButton.onClick.AddListener(_configPanelManager.OpenCloseConfigPanel);
         _musicButton.onClick.AddListener(_audioToggle.MusicButtonClicked);
         _sfxButton.onClick.AddListener(_audioToggle.SFXButtonClicked);
-        _creditsButton.onClick.AddListener(GetComponent<CanvasManager>().ShowHideCreditsCanvas);
-        _calendarButton.onClick.AddListener(GetComponent<CanvasManager>().ShowHideDailyRewardCanvas);
+        _creditsButton.onClick.AddListener(UIManager.Instance.ShowHideCreditsCanvas);
+        _calendarButton.onClick.AddListener(UIManager.Instance.ShowHideDailyRewardCanvas);
+        _closeNoLivesPanelButton.onClick.AddListener(UIManager.Instance.ShowHideNoLivesCanvas);
+        _adForMoreLifeButton.onClick.AddListener(UIManager.Instance.ShowHideNoLivesCanvas);
+
         _testLevelButton.onClick.AddListener(() => GetComponent<SceneTransitionManager>().LoadDebugTestScene());
 
         for (int i = 0; i < levelButtons.Length; i++)

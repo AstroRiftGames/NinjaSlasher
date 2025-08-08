@@ -64,7 +64,6 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
     {
         if (CurrentLives >= _maxLives)
         {
-            UIManager.Instance.OnTimerEnd();
             return;
         }
         double seconds = (DateTime.Now - _lastLifeUsed).TotalSeconds;
@@ -72,7 +71,6 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
         {
             int vidasAGenerar = Mathf.FloorToInt((float)seconds / _lifeRechargeSeconds);
             int newLives = Mathf.Min(CurrentLives + vidasAGenerar, _maxLives);
-            UIManager.Instance.SetCounter(_lifeRechargeSeconds);
 
             _lastLifeUsed = _lastLifeUsed.AddSeconds(vidasAGenerar * _lifeRechargeSeconds);
             CurrentLives = newLives;
@@ -146,7 +144,6 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
             _lastLifeUsed = DateTime.Now;
             _hasVirtualDeduction = false;
             _levelInProgress = false;
-            UIManager.Instance.SetCounter(_lifeRechargeSeconds);
             Debug.Log($"[LifeManager] Nivel perdido. Descuento confirmado. Vidas: {CurrentLives}");
 
             SaveLivesViaAutoSave("Vida perdida");
@@ -161,7 +158,6 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
 
             SaveLivesViaAutoSave("Vida perdida");
             OnLivesChanged?.Invoke(CurrentLives);
-            UIManager.Instance.SetCounter(_lifeRechargeSeconds);
             Debug.Log($"[LifeManager] Vida usada. Restantes: {CurrentLives}");
         }
     }
@@ -188,7 +184,6 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
             _lastLifeUsed = DateTime.Now;
             _hasVirtualDeduction = false;
             _levelInProgress = false;
-            UIManager.Instance.SetCounter(_lifeRechargeSeconds);
             Debug.Log($"[LifeManager] Nivel abandonado. Descuento confirmado. Vidas: {CurrentLives}");
 
             SaveLivesViaAutoSave("Vida perdida por abandono");
