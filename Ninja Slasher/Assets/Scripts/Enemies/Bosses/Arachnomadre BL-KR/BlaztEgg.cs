@@ -13,7 +13,7 @@ public class BlaztEgg : MonoBehaviour
         if(!_hatched && collision.gameObject.CompareTag("Floor"))
         {
             _hatched = true;
-            BL4ZT newEnemy = Instantiate(BlaztPrefab, transform.position, Quaternion.identity).GetComponentInChildren<BL4ZT>();
+            BL4ZT newEnemy = Instantiate(BlaztPrefab, transform.position + Vector3.up *.5f, Quaternion.identity).GetComponentInChildren<BL4ZT>();
             newEnemy.SetArachnomadre(_arachnomadre);
             _arachnomadre.IncreaseEggsAmount();
             Destroy(gameObject, .5f);
