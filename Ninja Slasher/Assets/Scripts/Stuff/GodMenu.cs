@@ -15,7 +15,12 @@ public class GodMenu : MonoBehaviour
     [SerializeField] TMP_Dropdown _enemiesDPD;
     [SerializeField] Button _spawnEnemyBTN;
     [SerializeField] Button _removeEnemiesBTN;
-    
+
+    //Boss Spawn Management
+    [SerializeField] TMP_Dropdown _bossDPD;
+    [SerializeField] Button _spawnBossBTN;
+    [SerializeField] Button _removeBossesBTN;
+
     //Time Scale Management
     [SerializeField] Button _increaseScaleBTN;
     [SerializeField] Button _decreaseScaleBTN;
@@ -30,13 +35,21 @@ public class GodMenu : MonoBehaviour
     private Vector2 _playerInitialPos;
 
     [Header("Enemies")]
-    [SerializeField] Transform _enemiesInitial;
-    [SerializeField] GameObject[] _enemiesPrefab;
+    [SerializeField] Transform _enemiesInitialPos;
+    [SerializeField] GameObject[] _enemiesPrefabs;
 
-    [Space]
     List<TMP_Dropdown.OptionData> _enemyOptions = new List<TMP_Dropdown.OptionData>();
     GameObject _selectedEnemy;
     List<GameObject> _currentEnemies = new List<GameObject>();
+
+    [Header("Bosses")]
+    [SerializeField] Transform _bossesInitialPos;
+    [SerializeField] GameObject[] _bossesPrefabs;
+
+    List<TMP_Dropdown.OptionData> _bossOptions = new List<TMP_Dropdown.OptionData>();
+    GameObject _selectedBoss;
+    List<GameObject> _currentBosses= new List<GameObject>();
+
 
     [Header("Time Scale Management")]
     [SerializeField] private float _scaleJump;
@@ -48,12 +61,8 @@ public class GodMenu : MonoBehaviour
         Player = _player.transform;
 
         _playerInitialPos = _player.transform.position;
-
-        foreach(var enemy in _enemiesPrefab)
-        {
-            _enemyOptions.Add(new TMP_Dropdown.OptionData(enemy.name));
-        }
-        _enemiesDPD.AddOptions(_enemyOptions);
+        SetEnemyOptions();
+        SetBossOptions();
     }
 
     private void OnEnable()
@@ -64,6 +73,9 @@ public class GodMenu : MonoBehaviour
         _enemiesDPD.onValueChanged.AddListener(SelectEnemy);
         _spawnEnemyBTN.onClick.AddListener(SpawnEnemy);
         _removeEnemiesBTN.onClick.AddListener(DestroyEnemies);
+        _spawnBossBTN.onClick.AddListener(SpawnBoss);
+        _bossDPD.onValueChanged.AddListener(SelectBoss);
+        _removeBossesBTN.onClick.AddListener(DestroyBosses);
         _increaseScaleBTN.onClick.AddListener(IncreaseScale);
         _decreaseScaleBTN.onClick.AddListener(DecreaseScale);
     }
@@ -76,14 +88,30 @@ public class GodMenu : MonoBehaviour
         _enemiesDPD.onValueChanged.RemoveListener(SelectEnemy);
         _enemiesDPD.onValueChanged.RemoveListener(SelectEnemy);
         _spawnEnemyBTN.onClick.RemoveListener(SpawnEnemy);
+        _spawnBossBTN.onClick.RemoveListener(SpawnBoss);
+        _bossDPD.onValueChanged.RemoveListener(SelectBoss);
+        _removeBossesBTN.onClick.RemoveListener(DestroyBosses);
         _removeEnemiesBTN.onClick.RemoveListener(DestroyEnemies);
         _increaseScaleBTN.onClick.RemoveListener(IncreaseScale);
         _decreaseScaleBTN.onClick.RemoveListener(DecreaseScale);
     }
 
-    private void Update()
+    private void SetEnemyOptions()
     {
-        if (Input.GetKeyDown(KeyCode.Space)) OpenClose();
+        foreach (var enemy in _enemiesPrefabs)
+        {
+            _enemyOptions.Add(new TMP_Dropdown.OptionData(enemy.name));
+        }
+        _enemiesDPD.AddOptions(_enemyOptions);
+    }
+
+    private void SetBossOptions()
+    {
+        foreach (var boss in _bossesPrefabs)
+        {
+            _bossOptions.Add(new TMP_Dropdown.OptionData(boss.name));
+        }
+        _bossDPD.AddOptions(_bossOptions);
     }
 
     private void OpenClose()
@@ -96,17 +124,27 @@ public class GodMenu : MonoBehaviour
     public void RestartPositions()
     {
         DestroyEnemies();
+        DestroyBosses();
         RestartPlayer();
     }
 
+    private void RestartPlayer()
+    {
+        if (_player != null) Destroy(_player.gameObject);
+
+        _player = Instantiate(_playerPrefab, _playerInitialPos, Quaternion.identity).GetComponent<Controller>();
+        Player = _player.transform;
+    }
+
+    #region ENEMY MANAGEMENT
     private void SelectEnemy(int value)
     {
-        _selectedEnemy = _enemiesPrefab[value];
+        _selectedEnemy = _enemiesPrefabs[value];
     }
 
     private void SpawnEnemy()
     {
-        _currentEnemies.Add(Instantiate(_selectedEnemy, _enemiesInitial.position, Quaternion.identity));
+        _currentEnemies.Add(Instantiate(_selectedEnemy, _enemiesInitialPos.position, Quaternion.identity));
     }
 
     private void DestroyEnemies()
@@ -117,14 +155,38 @@ public class GodMenu : MonoBehaviour
         }
         _currentEnemies.Clear();
     }
+#endregion
 
-    private void RestartPlayer()
+    #region BOSS MANAGEMENT
+    private void SelectBoss(int value)
     {
-        if (_player != null) Destroy(_player.gameObject);
-
-        _player = Instantiate(_playerPrefab, _playerInitialPos, Quaternion.identity).GetComponent<Controller>();
-        Player = _player.transform;
+        _selectedBoss= _bossesPrefabs[value];
     }
+
+    private void SpawnBoss()
+    {
+        _currentBosses.Add(Instantiate(_selectedBoss, _bossesInitialPos.position, Quaternion.identity));
+    }
+
+    private void DestroyBosses()
+    {
+        foreach (GameObject boss in _currentBosses)
+        {
+            if(boss.name == "Arachnomadre BL-KR")
+            {
+                BL4ZT[] blaztEnemies = FindObjectsOfType<BL4ZT>();
+                foreach(var enemy in blaztEnemies)
+                {
+                    Destroy(enemy.gameObject);
+                }
+            }
+            Destroy(boss);
+        }
+        _currentBosses.Clear();
+    }
+#endregion
+
+    #region TimeScale Management
 
     private void IncreaseScale()
     {
@@ -136,4 +198,5 @@ public class GodMenu : MonoBehaviour
         Time.timeScale -= _scaleJump;
         _currentScale.text = $"x{Time.timeScale}";
     }
+    #endregion
 }
