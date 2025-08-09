@@ -12,6 +12,7 @@ public class NinjaKOState<NinjaStates> : State<NinjaStates>
     public override void Enter()
     {
         _controller.Die();
+        _controller.View.Animator.SetTrigger("OnKO");
     }
 
     public override void Execute()

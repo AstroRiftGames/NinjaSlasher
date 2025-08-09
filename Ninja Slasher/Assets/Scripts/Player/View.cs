@@ -8,5 +8,8 @@ public class View : MonoBehaviour
     public Animator Animator => _anim;
     [SerializeField] Animator _anim;
 
+    public GameObject SpriteContainer => _spriteContainer;
+    [SerializeField] GameObject _spriteContainer;
+
     public Portal LastUsedPortal { get; set; }
 }

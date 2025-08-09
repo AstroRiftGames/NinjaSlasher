@@ -1,9 +1,11 @@
-using Unity.VisualScripting;
-using UnityEngine;
 using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Transactions;
-using System.Collections.Concurrent;
+using Unity.VisualScripting;
+using UnityEngine;
+using UnityEngine.InputSystem.XR;
+using static UnityEngine.Rendering.DebugUI;
 
 public class Controller : MonoBehaviour
 {
@@ -24,6 +26,8 @@ public class Controller : MonoBehaviour
     private Vector2 _lastDashDirection;
     private Vector2 _wishedDirection;
     private Vector2 lastSwipeDelta;
+    private bool _isMirrored;
+
 
     [Space]
     [SerializeField] private LineRenderer swipeIndicator;
@@ -71,7 +75,6 @@ public class Controller : MonoBehaviour
 
         dash.AddTransition(NinjaStates.Grab, grab);
         dash.AddTransition(NinjaStates.KO, ko);
-        dash.AddTransition(NinjaStates.Idle, idle);
 
         grab.AddTransition(NinjaStates.Dash, dash);
         grab.AddTransition(NinjaStates.Parry, parry);
@@ -101,8 +104,8 @@ public class Controller : MonoBehaviour
         _root = rootQuestion;
     }
 
-    private bool QDash() => _isDashing || CanDashFromInput();
-    private bool QGrab() => _currentSurface != null && !_isDashing;
+    private bool QDash() => IsDashing() || CanDashFromInput();
+    private bool QGrab() => _currentSurface != null && !IsDashing();
     private bool QParry() => CanParryFromInput();
     private bool QKO() => _isDead;
 
@@ -135,6 +138,7 @@ public class Controller : MonoBehaviour
         CheckSwipe();
 
         HandleParryTimer();
+        UpdateAnimatorParameters();
     }
 
     private void FixedUpdate()
@@ -348,10 +352,13 @@ public class Controller : MonoBehaviour
     }
     public void Dash()
     {
+        _playerView.Animator.SetBool("IsWallGrabbed", false);
+        _playerView.Animator.SetBool("IsCeilingGrabbed", false);
         if (_playerView == null || _playerView.RB == null)
         {
             return;
         }
+        SetIsDashing(true);
 
         MoveTracker.RegisterMove();
         _lastDashDirection = _wishedDirection;
@@ -359,9 +366,11 @@ public class Controller : MonoBehaviour
         _playerView.RB.linearVelocity = Vector2.zero;
         _playerView.RB.AddForce(_wishedDirection * _playerModel.DashForce, ForceMode2D.Impulse);
 
-        _isDashing = true;
-        _playerView.Animator.SetBool("IsGrounded", _isDashing);
+        SetIsMirrored(false);
+        RotateSprites(_lastDashDirection);
     }
+
+    
     #endregion
 
     #region PARRYING
@@ -415,8 +424,11 @@ public class Controller : MonoBehaviour
     #region COLLISION DETECTION
     private void OnCollisionEnter2D(Collision2D collision)
     {
-        if (collision.gameObject.CompareTag("Scenario") ||
-            collision.gameObject.CompareTag("Obstacle") ||
+        string colTag = collision.gameObject.tag;
+        if (colTag == "Scenario" ||
+            colTag == "Obstacle" ||
+            colTag == "Floor" ||
+            colTag == "Ceiling" ||
             collision.gameObject.GetComponent<PlatformBase>() != null)
         {
             if (_currentSurface != null && collision.collider == _currentSurface)
@@ -426,27 +438,12 @@ public class Controller : MonoBehaviour
 
             _currentSurface = collision.collider;
 
-            //if (_fsm.CurrentState.GetType() != typeof(NinjaDashState<NinjaStates>))
-            //{
-                SetIsDashing(false);
-            //}
-
-
-            _playerView.Animator.SetBool("IsGrounded", _isDashing);
-
-            Vector2 contactPoint = Vector2.zero;
-            Vector2 point = collision.GetContact(0).point;
-            contactPoint.x = point.x > transform.position.x ? 1 : -1;
-            contactPoint.y = point.y >= transform.position.y ? 1 : -1;
-
-            int value = 0;
-            if (contactPoint.y > 0) value = 2;
-            else if (contactPoint.x > 0) value = 1;
-
-            _playerView.Animator.SetInteger("GrabType", value);
+            SetIsDashing(false);
+            SetGrabbingAnimation();
+            RotateSprites(colTag == "Ceiling" ? Vector2.left : Vector2.right);
 
             ElasticPlatform elasticPlatform = collision.gameObject.GetComponent<ElasticPlatform>();
-            _lastSurfaceWasElastic = (elasticPlatform != null);
+            _lastSurfaceWasElastic = elasticPlatform != null;
 
             if (!_lastSurfaceWasElastic)
             {
@@ -493,6 +490,11 @@ public class Controller : MonoBehaviour
         }
     }
     #endregion
+
+    private void UpdateAnimatorParameters()
+    {
+        _playerView.Animator.SetBool("IsGrounded", !IsDashing());
+    }
 
     private void HandleFalling()
     {
@@ -560,6 +562,8 @@ public class Controller : MonoBehaviour
 
     public bool IsDashing() => _isDashing;
     public void SetIsDashing(bool value) => _isDashing = value;
+    public bool IsMirrored() => _isMirrored;
+    public void SetIsMirrored(bool newValue) => _isMirrored = newValue;
 
     public void ForceExitSurface() => _currentSurface = null;
 
@@ -579,6 +583,38 @@ public class Controller : MonoBehaviour
     //        _ => throw new System.IndexOutOfRangeException($"{i} was out of range"),
     //    };
     //}
+
+    public void RotateSprites(Vector2 dir)
+    {
+        float angle = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg;
+        _playerView.SpriteContainer.transform.rotation = Quaternion.Euler(0, 0, angle);
+
+
+        Vector3 newScale = _playerView.SpriteContainer.transform.localScale;
+        newScale.x = IsMirrored() ? -1 : 1;
+        _playerView.SpriteContainer.transform.localScale = newScale;
+    }
+    private void SetGrabbingAnimation()
+    {
+        RaycastHit2D colPoint = Physics2D.Raycast(transform.position, _wishedDirection, float.MaxValue, _scenarioLayer);
+        Vector2 normal = colPoint.normal;
+
+        Debug.DrawRay(transform.position, _wishedDirection * float.MaxValue, Color.red, 1f);
+        Debug.DrawRay(colPoint.point, normal * 1f, Color.red, 1f);
+
+        if (normal != null)
+        {
+            if (normal == Vector2.right || normal == Vector2.left)
+            {
+                _playerView.Animator.SetBool("IsWallGrabbed", true);
+                SetIsMirrored(normal == Vector2.left ? true : false);
+            }
+            else if (normal == Vector2.down)
+            {
+                _playerView.Animator.SetBool("IsCeilingGrabbed", true);
+            }
+        }
+    }
     #endregion
 
     private void OnDrawGizmos()
