@@ -8,11 +8,14 @@ public class Enemy : MonoBehaviour
     [SerializeField] GameObject RearCol;
     [SerializeField] GameObject FrontCol;
 
+    [SerializeField] protected LayerMask _obstaclesLayer;
+    [SerializeField] protected LayerMask _playerLayer;
+
 
     protected Transform _player;
     protected Rigidbody2D _rb;
     protected Collider2D _col;
-    protected Animator _animator;
+    [SerializeField] protected Animator _animator;
     public Animator Animator => _animator;
     private EnemyTracker tracker;
 
@@ -31,8 +34,11 @@ public class Enemy : MonoBehaviour
         _rb = rb;
         TryGetComponent(out Collider2D col);
         _col = col;
-        TryGetComponent(out Animator anim);
-        _animator = anim;
+        if(_animator == null)
+        {
+            TryGetComponent(out Animator anim);
+            _animator = anim;
+        }
 
         _player = FindAnyObjectByType<Controller>().transform;
         tracker = FindAnyObjectByType<EnemyTracker>();

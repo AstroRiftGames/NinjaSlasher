@@ -9,7 +9,6 @@ public class RangeEnemy : Enemy
 
     [Header("LOS Stats")]
     [SerializeField] private float _range;
-    [SerializeField] protected LayerMask _obstaclesLayer;
     protected bool _hasLOS;
     private bool _hasTarget;
 

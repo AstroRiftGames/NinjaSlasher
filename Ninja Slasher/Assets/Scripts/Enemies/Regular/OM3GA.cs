@@ -8,7 +8,6 @@ public class OM3GA : RangeEnemy
     [SerializeField] float _laserDuration;
     [SerializeField] float _timeToShoot;
     [SerializeField] float _laserLength;
-    [SerializeField] private LayerMask _playerLayer;
 
     [Header("Patrolling")]
     [SerializeField] Transform[] _nodes;

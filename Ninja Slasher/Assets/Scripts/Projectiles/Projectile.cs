@@ -137,12 +137,15 @@ public class Projectile : MonoBehaviour
         }
 
         EnemyTracker tracker = FindObjectOfType<EnemyTracker>();
+
+        enemy.TryGetComponent(out Enemy script);
+        Enemy enemyScript = script;
+
         if (tracker != null)
         {
-            tracker.OnEnemyKilled(enemy.GetComponent<Enemy>());
+            tracker.OnEnemyKilled(enemyScript);
         }
-
-        Destroy(enemy);
+        enemyScript.Die();
     }
 
     public void SetOwner(Transform shooter)

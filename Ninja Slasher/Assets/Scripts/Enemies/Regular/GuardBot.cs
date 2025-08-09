@@ -4,8 +4,6 @@ using UnityEngine;
 public class GuardBot : Enemy
 {
     [SerializeField] Transform _refPoint;
-    [SerializeField] LayerMask _playerLayer;
-    [SerializeField] LayerMask _scenarioLayer;
     [SerializeField] float _speed;
     [SerializeField][Range(1, 2)] float _speedMultiplier;
     [SerializeField] Transform[] _nodes;
@@ -46,7 +44,7 @@ public class GuardBot : Enemy
     {
         transform.localScale = new Vector3(_target.x > transform.localToWorldMatrix.GetPosition().x ? 1 : -1, transform.localScale.y, transform.localScale.z);
 
-        bool thereIsFloor = Physics2D.Raycast(transform.position + transform.right *.5f * _direction + Vector3.down, Vector3.down, .5f, _scenarioLayer);
+        bool thereIsFloor = Physics2D.Raycast(transform.position + transform.right *.5f * _direction + Vector3.down, Vector3.down, .5f, _obstaclesLayer);
         if(thereIsFloor)
         {
             _rb.linearVelocityX = _direction * _currentSpeed;

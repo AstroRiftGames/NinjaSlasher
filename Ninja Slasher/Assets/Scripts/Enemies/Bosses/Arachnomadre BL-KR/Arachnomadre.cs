@@ -15,7 +15,6 @@ public enum Surface
 public class Arachnomadre : BossEnemy
 {
     [SerializeField] private Surface _currentSurface = Surface.None;
-    [SerializeField] private LayerMask Scenariolayer;
 
     [SerializeField] private GameObject _sprites;
     [SerializeField] private Transform _body;
@@ -75,7 +74,7 @@ public class Arachnomadre : BossEnemy
 
     private void CheckSurface()
     {
-        bool _isNearSurface = Physics2D.Raycast(transform.position + transform.right * (_movingRight ? 1 : -1), transform.right * (_movingRight ? 1 : -1), .25f, Scenariolayer);
+        bool _isNearSurface = Physics2D.Raycast(transform.position + transform.right * (_movingRight ? 1 : -1), transform.right * (_movingRight ? 1 : -1), .25f, _obstaclesLayer);
 
 #if UNITY_EDITOR
         Debug.DrawRay(transform.position + transform.right * (_movingRight ? 1 : -1), transform.right * (_movingRight ? 1 : -1) * .25f);
@@ -251,7 +250,7 @@ public class Arachnomadre : BossEnemy
         for(int n = 0; n < 4; n++)
         {
             Vector2 dirToCast = GetDirectionByIndex(n);
-            RaycastHit2D hit = Physics2D.Raycast(origin, dirToCast, 15, Scenariolayer);
+            RaycastHit2D hit = Physics2D.Raycast(origin, dirToCast, 15, _obstaclesLayer);
             if(hit != false) Debug.DrawLine(origin, hit.point, Color.red, 1f);
             float disToCurrent = Vector2.Distance(origin, hit.point);
 
