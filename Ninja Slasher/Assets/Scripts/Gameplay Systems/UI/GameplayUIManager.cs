@@ -14,6 +14,7 @@ public class GameplayUIManager : MonoBehaviour
     [SerializeField] private TextMeshProUGUI _bonusTimeText;
     [SerializeField] private GameObject _lifeLostPanel;
     [SerializeField] private TextMeshProUGUI _powerUpsText;
+    [SerializeField] private TextMeshProUGUI _puRemainingTime;
 
     private bool _noLivesActive = false;
     private LevelController _levelController;
@@ -105,6 +106,14 @@ public class GameplayUIManager : MonoBehaviour
         if (context.SecondChanceActive) status += "Power up activo: Second Chance\n";
 
         _powerUpsText.text = status.Length > 0 ? status : "Sin Power Ups activos";
+
+        var time = PowerUpManager.Instance._puTimeLeft;
+        var hours = (int)(time / 3600);
+        var minutes = (int)((time % 3600) / 60);
+        var seconds = (int)(time % 60);
+        _puRemainingTime.text = $"{hours:D2}:{minutes:D2}:{seconds:D2}";
+        if (time <= 0) _puRemainingTime.enabled = false;
+        else _puRemainingTime.enabled = true;
     }
 
     public void ShowLifeLostPanel() => _lifeLostPanel.SetActive(true);
