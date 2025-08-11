@@ -1,18 +1,20 @@
 ﻿using UnityEngine;
 using Unity.Services.LevelPlay;
 
-public class AdsManager : MonoBehaviour
+public class AdsManager : MonoBehaviourSingleton<AdsManager>
 {
     [Header("LevelPlay Configuration")]
     [SerializeField] private string _appKey = "233038335";
     [SerializeField] private string _rewardedAdUnitId = "88ic5ya7o0vd1t02";
     [SerializeField] private string _interstitialAdUnitId = "y2is2h4ghz01hst6";
+    [SerializeField] private string _bannerAdUnitId = "jhznuyu8snjchhmv";
 
-    [Header("Debug")]
-    [SerializeField] private bool _enableTestSuite = true;
+    //[Header("Debug")]
+    //[SerializeField] private bool _enableTestSuite;
 
     private LevelPlayRewardedAd _rewardedAd;
     private LevelPlayInterstitialAd _interstitialAd;
+    private LevelPlayBannerAd _bannerAd;
 
     void Start()
     {
@@ -24,31 +26,31 @@ public class AdsManager : MonoBehaviour
         LevelPlay.OnInitSuccess += OnInitSuccess;
         LevelPlay.OnInitFailed += OnInitFailed;
 
-        if (_enableTestSuite)
-        {
-            LevelPlay.SetMetaData("is_test_suite", "enable");
-        }
+        //if (_enableTestSuite)
+        //{
+        //    LevelPlay.SetMetaData("is_test_suite", "enable");
+        //}
 
-        Debug.Log("Inicializando LevelPlay");
+        Debug.Log("Initializing LevelPlay");
         LevelPlay.Init(_appKey);
     }
 
     private void OnInitSuccess(LevelPlayConfiguration config)
     {
-        Debug.Log("LevelPlay inicializado correctamente!");
+        Debug.Log("LevelPlay initialized!");
 
         CreateAdUnits();
 
-        if (_enableTestSuite)
-        {
-            LevelPlay.LaunchTestSuite();
-        }
+        //if (_enableTestSuite)
+        //{
+        //    LevelPlay.LaunchTestSuite();
+        //}
     }
 
     private void OnInitFailed(LevelPlayInitError error)
     {
-        Debug.LogError($"Error inicializando LevelPlay: {error.ErrorMessage}");
-        Debug.LogError($"Código de error: {error.ErrorCode}");
+        Debug.LogError($"Error initializing LevelPlay: {error.ErrorMessage}");
+        Debug.LogError($"error code: {error.ErrorCode}");
     }
 
     private void CreateAdUnits()
@@ -71,6 +73,14 @@ public class AdsManager : MonoBehaviour
         _interstitialAd.OnAdDisplayFailed += OnInterstitialAdDisplayFailed;
         _interstitialAd.OnAdClosed += OnInterstitialAdClosed;
         _interstitialAd.OnAdClicked += OnInterstitialAdClicked;
+
+        //_bannerAd = new LevelPlayBannerAd(_bannerAdUnitId);
+
+        //_bannerAd.OnAdLoaded += OnBannerAdLoaded;
+        //_bannerAd.OnAdLoadFailed += OnBannerAdLoadFailed;
+        //_bannerAd.OnAdDisplayed += OnBannerAdDisplayed;
+        //_bannerAd.OnAdDisplayFailed += OnBannerAdDisplayFailed;
+        //_bannerAd.OnAdClicked += OnBannerAdClicked;
 
         LoadAds();
     }
@@ -118,6 +128,46 @@ public class AdsManager : MonoBehaviour
         LevelPlay.LaunchTestSuite();
     }
 
+    [ContextMenu("Show Banner Ad")]
+    public void ShowBannerAd()
+    {
+        if (_bannerAd != null)
+        {
+            _bannerAd.DestroyAd();
+        }
+
+        _bannerAd = new LevelPlayBannerAd(_bannerAdUnitId);
+
+        _bannerAd.OnAdLoaded += OnBannerAdLoaded;
+        _bannerAd.OnAdLoadFailed += OnBannerAdLoadFailed;
+        _bannerAd.OnAdDisplayed += OnBannerAdDisplayed;
+        _bannerAd.OnAdDisplayFailed += OnBannerAdDisplayFailed;
+        _bannerAd.OnAdClicked += OnBannerAdClicked;
+
+        Debug.Log("Loading Banner Ad");
+        _bannerAd.LoadAd();
+    }
+
+    [ContextMenu("Hide Banner Ad")]
+    public void HideBannerAd()
+    {
+        if (_bannerAd != null)
+        {
+            Debug.Log("Hidding Banner Ad");
+            _bannerAd.HideAd();
+        }
+    }
+
+    [ContextMenu("Destroy Banner Ad")]
+    public void DestroyBannerAd()
+    {
+        if (_bannerAd != null)
+        {
+            Debug.Log("Destroying Banner Ad");
+            _bannerAd.DestroyAd();
+        }
+    }
+
     [ContextMenu("Reload All Ads")]
     public void ReloadAllAds()
     {
@@ -147,7 +197,7 @@ public class AdsManager : MonoBehaviour
 
     private void OnRewardedAdRewarded(LevelPlayAdInfo adInfo, LevelPlayReward reward)
     {
-        Debug.Log($"¡user rewarded!");
+        Debug.Log($"user rewarded!");
         Debug.Log($"reward: {reward.Name} - ampunt: {reward.Amount}");
 
         GiveReward(reward);
@@ -171,7 +221,7 @@ public class AdsManager : MonoBehaviour
 
     private void OnInterstitialAdLoadFailed(LevelPlayAdError error)
     {
-        Debug.LogError($"❌ Error loading Interstitial Ad: {error.ErrorMessage}");
+        Debug.LogError($"Error loading Interstitial Ad: {error.ErrorMessage}");
         Invoke(nameof(LoadInterstitialAd), 30f);
     }
 
@@ -196,6 +246,33 @@ public class AdsManager : MonoBehaviour
         Debug.Log("Interstitial Ad clicked");
     }
 
+    private void OnBannerAdLoaded(LevelPlayAdInfo adInfo)
+    {
+        Debug.Log($"Banner Ad loaded. Network: {adInfo.adNetwork}");
+        _bannerAd?.ShowAd();
+    }
+
+    private void OnBannerAdLoadFailed(LevelPlayAdError error)
+    {
+        Debug.LogError($"Error loading Banner Ad: {error.ErrorMessage}");
+        Invoke(nameof(RetryBannerLoad), 15f);
+    }
+
+    private void OnBannerAdDisplayed(LevelPlayAdInfo adInfo)
+    {
+        Debug.Log("Banner Ad showed");
+    }
+
+    private void OnBannerAdDisplayFailed(LevelPlayAdDisplayInfoError error)
+    {
+        Debug.LogError($"Error showing Banner Ad: {error.LevelPlayError.ErrorMessage}");
+    }
+
+    private void OnBannerAdClicked(LevelPlayAdInfo adInfo)
+    {
+        Debug.Log("Banner Ad clicked");
+    }
+
     private void LoadRewardedAd()
     {
         _rewardedAd?.LoadAd();
@@ -204,6 +281,11 @@ public class AdsManager : MonoBehaviour
     private void LoadInterstitialAd()
     {
         _interstitialAd?.LoadAd();
+    }
+
+    private void RetryBannerLoad()
+    {
+        ShowBannerAd(); // Reintentar cargar banner
     }
 
     private void GiveReward(LevelPlayReward reward)
@@ -221,6 +303,11 @@ public class AdsManager : MonoBehaviour
     public bool IsInterstitialAdReady()
     {
         return _interstitialAd != null && _interstitialAd.IsAdReady();
+    }
+
+    public bool IsBannerAdLoaded()
+    {
+        return _bannerAd != null;
     }
 
     void OnDestroy()
@@ -249,6 +336,16 @@ public class AdsManager : MonoBehaviour
             _interstitialAd.OnAdClosed -= OnInterstitialAdClosed;
             _interstitialAd.OnAdClicked -= OnInterstitialAdClicked;
             _interstitialAd.DestroyAd();
+        }
+
+        if (_bannerAd != null)
+        {
+            _bannerAd.OnAdLoaded -= OnBannerAdLoaded;
+            _bannerAd.OnAdLoadFailed -= OnBannerAdLoadFailed;
+            _bannerAd.OnAdDisplayed -= OnBannerAdDisplayed;
+            _bannerAd.OnAdDisplayFailed -= OnBannerAdDisplayFailed;
+            _bannerAd.OnAdClicked -= OnBannerAdClicked;
+            _bannerAd.DestroyAd();
         }
     }
 }
