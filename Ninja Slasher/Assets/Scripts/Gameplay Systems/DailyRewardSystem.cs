@@ -234,14 +234,14 @@ public class DailyRewardSystem : MonoBehaviourSingleton<DailyRewardSystem>
     public string GetTimeUntilNextReward()
     {
         if (string.IsNullOrEmpty(rewardData.lastClaimDate))
-            return "Disponible ahora";
+            return "AVAILABLE NOW";
 
         DateTime lastClaim = DateTime.Parse(rewardData.lastClaimDate);
         DateTime nextAvailable = lastClaim.AddDays(1);
         TimeSpan timeUntilNext = nextAvailable - DateTime.Now;
 
         if (timeUntilNext.TotalSeconds <= 0)
-            return "Disponible ahora";
+            return "AVAILABLE NOW";
 
         return $"{timeUntilNext.Hours:D2}:{timeUntilNext.Minutes:D2}:{timeUntilNext.Seconds:D2}";
     }

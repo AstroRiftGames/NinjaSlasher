@@ -6,7 +6,6 @@ using System.Collections;
 public class DailyRewardUIManager : MonoBehaviourSingleton<DailyRewardUIManager>
 {
     [Header("Panel Principal")]
-    //public GameObject dailyRewardPanel;
     public Button closeButton;
     public TextMeshProUGUI nextRewardTimeText;
     public DailyRewardDayUI[] weeklyRewardDays = new DailyRewardDayUI[7];
@@ -26,13 +25,8 @@ public class DailyRewardUIManager : MonoBehaviourSingleton<DailyRewardUIManager>
     {
         dailyRewardSystem = DailyRewardSystem.Instance;
 
-        //SetupButtons();
-
         SubscribeToEvents();
         InitializeUI();
-
-        //if (dailyRewardPanel != null)
-        //    dailyRewardPanel.SetActive(false);
     }
 
     void OnDestroy()
@@ -77,26 +71,6 @@ public class DailyRewardUIManager : MonoBehaviourSingleton<DailyRewardUIManager>
         }
     }
 
-    //public void ShowDailyReward()
-    //{
-    //    //if (dailyRewardPanel == null)
-    //    //{
-    //    //    return;
-    //    //}
-
-    //    //Debug.Log("[DailyRewardUI] Activando panel");
-    //    //dailyRewardPanel.SetActive(true);
-    //    ShowUpdateWeeklyProgressUI();
-    //}
-
-    //public void HideDailyRewardPanel()
-    //{
-    //    if (dailyRewardPanel != null)
-    //    {
-    //        dailyRewardPanel.SetActive(false);
-    //    }
-    //}
-
     public void ShowDailyReward()
     {
         if (!isInitialized || dailyRewardSystem == null) return;
@@ -104,15 +78,6 @@ public class DailyRewardUIManager : MonoBehaviourSingleton<DailyRewardUIManager>
         UpdateWeeklyProgress();
         UpdateClaimButton();
     }
-
-    //void SetupButtons()
-    //{
-    //    if (claimButton != null)
-    //        claimButton.onClick.AddListener(() => {dailyRewardSystem.ClaimReward();});
-
-    //    if (closeButton != null)
-    //        closeButton.onClick.AddListener(HideDailyRewardPanel);
-    //}
 
     void UpdateWeeklyProgress()
     {
@@ -163,7 +128,7 @@ public class DailyRewardUIManager : MonoBehaviourSingleton<DailyRewardUIManager>
         if (nextRewardTimeText != null && dailyRewardSystem != null)
         {
             string timeText = dailyRewardSystem.GetTimeUntilNextReward();
-            nextRewardTimeText.text = timeText.Contains("Disponible") ? timeText : $"Next reward: {timeText}";
+            nextRewardTimeText.text = timeText.Contains("AVAILABLE") ? timeText : $"Next reward: {timeText}";
         }
     }
 
@@ -294,7 +259,7 @@ public class DailyRewardDayUI
 
     string GetDayName(int dayIndex)
     {
-        string[] dayNames = { "HOY", "DÍA 2", "DÍA 3", "DÍA 4", "DÍA 5", "DÍA 6", "DÍA 7" };
-        return dayIndex < dayNames.Length ? dayNames[dayIndex] : $"DÍA {dayIndex + 1}";
+        string[] dayNames = { "TODAY", "DAY 2", "DAY 3", "DAY 4", "DAY 5", "DAY 6", "DAY 7" };
+        return dayIndex < dayNames.Length ? dayNames[dayIndex] : $"DAY {dayIndex + 1}";
     }
 }

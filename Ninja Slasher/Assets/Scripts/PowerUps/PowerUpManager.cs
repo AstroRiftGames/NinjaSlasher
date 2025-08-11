@@ -22,10 +22,10 @@ public class PowerUpDebugInfo
 
 public class PowerUpManager : MonoBehaviourSingleton<PowerUpManager>
 {
-    public Image _puIconActive;
+    [SerializeField] private Image _puIconActive;
     public List<PowerUpBase> activePowerUps = new List<PowerUpBase>();
     public PowerUpContext context = new PowerUpContext();
-    [HideInInspector] public float _puTimeLeft;
+    [HideInInspector] public float puTimeLeft;
 
     [Header("PowerUp References")]
     public PowerUpExtraTime powerUpExtraTime;
@@ -79,7 +79,7 @@ public class PowerUpManager : MonoBehaviourSingleton<PowerUpManager>
         {
             var (pu, timeLeft) = _timers[i];
             timeLeft -= Time.deltaTime;
-            _puTimeLeft = timeLeft;
+            puTimeLeft = timeLeft;
 
             if (timeLeft <= 0)
             {
