@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using TMPro;
+using UnityEngine.UI;
 
 public enum PowerUpType
 {
@@ -22,9 +22,10 @@ public class PowerUpDebugInfo
 
 public class PowerUpManager : MonoBehaviourSingleton<PowerUpManager>
 {
-    [SerializeField] private TextMeshProUGUI _puRemainingTime;
+    public Image _puIconActive;
     public List<PowerUpBase> activePowerUps = new List<PowerUpBase>();
     public PowerUpContext context = new PowerUpContext();
+    [HideInInspector] public float _puTimeLeft;
 
     [Header("PowerUp References")]
     public PowerUpExtraTime powerUpExtraTime;
@@ -78,10 +79,7 @@ public class PowerUpManager : MonoBehaviourSingleton<PowerUpManager>
         {
             var (pu, timeLeft) = _timers[i];
             timeLeft -= Time.deltaTime;
-            var hours = (int)(timeLeft / 3600);
-            var minutes = (int)((timeLeft % 3600) / 60);
-            var seconds = (int)(timeLeft % 60);
-            _puRemainingTime.text = $"{hours:D2}:{minutes:D2}:{seconds:D2}";
+            _puTimeLeft = timeLeft;
 
             if (timeLeft <= 0)
             {
@@ -154,6 +152,8 @@ public class PowerUpManager : MonoBehaviourSingleton<PowerUpManager>
             activePowerUps.Add(powerUp);
         powerUp.Activate(context);
         _timers.Add((powerUp, powerUp.duration));
+        _puIconActive.enabled = true;
+        _puIconActive.sprite = powerUp.icon;
     }
 
     public bool ActivatePowerUpFromInventory(PowerUpType powerUpType, float duration = 1800f)
@@ -270,7 +270,7 @@ public class PowerUpManager : MonoBehaviourSingleton<PowerUpManager>
         SyncTestingToggle(type, false);
 
         OnPowerUpDeactivated?.Invoke(type);
-
+        _puIconActive.enabled = false;
         Debug.Log($"[PowerUpManager] {type} desactivado (tiempo expirado)");
     }
 
