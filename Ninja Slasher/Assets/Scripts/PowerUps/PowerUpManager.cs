@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using TMPro;
 
 public enum PowerUpType
 {
@@ -21,6 +22,7 @@ public class PowerUpDebugInfo
 
 public class PowerUpManager : MonoBehaviourSingleton<PowerUpManager>
 {
+    [SerializeField] private TextMeshProUGUI _puRemainingTime;
     public List<PowerUpBase> activePowerUps = new List<PowerUpBase>();
     public PowerUpContext context = new PowerUpContext();
 
@@ -76,6 +78,10 @@ public class PowerUpManager : MonoBehaviourSingleton<PowerUpManager>
         {
             var (pu, timeLeft) = _timers[i];
             timeLeft -= Time.deltaTime;
+            var hours = (int)(timeLeft / 3600);
+            var minutes = (int)((timeLeft % 3600) / 60);
+            var seconds = (int)(timeLeft % 60);
+            _puRemainingTime.text = $"{hours:D2}:{minutes:D2}:{seconds:D2}";
 
             if (timeLeft <= 0)
             {
@@ -364,7 +370,7 @@ public class PowerUpManager : MonoBehaviourSingleton<PowerUpManager>
             {
                 type = kvp.Key,
                 quantity = kvp.Value.Count,
-                timeRemaining = $"{hours:D2}:{minutes:D2}"
+                timeRemaining = $"{hours:D2}:{minutes:D2}"                
             });
         }
     }
