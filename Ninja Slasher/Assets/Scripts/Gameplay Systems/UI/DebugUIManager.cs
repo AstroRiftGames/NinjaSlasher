@@ -5,7 +5,8 @@ public class DebugUIManager : MonoBehaviour
 {
     [Header("DEBUG")]
     [SerializeField] private TextMeshProUGUI debugStarsText;
-    [SerializeField] private TextMeshProUGUI _totalStarsText;
+    [SerializeField] private TextMeshProUGUI _mainCurrentStarsText;
+    [SerializeField] private TextMeshProUGUI _profileCurrentStarsText;
 
     public void ShowStarsDebug()
     {
@@ -19,7 +20,8 @@ public class DebugUIManager : MonoBehaviour
         {
             sb.AppendLine($"Nivel {kvp.Key}: {kvp.Value} estrellas");
         }
-        _totalStarsText.text = $"{data.totalStars}";
+        _mainCurrentStarsText.text = $"{data.totalStars}";
+        _profileCurrentStarsText.text = $"{data.totalStars}";
         debugStarsText.text = sb.ToString();
     }
 

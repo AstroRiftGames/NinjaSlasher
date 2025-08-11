@@ -12,6 +12,7 @@ public class CanvasManager : MonoBehaviour
     [SerializeField] private Canvas _profileCanvas;
     [SerializeField] private Canvas _dailyRewardCanvas;
     [SerializeField] private Canvas _noLivesCanvas;
+    //[SerializeField] private Canvas _extraLifeCanvas;
 
     public void OpenCanvas(Canvas canvas) => canvas.enabled = true;
     public void CloseCanvas(Canvas canvas) => canvas.enabled = false;
@@ -35,12 +36,25 @@ public class CanvasManager : MonoBehaviour
         bool isCanvasActive = !_noLivesCanvas.enabled;
         ShowHideCanvas(_noLivesCanvas, isCanvasActive);
     }
+
     public void ShowHideCreditsCanvas()
     {
         bool isCanvasActive = !_creditsCanvas.enabled;
+        ShowHideCanvas(_profileCanvas, !isCanvasActive);
         ShowHideCanvas(_creditsCanvas, isCanvasActive);
     }
+    
+    public void ShowHideProfileCanvas()
+    {
+        bool isCanvasActive = !_profileCanvas.enabled;
+        ShowHideCanvas(_profileCanvas, isCanvasActive);
+    }
 
+    //public void ShowHideExtraLifeCanvas()
+    //{
+    //    bool isCanvasActive = !_extraLifeCanvas.enabled;
+    //    ShowHideCanvas(_extraLifeCanvas, isCanvasActive);
+    //}
     public void ShowHidePreGameCanvas()
     {
         bool isCanvasActive = !_preGameCanvas.enabled;

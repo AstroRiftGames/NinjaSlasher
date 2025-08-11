@@ -6,11 +6,25 @@ public class ButtonManager : MonoBehaviour
     [Header("LEVEL SELECTOR BUTTONS")]
     [SerializeField] private Button[] levelButtons;
     [SerializeField] private Button _testLevelButton;
-    [SerializeField] private Button _configButton;
+    [SerializeField] private Button _configDropdownButton;
+    [SerializeField] private Button _calendarButton;
+    [SerializeField] private Button _heartButton;
+
+    [Header("CONFIG DROPDOWN BUTTONS")]
     [SerializeField] private Button _musicButton;
     [SerializeField] private Button _sfxButton;
+    [SerializeField] private Button _profileButton;
+
+    [Header("PROFILE BUTTONS")]
+    [SerializeField] private Button _userIconButton;
+
+    [SerializeField] private Button _closeProfileButton;
     [SerializeField] private Button _creditsButton;
-    [SerializeField] private Button _calendarButton;
+    [SerializeField] private Button _closeCreditsButton;
+
+    [Header("EXTRA LIFE PANEL BUTTONS")]
+    //[SerializeField] private Button _closeExtraLifeButton;
+    //[SerializeField] private Button _claimExtraLifeButton;
 
     [Header("DAILY REWARDS BUTTONS")]
     [SerializeField] private Button _claimRewardButton;
@@ -145,15 +159,30 @@ public class ButtonManager : MonoBehaviour
 
     private void SetupLevelSelectorButtons()
     {
-        _configButton.onClick.AddListener(_configPanelManager.OpenCloseConfigPanel);
+        //EXTRA LIFE PANEL
+        //_closeExtraLifeButton.onClick.AddListener(UIManager.Instance.ShowHideExtraLifeCanvas);
+        //_claimExtraLifeButton.onClick.AddListener(UIManager.Instance.ShowHideExtraLifeCanvas);
+
+        //CONFIG DROPDOWN
         _musicButton.onClick.AddListener(_audioToggle.MusicButtonClicked);
         _sfxButton.onClick.AddListener(_audioToggle.SFXButtonClicked);
-        _creditsButton.onClick.AddListener(UIManager.Instance.ShowHideCreditsCanvas);
-        _calendarButton.onClick.AddListener(UIManager.Instance.ShowHideDailyRewardCanvas);
+        _profileButton.onClick.AddListener(UIManager.Instance.ShowHideProfileCanvas);
+
+        //NO LIVES PANEL
         _closeNoLivesPanelButton.onClick.AddListener(UIManager.Instance.ShowHideNoLivesCanvas);
         _adForMoreLifeButton.onClick.AddListener(UIManager.Instance.ShowHideNoLivesCanvas);
 
+        //PROFILE
+        _userIconButton.onClick.AddListener(UIManager.Instance.ShowHideProfileCanvas);
+        _creditsButton.onClick.AddListener(UIManager.Instance.ShowHideCreditsCanvas);
+        _closeProfileButton.onClick.AddListener(UIManager.Instance.ShowHideProfileCanvas);
+        _closeCreditsButton.onClick.AddListener(UIManager.Instance.ShowHideCreditsCanvas);
+
+        //MAIN SCREEN
+        _calendarButton.onClick.AddListener(UIManager.Instance.ShowHideDailyRewardCanvas);
+        _configDropdownButton.onClick.AddListener(_configPanelManager.OpenCloseConfigPanel);
         _testLevelButton.onClick.AddListener(() => GetComponent<SceneTransitionManager>().LoadDebugTestScene());
+        //_heartButton.onClick.AddListener(UIManager.Instance.ShowHideExtraLifeCanvas);
 
         for (int i = 0; i < levelButtons.Length; i++)
         {
