@@ -4,13 +4,7 @@ using UnityEngine;
 
 public class ScoutBot : Enemy
 {
-    [SerializeField] float _deathTime;
     [SerializeField] float _detectionRange;
-    public override void Die()
-    {
-        _animator.SetTrigger("OnHit");
-        Destroy(gameObject, _deathTime);
-    }
 
     public void Update()
     {

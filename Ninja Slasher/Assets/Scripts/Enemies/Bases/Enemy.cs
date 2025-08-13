@@ -7,6 +7,7 @@ public class Enemy : MonoBehaviour
     [SerializeField] GameObject LowerCol;
     [SerializeField] GameObject RearCol;
     [SerializeField] GameObject FrontCol;
+    [SerializeField] float _deathTime;
 
     [SerializeField] protected LayerMask _obstaclesLayer;
     [SerializeField] protected LayerMask _playerLayer;
@@ -67,12 +68,15 @@ public class Enemy : MonoBehaviour
     public virtual void Die()
     {
         Debug.Log($"{_data.Type} killed");
+
+        _animator.SetTrigger("OnHit");
+
         tracker.OnEnemyKilled(this);
 
         var combo = ComboManager.Instance;
         if (combo != null)
             combo.RegisterKill();
 
-        Destroy(gameObject);
+        Destroy(gameObject, _deathTime);
     }
 }
