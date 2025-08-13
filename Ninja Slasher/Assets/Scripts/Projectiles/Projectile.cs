@@ -10,6 +10,8 @@ public class Projectile : MonoBehaviour
     public Transform Shooter => _shooter;
     [SerializeField] protected LayerMask enemyLayer;
     [SerializeField] protected LayerMask playerLayer;
+    [SerializeField] private Animator _animator;
+    [SerializeField] private float _impactTime;
 
     protected Rigidbody2D _rb;
     protected bool _hasBeenReflected = false;
@@ -35,13 +37,16 @@ public class Projectile : MonoBehaviour
         SetDirection(transform.up);
     }
 
-    public virtual void Update()
-    {
-
-    }
+    public virtual void Update() { }
 
     public virtual void SetDirection(Vector2 direction)
     {
+        float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
+        transform.rotation = Quaternion.Euler(0, 0, angle);
+
+
+
+
         _rb.AddForce(direction* _speed);
     }
 
@@ -104,6 +109,7 @@ public class Projectile : MonoBehaviour
         _hasBeenReflected = true;
 
         transform.right = direction;
+        _animator.SetTrigger("OnRepelled");
 
         Debug.Log("Proyectil reflejado hacia: " + target.name);
     }
@@ -119,7 +125,10 @@ public class Projectile : MonoBehaviour
             DamageEnemy(collision.gameObject);
         }
 
-        Destroy(gameObject);
+        _animator.SetTrigger("OnImpact");
+        _rb.linearVelocity = Vector2.zero;
+
+        Destroy(gameObject, _impactTime);
     }
 
     protected void DamagePlayer(GameObject player)
