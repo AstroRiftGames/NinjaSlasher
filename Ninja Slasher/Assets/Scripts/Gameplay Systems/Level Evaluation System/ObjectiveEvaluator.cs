@@ -36,6 +36,7 @@ public class ObjectiveEvaluator
 
         result.primaryCompleted = true;
         result.starsEarned = primaryObjective.starValue;
+        result.completedObjectives.Add(primaryObjective);
 
         var secondaryObjectives = config.GetSecondaryObjectives();
         foreach (var objective in secondaryObjectives)
