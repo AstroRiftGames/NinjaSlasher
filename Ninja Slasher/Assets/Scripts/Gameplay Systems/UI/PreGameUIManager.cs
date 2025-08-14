@@ -14,10 +14,14 @@ public class PreGameUIManager : MonoBehaviour
     [SerializeField] private Transform _powerUpsContainer;
     [SerializeField] private PowerUpSlotUI _powerUpSlotPrefab;
     [SerializeField] private PowerUpBase[] allPowerUpBases;
-
+    [SerializeField] private TextMeshProUGUI _title;
+    [SerializeField] private Transform _starsContainer;
     [SerializeField] private TextMeshProUGUI _primaryGoalText;
     [SerializeField] private TextMeshProUGUI[] _secondaryGoalTexts;
+    [SerializeField] private Color _starNotAcquired = Color.black;
+    [SerializeField] private Color _starAcquired = Color.yellow;
 
+    private bool isObjectiveComplete = false;
     private List<PowerUpSlotUI> _slots = new();
 
     public void ShowConfirmationPanel(string sceneName)
@@ -30,7 +34,7 @@ public class PreGameUIManager : MonoBehaviour
 
         _closeButton.onClick.RemoveAllListeners();
         _closeButton.onClick.AddListener(CancelLevelSelection);
-
+        ShowPreGameTitle();
         SetGoals();
     }
 
@@ -49,6 +53,15 @@ public class PreGameUIManager : MonoBehaviour
     {
         UIManager.Instance.ShowHidePreGameCanvas();
         _pendingSceneName = null;
+    }
+
+    void ShowPreGameTitle()
+    {
+        int levelId = GetLevelIdFromSceneName(_pendingSceneName);
+
+        var cfgMgr = LevelConfigurationManager.Instance;
+        var config = cfgMgr != null ? cfgMgr.GetConfigurationForLevel(levelId) : null;
+        _title.text = config.levelName;
     }
 
     public void ShowPreGamePowerUps()
@@ -116,8 +129,23 @@ public class PreGameUIManager : MonoBehaviour
         }
 
         var primary = config.GetPrimaryObjective();
-        if (_primaryGoalText)
-            _primaryGoalText.text = primary != null ? primary.description : "-";
+        if (_primaryGoalText) 
+        {
+            _primaryGoalText.text = primary != null ? primary.description : "-";            
+        }
+
+        isObjectiveComplete = SaveManager.Instance?.IsObjectiveCompleted(levelId, primary) ?? false;
+
+        if (isObjectiveComplete)
+        {
+            _primaryGoalText.GetComponentInChildren<Image>().enabled = true;
+            _starsContainer.GetChild(0).GetComponent<Image>().color = _starAcquired;
+        }
+        else
+        {
+            _primaryGoalText.GetComponentInChildren<Image>().enabled = false;
+            _starsContainer.GetChild(0).GetComponent<Image>().color = _starNotAcquired;
+        }
 
         var secondaries = config.GetSecondaryObjectives();
         for (int i = 0; i < _secondaryGoalTexts.Length; i++)
@@ -126,9 +154,18 @@ public class PreGameUIManager : MonoBehaviour
 
             if (i < secondaries.Length && secondaries[i] != null)
             {
-                bool completed = SaveManager.Instance?.IsObjectiveCompleted(levelId, secondaries[i]) ?? false;
-
                 _secondaryGoalTexts[i].text = secondaries[i].description;
+                isObjectiveComplete = SaveManager.Instance?.IsObjectiveCompleted(levelId, secondaries[i]) ?? false;
+                if (isObjectiveComplete)
+                {
+                    _secondaryGoalTexts[i].GetComponentInChildren<Image>().enabled = true;
+                    _starsContainer.GetChild(i + 1).GetComponent<Image>().color = _starAcquired;
+                }
+                else
+                {
+                    _secondaryGoalTexts[i].GetComponentInChildren<Image>().enabled = false;
+                    _starsContainer.GetChild(i + 1).GetComponent<Image>().color = _starNotAcquired;
+                }
             }
             else
             {

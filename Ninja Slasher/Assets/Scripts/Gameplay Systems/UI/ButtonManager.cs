@@ -212,12 +212,11 @@ public class ButtonManager : MonoBehaviour
         Transform buttonTransform = levelButton.transform;
         Transform starsContainer = buttonTransform.Find("Stars");
         int starsEarned = GetStars(levelId);
-        Debug.Log(starsEarned);
         bool isLevelUnlocked = IsLevelUnlocked(levelId);
 
-        for (int i = 1; i <= 3; i++)
+        for (int i = 0; i < 3; i++)
         {
-            Transform star = starsContainer.Find($"Star {i}") ?? starsContainer.Find($"Star {i}") ?? starsContainer.Find($"Star {i}") ?? starsContainer.Find($"Star {i}");
+            Transform star = starsContainer.GetChild(i);
             if(star != null)
             {
                 Image starImage = star.GetComponent<Image>();
@@ -226,7 +225,7 @@ public class ButtonManager : MonoBehaviour
                     star.gameObject.SetActive(isLevelUnlocked);
                     if (isLevelUnlocked)
                     {
-                        bool isEarned = i <= starsEarned;
+                        bool isEarned = i < starsEarned;
                         starImage.color = isEarned ? _starAcquired : _starNotAcquired;
                     }                    
                 }
