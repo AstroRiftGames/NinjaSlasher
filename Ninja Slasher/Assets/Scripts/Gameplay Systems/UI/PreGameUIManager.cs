@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -13,7 +15,10 @@ public class PreGameUIManager : MonoBehaviour
     [SerializeField] private PowerUpSlotUI _powerUpSlotPrefab;
     [SerializeField] private PowerUpBase[] allPowerUpBases;
 
-    private List<PowerUpSlotUI> _slots = new List<PowerUpSlotUI>();
+    [SerializeField] private TextMeshProUGUI _primaryGoalText;
+    [SerializeField] private TextMeshProUGUI[] _secondaryGoalTexts;
+
+    private List<PowerUpSlotUI> _slots = new();
 
     public void ShowConfirmationPanel(string sceneName)
     {
@@ -25,6 +30,8 @@ public class PreGameUIManager : MonoBehaviour
 
         _closeButton.onClick.RemoveAllListeners();
         _closeButton.onClick.AddListener(CancelLevelSelection);
+
+        SetGoals();
     }
 
     private void OnConfirmLevelSelection()
@@ -92,5 +99,47 @@ public class PreGameUIManager : MonoBehaviour
             if (pu.powerUpType == type)
                 return pu;
         return null;
+    }
+
+    private void SetGoals()
+    {
+        int levelId = GetLevelIdFromSceneName(_pendingSceneName);
+
+        var cfgMgr = LevelConfigurationManager.Instance;
+        var config = cfgMgr != null ? cfgMgr.GetConfigurationForLevel(levelId) : null;
+
+        if (config == null)
+        {
+            _primaryGoalText.text = "Goals not configured.";
+            foreach (var t in _secondaryGoalTexts) if (t) t.text = string.Empty;
+            return;
+        }
+
+        var primary = config.GetPrimaryObjective();
+        if (_primaryGoalText)
+            _primaryGoalText.text = primary != null ? primary.description : "-";
+
+        var secondaries = config.GetSecondaryObjectives();
+        for (int i = 0; i < _secondaryGoalTexts.Length; i++)
+        {
+            if (!_secondaryGoalTexts[i]) continue;
+
+            if (i < secondaries.Length && secondaries[i] != null)
+            {
+                bool completed = SaveManager.Instance?.IsObjectiveCompleted(levelId, secondaries[i]) ?? false;
+
+                _secondaryGoalTexts[i].text = secondaries[i].description;
+            }
+            else
+            {
+                _secondaryGoalTexts[i].text = string.Empty;
+            }
+        }
+    }
+
+    private int GetLevelIdFromSceneName(string name)
+    {
+        return (name != null &&
+                name.Contains("Level") && int.TryParse(name.Substring(5), out var id)) ? id : 1;
     }
 }
