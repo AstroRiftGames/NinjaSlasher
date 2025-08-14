@@ -199,7 +199,7 @@ GameObject:
   - component: {fileID: 6391668477862170959}
   - component: {fileID: 2234693890108503027}
   - component: {fileID: 8005450151810578804}
-  - component: {fileID: 1342354987368541441}
+  - component: {fileID: 8143181119019381039}
   - component: {fileID: 737437187067326278}
   - component: {fileID: 8174576930485009954}
   - component: {fileID: 539905384003771168}
@@ -289,7 +289,7 @@ MonoBehaviour:
   _sfxImage: {fileID: 2899433265878094987}
   _musicOn: 0
   _sfxOn: 0
---- !u!114 &1342354987368541441
+--- !u!114 &8143181119019381039
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -298,7 +298,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 52824968843742465}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0dfd5c6ee04a77f448087083fd324c79, type: 3}
+  m_Script: {fileID: 11500000, guid: fa6a1a9d59e828e43b36d4b4e093209d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   levelButtons:
@@ -359,6 +359,8 @@ MonoBehaviour:
   - Level8
   - Level9
   - Level10
+  _starNotAcquired: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+  _starAcquired: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
   deleteSaveButton: {fileID: 46443166469604056}
 --- !u!114 &737437187067326278
 MonoBehaviour:
@@ -430,7 +432,6 @@ MonoBehaviour:
   _levelTimerText: {fileID: 3250700708126626020}
   _bonusTimeText: {fileID: 8657406034820787390}
   _lifeLostPanel: {fileID: 3150805457132935333}
-  _powerUpsText: {fileID: 0}
   _puRemainingTime: {fileID: 5808943735912777215}
 --- !u!114 &27275853345417353
 MonoBehaviour:
