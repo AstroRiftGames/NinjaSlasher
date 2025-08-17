@@ -45,6 +45,7 @@ public class Controller : MonoBehaviour
     [Space]
     [SerializeField] private float checkDistance;
     [SerializeField] private LayerMask _scenarioLayer;
+    [SerializeField] private LayerMask _enemyLayer;
 
     private bool _isDead = false;
     private bool _isInvincible;
@@ -382,7 +383,7 @@ public class Controller : MonoBehaviour
         foreach (var hit in hits)
         {
             Projectile proj = hit.GetComponent<Projectile>();
-            if (proj != null && proj.IsParryable && !proj.HasBeenReflected)
+            if (proj != null && proj.IsParryable)
             {
                 _parryInputDetected = true;
                 return;
@@ -413,9 +414,11 @@ public class Controller : MonoBehaviour
         foreach (var hit in hits)
         {
             Projectile proj = hit.GetComponent<Projectile>();
-            if (proj != null && proj.IsParryable && !proj.HasBeenReflected)
+            if (proj != null && proj.IsParryable)
             {
-                proj.ReflectBackwards();
+                Transform target = proj.Shooter != null ? proj.Shooter : FindClosestEnemy();
+                Vector2 newDir = (target.position - transform.position).normalized;
+                proj.ReflectBackwards(transform, newDir);
             }
         }
     }
@@ -452,6 +455,11 @@ public class Controller : MonoBehaviour
                     _playerView.RB.linearVelocity = Vector2.zero;
                 }
             }
+        }
+        else if (colTag == "Projectile")
+        {
+            collision.gameObject.TryGetComponent(out Projectile projectile);
+            projectile.ManageCollision(_playerView.Col);
         }
     }
     private void OnCollisionExit2D(Collision2D collision)
@@ -571,6 +579,24 @@ public class Controller : MonoBehaviour
     public Vector2 GetLastDashDirection() => _lastDashDirection;
 
     public void SetInvincibility(bool value) => _isInvincible = value;
+
+    Transform FindClosestEnemy()
+    {
+        float minDistance = Mathf.Infinity;
+        Transform closest = null;
+
+        foreach (Collider2D col in Physics2D.OverlapCircleAll(transform.position, 10f, _enemyLayer))
+        {
+            float dist = Vector2.Distance(transform.position, col.transform.position);
+            if (dist < minDistance)
+            {
+                minDistance = dist;
+                closest = col.transform;
+            }
+        }
+
+        return closest;
+    }
 
     //private Vector2 GetDirectionByIndex(int i)
     //{
