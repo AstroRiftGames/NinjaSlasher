@@ -16,7 +16,7 @@ GameObject:
   - component: {fileID: 2593845784405653921}
   m_Layer: 8
   m_Name: EnergyProjectile
-  m_TagString: Untagged
+  m_TagString: Projectile
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -121,7 +121,7 @@ CircleCollider2D:
   m_CallbackLayers:
     serializedVersion: 2
     m_Bits: 4294967295
-  m_IsTrigger: 1
+  m_IsTrigger: 0
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
@@ -152,7 +152,7 @@ Rigidbody2D:
     m_Bits: 0
   m_Interpolate: 0
   m_SleepingMode: 1
-  m_CollisionDetection: 0
+  m_CollisionDetection: 1
   m_Constraints: 4
 --- !u!114 &5454781216189487775
 MonoBehaviour:
@@ -166,8 +166,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5141c332bc6fe29489751593331d03b0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _speed: 350
-  _reflectedSpeed: 350
+  _speed: 300
   _shooter: {fileID: 0}
   enemyLayer:
     serializedVersion: 2
@@ -178,8 +177,7 @@ MonoBehaviour:
   _animator: {fileID: 2593845784405653921}
   _impactTime: 0.25
   isParryable: 1
-  _maxParries: 2
-  _multiplier: 1.5
+  _multiplier: 1.25
 --- !u!95 &2593845784405653921
 Animator:
   serializedVersion: 7
