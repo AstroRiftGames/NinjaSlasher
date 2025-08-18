@@ -6,7 +6,7 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
     [Header("LIVES SETTINGS")]
     [SerializeField] private int _maxLives;
     [SerializeField] private int _startingLives;
-    [SerializeField] private int _lifeRechargeSeconds = 1800; // 30 min por vida
+    [SerializeField] public int _lifeRechargeSeconds = 1800; // 30 min por vida
 
     public int CurrentLives { get; private set; }
     private DateTime _lastLifeUsed;
@@ -62,8 +62,10 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
 
     private void UpdateLifeRecharge()
     {
-        if (CurrentLives >= _maxLives) return;
-
+        if (CurrentLives >= _maxLives)
+        {
+            return;
+        }
         double seconds = (DateTime.Now - _lastLifeUsed).TotalSeconds;
         if (seconds >= _lifeRechargeSeconds)
         {
@@ -98,7 +100,7 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
         {
             int vidasAGenerar = Mathf.FloorToInt((float)seconds / _lifeRechargeSeconds);
             int newLives = Mathf.Min(CurrentLives + vidasAGenerar, _maxLives);
-
+            
             _lastLifeUsed = _lastLifeUsed.AddSeconds(vidasAGenerar * _lifeRechargeSeconds);
             CurrentLives = newLives;
             _virtualLives = CurrentLives;
@@ -142,7 +144,6 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
             _lastLifeUsed = DateTime.Now;
             _hasVirtualDeduction = false;
             _levelInProgress = false;
-
             Debug.Log($"[LifeManager] Nivel perdido. Descuento confirmado. Vidas: {CurrentLives}");
 
             SaveLivesViaAutoSave("Vida perdida");
@@ -157,7 +158,6 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
 
             SaveLivesViaAutoSave("Vida perdida");
             OnLivesChanged?.Invoke(CurrentLives);
-
             Debug.Log($"[LifeManager] Vida usada. Restantes: {CurrentLives}");
         }
     }
@@ -184,7 +184,6 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
             _lastLifeUsed = DateTime.Now;
             _hasVirtualDeduction = false;
             _levelInProgress = false;
-
             Debug.Log($"[LifeManager] Nivel abandonado. Descuento confirmado. Vidas: {CurrentLives}");
 
             SaveLivesViaAutoSave("Vida perdida por abandono");

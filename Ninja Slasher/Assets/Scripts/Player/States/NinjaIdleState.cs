@@ -11,16 +11,14 @@ public class NinjaIdleState<NinjaStates> : State<NinjaStates>
 
     public override void Enter()
     {
-        _controller.View.Animator.SetBool("IsGrounded", true);
     }
 
     public override void Execute()
     {
-        
     }
 
     public override void Sleep()
     {
-        _controller.View.Animator.SetBool("IsGrounded", false);
+        _controller.View.Animator.SetInteger("GrabType", 0);
     }
 }

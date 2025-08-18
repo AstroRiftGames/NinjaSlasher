@@ -34,9 +34,4 @@ public class NinjaDashState<NinjaStates> : State<NinjaStates> where NinjaStates 
             }
         }
     }
-
-    public override void Sleep()
-    {
-        _controller.View.Animator.SetBool("IsGrounded", false);
-    }
 }

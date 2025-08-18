@@ -1,7 +1,11 @@
+using System.Collections;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Transactions;
 using Unity.VisualScripting;
 using UnityEngine;
-using System.Collections;
-using System.Collections.Generic;
+using UnityEngine.InputSystem.XR;
+using static UnityEngine.Rendering.DebugUI;
 
 public class Controller : MonoBehaviour
 {
@@ -14,6 +18,7 @@ public class Controller : MonoBehaviour
     private ITreeNode _root;
 
     [Space]
+    [SerializeField] float _maxAngle = 70f;
     private bool _isDashing = false;
     private float _lastDash;
     private Collider2D _currentSurface;
@@ -21,10 +26,13 @@ public class Controller : MonoBehaviour
     private Vector2 _lastDashDirection;
     private Vector2 _wishedDirection;
     private Vector2 lastSwipeDelta;
+    private bool _isMirrored;
+
 
     [Space]
     [SerializeField] private LineRenderer swipeIndicator;
     private Vector2 swipeStart;
+    private bool _startedSwipe;
     private Vector2 endTouchPosition;
     private Vector2 currentSwipe;
     private bool isSwiping = false;
@@ -36,7 +44,8 @@ public class Controller : MonoBehaviour
 
     [Space]
     [SerializeField] private float checkDistance;
-    [SerializeField] private LayerMask obstacleLayer;
+    [SerializeField] private LayerMask _scenarioLayer;
+    [SerializeField] private LayerMask _enemyLayer;
 
     private bool _isDead = false;
     private bool _isInvincible;
@@ -67,7 +76,6 @@ public class Controller : MonoBehaviour
 
         dash.AddTransition(NinjaStates.Grab, grab);
         dash.AddTransition(NinjaStates.KO, ko);
-        dash.AddTransition(NinjaStates.Idle, idle);
 
         grab.AddTransition(NinjaStates.Dash, dash);
         grab.AddTransition(NinjaStates.Parry, parry);
@@ -97,8 +105,8 @@ public class Controller : MonoBehaviour
         _root = rootQuestion;
     }
 
-    private bool QDash() => _isDashing || CanDashFromInput();
-    private bool QGrab() => _currentSurface != null && !_isDashing;
+    private bool QDash() => IsDashing() || CanDashFromInput();
+    private bool QGrab() => _currentSurface != null && !IsDashing();
     private bool QParry() => CanParryFromInput();
     private bool QKO() => _isDead;
 
@@ -129,9 +137,9 @@ public class Controller : MonoBehaviour
         _fsm.OnUpdate();
 
         CheckSwipe();
-        CheckParryTap();
 
         HandleParryTimer();
+        UpdateAnimatorParameters();
     }
 
     private void FixedUpdate()
@@ -147,24 +155,27 @@ public class Controller : MonoBehaviour
 #if UNITY_EDITOR
         if (Input.GetMouseButtonDown(0))
         {
+            TryStartParryLogic();
             swipeStart = Input.mousePosition;
-            isSwiping = true;
-            if (swipeIndicator != null)
-                swipeIndicator.enabled = true;
+            _startedSwipe = true;
         }
 
-        if (Input.GetMouseButton(0) && isSwiping)
+        if (Input.GetMouseButton(0))
         {
             currentSwipe = (Vector2)Input.mousePosition - swipeStart;
-            if (currentSwipe.magnitude >= minSwipeDistance)
+
+            Vector3 start = transform.position;
+
+            if (_startedSwipe && currentSwipe.magnitude >= minSwipeDistance)
             {
                 if (swipeIndicator != null && !swipeIndicator.enabled)
+                {
                     swipeIndicator.enabled = true;
+                }
+                isSwiping = true;
 
-                Vector2 dir = -currentSwipe.normalized;
-                Vector3 start = transform.position;
-                Vector3 end = start + (Vector3)(dir * 2f);
-
+                Vector2 clampedDir = -currentSwipe.normalized; //GetClampedSwipeDirection(currentSwipe.normalized);
+                Vector3 end = start + (Vector3)(clampedDir * 2f);
                 if (swipeIndicator != null)
                 {
                     swipeIndicator.SetPosition(0, start);
@@ -176,49 +187,55 @@ public class Controller : MonoBehaviour
         if (Input.GetMouseButtonUp(0) && isSwiping)
         {
             isSwiping = false;
+            _startedSwipe = false;
             if (swipeIndicator != null)
+            {
                 swipeIndicator.enabled = false;
+            }
             endTouchPosition = Input.mousePosition;
-            Vector2 swipeDelta = endTouchPosition - swipeStart;
+            Vector2 swipeDelta = endTouchPosition - swipeStart; // GetClampedSwipeDirection(endTouchPosition - swipeStart);
             if (swipeDelta.magnitude >= minSwipeDistance)
+            {
                 TryDashFromSwipe(swipeDelta);
+            }
         }
 #else
         if (Input.touchCount > 0)
         {
+            TryStartParryLogic();
             Touch touch = Input.GetTouch(0);
             switch (touch.phase)
             {
                 case TouchPhase.Began:
                     swipeStart = touch.position;
-                    isSwiping = true;
-                    if (swipeIndicator != null)
-                        swipeIndicator.enabled = true;
+                    _startedSwipe = true;
                     break;
 
                 case TouchPhase.Moved:
                 case TouchPhase.Stationary:
-                    if (isSwiping)
+                    currentSwipe = touch.position - swipeStart;
+
+                    Vector3 start = transform.position;
+
+                    if (_startedSwipe &&  currentSwipe.magnitude >= minSwipeDistance)
                     {
-                        currentSwipe = touch.position - swipeStart;
-
-                        if (currentSwipe.magnitude >= minSwipeDistance)
+                        if (swipeIndicator != null && !swipeIndicator.enabled)
                         {
-                            if (swipeIndicator != null && !swipeIndicator.enabled)
-                                swipeIndicator.enabled = true;
+                            swipeIndicator.enabled = true;
+                        }
+                        isSwiping = true;
 
-                            Vector2 dir = -currentSwipe.normalized;
-                            Vector3 start = transform.position;
-                            Vector3 end = start + (Vector3)(dir * 2f);
+                        Vector2 clampedDir = -currentSwipe.normalized; //GetClampedSwipeDirection(currentSwipe.normalized);
 
-                            if (swipeIndicator != null)
-                            {
-                                swipeIndicator.SetPosition(0, start);
-                                swipeIndicator.SetPosition(1, end);
-                            }
+                        Vector3 end = start + (Vector3)(clampedDir * 2f);
+
+                        if (swipeIndicator != null)
+                        {
+                            swipeIndicator.SetPosition(0, start);
+                            swipeIndicator.SetPosition(1, end);
                         }
                     }
-                    break;
+                break;
 
                 case TouchPhase.Ended:
                 case TouchPhase.Canceled:
@@ -226,11 +243,15 @@ public class Controller : MonoBehaviour
                     {
                         isSwiping = false;
                         if (swipeIndicator != null)
+                        {
                             swipeIndicator.enabled = false;
+                        }
                         endTouchPosition = touch.position;
                         Vector2 swipeDelta = endTouchPosition - swipeStart;
                         if (swipeDelta.magnitude >= minSwipeDistance)
+                        {
                             TryDashFromSwipe(swipeDelta);
+                        }
                     }
                     break;
             }
@@ -247,6 +268,36 @@ public class Controller : MonoBehaviour
 #endif
     }
 
+    //private Vector2 GetClampedSwipeDirection(Vector2 swipeDelta)
+    //{
+    //    Vector2 dashDir = -swipeDelta.normalized;
+
+    //    Vector2 surfaceNormal = Vector2.up;
+    //    float dis = 0;
+
+    //    for (int n = 0; n < 4; n++)
+    //    {
+    //        RaycastHit2D currentHit = Physics2D.Raycast(transform.position, GetDirectionByIndex(n), checkDistance, _scenarioLayer);
+    //        if (currentHit && (dis == 0 || currentHit.distance < dis))
+    //        {
+    //            dis = currentHit.distance;
+    //            surfaceNormal = currentHit.normal;
+    //            Debug.DrawLine(transform.position, currentHit.point, Color.magenta);
+    //        }
+    //    }
+    //    Debug.DrawRay(transform.position, surfaceNormal, Color.yellow);
+
+    //    float angle = Vector2.Angle(dashDir, surfaceNormal);
+
+    //    if (angle > _maxAngle)
+    //    {
+    //        Vector3 rotationAxis = Vector3.Cross(surfaceNormal, dashDir);
+    //        dashDir = Quaternion.AngleAxis(_maxAngle, rotationAxis) * surfaceNormal;
+    //    }
+
+    //    return dashDir;
+    //}
+
     private bool _dashInputDetected = false;
     private bool _parryInputDetected = false;
     #endregion
@@ -259,7 +310,7 @@ public class Controller : MonoBehaviour
             return;
         }
 
-        if (_currentSurface == null)
+        if(_isDashing)
         {
             return;
         }
@@ -277,7 +328,7 @@ public class Controller : MonoBehaviour
             return;
         }
 
-        RaycastHit2D hit = Physics2D.Raycast(transform.position, dashDir, checkDistance, obstacleLayer);
+        RaycastHit2D hit = Physics2D.Raycast(transform.position, dashDir, checkDistance, _scenarioLayer);
 
         if (hit.collider != null)
         {
@@ -302,10 +353,13 @@ public class Controller : MonoBehaviour
     }
     public void Dash()
     {
+        _playerView.Animator.SetBool("IsWallGrabbed", false);
+        _playerView.Animator.SetBool("IsCeilingGrabbed", false);
         if (_playerView == null || _playerView.RB == null)
         {
             return;
         }
+        SetIsDashing(true);
 
         MoveTracker.RegisterMove();
         _lastDashDirection = _wishedDirection;
@@ -313,29 +367,14 @@ public class Controller : MonoBehaviour
         _playerView.RB.linearVelocity = Vector2.zero;
         _playerView.RB.AddForce(_wishedDirection * _playerModel.DashForce, ForceMode2D.Impulse);
 
-        _isDashing = true;
-        _playerView.Animator.SetBool("IsGrounded", _isDashing);
+        SetIsMirrored(false);
+        RotateSprites(_lastDashDirection);
     }
+
+    
     #endregion
 
     #region PARRYING
-    private void CheckParryTap()
-    {
-        if (isSwiping) return;
-
-#if UNITY_EDITOR
-        if (Input.GetMouseButtonDown(0))
-        {
-            TryStartParryLogic();
-        }
-#else
-        if (Input.touchCount > 0 && Input.GetTouch(0).phase == TouchPhase.Began)
-        {
-            TryStartParryLogic();
-        }
-#endif
-    }
-
     private void TryStartParryLogic()
     {
         if (isParrying) return;
@@ -344,7 +383,7 @@ public class Controller : MonoBehaviour
         foreach (var hit in hits)
         {
             Projectile proj = hit.GetComponent<Projectile>();
-            if (proj != null && proj.IsParryable && !proj.HasBeenReflected)
+            if (proj != null && proj.IsParryable)
             {
                 _parryInputDetected = true;
                 return;
@@ -375,9 +414,11 @@ public class Controller : MonoBehaviour
         foreach (var hit in hits)
         {
             Projectile proj = hit.GetComponent<Projectile>();
-            if (proj != null && proj.IsParryable && !proj.HasBeenReflected)
+            if (proj != null && proj.IsParryable)
             {
-                proj.ReflectBackwards();
+                Transform target = proj.Shooter != null ? proj.Shooter : FindClosestEnemy();
+                Vector2 newDir = (target.position - transform.position).normalized;
+                proj.ReflectBackwards(transform, newDir);
             }
         }
     }
@@ -386,8 +427,11 @@ public class Controller : MonoBehaviour
     #region COLLISION DETECTION
     private void OnCollisionEnter2D(Collision2D collision)
     {
-        if (collision.gameObject.CompareTag("Scenario") ||
-            collision.gameObject.CompareTag("Obstacle") ||
+        string colTag = collision.gameObject.tag;
+        if (colTag == "Scenario" ||
+            colTag == "Obstacle" ||
+            colTag == "Floor" ||
+            colTag == "Ceiling" ||
             collision.gameObject.GetComponent<PlatformBase>() != null)
         {
             if (_currentSurface != null && collision.collider == _currentSurface)
@@ -397,27 +441,12 @@ public class Controller : MonoBehaviour
 
             _currentSurface = collision.collider;
 
-            //if (_fsm.CurrentState.GetType() != typeof(NinjaDashState<NinjaStates>))
-            //{
-                SetIsDashing(false);
-            //}
-
-
-            _playerView.Animator.SetBool("IsGrounded", _isDashing);
-
-            Vector2 contactPoint = Vector2.zero;
-            Vector2 point = collision.GetContact(0).point;
-            contactPoint.x = point.x > transform.position.x ? 1 : -1;
-            contactPoint.y = point.y >= transform.position.y ? 1 : -1;
-
-            int value = 0;
-            if (contactPoint.y > 0) value = 2;
-            else if (contactPoint.x > 0) value = 1;
-
-            _playerView.Animator.SetInteger("GrabType", value);
+            SetIsDashing(false);
+            SetGrabbingAnimation();
+            RotateSprites(colTag == "Ceiling" ? Vector2.left : Vector2.right);
 
             ElasticPlatform elasticPlatform = collision.gameObject.GetComponent<ElasticPlatform>();
-            _lastSurfaceWasElastic = (elasticPlatform != null);
+            _lastSurfaceWasElastic = elasticPlatform != null;
 
             if (!_lastSurfaceWasElastic)
             {
@@ -427,12 +456,17 @@ public class Controller : MonoBehaviour
                 }
             }
         }
+        else if (colTag == "Projectile")
+        {
+            collision.gameObject.TryGetComponent(out Projectile projectile);
+            projectile.ManageCollision(_playerView.Col);
+        }
     }
     private void OnCollisionExit2D(Collision2D collision)
     {
         if (collision.collider == _currentSurface)
         {
-            _currentSurface = null;
+            ForceExitSurface();
 
             if (_lastSurfaceWasElastic)
             {
@@ -464,6 +498,11 @@ public class Controller : MonoBehaviour
         }
     }
     #endregion
+
+    private void UpdateAnimatorParameters()
+    {
+        _playerView.Animator.SetBool("IsGrounded", !IsDashing());
+    }
 
     private void HandleFalling()
     {
@@ -531,6 +570,8 @@ public class Controller : MonoBehaviour
 
     public bool IsDashing() => _isDashing;
     public void SetIsDashing(bool value) => _isDashing = value;
+    public bool IsMirrored() => _isMirrored;
+    public void SetIsMirrored(bool newValue) => _isMirrored = newValue;
 
     public void ForceExitSurface() => _currentSurface = null;
 
@@ -538,6 +579,68 @@ public class Controller : MonoBehaviour
     public Vector2 GetLastDashDirection() => _lastDashDirection;
 
     public void SetInvincibility(bool value) => _isInvincible = value;
+
+    Transform FindClosestEnemy()
+    {
+        float minDistance = Mathf.Infinity;
+        Transform closest = null;
+
+        foreach (Collider2D col in Physics2D.OverlapCircleAll(transform.position, 10f, _enemyLayer))
+        {
+            float dist = Vector2.Distance(transform.position, col.transform.position);
+            if (dist < minDistance)
+            {
+                minDistance = dist;
+                closest = col.transform;
+            }
+        }
+
+        return closest;
+    }
+
+    //private Vector2 GetDirectionByIndex(int i)
+    //{
+    //    return i switch
+    //    {
+    //        0 => Vector2.right,
+    //        1 => Vector2.down,
+    //        2 => Vector2.left,
+    //        3 => Vector2.up,
+    //        _ => throw new System.IndexOutOfRangeException($"{i} was out of range"),
+    //    };
+    //}
+
+    public void RotateSprites(Vector2 dir)
+    {
+        float angle = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg;
+        _playerView.SpriteContainer.transform.rotation = Quaternion.Euler(0, 0, angle);
+
+
+        Vector3 newScale = _playerView.SpriteContainer.transform.localScale;
+        newScale.x = IsMirrored() ? -1 : 1;
+        _playerView.SpriteContainer.transform.localScale = newScale;
+    }
+    private void SetGrabbingAnimation()
+    {
+        RaycastHit2D colPoint = Physics2D.Raycast(transform.position, _wishedDirection, float.MaxValue, _scenarioLayer);
+        Vector2 normal = colPoint.normal;
+
+        Debug.DrawRay(transform.position, _wishedDirection * float.MaxValue, Color.red, 1f);
+        Debug.DrawRay(colPoint.point, normal * 1f, Color.red, 1f);
+
+        if (normal != null)
+        {
+            if (normal == Vector2.right || normal == Vector2.left)
+            {
+                _playerView.Animator.SetBool("IsWallGrabbed", true);
+                SetIsMirrored(normal == Vector2.left ? true : false);
+            }
+            else if (normal == Vector2.down)
+            {
+                _playerView.Animator.SetBool("IsCeilingGrabbed", true);
+            }
+        }
+    }
     #endregion
 
     private void OnDrawGizmos()

@@ -34,15 +34,6 @@ public class ComboManager : MonoBehaviourSingleton<ComboManager>
     private void FindLevelController()
     {
         levelController = FindObjectOfType<LevelController>();
-
-        if (levelController == null)
-        {
-            Debug.LogError("[ComboManager] No se pudo encontrar LevelController en la escena!");
-        }
-        else
-        {
-            Debug.Log($"[ComboManager] LevelController encontrado: {levelController.name}");
-        }
     }
 
     public void RegisterKill()
@@ -82,23 +73,16 @@ public class ComboManager : MonoBehaviourSingleton<ComboManager>
             float percent = context.ComboBonusPercent;
             float bonusExtra = bonus * percent;
             bonus += bonusExtra;
-            Debug.Log($"[PowerUp] ComboMaster: +{bonusExtra:F2}s extra en combo ({percent * 100}% adicional).");
         }
 
         if (levelController == null)
         {
-            Debug.Log("[ComboManager] LevelController es null, intentando buscar de nuevo...");
             FindLevelController();
         }
 
         if (levelController != null)
         {
-            Debug.Log($"[ComboManager] Agregando {bonus:F2} segundos al timer");
             levelController.AddTime(bonus);
-        }
-        else
-        {
-            Debug.LogError("[ComboManager] LevelController sigue siendo NULL! Verificar que esté en la escena.");
         }
     }
 

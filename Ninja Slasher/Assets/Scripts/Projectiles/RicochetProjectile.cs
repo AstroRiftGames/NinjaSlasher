@@ -14,20 +14,21 @@ public class RicochetProjectile : Projectile
         }
         else
         {
-            if (!_hasBeenReflected)
-            {
-                if (IsParryable && _playerInZone != null && _playerInZone.IsParrying())
-                {
-                    ReflectProjectile(_playerInZone.transform);
-                    ResetTime();
-                    _currentBounces = 0;
-                }
-                if (!collision.gameObject.CompareTag("Enemy")) Collide(collision.collider);
-            }
-            else if (!collision.gameObject.CompareTag("Player"))
-            {
-                Collide(collision.collider);
-            }
+            //if (!_hasBeenReflected)
+            //{
+            //    if (IsParryable && _playerInZone != null && _playerInZone.IsParrying())
+            //    {
+            //        ReflectProjectile();
+            //        ResetTime();
+            //        _currentBounces = 0;
+            //    }
+            //if (!collision.gameObject.CompareTag("Enemy")) Collide(collision.collider);
+            //}
+            //else if (!collision.gameObject.CompareTag("Player"))
+            //{
+            //    Collide(collision.collider);
+            //}
+            Collide(collision.collider);
         }
     }
 

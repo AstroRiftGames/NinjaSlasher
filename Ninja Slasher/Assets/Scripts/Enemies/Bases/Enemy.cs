@@ -7,12 +7,16 @@ public class Enemy : MonoBehaviour
     [SerializeField] GameObject LowerCol;
     [SerializeField] GameObject RearCol;
     [SerializeField] GameObject FrontCol;
+    [SerializeField] float _deathTime;
+
+    [SerializeField] protected LayerMask _obstaclesLayer;
+    [SerializeField] protected LayerMask _playerLayer;
 
 
     protected Transform _player;
     protected Rigidbody2D _rb;
     protected Collider2D _col;
-    protected Animator _animator;
+    [SerializeField] protected Animator _animator;
     public Animator Animator => _animator;
     private EnemyTracker tracker;
 
@@ -31,8 +35,11 @@ public class Enemy : MonoBehaviour
         _rb = rb;
         TryGetComponent(out Collider2D col);
         _col = col;
-        TryGetComponent(out Animator anim);
-        _animator = anim;
+        if(_animator == null)
+        {
+            TryGetComponent(out Animator anim);
+            _animator = anim;
+        }
 
         _player = FindAnyObjectByType<Controller>().transform;
         tracker = FindAnyObjectByType<EnemyTracker>();
@@ -61,12 +68,15 @@ public class Enemy : MonoBehaviour
     public virtual void Die()
     {
         Debug.Log($"{_data.Type} killed");
+
+        _animator.SetTrigger("OnHit");
+
         tracker.OnEnemyKilled(this);
 
         var combo = ComboManager.Instance;
         if (combo != null)
             combo.RegisterKill();
 
-        Destroy(gameObject);
+        Destroy(gameObject, _deathTime);
     }
 }

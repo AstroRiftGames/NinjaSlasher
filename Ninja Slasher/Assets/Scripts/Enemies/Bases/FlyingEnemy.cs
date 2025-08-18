@@ -6,7 +6,6 @@ public class FlyingEnemy : Enemy
 
     [Header("LOS Stats")]
     [SerializeField] private float _range;
-    [SerializeField] private LayerMask _obstaclesLayer;
     
     private Vector2 _dirToTarget;
     private Vector2 _target;

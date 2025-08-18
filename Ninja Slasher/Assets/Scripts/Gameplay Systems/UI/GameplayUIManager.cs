@@ -5,14 +5,15 @@ using UnityEngine;
 public class GameplayUIManager : MonoBehaviour
 {
     [Header("GAMEPLAY UI")]
-    [SerializeField] private TextMeshProUGUI _livesText;
-    [SerializeField] private GameObject _noLivesPanel;
+    [SerializeField] private TextMeshProUGUI _livesAmount;
+    [SerializeField] private TextMeshProUGUI _livesTimerText;
+    [SerializeField] private GameObject _livesTimerObj;
     [SerializeField] private TextMeshProUGUI _noLivesTimerText;
     [SerializeField] private TextMeshProUGUI _comboCountText;
     [SerializeField] private TextMeshProUGUI _levelTimerText;
     [SerializeField] private TextMeshProUGUI _bonusTimeText;
     [SerializeField] private GameObject _lifeLostPanel;
-    [SerializeField] private TextMeshProUGUI _powerUpsText;
+    [SerializeField] private TextMeshProUGUI _puRemainingTime;
 
     private bool _noLivesActive = false;
     private LevelController _levelController;
@@ -75,27 +76,43 @@ public class GameplayUIManager : MonoBehaviour
 
     private void UpdateNoLivesTimer()
     {
-        if (_noLivesPanel.activeSelf)
+        if (LifeManager.Instance.GetRealLives() < 3)
         {
             var time = LifeManager.Instance.GetTimeToNextLife();
-            _noLivesTimerText.text = $"Next life in: {time.Minutes:D2}:{time.Seconds:D2}";
+            _noLivesTimerText.text = $"{time.Minutes:D2}:{time.Seconds:D2}";
+            _livesTimerText.text = $"{time.Minutes:D2}:{time.Seconds:D2}";
+
+            _livesTimerObj.SetActive(true);
+        }
+
+        if (LifeManager.Instance.GetRealLives() >= 3)
+        {
+            _livesTimerObj.SetActive(false);
         }
     }
 
     public void UpdatePowerUpsUI()
     {
         var context = PowerUpManager.Instance?.context;
-        if (_powerUpsText == null || context == null)
+        if (context == null)
             return;
 
-        string status = "";
-        if (context.ExtraTimeActive) status += "Power up activo: Tiempo Extra\n";
-        if (context.DashTurboActive) status += "Power up activo: Dash Turbo\n";
-        if (context.ParryPerfectActive) status += "Power up activo: Parry Perfect\n";
-        if (context.ComboMasterActive) status += "Power up activo: Combo Master\n";
-        if (context.SecondChanceActive) status += "Power up activo: Second Chance\n";
+        //string status = "";
+        //if (context.ExtraTimeActive) status += "Power up activo: Tiempo Extra\n";
+        //if (context.DashTurboActive) status += "Power up activo: Dash Turbo\n";
+        //if (context.ParryPerfectActive) status += "Power up activo: Parry Perfect\n";
+        //if (context.ComboMasterActive) status += "Power up activo: Combo Master\n";
+        //if (context.SecondChanceActive) status += "Power up activo: Second Chance\n";
 
-        _powerUpsText.text = status.Length > 0 ? status : "Sin Power Ups activos";
+        //_powerUpsText.text = status.Length > 0 ? status : "Sin Power Ups activos";
+
+        var time = PowerUpManager.Instance.puTimeLeft;
+        var hours = (int)(time / 3600);
+        var minutes = (int)((time % 3600) / 60);
+        var seconds = (int)(time % 60);
+        _puRemainingTime.text = $"{hours:D2}:{minutes:D2}:{seconds:D2}";
+        if (time <= 0) _puRemainingTime.enabled = false;
+        else _puRemainingTime.enabled = true;
     }
 
     public void ShowLifeLostPanel() => _lifeLostPanel.SetActive(true);
@@ -103,16 +120,14 @@ public class GameplayUIManager : MonoBehaviour
 
     public void ShowNoLivesPanel()
     {
-        _noLivesPanel.SetActive(true);
+        UIManager.Instance.ShowHideNoLivesCanvas();
         _noLivesActive = true;
     }
 
-    public void HideNoLivesPanel() => _noLivesPanel.SetActive(false);
-
     public void UpdateLivesUI(int lives)
     {
-        if (_livesText != null)
-            _livesText.text = $"{lives}";
+        if (_livesAmount != null)
+            _livesAmount.text = $"{lives}";
     }
 
     public void OnRetryPressed()
@@ -135,7 +150,7 @@ public class GameplayUIManager : MonoBehaviour
         if (_noLivesActive && LifeManager.Instance.GetRealLives() > 0)
         {
             _noLivesActive = false;
-            HideNoLivesPanel();
+            UIManager.Instance.ShowHideNoLivesCanvas();
         }
     }
 
