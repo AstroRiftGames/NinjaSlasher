@@ -50,6 +50,25 @@ public class DailyRewardSystem : MonoBehaviourSingleton<DailyRewardSystem>
         CheckDailyReward();
     }
 
+    private void OnEnable()
+    {
+        if (SaveManager.Instance != null)
+            SaveManager.Instance.OnGameDataChanged += HandleGameDataChanged;
+    }
+
+    private void OnDisable()
+    {
+        if (SaveManager.Instance != null)
+            SaveManager.Instance.OnGameDataChanged -= HandleGameDataChanged;
+    }
+
+    private void HandleGameDataChanged(GameData gd)
+    {
+        LoadRewardData();
+        CheckDailyReward();
+        OnRewardAvailabilityChanged?.Invoke(CanClaimToday());
+    }
+
     void LoadRewardData()
     {
         string jsonData = SaveManager.Instance.GetDailyRewardData();
@@ -66,7 +85,6 @@ public class DailyRewardSystem : MonoBehaviourSingleton<DailyRewardSystem>
             }
             catch (Exception e)
             {
-                Debug.LogError("Error cargando datos de recompensas diarias: " + e.Message);
                 rewardData = new DailyRewardSaveData();
             }
         }
@@ -83,7 +101,6 @@ public class DailyRewardSystem : MonoBehaviourSingleton<DailyRewardSystem>
         else
         {
             SaveManager.Instance.SaveDailyRewardData(jsonData);
-            Debug.LogWarning("[DailyRewardSystem] AutoSaveManager no encontrado");
         }
     }
 

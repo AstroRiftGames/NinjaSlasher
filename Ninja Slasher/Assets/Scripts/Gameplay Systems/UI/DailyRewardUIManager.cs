@@ -29,6 +29,23 @@ public class DailyRewardUIManager : MonoBehaviourSingleton<DailyRewardUIManager>
         InitializeUI();
     }
 
+    private void OnEnable()
+    {
+        if (SaveManager.Instance != null)
+            SaveManager.Instance.OnGameDataChanged += HandleGameDataChanged;
+    }
+
+    private void OnDisable()
+    {
+        if (SaveManager.Instance != null)
+            SaveManager.Instance.OnGameDataChanged -= HandleGameDataChanged;
+    }
+
+    private void HandleGameDataChanged(GameData gd)
+    {
+        ShowDailyReward();
+    }
+
     void OnDestroy()
     {
         UnsubscribeFromEvents();

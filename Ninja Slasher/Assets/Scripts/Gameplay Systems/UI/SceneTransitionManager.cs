@@ -46,8 +46,10 @@ public class SceneTransitionManager : MonoBehaviour
         UIManager.Instance.ShowHidePauseCanvas();
     }
 
-    public void ShowLevelSelector()
+    public async void ShowLevelSelector()
     {
+        await CloudSaveManager.Instance.EnsureInitialSync();
+
         StartCoroutine(ShowLevelSelectorCo());
         GetComponent<GameplayUIManager>().UpdateLivesUI(LifeManager.Instance.CurrentLives);
         GetComponent<DebugUIManager>()?.ShowStarsDebug();
