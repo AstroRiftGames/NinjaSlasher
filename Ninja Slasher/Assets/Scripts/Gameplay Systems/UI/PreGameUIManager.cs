@@ -24,27 +24,6 @@ public class PreGameUIManager : MonoBehaviour
     private bool isObjectiveComplete = false;
     private List<PowerUpSlotUI> _slots = new();
 
-    private void OnEnable()
-    {
-        if (SaveManager.Instance != null)
-            SaveManager.Instance.OnGameDataChanged += HandleGameDataChanged;
-    }
-
-    private void OnDisable()
-    {
-        if (SaveManager.Instance != null)
-            SaveManager.Instance.OnGameDataChanged -= HandleGameDataChanged;
-    }
-
-    private void HandleGameDataChanged(GameData gd)
-    {
-        var canvas = GetComponentInParent<CanvasManager>();
-        if (canvas == null) { ShowPreGamePowerUps(); SetGoals(); return; }
-
-        ShowPreGamePowerUps();
-        SetGoals();
-    }
-
     public void ShowConfirmationPanel(string sceneName)
     {
         _pendingSceneName = sceneName;
@@ -135,7 +114,7 @@ public class PreGameUIManager : MonoBehaviour
         return null;
     }
 
-    public void SetGoals()
+    private void SetGoals()
     {
         int levelId = GetLevelIdFromSceneName(_pendingSceneName);
 

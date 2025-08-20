@@ -1,4 +1,3 @@
-using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -90,7 +89,7 @@ public class ButtonManager : MonoBehaviour
         }
     }
 
-    private IEnumerator DelayedSubscription()
+    private System.Collections.IEnumerator DelayedSubscription()
     {
         yield return null;
 

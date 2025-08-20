@@ -7,12 +7,23 @@ public class AdsTestingUI : MonoBehaviour
     [Header("Botones")]
     [SerializeField] private Button rewardedButton;
     [SerializeField] private Button interstitialButton;
+    [SerializeField] private Button bannerShowButton;
+    [SerializeField] private Button bannerHideButton;
 
     [Header("Info")]
     [SerializeField] private TextMeshProUGUI statusText;
 
     void Start()
     {
+        Debug.Log("=== AdsTestingUI Start ===");
+
+        if (AdsManager.Instance != null)
+        {
+            Debug.Log($"AdsManager ENCONTRADO: {AdsManager.Instance.name}");
+            Debug.Log($"GameObject activo: {AdsManager.Instance.gameObject.activeInHierarchy}");
+            Debug.Log($"Component habilitado: {AdsManager.Instance.enabled}");
+        }
+
         SetupButtons();
 
         InvokeRepeating(nameof(UpdateUI), 2f, 1f);
@@ -25,6 +36,12 @@ public class AdsTestingUI : MonoBehaviour
 
         if (interstitialButton != null)
             interstitialButton.onClick.AddListener(() => ShowInterstitialAd());
+
+        if (bannerShowButton != null)
+            bannerShowButton.onClick.AddListener(() => ShowBanner());
+
+        if (bannerHideButton != null)
+            bannerHideButton.onClick.AddListener(() => HideBanner());
     }
 
     void ShowRewardedAd()
@@ -53,6 +70,32 @@ public class AdsTestingUI : MonoBehaviour
         }
     }
 
+    void ShowBanner()
+    {
+        if (AdsManager.Instance != null)
+        {
+            AdsManager.Instance.ShowBannerAd();
+            UpdateStatus("Loading Banner Ad...");
+        }
+        else
+        {
+            UpdateStatus("AdsManager not found!");
+        }
+    }
+
+    void HideBanner()
+    {
+        if (AdsManager.Instance != null)
+        {
+            AdsManager.Instance.HideBannerAd();
+            UpdateStatus("Banner Hidden");
+        }
+        else
+        {
+            UpdateStatus("AdsManager not found!");
+        }
+    }
+
     void UpdateUI()
     {
         if (AdsManager.Instance == null) return;
@@ -60,6 +103,7 @@ public class AdsTestingUI : MonoBehaviour
         string status = "";
         status += $"Rewarded: {(AdsManager.Instance.IsRewardedAdReady() ? "Ready" : "Loading...")}\n";
         status += $"Interstitial: {(AdsManager.Instance.IsInterstitialAdReady() ? "Ready" : "Loading...")}\n";
+        status += $"Banner: {(AdsManager.Instance.IsBannerAdLoaded() ? "Available" : "Not loaded")}";
 
         if (statusText != null)
         {
@@ -102,5 +146,15 @@ public class AdsTestingUI : MonoBehaviour
     public void OnNeedExtraLife()
     {
         ShowRewardedAd();
+    }
+
+    public void OnMainMenu()
+    {
+        ShowBanner();
+    }
+
+    public void OnGameplay()
+    {
+        HideBanner();
     }
 }

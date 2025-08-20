@@ -175,8 +175,12 @@ public class AutoSaveManager : MonoBehaviourSingleton<AutoSaveManager>
 
         ShowSaveIndicator("Guardando datos...");
         saveManager.SaveData();
+    }
 
-        CloudSaveManager.Instance?.OnLocalSaveTriggered();
+    [ContextMenu("Test Save Indicator")]
+    public void TestSaveIndicator()
+    {
+        ShowSaveIndicator("Prueba desde AutoSaveManager");
     }
 
     void Update()

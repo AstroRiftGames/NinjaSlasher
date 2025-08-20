@@ -23,25 +23,6 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
         _gameplayUIManager.Initialize();
     }
 
-    private void OnEnable()
-    {
-        SceneManager.sceneLoaded += OnSceneLoaded;
-        if (SaveManager.Instance != null)
-        {
-            SaveManager.Instance.OnGameDataChanged += OnGameDataChanged;
-
-            var data = SaveManager.Instance.GetGameData();
-            if (data != null) OnGameDataChanged(data);
-        }
-    }
-
-    private void OnDisable()
-    {
-        SceneManager.sceneLoaded -= OnSceneLoaded;
-        if (SaveManager.Instance != null)
-            SaveManager.Instance.OnGameDataChanged -= OnGameDataChanged;
-    }
-
     private void InitializeManagers()
     {
         _canvasManager = GetComponent<CanvasManager>();
@@ -49,6 +30,16 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
         _gameplayUIManager = GetComponent<GameplayUIManager>();
         _preGameUIManager = GetComponent<PreGameUIManager>();
         _sceneTransitionManager = GetComponent<SceneTransitionManager>();
+    }
+
+    private void OnEnable()
+    {
+        SceneManager.sceneLoaded += OnSceneLoaded;
+    }
+
+    private void OnDisable()
+    {
+        SceneManager.sceneLoaded -= OnSceneLoaded;
     }
 
     private void Update()
@@ -60,14 +51,6 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
     {
         if (_gameplayUIManager != null)
             _gameplayUIManager.OnSceneLoaded();
-    }
-
-
-    private void OnGameDataChanged(GameData gd)
-    {
-        _gameplayUIManager?.UpdateUI();
-        _preGameUIManager?.ShowPreGamePowerUps();
-        _preGameUIManager?.SetGoals();
     }
 
     public void ShowLevelSelector() => _sceneTransitionManager.ShowLevelSelector();

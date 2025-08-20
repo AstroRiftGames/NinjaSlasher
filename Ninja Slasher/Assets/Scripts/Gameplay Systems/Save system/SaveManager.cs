@@ -1,4 +1,4 @@
-Ôªøusing System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
@@ -8,10 +8,6 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
     private static string SaveFileName = "ninja_save.json";
     private string saveFilePath;
     private GameData gameData;
-
-    public event Action<GameData> OnGameDataChanged;
-
-    public bool HasLocalFile => File.Exists(saveFilePath);
 
     public override void Awake()
     {
@@ -42,8 +38,6 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
             gameData = new GameData();
             InitializeNewGameData();
         }
-
-        NotifyDataChanged();
     }
 
     public void SaveData()
@@ -52,34 +46,6 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
         gameData.lastPlayDate = DateTime.Now;
         string json = JsonUtility.ToJson(gameData, true);
         File.WriteAllText(saveFilePath, json);
-
-        NotifyDataChanged();
-        CloudSaveManager.Instance?.OnLocalSaveTriggered();
-    }
-
-    public void ReplaceGameData(GameData newData, bool persist = true)
-    {
-        if (newData == null) return;
-
-        gameData = newData;
-
-        if (persist)
-            SaveData();
-        else
-            NotifyDataChanged();
-    }
-
-    public bool IsPristine()
-    {
-        return gameData == null
-            || (gameData.totalStars == 0
-                && gameData.highestUnlockedLevel <= 1
-                && (gameData.levelProgressData == null || gameData.levelProgressData.Count == 0));
-    }
-
-    private void NotifyDataChanged()
-    {
-        OnGameDataChanged?.Invoke(gameData);
     }
 
     private void ValidateAndInitializeProgressionData()
@@ -414,17 +380,16 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
     {
         UpdateActivePowerUps();
         SaveData();
-        CloudSaveManager.Instance?.OnLocalSaveTriggered();
     }
 
     public void ShowProgressionDebug()
     {
         var gameData = GetGameData();
         Debug.Log($"[SaveManager] ESTADO ACTUAL:\n" +
-                  $"- Nivel m√°s alto: {gameData.highestUnlockedLevel}\n" +
-                  $"- √Årea m√°s alta: {gameData.highestUnlockedArea}\n" +
+                  $"- Nivel m·s alto: {gameData.highestUnlockedLevel}\n" +
+                  $"- ¡rea m·s alta: {gameData.highestUnlockedArea}\n" +
                   $"- Estrellas totales: {gameData.totalStars}\n" +
-                  $"- √Åreas desbloqueadas: [{string.Join(", ", gameData.unlockedAreas)}]");
+                  $"- ¡reas desbloqueadas: [{string.Join(", ", gameData.unlockedAreas)}]");
     }
 
     public void DeleteSaveData()
@@ -434,101 +399,4 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
         SaveData();
         Debug.Log("[SaveManager] Save reseteado");
     }
-
-    #region Cloud Integration
-
-    public GameData GetGameDataSnapshot()
-    {
-        if (gameData == null) return null;
-        try
-        {
-            var json = JsonUtility.ToJson(gameData);
-            return JsonUtility.FromJson<GameData>(json);
-        }
-        catch
-        {
-            return gameData;
-        }
-    }
-
-    public long GetLastLocalSaveTimestamp()
-    {
-        try
-        {
-            DateTime last = DateTime.UtcNow;
-            try
-            {
-                var lastField = gameData != null ? gameData.lastPlayDate : DateTime.MinValue;
-                if (lastField != DateTime.MinValue)
-                {
-                    last = lastField.Kind == DateTimeKind.Utc ? lastField : lastField.ToUniversalTime();
-                }
-                else if (gameData != null && !string.IsNullOrEmpty(gameData.lastPlayDateIso))
-                {
-                    if (DateTime.TryParse(gameData.lastPlayDateIso, null, System.Globalization.DateTimeStyles.AdjustToUniversal, out var parsed))
-                        last = parsed.ToUniversalTime();
-                }
-            }
-            catch { /* ignoramos y usamos UtcNow */ }
-            return new DateTimeOffset(last).ToUnixTimeSeconds();
-        }
-        catch
-        {
-            return DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-        }
-    }
-
-    public void ApplyCloudDataToLocal(GameData cloudData, bool saveImmediately = true, bool triggerCloudEvent = false)
-    {
-        if (cloudData == null) return;
-
-        gameData = cloudData;
-
-        ValidateAndInitializeProgressionData();
-
-        if (saveImmediately)
-        {
-            SaveData(triggerCloudEvent);
-        }
-        else
-        {
-            NotifyDataChanged();
-        }
-    }
-
-    public void SaveData(bool triggerCloudEvent)
-    {
-        if (gameData == null) return;
-
-        gameData.lastPlayDate = DateTime.Now;
-        string json = JsonUtility.ToJson(gameData, true);
-        string path = GetSaveFilePath();
-
-        try
-        {
-            var dir = Path.GetDirectoryName(path);
-            if (!Directory.Exists(dir)) Directory.CreateDirectory(dir);
-            File.WriteAllText(path, json);
-        }
-        catch (Exception ex)
-        {
-            Debug.LogError($"[SaveManager] Error al guardar datos: {ex.Message}");
-        }
-        finally
-        {
-            OnGameDataChanged?.Invoke(gameData);
-
-            if (triggerCloudEvent)
-                CloudSaveManager.Instance?.OnLocalSaveTriggered();
-        }
-    }
-
-    private string GetSaveFilePath()
-    {
-        if (string.IsNullOrEmpty(saveFilePath))
-            saveFilePath = Path.Combine(Application.persistentDataPath, SaveFileName);
-        return saveFilePath;
-    }
-    #endregion
-
 }
