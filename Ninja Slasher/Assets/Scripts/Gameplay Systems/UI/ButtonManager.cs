@@ -53,6 +53,9 @@ public class ButtonManager : MonoBehaviour
 
     [SerializeField] private string[] sceneNames;
 
+    [SerializeField] private Color _starNotAcquired = Color.black;
+    [SerializeField] private Color _starAcquired = Color.yellow;
+
 #if UNITY_EDITOR
     [SerializeField] private Button deleteSaveButton;
 #endif
@@ -103,6 +106,7 @@ public class ButtonManager : MonoBehaviour
         SetupGameplayButtons();
         SetupDailyRewardButtons();
         SetupLevelProgression();
+        UpdateButtonProgression();
 
 #if UNITY_EDITOR
         SetupDebugButtons();
@@ -203,6 +207,51 @@ public class ButtonManager : MonoBehaviour
         }
     }
 
+    void UpdateStars(Button levelButton, int levelId)
+    {
+        Transform buttonTransform = levelButton.transform;
+        Transform starsContainer = buttonTransform.Find("Stars");
+        int starsEarned = GetStars(levelId);
+        bool isLevelUnlocked = IsLevelUnlocked(levelId);
+
+        for (int i = 0; i < 3; i++)
+        {
+            Transform star = starsContainer.GetChild(i);
+            if(star != null)
+            {
+                Image starImage = star.GetComponent<Image>();
+                if (starImage != null)
+                {
+                    star.gameObject.SetActive(isLevelUnlocked);
+                    if (isLevelUnlocked)
+                    {
+                        bool isEarned = i < starsEarned;
+                        starImage.color = isEarned ? _starAcquired : _starNotAcquired;
+                    }                    
+                }
+            }      
+        }
+    }
+
+    private int GetStars(int levelId)
+    {
+        var gameData = SaveManager.Instance.GetGameData();
+        if (gameData.levelStars.TryGetValue(levelId, out int stars))
+        {
+            return stars;
+        }
+
+        return 0;
+    }
+
+    void UpdateButtonProgression()
+    {        
+        for (int i = 0; i < levelButtons.Length; i++)
+        {
+            int levelId = i + 1;
+            UpdateStars(levelButtons[i], levelId);
+        }
+    }
     private void ShowLevelLockedMessage(int levelId)
     {
         Debug.Log($"[ButtonManager] Nivel {levelId} está bloqueado");
@@ -235,6 +284,7 @@ public class ButtonManager : MonoBehaviour
             if (isUnlocked) unlockedCount++;
             else lockedCount++;
         }
+        UpdateButtonProgression();
     }
 
     private void OnRestartPressed()

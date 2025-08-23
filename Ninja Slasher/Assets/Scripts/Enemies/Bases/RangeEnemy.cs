@@ -58,18 +58,21 @@ public class RangeEnemy : Enemy
 
     private bool CheckLOS()
     {
-        float distance = _dirToTarget.magnitude;
+        Vector2 LOSv = _target.position - transform.position;
+        Vector2 LOSvNormalized = LOSv.normalized;
+        float distance = LOSv.magnitude;
         if (distance > _range) return false;
 
-        bool hit = Physics2D.Raycast(_refPoint.position, _dirToTarget.normalized, distance, _obstaclesLayer).collider != null;
+        bool hit = Physics2D.Raycast(transform.position, LOSvNormalized, distance, _obstaclesLayer).collider != null;
 #if UNITY_EDITOR
-        Debug.DrawRay(_refPoint.position, _dirToTarget.normalized*distance, Color.red, _cooldDown/2);
+        Debug.DrawRay(transform.position, LOSvNormalized * distance, Color.red, _cooldDown/2);
 #endif
         return !hit;
     }
 
     public virtual void Attack()
     {
+        _animator.SetTrigger("OnAttack");
         SetLastAttack();
         Shoot();
     }
@@ -82,7 +85,7 @@ public class RangeEnemy : Enemy
     }
 
 #if UNITY_EDITOR
-    private void OnDrawGizmosSelected()
+    private void OnDrawGizmos()
     {
         Gizmos.color = Color.yellow;
         Gizmos.DrawWireSphere(transform.position, _range);

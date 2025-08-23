@@ -15,7 +15,7 @@ GameObject:
   - component: {fileID: 5352175637829256867}
   m_Layer: 8
   m_Name: RicochetProjectile
-  m_TagString: Untagged
+  m_TagString: Projectile
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -166,7 +166,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _speed: 150
-  _reflectedSpeed: 15
   _shooter: {fileID: 0}
   enemyLayer:
     serializedVersion: 2
@@ -174,5 +173,7 @@ MonoBehaviour:
   playerLayer:
     serializedVersion: 2
     m_Bits: 1024
-  IsParryable: 1
+  _animator: {fileID: 0}
+  _impactTime: 0
+  isParryable: 1
   _maxBounces: 5

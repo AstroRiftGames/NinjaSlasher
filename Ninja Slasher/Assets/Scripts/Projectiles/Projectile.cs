@@ -5,18 +5,19 @@ using UnityEngine.UI;
 public class Projectile : MonoBehaviour
 {
     [SerializeField] protected float _speed;
-    [SerializeField] private float _reflectedSpeed;
+    public float MultiplySpeed(float value) => _speed *= value;
     [SerializeField] protected Transform _shooter;
     public Transform Shooter => _shooter;
     [SerializeField] protected LayerMask enemyLayer;
     [SerializeField] protected LayerMask playerLayer;
+    [SerializeField] private Animator _animator;
+    [SerializeField] private float _impactTime;
 
     protected Rigidbody2D _rb;
-    protected bool _hasBeenReflected = false;
 
-    private bool _timeSlowed = false;
     protected Controller _playerInZone;
     [SerializeField] protected bool isParryable = true;
+    public void SetIsParryable(bool value) => isParryable = value;
 
     private void OnEnable()
     {
@@ -35,77 +36,32 @@ public class Projectile : MonoBehaviour
         SetDirection(transform.up);
     }
 
-    public virtual void Update()
-    {
-
-    }
+    public virtual void Update() { }
 
     public virtual void SetDirection(Vector2 direction)
     {
+        float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
+        transform.rotation = Quaternion.Euler(0, 0, angle);
+
         _rb.AddForce(direction* _speed);
     }
 
-    private void OnTriggerEnter2D(Collider2D collision)
+    public void OnCollisionEnter2D(Collision2D collision)
     {
-        if (collision.CompareTag("ParryZone"))
+            string colTag = collision.gameObject.tag;
+        if(collision.gameObject.layer == LayerMask.GetMask("Scenario") ||
+            collision.gameObject.layer == LayerMask.GetMask("Obstacles") ||
+            !IsParryable && colTag is "Player" or "Boss")
         {
-            _playerInZone = collision.GetComponentInParent<Controller>();
-            if (_playerInZone == null) return;
-
-            if (IsParryable && _playerInZone.IsParrying())
-            {
-                ReflectProjectile(_playerInZone.transform);
-            }
-            else if (!_timeSlowed)
-            {
-                StartCoroutine(SlowTimeUntilParry());
-            }
-        }
-        else
-        {
-            if (!_timeSlowed) ManageCollision(collision);
+            ManageCollision(collision.collider);
         }
     }
 
     public virtual void ManageCollision(Collider2D collision)
     {
-        if (!_hasBeenReflected)
-        {
-            if (_timeSlowed) return;
+        Debug.Log($"Collided with: {collision.name}");
 
-            if (IsParryable && _playerInZone != null && _playerInZone.IsParrying())
-            {
-                ReflectProjectile(_playerInZone.transform);
-                ResetTime();
-            }
-            else if (!collision.CompareTag("Enemy"))
-            {
-                Collide(collision);
-            }
-        }
-        else if (!collision.CompareTag("Player"))
-        {
-            Collide(collision);
-        }
-    }
-
-    protected void ReflectProjectile(Transform playerTransform)
-    {
-        if (_hasBeenReflected) return;
-
-        Transform target = _shooter != null ? _shooter : FindClosestEnemy();
-        if (target == null)
-        {
-            return;
-        }
-
-        Vector2 direction = (target.position - transform.position).normalized;
-        _rb.linearVelocity = direction * _reflectedSpeed;
-        _hasBeenReflected = true;
-
-        transform.right = direction;
-
-        Debug.Log("Proyectil reflejado hacia: " + target.name);
+        Collide(collision);
     }
 
     public virtual void Collide(Collider2D collision)
@@ -119,7 +75,10 @@ public class Projectile : MonoBehaviour
             DamageEnemy(collision.gameObject);
         }
 
-        Destroy(gameObject);
+        _animator.SetTrigger("OnImpact");
+        _rb.linearVelocity = Vector2.zero;
+
+        Destroy(gameObject, _impactTime);
     }
 
     protected void DamagePlayer(GameObject player)
@@ -130,55 +89,23 @@ public class Projectile : MonoBehaviour
 
     protected void DamageEnemy(GameObject enemy)
     {
-        if (_hasBeenReflected)
-        {
-            ParryKillTracker.RegisterParryKill();
-            Debug.Log("Parry kill registrada.");
-        }
+        ParryKillTracker.RegisterParryKill();
+        Debug.Log("Parry kill registrada.");
 
         EnemyTracker tracker = FindObjectOfType<EnemyTracker>();
 
         enemy.TryGetComponent(out Enemy script);
-        Enemy enemyScript = script;
 
         if (tracker != null)
         {
-            tracker.OnEnemyKilled(enemyScript);
+            tracker.OnEnemyKilled(script);
         }
-        enemyScript.Die();
+        script.Die();
     }
 
     public void SetOwner(Transform shooter)
     {
         _shooter = shooter;
-    }
-
-    private IEnumerator SlowTimeUntilParry()
-    {
-        _timeSlowed = true;
-        Time.timeScale = 0.3f;
-        Time.fixedDeltaTime = 0.02f * Time.timeScale;
-
-        float maxRealTime = 0.4f;
-        float elapsed = 0f;
-
-        while (elapsed < maxRealTime)
-        {
-            if (_playerInZone != null && _playerInZone.IsParrying())
-            {
-                Debug.Log("Parry detected");
-                ReflectProjectile(_playerInZone.transform);
-                ResetTime();
-                yield break;
-            }
-
-            elapsed += Time.unscaledDeltaTime;
-            yield return null;
-        }
-
-        ResetTime();
-
-        Collide(null);
     }
 
     protected void ResetTime()
@@ -190,41 +117,12 @@ public class Projectile : MonoBehaviour
         }
     }
 
-    Transform FindClosestEnemy()
+    public virtual void ReflectBackwards(Transform newShooter, Vector2 newDir)
     {
-        float minDistance = Mathf.Infinity;
-        Transform closest = null;
-
-        foreach (Collider2D col in Physics2D.OverlapCircleAll(transform.position, 10f, enemyLayer))
-        {
-            float dist = Vector2.Distance(transform.position, col.transform.position);
-            if (dist < minDistance)
-            {
-                minDistance = dist;
-                closest = col.transform;
-            }
-        }
-
-        return closest;
+        SetOwner(newShooter);
+        _rb.linearVelocity = Vector2.zero;
+        SetDirection(newDir);
     }
 
-    public void ReflectBackwards()
-    {
-        if (_hasBeenReflected) return;
-
-        Transform target = _shooter != null ? _shooter : FindClosestEnemy();
-        if (target == null)
-        {
-            Debug.Log("No target found to reflect");
-            return;
-        }
-
-        Vector2 direction = (target.position - transform.position).normalized;
-        _rb.linearVelocity = direction * _reflectedSpeed;
-        _hasBeenReflected = true;
-        transform.right = direction;
-    }
-
-    public bool HasBeenReflected => _hasBeenReflected;
     public bool IsParryable => isParryable;
 }
