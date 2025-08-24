@@ -4,7 +4,10 @@ using UnityEngine.SceneManagement;
 public class GameManager : MonoBehaviourSingleton<GameManager>
 {
     public LevelController levelController;
-    private string[] testingScenes = { "TestScene" };
+
+    [Header("Testing")]
+    [SerializeField] private string[] testingScenes = { "TestScene" };
+
     private LevelStats currentStats;
     private bool _playerHasDied;
     private bool _levelStarted = false;
@@ -14,18 +17,17 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
     public override void Awake()
     {
         base.Awake();
+
         if (!IsTestingScene())
         {
-            EnemyTracker.OnAllEnemiesDefeated += OnLevelCompleted;
+            HookEnemyEvents();
         }
     }
 
-    void Start()
+    private void Start()
     {
         if (LifeManager.Instance != null)
-        {
             LifeManager.Instance.OnLivesChanged += OnLivesChanged;
-        }
 
         _playerHasDied = false;
         _levelStarted = false;
@@ -49,33 +51,48 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        if (scene.name.Contains("Level") && !_levelStarted && LifeManager.Instance.CanPlay())
+        if (scene.name.Contains("Level"))
         {
-            StartLevel();
+            if (!IsTestingScene())
+                HookEnemyEvents();
+
+            if (!_levelStarted && LifeManager.Instance.CanPlay())
+                StartLevel();
         }
+    }
+
+    private void HookEnemyEvents()
+    {
+        EnemyTracker.OnAllEnemiesDefeated -= OnLevelCompleted;
+        EnemyTracker.OnAllEnemiesDefeated += OnLevelCompleted;
     }
 
     private void StartLevel()
     {
-        if (!_levelStarted && LifeManager.Instance.CanPlay())
-        {
-            _levelStarted = true;
-            LifeManager.Instance.OnLevelStart();
-        }
+        if (_levelStarted || !LifeManager.Instance.CanPlay()) return;
+
+        _playerHasDied = false;
+
+        ParryKillTracker.Reset();
+        //MoveTracker.ResetTracker();
+
+        _levelStarted = true;
+        LifeManager.Instance.OnLevelStart();
     }
 
     public void OnLevelCompleted(LevelStats stats)
     {
-        if (IsTestingScene())
-            return;
+        if (IsTestingScene()) return;
 
         if (levelController == null)
             levelController = FindObjectOfType<LevelController>();
 
         currentStats = stats;
+
         stats.timeTaken = levelController.TimeTaken;
         stats.movesUsed = MoveTracker.TotalMoves;
         stats.parryKillDone = ParryKillTracker.KillWithParryPerformed;
+
         ParryKillTracker.Reset();
         levelController.StopTimer();
 
@@ -182,7 +199,6 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
 
         if (!LifeManager.Instance.CanPlay())
         {
-            //UIManager.Instance.ShowNoLivesPanel();
             GoToLevelSelection();
             return;
         }
@@ -212,14 +228,12 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
         return 1;
     }
 
-    void OnDestroy()
+    private void OnDestroy()
     {
         EnemyTracker.OnAllEnemiesDefeated -= OnLevelCompleted;
 
         if (LifeManager.Instance != null)
-        {
             LifeManager.Instance.OnLivesChanged -= OnLivesChanged;
-        }
     }
 
     private bool IsTestingScene()
@@ -237,11 +251,7 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
 
     private void OnApplicationPause(bool pauseStatus)
     {
-        if (pauseStatus && _levelStarted)
-        {
-            LifeManager.Instance.OnLevelExit();
-            _levelStarted = false;
-        }
+
     }
 
     private void OnApplicationFocus(bool hasFocus)

@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -79,6 +80,8 @@ public class ButtonManager : MonoBehaviour
         {
             StartCoroutine(DelayedSubscription());
         }
+
+        SaveManager.OnDataLoaded += _ => RefreshLevelProgression();
     }
 
     private void OnDisable()
@@ -87,9 +90,11 @@ public class ButtonManager : MonoBehaviour
         {
             LevelProgressionManager.Instance.OnProgressionUpdated -= RefreshLevelProgression;
         }
+
+        SaveManager.OnDataLoaded -= _ => RefreshLevelProgression();
     }
 
-    private System.Collections.IEnumerator DelayedSubscription()
+    private IEnumerator DelayedSubscription()
     {
         yield return null;
 

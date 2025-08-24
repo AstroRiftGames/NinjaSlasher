@@ -273,10 +273,7 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
 
     private void OnApplicationPause(bool pauseStatus)
     {
-        if (pauseStatus && _levelInProgress && _hasVirtualDeduction)
-        {
-            OnLevelExit();
-        }
+
     }
 
     private void OnApplicationFocus(bool hasFocus)

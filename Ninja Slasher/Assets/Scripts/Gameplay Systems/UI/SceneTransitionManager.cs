@@ -36,11 +36,6 @@ public class SceneTransitionManager : MonoBehaviour
 
     public void RestartLevel()
     {
-        //if (!LifeManager.Instance.CanPlay())
-        //{
-        //    GetComponent<GameplayUIManager>().ShowNoLivesPanel();
-        //    return;
-        //}
         string sceneName = SceneManager.GetActiveScene().name;
         LoadLevelScene(sceneName);
         UIManager.Instance.ShowHidePauseCanvas();
