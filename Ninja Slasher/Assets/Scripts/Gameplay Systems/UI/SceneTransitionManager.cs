@@ -65,18 +65,21 @@ public class SceneTransitionManager : MonoBehaviour
 
     private void CheckAndShowDailyRewards()
     {
-        if (DailyRewardSystem.Instance == null)
-        {
-            return;
-        }
+        StartCoroutine(CheckAndShowDailyRewardsWhenReady());
+    }
+
+    private IEnumerator CheckAndShowDailyRewardsWhenReady()
+    {
+        while (SaveManager.Instance == null || !SaveManager.Instance.IsDataLoaded || DailyRewardSystem.Instance == null)
+            yield return null;
+
+        yield return null;
 
         bool canClaim = DailyRewardSystem.Instance.CanClaimToday();
-        Debug.Log($"[UIManager] CanClaimToday: {canClaim}");
+        Debug.Log($"[SceneTransition] CanClaimToday (ready): {canClaim}");
 
         if (canClaim)
-        {
             StartCoroutine(ShowDailyRewardsAfterDelay(1f));
-        }
     }
 
     private IEnumerator ShowDailyRewardsAfterDelay(float delay)

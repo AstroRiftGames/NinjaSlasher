@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using UnityEngine;
 
 [Serializable]
@@ -46,14 +47,35 @@ public class DailyRewardSystem : MonoBehaviourSingleton<DailyRewardSystem>
 
     void Start()
     {
+        if (SaveManager.Instance != null && SaveManager.Instance.IsDataLoaded)
+            BootstrapFromSave();
+    }
+
+    private void OnEnable()
+    {
+        SaveManager.OnDataLoaded += HandleDataLoaded;
+    }
+
+    private void OnDisable()
+    {
+        SaveManager.OnDataLoaded -= HandleDataLoaded;
+    }
+
+    private void HandleDataLoaded(GameData _)
+    {
+        BootstrapFromSave();
+    }
+
+    private void BootstrapFromSave()
+    {
         LoadRewardData();
         CheckDailyReward();
+        OnRewardAvailabilityChanged?.Invoke(CanClaimToday());
     }
 
     void LoadRewardData()
     {
         string jsonData = SaveManager.Instance.GetDailyRewardData();
-
         if (string.IsNullOrEmpty(jsonData))
         {
             rewardData = new DailyRewardSaveData();
@@ -69,6 +91,13 @@ public class DailyRewardSystem : MonoBehaviourSingleton<DailyRewardSystem>
                 Debug.LogError("Error cargando datos de recompensas diarias: " + e.Message);
                 rewardData = new DailyRewardSaveData();
             }
+        }
+
+        if (string.IsNullOrEmpty(rewardData.lastClaimDate))
+        {
+            var last = GetLastClaimDateSafe();
+            if (last > DateTime.MinValue)
+                rewardData.lastClaimDate = last.ToString("yyyy-MM-dd");
         }
     }
 
@@ -89,19 +118,17 @@ public class DailyRewardSystem : MonoBehaviourSingleton<DailyRewardSystem>
 
     void CheckDailyReward()
     {
-        string today = DateTime.Now.ToString("yyyy-MM-dd");
         bool wasAvailable = CanClaimToday();
+        var last = GetLastClaimDateSafe();
+        var currentDate = DateTime.Now.Date;
 
-        if (string.IsNullOrEmpty(rewardData.lastClaimDate))
+        if (last == DateTime.MinValue.Date)
         {
             Debug.Log("[DailyRewardSystem] Primer día del sistema de recompensas");
         }
         else
         {
-            DateTime lastClaim = DateTime.Parse(rewardData.lastClaimDate);
-            DateTime currentDate = DateTime.Now.Date;
-
-            int daysDifference = (int)(currentDate - lastClaim.Date).TotalDays;
+            int daysDifference = (int)(currentDate - last).TotalDays;
 
             if (daysDifference == 0)
             {
@@ -119,10 +146,9 @@ public class DailyRewardSystem : MonoBehaviourSingleton<DailyRewardSystem>
 
         bool isAvailableNow = CanClaimToday();
         if (wasAvailable != isAvailableNow)
-        {
             OnRewardAvailabilityChanged?.Invoke(isAvailableNow);
-        }
     }
+
 
     void AdvanceDay()
     {
@@ -149,28 +175,25 @@ public class DailyRewardSystem : MonoBehaviourSingleton<DailyRewardSystem>
 
     public bool ClaimReward()
     {
-        if (!CanClaimToday())
-        {
-            return false;
-        }
+        if (!CanClaimToday()) return false;
 
-        if (rewardData.claimedDays[rewardData.currentWeekDay])
-        {
-            return false;
-        }
+        if (rewardData.claimedDays[rewardData.currentWeekDay]) return false;
 
         rewardData.claimedDays[rewardData.currentWeekDay] = true;
         rewardData.lastClaimDate = DateTime.Now.ToString("yyyy-MM-dd");
 
-        DailyReward claimedReward = weeklyRewards[rewardData.currentWeekDay];
+        var claimed = weeklyRewards[rewardData.currentWeekDay];
 
-        AddPowerUpToInventoryViaAutoSave(claimedReward);
+        AddPowerUpToInventoryViaAutoSave(claimed);
 
         SaveRewardData();
 
-        OnRewardClaimed?.Invoke(claimedReward);
-        OnRewardAvailabilityChanged?.Invoke(false);
+#if UNITY_EDITOR
+        SaveManager.Instance.DebugPrintDailyRewardFields();
+#endif
 
+        OnRewardClaimed?.Invoke(claimed);
+        OnRewardAvailabilityChanged?.Invoke(false);
         return true;
     }
 
@@ -207,8 +230,10 @@ public class DailyRewardSystem : MonoBehaviourSingleton<DailyRewardSystem>
 
     public bool CanClaimToday()
     {
-        string today = DateTime.Now.ToString("yyyy-MM-dd");
-        return rewardData.lastClaimDate != today;
+        var last = GetLastClaimDateSafe();
+        if (last == DateTime.MinValue.Date) return true;
+
+        return DateTime.Now.Date > last;
     }
 
     public DailyReward GetTodayReward()
@@ -233,11 +258,11 @@ public class DailyRewardSystem : MonoBehaviourSingleton<DailyRewardSystem>
 
     public string GetTimeUntilNextReward()
     {
-        if (string.IsNullOrEmpty(rewardData.lastClaimDate))
+        var last = GetLastClaimDateSafe();
+        if (last == DateTime.MinValue.Date)
             return "AVAILABLE NOW";
 
-        DateTime lastClaim = DateTime.Parse(rewardData.lastClaimDate);
-        DateTime nextAvailable = lastClaim.AddDays(1);
+        DateTime nextAvailable = last.AddDays(1);
         TimeSpan timeUntilNext = nextAvailable - DateTime.Now;
 
         if (timeUntilNext.TotalSeconds <= 0)
@@ -245,4 +270,30 @@ public class DailyRewardSystem : MonoBehaviourSingleton<DailyRewardSystem>
 
         return $"{timeUntilNext.Hours:D2}:{timeUntilNext.Minutes:D2}:{timeUntilNext.Seconds:D2}";
     }
+
+    private DateTime GetLastClaimDateSafe()
+    {
+        if (!string.IsNullOrEmpty(rewardData?.lastClaimDate) && TryParseYMD(rewardData.lastClaimDate, out var ymd))
+            return ymd.Date;
+
+        var gd = SaveManager.Instance.GetGameData();
+        if (!string.IsNullOrEmpty(gd.lastRewardTimestamp) && TryParseISO(gd.lastRewardTimestamp, out var iso))
+            return iso.Date;
+
+        return DateTime.MinValue.Date;
+    }
+
+    private static bool TryParseYMD(string ymd, out DateTime date)
+    {
+        return DateTime.TryParseExact(ymd, "yyyy-MM-dd",
+            CultureInfo.InvariantCulture,
+            DateTimeStyles.None, out date);
+    }
+
+    private static bool TryParseISO(string iso, out DateTime date)
+    {
+        return DateTime.TryParse(iso, null,
+            DateTimeStyles.RoundtripKind, out date);
+    }
+
 }

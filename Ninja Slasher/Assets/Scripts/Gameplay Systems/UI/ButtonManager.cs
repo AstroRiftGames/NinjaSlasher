@@ -18,17 +18,11 @@ public class ButtonManager : MonoBehaviour
 
     [Header("PROFILE BUTTONS")]
     [SerializeField] private Button _userIconButton;
-
     [SerializeField] private Button _closeProfileButton;
     [SerializeField] private Button _creditsButton;
     [SerializeField] private Button _closeCreditsButton;
 
-    [Header("EXTRA LIFE PANEL BUTTONS")]
-    //[SerializeField] private Button _closeExtraLifeButton;
-    //[SerializeField] private Button _claimExtraLifeButton;
-
     [Header("DAILY REWARDS BUTTONS")]
-    [SerializeField] private Button _claimRewardButton;
     [SerializeField] private Button _closeCalendarButton;
 
     [Header("PREGAME BUTTONS")]
@@ -64,6 +58,8 @@ public class ButtonManager : MonoBehaviour
     private AudioToggle _audioToggle;
     private ConfigDropdown _configPanelManager;
 
+    private void OnSaveDataLoaded(GameData _) => RefreshLevelProgression();
+
     private void Awake()
     {
         _audioToggle = GetComponent<AudioToggle>();
@@ -81,7 +77,7 @@ public class ButtonManager : MonoBehaviour
             StartCoroutine(DelayedSubscription());
         }
 
-        SaveManager.OnDataLoaded += _ => RefreshLevelProgression();
+        SaveManager.OnDataLoaded += OnSaveDataLoaded;
     }
 
     private void OnDisable()
@@ -91,7 +87,7 @@ public class ButtonManager : MonoBehaviour
             LevelProgressionManager.Instance.OnProgressionUpdated -= RefreshLevelProgression;
         }
 
-        SaveManager.OnDataLoaded -= _ => RefreshLevelProgression();
+        SaveManager.OnDataLoaded -= OnSaveDataLoaded;
     }
 
     private IEnumerator DelayedSubscription()
@@ -109,7 +105,6 @@ public class ButtonManager : MonoBehaviour
         SetupLevelSelectorButtons();
         SetupPreGameButtons();
         SetupGameplayButtons();
-        SetupDailyRewardButtons();
         SetupLevelProgression();
         UpdateButtonProgression();
 
@@ -134,22 +129,6 @@ public class ButtonManager : MonoBehaviour
         _backToSelectionButton.onClick.AddListener(GetComponent<GameplayUIManager>().OnBackToSelectionPressed);
     }
 
-    private void SetupDailyRewardButtons()
-    {
-        _claimRewardButton.onClick.AddListener(() =>
-        {
-            if (DailyRewardSystem.Instance != null)
-            {
-                bool success = DailyRewardSystem.Instance.ClaimReward();
-            }
-        });
-
-        _closeCalendarButton.onClick.AddListener(() =>
-        {
-            GetComponent<CanvasManager>().ShowHideDailyRewardCanvas();
-        });
-    }
-
     private void SetupLevelProgression()
     {
         for (int i = 0; i < levelButtons.Length; i++)
@@ -168,30 +147,21 @@ public class ButtonManager : MonoBehaviour
 
     private void SetupLevelSelectorButtons()
     {
-        //EXTRA LIFE PANEL
-        //_closeExtraLifeButton.onClick.AddListener(UIManager.Instance.ShowHideExtraLifeCanvas);
-        //_claimExtraLifeButton.onClick.AddListener(UIManager.Instance.ShowHideExtraLifeCanvas);
-
-        //CONFIG DROPDOWN
         _musicButton.onClick.AddListener(_audioToggle.MusicButtonClicked);
         _sfxButton.onClick.AddListener(_audioToggle.SFXButtonClicked);
         _profileButton.onClick.AddListener(UIManager.Instance.ShowHideProfileCanvas);
 
-        //NO LIVES PANEL
         _closeNoLivesPanelButton.onClick.AddListener(UIManager.Instance.ShowHideNoLivesCanvas);
         _adForMoreLifeButton.onClick.AddListener(UIManager.Instance.ShowHideNoLivesCanvas);
 
-        //PROFILE
         _userIconButton.onClick.AddListener(UIManager.Instance.ShowHideProfileCanvas);
         _creditsButton.onClick.AddListener(UIManager.Instance.ShowHideCreditsCanvas);
         _closeProfileButton.onClick.AddListener(UIManager.Instance.ShowHideProfileCanvas);
         _closeCreditsButton.onClick.AddListener(UIManager.Instance.ShowHideCreditsCanvas);
 
-        //MAIN SCREEN
         _calendarButton.onClick.AddListener(UIManager.Instance.ShowHideDailyRewardCanvas);
         _configDropdownButton.onClick.AddListener(_configPanelManager.OpenCloseConfigPanel);
         _testLevelButton.onClick.AddListener(() => GetComponent<SceneTransitionManager>().LoadDebugTestScene());
-        //_heartButton.onClick.AddListener(UIManager.Instance.ShowHideExtraLifeCanvas);
 
         for (int i = 0; i < levelButtons.Length; i++)
         {
@@ -222,7 +192,7 @@ public class ButtonManager : MonoBehaviour
         for (int i = 0; i < 3; i++)
         {
             Transform star = starsContainer.GetChild(i);
-            if(star != null)
+            if (star != null)
             {
                 Image starImage = star.GetComponent<Image>();
                 if (starImage != null)
@@ -232,9 +202,9 @@ public class ButtonManager : MonoBehaviour
                     {
                         bool isEarned = i < starsEarned;
                         starImage.color = isEarned ? _starAcquired : _starNotAcquired;
-                    }                    
+                    }
                 }
-            }      
+            }
         }
     }
 
@@ -245,18 +215,18 @@ public class ButtonManager : MonoBehaviour
         {
             return stars;
         }
-
         return 0;
     }
 
     void UpdateButtonProgression()
-    {        
+    {
         for (int i = 0; i < levelButtons.Length; i++)
         {
             int levelId = i + 1;
             UpdateStars(levelButtons[i], levelId);
         }
     }
+
     private void ShowLevelLockedMessage(int levelId)
     {
         Debug.Log($"[ButtonManager] Nivel {levelId} está bloqueado");
@@ -276,7 +246,6 @@ public class ButtonManager : MonoBehaviour
         for (int i = 0; i < levelButtons.Length; i++)
         {
             int levelId = i + 1;
-            bool wasInteractable = levelButtons[i].interactable;
             bool isUnlocked = IsLevelUnlocked(levelId);
 
             levelButtons[i].interactable = isUnlocked;
@@ -289,6 +258,7 @@ public class ButtonManager : MonoBehaviour
             if (isUnlocked) unlockedCount++;
             else lockedCount++;
         }
+
         UpdateButtonProgression();
     }
 
@@ -304,9 +274,7 @@ public class ButtonManager : MonoBehaviour
         {
             return levelId == 1;
         }
-
-        bool isUnlocked = LevelProgressionManager.Instance.IsLevelUnlocked(levelId);
-        return isUnlocked;
+        return LevelProgressionManager.Instance.IsLevelUnlocked(levelId);
     }
 
 #if UNITY_EDITOR

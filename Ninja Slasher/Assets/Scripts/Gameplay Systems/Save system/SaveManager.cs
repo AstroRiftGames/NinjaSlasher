@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 
+[DefaultExecutionOrder(-1000)]
 public class SaveManager : MonoBehaviourSingleton<SaveManager>
 {
     [Header("Save Settings")]
@@ -16,6 +17,7 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
     private GameData gameData;
     private string currentUserId = "";
     private bool isDataLoaded = false;
+    public bool IsDataLoaded => isDataLoaded;
     private bool hasAuthIntegration = false;
 
     public static event Action<GameData> OnDataLoaded;
@@ -111,7 +113,7 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
                     loadedWithDto = true;
                 }
             }
-            catch { /* ignorar y probar legacy */ }
+            catch { /* ignorar */ }
 
             if (!loadedWithDto)
             {
@@ -136,41 +138,125 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
         if (debugMode)
             Debug.Log($"[SaveManager] Migrating from {currentUserId} to {authenticatedUserId}");
 
-        GameData currentData = gameData;
+        GameData offlineData = gameData;
 
         currentUserId = authenticatedUserId;
         string userFolder = Path.Combine(Application.persistentDataPath, USER_DATA_FOLDER, currentUserId);
-        if (!Directory.Exists(userFolder))
-        {
-            Directory.CreateDirectory(userFolder);
-        }
+        if (!Directory.Exists(userFolder)) Directory.CreateDirectory(userFolder);
         saveFilePath = Path.Combine(userFolder, SaveFileName);
 
         if (TryLoadFromCurrentPath())
         {
-            if (debugMode)
-                Debug.Log("[SaveManager] Loaded existing authenticated user data");
-        }
-        else if (autoMigration && currentData != null)
-        {
-            gameData = currentData;
-            SaveData();
-
-            if (debugMode)
-                Debug.Log("[SaveManager] Migrated data to authenticated user");
-        }
-
-        if (debugMode && currentData != null)
-        {
-            Debug.Log($"[SaveManager] Migrating data - Stars before: {currentData.totalStars}");
-            Debug.Log($"[SaveManager] Level stars count: {currentData.levelStars.Count}");
-            foreach (var kvp in currentData.levelStars)
+            if (debugMode) Debug.Log("[SaveManager] Loaded existing authenticated user data");
+            if (offlineData != null)
             {
-                Debug.Log($"[SaveManager] Level {kvp.Key}: {kvp.Value} stars");
+                MergeGameData(offlineData, gameData);
+                SaveData();
+                if (debugMode) Debug.Log("[SaveManager] Merged offline changes into authenticated save");
             }
+        }
+        else if (autoMigration && offlineData != null)
+        {
+            // Si no existe, migramos el estado actual tal cual
+            gameData = offlineData;
+            SaveData();
+            if (debugMode) Debug.Log("[SaveManager] Migrated data to authenticated user");
         }
 
         OnDataLoaded?.Invoke(gameData);
+    }
+
+    [Serializable]
+    private class DailyRewardMirror
+    {
+        public string lastClaimDate;
+    }
+
+    private DateTime ParseIsoOrDefault(string iso)
+    {
+        if (string.IsNullOrEmpty(iso)) return DateTime.MinValue;
+        if (DateTime.TryParse(iso, null,
+            System.Globalization.DateTimeStyles.RoundtripKind, out var dt)) return dt;
+        if (DateTime.TryParse(iso, out dt)) return dt;
+        return DateTime.MinValue;
+    }
+
+    private void MergeGameData(GameData source, GameData target)
+    {
+        if (source == null || target == null) return;
+
+        target.highestUnlockedLevel = Mathf.Max(target.highestUnlockedLevel, source.highestUnlockedLevel);
+        target.highestUnlockedArea = Mathf.Max(target.highestUnlockedArea, source.highestUnlockedArea);
+        target.currentArea = Mathf.Max(target.currentArea, source.currentArea);
+
+        if (source.levelStars != null)
+        {
+            if (target.levelStars == null) target.levelStars = new Dictionary<int, int>();
+            foreach (var kv in source.levelStars)
+            {
+                if (!target.levelStars.ContainsKey(kv.Key))
+                    target.levelStars[kv.Key] = kv.Value;
+                else
+                    target.levelStars[kv.Key] = Mathf.Max(target.levelStars[kv.Key], kv.Value);
+            }
+        }
+        target.totalStars = 0;
+        if (target.levelStars != null)
+            foreach (var kv in target.levelStars) target.totalStars += Mathf.Max(0, kv.Value);
+
+        if (source.unlockedAreas != null)
+        {
+            if (target.unlockedAreas == null) target.unlockedAreas = new List<int>();
+            foreach (var a in source.unlockedAreas)
+                if (!target.unlockedAreas.Contains(a)) target.unlockedAreas.Add(a);
+        }
+
+        if (source.powerUpInventory != null)
+        {
+            if (target.powerUpInventory == null) target.powerUpInventory = new List<PowerUpInventoryItem>();
+            foreach (var item in source.powerUpInventory)
+            {
+                var dst = target.powerUpInventory.Find(i => i.type == item.type);
+                if (dst == null)
+                {
+                    target.powerUpInventory.Add(new PowerUpInventoryItem(item.type, item.quantity)
+                    {
+                        lastUpdated = item.lastUpdated
+                    });
+                }
+                else
+                {
+                    dst.quantity += item.quantity;
+                    if (item.lastUpdated > dst.lastUpdated) dst.lastUpdated = item.lastUpdated;
+                }
+            }
+        }
+
+        if (source.activePowerUps != null)
+        {
+            if (target.activePowerUps == null) target.activePowerUps = new List<PowerUpData>();
+            foreach (var p in source.activePowerUps)
+            {
+                var existing = target.activePowerUps.Find(x => x.type == p.type);
+                if (existing == null || p.activationTime > existing.activationTime)
+                {
+                    if (existing != null) target.activePowerUps.Remove(existing);
+                    target.activePowerUps.Add(p);
+                }
+            }
+        }
+
+        try
+        {
+            var src = string.IsNullOrEmpty(source.dailyRewardData) ? null : JsonUtility.FromJson<DailyRewardMirror>(source.dailyRewardData);
+            var dst = string.IsNullOrEmpty(target.dailyRewardData) ? null : JsonUtility.FromJson<DailyRewardMirror>(target.dailyRewardData);
+            var srcDate = src != null ? ParseIsoOrDefault(src.lastClaimDate) : DateTime.MinValue;
+            var dstDate = dst != null ? ParseIsoOrDefault(dst.lastClaimDate) : DateTime.MinValue;
+            if (srcDate > dstDate) target.dailyRewardData = source.dailyRewardData;
+        }
+        catch { /* si falla parse, dejamos el existente */ }
+
+        if (source.lastPlayDate > target.lastPlayDate) target.lastPlayDate = source.lastPlayDate;
     }
 
     #endregion
@@ -405,6 +491,7 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
     {
         var data = GetGameData();
         data.dailyRewardData = dailyRewardJson;
+        data.lastRewardTimestamp = DateTime.Now.ToString("o");
         SaveData();
     }
 
@@ -677,6 +764,15 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
 
         Debug.Log("Test stars added and UI refreshed");
     }
+
+    [ContextMenu("DEBUG/Print DailyReward Fields")]
+    public void DebugPrintDailyRewardFields()
+    {
+        var d = GetGameData();
+        Debug.Log($"[DEBUG] dailyRewardData(len): {(d.dailyRewardData == null ? 0 : d.dailyRewardData.Length)}");
+        Debug.Log($"[DEBUG] lastRewardTimestamp: {d.lastRewardTimestamp}");
+    }
+
 #endif
 
     #endregion

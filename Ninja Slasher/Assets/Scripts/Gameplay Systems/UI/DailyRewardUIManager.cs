@@ -6,10 +6,11 @@ using System.Collections;
 public class DailyRewardUIManager : MonoBehaviourSingleton<DailyRewardUIManager>
 {
     [Header("Panel Principal")]
-    public Button closeButton;
     public TextMeshProUGUI nextRewardTimeText;
     public DailyRewardDayUI[] weeklyRewardDays = new DailyRewardDayUI[7];
+
     public Button claimButton;
+    public Button closeButton;
     public TextMeshProUGUI claimButtonText;
 
     [Header("BACKGROUND COLORS")]
@@ -29,6 +30,20 @@ public class DailyRewardUIManager : MonoBehaviourSingleton<DailyRewardUIManager>
         InitializeUI();
     }
 
+    void OnEnable()
+    {
+        if (dailyRewardSystem == null) dailyRewardSystem = DailyRewardSystem.Instance;
+
+        HookButtons();
+        SubscribeToEvents();
+        if (!isInitialized) InitializeUI();
+    }
+
+    void OnDisable()
+    {
+        UnsubscribeFromEvents();
+    }
+
     void OnDestroy()
     {
         UnsubscribeFromEvents();
@@ -37,6 +52,21 @@ public class DailyRewardUIManager : MonoBehaviourSingleton<DailyRewardUIManager>
     void Update()
     {
         UpdateNextRewardTimer();
+    }
+
+    private void HookButtons()
+    {
+        if (claimButton != null)
+        {
+            claimButton.onClick.RemoveAllListeners();
+            claimButton.onClick.AddListener(OnClaimPressed);
+        }
+
+        if (closeButton != null)
+        {
+            closeButton.onClick.RemoveAllListeners();
+            closeButton.onClick.AddListener(OnClosePressed);
+        }
     }
 
     void SubscribeToEvents()
@@ -159,6 +189,31 @@ public class DailyRewardUIManager : MonoBehaviourSingleton<DailyRewardUIManager>
     public bool HasAvailableReward()
     {
         return dailyRewardSystem != null && dailyRewardSystem.CanClaimToday();
+    }
+
+    private void OnClaimPressed()
+    {
+        if (dailyRewardSystem == null) return;
+        if (!dailyRewardSystem.CanClaimToday()) return;
+
+        if (dailyRewardSystem.ClaimReward())
+        {
+            ShowDailyReward();
+            var preGame = FindObjectOfType<PreGameUIManager>();
+            if (preGame != null && preGame.isActiveAndEnabled)
+                preGame.ShowPreGamePowerUps();
+        }
+    }
+
+    private void OnClosePressed()
+    {
+        var canvasManager = GetComponentInParent<CanvasManager>();
+        if (canvasManager != null) canvasManager.ShowHideDailyRewardCanvas();
+    }
+
+    private void OnAvailabilityChanged(bool canClaim)
+    {
+        if (claimButton) claimButton.interactable = canClaim;
     }
 }
 
