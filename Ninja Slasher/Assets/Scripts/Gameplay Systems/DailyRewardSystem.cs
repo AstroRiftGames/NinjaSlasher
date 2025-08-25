@@ -158,7 +158,7 @@ public class DailyRewardSystem : MonoBehaviourSingleton<DailyRewardSystem>
         {
             return false;
         }
-
+        AudioManager.Instance.PlaySFX(SFXClip.UI_Claim);
         rewardData.claimedDays[rewardData.currentWeekDay] = true;
         rewardData.lastClaimDate = DateTime.Now.ToString("yyyy-MM-dd");
 

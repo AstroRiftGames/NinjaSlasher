@@ -32,6 +32,9 @@ public class PowerUpSlotUI : MonoBehaviour
     private void OnActivatePressed()
     {
         if (_item.quantity > 0)
+        {
+            AudioManager.Instance.PlaySFX(SFXClip.UI_PowerUp);
             _onActivateCallback?.Invoke(_item);
+        }
     }
 }

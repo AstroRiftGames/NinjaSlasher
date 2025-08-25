@@ -47,6 +47,40 @@ public class PreGameUIManager : MonoBehaviour
         }
         UIManager.Instance.ShowHidePreGameCanvas();
         UIManager.Instance.LoadLevelScene(_pendingSceneName);
+        PlayLevelMusic();
+        
+    }
+
+    void PlayLevelMusic()
+    {
+        int levelId = GetLevelIdFromSceneName(_pendingSceneName);
+        var cfgMgr = LevelConfigurationManager.Instance;
+        var config = cfgMgr != null ? cfgMgr.GetConfigurationForLevel(levelId) : null;
+
+        if (config.unlockRequirements.isBossLevel)
+        {
+            AudioManager.Instance.PlayMusic(MusicClip.BossLevel);
+            return;
+        }
+
+        switch (config.unlockRequirements.areaId)
+        {
+            case 1:
+                AudioManager.Instance.PlayMusic(MusicClip.Area1);
+                break;
+            case 2:
+                AudioManager.Instance.PlayMusic(MusicClip.Area2);
+                break;
+            case 3:
+                AudioManager.Instance.PlayMusic(MusicClip.Area3);
+                break;
+            case 4:
+                AudioManager.Instance.PlayMusic(MusicClip.Area4);
+                break;
+            case 5:
+                AudioManager.Instance.PlayMusic(MusicClip.Area5);
+                break;
+        }
     }
 
     private void CancelLevelSelection()

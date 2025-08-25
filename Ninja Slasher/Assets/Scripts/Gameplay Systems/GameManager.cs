@@ -161,12 +161,12 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
 
         SaveManager.Instance.SaveData();
         SceneManager.sceneLoaded += HandleScreenflowLoaded;
-        SceneManager.LoadScene("ScreenflowTest");
+        SceneManager.LoadScene("SplashScreen");
     }
 
     private void HandleScreenflowLoaded(Scene scene, LoadSceneMode mode)
     {
-        if (scene.name != "ScreenflowTest") return;
+        if (scene.name != "SplashScreen") return;
 
         UIManager.Instance.ShowLevelSelector();
         SceneManager.sceneLoaded -= HandleScreenflowLoaded;
