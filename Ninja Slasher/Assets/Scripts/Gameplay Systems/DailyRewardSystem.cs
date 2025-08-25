@@ -124,7 +124,7 @@ public class DailyRewardSystem : MonoBehaviourSingleton<DailyRewardSystem>
 
         if (last == DateTime.MinValue.Date)
         {
-            Debug.Log("[DailyRewardSystem] Primer día del sistema de recompensas");
+            Debug.Log("[DailyRewardSystem] Primer dï¿½a del sistema de recompensas");
         }
         else
         {
@@ -177,7 +177,11 @@ public class DailyRewardSystem : MonoBehaviourSingleton<DailyRewardSystem>
     {
         if (!CanClaimToday()) return false;
 
-        if (rewardData.claimedDays[rewardData.currentWeekDay]) return false;
+        if (rewardData.claimedDays[rewardData.currentWeekDay])
+        {
+            return false;
+        }
+        AudioManager.Instance.PlaySFX(SFXClip.UI_Claim);
 
         rewardData.claimedDays[rewardData.currentWeekDay] = true;
         rewardData.lastClaimDate = DateTime.Now.ToString("yyyy-MM-dd");

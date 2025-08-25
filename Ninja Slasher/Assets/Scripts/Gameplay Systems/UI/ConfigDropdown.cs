@@ -7,6 +7,7 @@ public class ConfigDropdown : MonoBehaviour
 
     public void OpenCloseConfigPanel()
     {
+        AudioManager.Instance.PlaySFX(SFXClip.UI_ShowConfig);
         if (_isOpen)
         {
             _configPanelAnim.SetTrigger("Close");

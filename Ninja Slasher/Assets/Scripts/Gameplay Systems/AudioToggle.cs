@@ -33,6 +33,7 @@ public class AudioToggle : MonoBehaviour
             _sfxImage.sprite = _sfxTurnOnIcon;
             _sfxOn = !_sfxOn;
         }
+        AudioManager.Instance.MuteSFX(!_sfxOn);
     }
     
     public void MusicButtonClicked()
@@ -49,5 +50,6 @@ public class AudioToggle : MonoBehaviour
             _musicOn = !_musicOn;
             //_audioSource.mute = true;
         }
+        AudioManager.Instance.MuteMusic(!_musicOn);
     }
 }

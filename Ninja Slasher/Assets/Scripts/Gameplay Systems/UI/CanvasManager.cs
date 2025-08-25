@@ -19,6 +19,7 @@ public class CanvasManager : MonoBehaviour
 
     public void ShowHideCanvas(Canvas canvas, bool state)
     {
+        AudioManager.Instance.PlaySFX(SFXClip.UI_Select);
         if (state) OpenCanvas(canvas);
         else CloseCanvas(canvas);
     }

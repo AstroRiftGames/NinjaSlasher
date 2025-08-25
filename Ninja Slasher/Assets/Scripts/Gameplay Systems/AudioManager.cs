@@ -6,12 +6,13 @@ using UnityEngine;
 [Serializable]
 public enum MusicClip
 {
+    Splash,
     MainMenu,
-    Section1,
-    Section2,
-    Section3,
-    Section4,
-    Section5,
+    Area1,
+    Area2,
+    Area3,
+    Area4,
+    Area5,
     BossLevel,
     Victory,
     GameOver
@@ -20,13 +21,17 @@ public enum MusicClip
 [Serializable]
 public enum SFXClip
 {
-    Jump,
-    Shoot,
-    Explosion,
-    Interact,
-    Hit,
-    PowerUp,
-    MenuSelect
+    E_Hit,
+    E_Shoot,
+    E_Explosion,
+    P_Movement,
+    UI_TapSplashScreen,
+    UI_TransitionSlash,
+    UI_Select,
+    UI_PowerUp,
+    UI_Transition,
+    UI_ShowConfig,
+    UI_Claim,
 }
 
 [Serializable]
@@ -35,6 +40,7 @@ public class AudioClipData
     public AudioClip clip;
     public float volume = 1f;
     public float pitch = 1f;
+    public float volumeMultiplier = 1f;
 }
 
 [Serializable]
@@ -73,6 +79,12 @@ public class AudioManager : MonoBehaviourSingleton<AudioManager>
 
     private Coroutine musicFadeCoroutine;
     private MusicClip currentMusicClip;
+
+    private void Start()
+    {
+        InitializeAudioManager();
+        PlayMusic(MusicClip.Splash);
+    }
 
     void InitializeAudioManager()
     {
@@ -156,14 +168,14 @@ public class AudioManager : MonoBehaviourSingleton<AudioManager>
         musicSource.UnPause();
     }
 
-    public void PlaySFX(SFXClip clipType, float volumeMultiplier = 1f)
+    public void PlaySFX(SFXClip clipType)
     {
         if (sfxDict.ContainsKey(clipType))
         {
             var audioData = sfxDict[clipType];
 
             sfxSource.pitch = audioData.pitch;
-            sfxSource.PlayOneShot(audioData.clip, audioData.volume * volumeMultiplier);
+            sfxSource.PlayOneShot(audioData.clip, audioData.volume * audioData.volumeMultiplier);
         }
         else
         {
@@ -202,12 +214,20 @@ public class AudioManager : MonoBehaviourSingleton<AudioManager>
         }
     }
 
+    public void MuteMusic(bool state)
+    {
+        musicSource.mute = state;
+    }
+
+    public void MuteSFX(bool state)
+    {
+        sfxSource.mute = state;
+    }
     public void SetMusicVolume(float volume)
     {
         musicVolume = Mathf.Clamp01(volume);
         UpdateVolumes();
     }
-
     public void SetSFXVolume(float volume)
     {
         sfxVolume = Mathf.Clamp01(volume);
