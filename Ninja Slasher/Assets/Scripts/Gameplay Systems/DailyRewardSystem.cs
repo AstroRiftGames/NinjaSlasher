@@ -39,6 +39,10 @@ public class DailyRewardSystem : MonoBehaviourSingleton<DailyRewardSystem>
     public static event Action<DailyReward> OnRewardClaimed;
     public static event Action<int> OnConsecutiveDaysUpdated;
     public static event Action<bool> OnRewardAvailabilityChanged;
+    public static event Action OnRewardDoubled;
+
+    private bool _hasDoubledToday = false;
+
 
     public override void Awake()
     {
@@ -70,6 +74,7 @@ public class DailyRewardSystem : MonoBehaviourSingleton<DailyRewardSystem>
     {
         LoadRewardData();
         CheckDailyReward();
+        CheckDoubleRewardStatus();
         OnRewardAvailabilityChanged?.Invoke(CanClaimToday());
     }
 
@@ -149,6 +154,69 @@ public class DailyRewardSystem : MonoBehaviourSingleton<DailyRewardSystem>
             OnRewardAvailabilityChanged?.Invoke(isAvailableNow);
     }
 
+    private void CheckDoubleRewardStatus()
+    {
+        var last = GetLastClaimDateSafe();
+        var currentDate = DateTime.Now.Date;
+
+        if (last != currentDate)
+        {
+            _hasDoubledToday = false;
+        }
+    }
+
+    public void DoubleTodaysReward()
+    {
+        if (_hasDoubledToday)
+        {
+            Debug.LogWarning("Ya se duplicó la recompensa de hoy");
+            return;
+        }
+
+        if (rewardData.claimedDays[rewardData.currentWeekDay])
+        {
+            Debug.LogWarning("No se puede duplicar una recompensa ya reclamada");
+            return;
+        }
+
+        var todayReward = weeklyRewards[rewardData.currentWeekDay];
+
+        var doubledReward = new DailyReward
+        {
+            powerUpType = todayReward.powerUpType,
+            quantity = todayReward.quantity * 2,
+            icon = todayReward.icon,
+            displayName = todayReward.displayName + " x2",
+            description = "Recompensa duplicada por anuncio"
+        };
+
+        AddPowerUpToInventoryViaAutoSave(doubledReward);
+
+        rewardData.claimedDays[rewardData.currentWeekDay] = true;
+        rewardData.lastClaimDate = DateTime.Now.ToString("yyyy-MM-dd");
+
+        _hasDoubledToday = true;
+
+        SaveRewardData();
+
+        Debug.Log($"Recompensa diaria duplicada: {doubledReward.powerUpType} x{doubledReward.quantity}");
+
+        OnRewardClaimed?.Invoke(doubledReward);
+        OnRewardAvailabilityChanged?.Invoke(false);
+        OnRewardDoubled?.Invoke();
+    }
+
+    public bool CanDoubleToday()
+    {
+        return !_hasDoubledToday &&
+               !rewardData.claimedDays[rewardData.currentWeekDay] &&
+               CanClaimToday();
+    }
+
+    public bool HasDoubledToday()
+    {
+        return _hasDoubledToday;
+    }
 
     void AdvanceDay()
     {

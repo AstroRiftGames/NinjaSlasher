@@ -5,13 +5,17 @@ using System.Collections;
 
 public class DailyRewardUIManager : MonoBehaviourSingleton<DailyRewardUIManager>
 {
-    [Header("Panel Principal")]
     public TextMeshProUGUI nextRewardTimeText;
     public DailyRewardDayUI[] weeklyRewardDays = new DailyRewardDayUI[7];
 
-    public Button claimButton;
-    public Button closeButton;
+    [SerializeField] private Button closeButton;
+
+    [SerializeField] private Button claimButton;
     public TextMeshProUGUI claimButtonText;
+
+    [Header("Double Reward Button")]
+    [SerializeField] private Button _doubleDailyRewardButton;
+    [SerializeField] private TextMeshProUGUI _doubleRewardButtonText;
 
     [Header("BACKGROUND COLORS")]
     public Color availableColor = Color.white;
@@ -67,12 +71,19 @@ public class DailyRewardUIManager : MonoBehaviourSingleton<DailyRewardUIManager>
             closeButton.onClick.RemoveAllListeners();
             closeButton.onClick.AddListener(OnClosePressed);
         }
+
+        if (_doubleDailyRewardButton != null)
+        {
+            _doubleDailyRewardButton.onClick.RemoveAllListeners();
+            _doubleDailyRewardButton.onClick.AddListener(OnDoubleRewardPressed);
+        }
     }
 
     void SubscribeToEvents()
     {
         DailyRewardSystem.OnRewardClaimed += OnRewardClaimed;
         DailyRewardSystem.OnRewardAvailabilityChanged += OnRewardAvailabilityChanged;
+        DailyRewardSystem.OnRewardDoubled += OnRewardDoubled;
     }
 
     void UnsubscribeFromEvents()
@@ -107,6 +118,7 @@ public class DailyRewardUIManager : MonoBehaviourSingleton<DailyRewardUIManager>
 
         UpdateWeeklyProgress();
         UpdateClaimButton();
+        UpdateDoubleRewardButton();
     }
 
     void UpdateWeeklyProgress()
@@ -214,6 +226,64 @@ public class DailyRewardUIManager : MonoBehaviourSingleton<DailyRewardUIManager>
     private void OnAvailabilityChanged(bool canClaim)
     {
         if (claimButton) claimButton.interactable = canClaim;
+    }
+
+    private void OnRewardDoubled()
+    {
+        UpdateDoubleRewardButton();
+    }
+
+    void UpdateDoubleRewardButton()
+    {
+        if (_doubleDailyRewardButton == null || dailyRewardSystem == null) return;
+
+        bool canDouble = dailyRewardSystem.CanDoubleToday() &&
+                        AdsManager.Instance != null &&
+                        AdsManager.Instance.IsRewardedAdReady();
+
+        bool hasDoubledToday = dailyRewardSystem.HasDoubledToday();
+
+        _doubleDailyRewardButton.interactable = canDouble;
+
+        if (_doubleRewardButtonText != null)
+        {
+            if (hasDoubledToday)
+            {
+                _doubleRewardButtonText.text = "DOUBLED!";
+            }
+            else if (canDouble)
+            {
+                _doubleRewardButtonText.text = "WATCH AD x2";
+            }
+            else if (AdsManager.Instance != null && !AdsManager.Instance.IsRewardedAdReady())
+            {
+                _doubleRewardButtonText.text = "LOADING...";
+            }
+            else
+            {
+                _doubleRewardButtonText.text = "UNAVAILABLE";
+            }
+        }
+    }
+
+
+    private void OnDoubleRewardPressed()
+    {
+        if (dailyRewardSystem == null || AdsManager.Instance == null) return;
+
+        if (!dailyRewardSystem.CanDoubleToday())
+        {
+            Debug.Log("No se puede duplicar la recompensa hoy");
+            return;
+        }
+
+        if (!AdsManager.Instance.IsRewardedAdReady())
+        {
+            Debug.Log("Anuncio no está listo");
+            return;
+        }
+
+        AdsManager.Instance.ShowRewardedAdForDoubleDailyReward();
     }
 }
 

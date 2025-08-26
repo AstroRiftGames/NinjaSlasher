@@ -40,6 +40,7 @@ public class ButtonManager : MonoBehaviour
     [Header("NO LIVES PANEL BUTTONS")]
     [SerializeField] private Button _closeNoLivesPanelButton;
     [SerializeField] private Button _adForMoreLifeButton;
+    [SerializeField] private Button _extraRewardButton;
 
     [Header("PROGRESSION UI")]
     [SerializeField] private Image[] levelButtonImages;
@@ -152,7 +153,7 @@ public class ButtonManager : MonoBehaviour
         _profileButton.onClick.AddListener(UIManager.Instance.ShowHideProfileCanvas);
 
         _closeNoLivesPanelButton.onClick.AddListener(UIManager.Instance.ShowHideNoLivesCanvas);
-        _adForMoreLifeButton.onClick.AddListener(UIManager.Instance.ShowHideNoLivesCanvas);
+        _adForMoreLifeButton.onClick.AddListener(AdsManager.Instance.ShowRewardedAdForExtraLife);
 
         _userIconButton.onClick.AddListener(UIManager.Instance.ShowHideProfileCanvas);
         _creditsButton.onClick.AddListener(UIManager.Instance.ShowHideCreditsCanvas);

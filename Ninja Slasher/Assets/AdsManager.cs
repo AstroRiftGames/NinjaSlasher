@@ -14,6 +14,15 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
     private LevelPlayRewardedAd _rewardedAd;
     private LevelPlayInterstitialAd _interstitialAd;
 
+    public enum RewardType
+    {
+        ExtraLife,
+        DoubleDailyReward,
+        None
+    }
+
+    private RewardType _currentRewardType = RewardType.ExtraLife;
+
     void Start()
     {
         InitializeLevelPlay();
@@ -206,11 +215,47 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
         _interstitialAd?.LoadAd();
     }
 
-    private void GiveReward(LevelPlayReward reward)
+    public void GiveReward(LevelPlayReward reward)
     {
         Debug.Log($"Otorgando reward: {reward.Name} x{reward.Amount}");
 
-        // lógica de recompensa
+        switch (_currentRewardType)
+        {
+            case RewardType.ExtraLife:
+                if (LifeManager.Instance != null)
+                {
+                    LifeManager.Instance.AddLife();
+                    Debug.Log("Vida extra otorgada");
+                }
+                break;
+
+            case RewardType.DoubleDailyReward:
+                if (DailyRewardSystem.Instance != null)
+                {
+                    DailyRewardSystem.Instance.DoubleTodaysReward();
+                    Debug.Log("Recompensa diaria duplicada!");
+                }
+                break;
+
+            case RewardType.None:
+            default:
+                Debug.Log("Recompensa genérica");
+                break;
+        }
+
+        _currentRewardType = RewardType.None;
+    }
+
+    public void ShowRewardedAdForExtraLife()
+    {
+        _currentRewardType = RewardType.ExtraLife;
+        ShowRewardedAd();
+    }
+
+    public void ShowRewardedAdForDoubleDailyReward()
+    {
+        _currentRewardType = RewardType.DoubleDailyReward;
+        ShowRewardedAd();
     }
 
     public bool IsRewardedAdReady()
@@ -221,6 +266,29 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
     public bool IsInterstitialAdReady()
     {
         return _interstitialAd != null && _interstitialAd.IsAdReady();
+    }
+
+    [ContextMenu("Test Show Extra Life Ad")]
+    public void TestShowExtraLifeAd()
+    {
+        ShowRewardedAdForExtraLife();
+    }
+
+    [ContextMenu("Test Double Daily Reward")]
+    public void TestDoubleDailyReward()
+    {
+        _currentRewardType = RewardType.DoubleDailyReward;
+        ProcessDoubleDailyRewardDirect();
+    }
+
+    private void ProcessDoubleDailyRewardDirect()
+    {
+        if (DailyRewardSystem.Instance != null)
+        {
+            DailyRewardSystem.Instance.DoubleTodaysReward();
+            Debug.Log("Recompensa diaria duplicada (test)");
+        }
+        _currentRewardType = RewardType.None;
     }
 
     void OnDestroy()
