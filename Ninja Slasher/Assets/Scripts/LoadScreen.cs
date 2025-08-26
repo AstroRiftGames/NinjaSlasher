@@ -54,7 +54,6 @@ public class LoadManager : MonoBehaviour
                     UIManager.Instance.ShowLevelSelector();
                     yield return new WaitForSeconds(2);
                     AudioManager.Instance.PlayMusic(MusicClip.MainMenu, true);
-                    AudioManager.Instance.PlaySFX(SFXClip.UI_TransitionSlash);
                     asyncOperation.allowSceneActivation = true;
                 }
 #endif

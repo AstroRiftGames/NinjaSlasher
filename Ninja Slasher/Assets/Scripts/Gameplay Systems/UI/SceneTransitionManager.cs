@@ -31,6 +31,7 @@ public class SceneTransitionManager : MonoBehaviour
         _canvasManager.SetLevelsCanvasEnabled(false);
         SceneManager.LoadScene(sceneName);
         _transitionAnim.SetTrigger("End");
+        AudioManager.Instance.PlaySFX(SFXClip.UI_TransitionSlash);
         _canvasManager.SetGameplayCanvasEnabled(true);
     }
 
@@ -57,10 +58,8 @@ public class SceneTransitionManager : MonoBehaviour
         _canvasManager.SetSplashCanvasEnabled(false);
         _canvasManager.SetLevelsCanvasEnabled(true);
         _canvasManager.SetPauseCanvasEnabled(false);
-        //if (!LifeManager.Instance.CanPlay())
-        //    GetComponent<GameplayUIManager>().ShowNoLivesPanel();
-
         _transitionAnim.SetTrigger("End");
+        AudioManager.Instance.PlaySFX(SFXClip.UI_TransitionSlash);
     }
 
     private void CheckAndShowDailyRewards()
