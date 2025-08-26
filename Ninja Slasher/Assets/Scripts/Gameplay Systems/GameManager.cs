@@ -162,6 +162,7 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
         SaveManager.Instance.SaveData();
         SceneManager.sceneLoaded += HandleScreenflowLoaded;
         SceneManager.LoadScene("SplashScreen");
+        AudioManager.Instance.PlayMusic(MusicClip.MainMenu, true);
     }
 
     private void HandleScreenflowLoaded(Scene scene, LoadSceneMode mode)
