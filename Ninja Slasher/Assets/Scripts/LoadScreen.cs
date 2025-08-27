@@ -39,8 +39,10 @@ public class LoadManager : MonoBehaviour
 
                     if (touch.phase == TouchPhase.Began)
                     {
+                        AudioManager.Instance.PlaySFX(SFXClip.UI_TapSplashScreen);
                         UIManager.Instance.ShowLevelSelector();
                         yield return new WaitForSeconds(2);
+                        AudioManager.Instance.PlaySFX(SFXClip.UI_TransitionSlash);
                         asyncOperation.allowSceneActivation = true;
                     }
                 }
@@ -48,8 +50,10 @@ public class LoadManager : MonoBehaviour
 #if UNITY_EDITOR
                 if (Input.anyKeyDown)
                 {
+                    AudioManager.Instance.PlaySFX(SFXClip.UI_TapSplashScreen);
                     UIManager.Instance.ShowLevelSelector();
                     yield return new WaitForSeconds(2);
+                    AudioManager.Instance.PlayMusic(MusicClip.MainMenu, true);
                     asyncOperation.allowSceneActivation = true;
                 }
 #endif

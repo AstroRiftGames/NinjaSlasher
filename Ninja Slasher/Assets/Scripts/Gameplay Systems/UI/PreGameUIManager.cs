@@ -34,8 +34,26 @@ public class PreGameUIManager : MonoBehaviour
 
         _closeButton.onClick.RemoveAllListeners();
         _closeButton.onClick.AddListener(CancelLevelSelection);
+
         ShowPreGameTitle();
         SetGoals();
+
+        ShowPreGamePowerUps();
+    }
+
+    private void OnEnable()
+    {
+        DailyRewardSystem.OnRewardClaimed += OnDailyRewardClaimedRefresh;
+    }
+
+    private void OnDisable()
+    {
+        DailyRewardSystem.OnRewardClaimed -= OnDailyRewardClaimedRefresh;
+    }
+
+    private void OnDailyRewardClaimedRefresh(DailyReward _)
+    {
+        ShowPreGamePowerUps();
     }
 
     private void OnConfirmLevelSelection()
@@ -47,6 +65,40 @@ public class PreGameUIManager : MonoBehaviour
         }
         UIManager.Instance.ShowHidePreGameCanvas();
         UIManager.Instance.LoadLevelScene(_pendingSceneName);
+        PlayLevelMusic();
+        
+    }
+
+    void PlayLevelMusic()
+    {
+        int levelId = GetLevelIdFromSceneName(_pendingSceneName);
+        var cfgMgr = LevelConfigurationManager.Instance;
+        var config = cfgMgr != null ? cfgMgr.GetConfigurationForLevel(levelId) : null;
+
+        if (config.unlockRequirements.isBossLevel)
+        {
+            AudioManager.Instance.PlayMusic(MusicClip.BossLevel);
+            return;
+        }
+
+        switch (config.unlockRequirements.areaId)
+        {
+            case 1:
+                AudioManager.Instance.PlayMusic(MusicClip.Area1);
+                break;
+            case 2:
+                AudioManager.Instance.PlayMusic(MusicClip.Area2);
+                break;
+            case 3:
+                AudioManager.Instance.PlayMusic(MusicClip.Area3);
+                break;
+            case 4:
+                AudioManager.Instance.PlayMusic(MusicClip.Area4);
+                break;
+            case 5:
+                AudioManager.Instance.PlayMusic(MusicClip.Area5);
+                break;
+        }
     }
 
     private void CancelLevelSelection()
@@ -86,22 +138,13 @@ public class PreGameUIManager : MonoBehaviour
 
     private void OnPowerUpActivateClicked(PowerUpInventoryItem item)
     {
-        if (item.quantity > 0)
+        if (item.quantity <= 0) return;
+
+        var powerUpBase = GetPowerUpBaseByType(item.type);
+        float duration = powerUpBase != null ? powerUpBase.duration : 3600f;
+
+        if (PowerUpManager.Instance.ActivatePowerUpFromInventory(item.type, duration))
         {
-            item.quantity--;
-            var powerUpBase = GetPowerUpBaseByType(item.type);
-
-            if (powerUpBase != null)
-                PowerUpManager.Instance.ActivatePowerUp(powerUpBase);
-
-            var powerUpData = new PowerUpData
-            {
-                type = item.type,
-                activationTime = DateTime.Now,
-                duration = powerUpBase != null ? powerUpBase.duration : 3600f
-            };
-            SaveManager.Instance.GetGameData().activePowerUps.Add(powerUpData);
-            SaveManager.Instance.SaveData();
             ShowPreGamePowerUps();
         }
     }

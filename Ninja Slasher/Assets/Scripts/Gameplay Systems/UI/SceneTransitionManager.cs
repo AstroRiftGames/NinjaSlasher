@@ -31,16 +31,12 @@ public class SceneTransitionManager : MonoBehaviour
         _canvasManager.SetLevelsCanvasEnabled(false);
         SceneManager.LoadScene(sceneName);
         _transitionAnim.SetTrigger("End");
+        AudioManager.Instance.PlaySFX(SFXClip.UI_TransitionSlash);
         _canvasManager.SetGameplayCanvasEnabled(true);
     }
 
     public void RestartLevel()
     {
-        //if (!LifeManager.Instance.CanPlay())
-        //{
-        //    GetComponent<GameplayUIManager>().ShowNoLivesPanel();
-        //    return;
-        //}
         string sceneName = SceneManager.GetActiveScene().name;
         LoadLevelScene(sceneName);
         UIManager.Instance.ShowHidePauseCanvas();
@@ -62,26 +58,27 @@ public class SceneTransitionManager : MonoBehaviour
         _canvasManager.SetSplashCanvasEnabled(false);
         _canvasManager.SetLevelsCanvasEnabled(true);
         _canvasManager.SetPauseCanvasEnabled(false);
-        //if (!LifeManager.Instance.CanPlay())
-        //    GetComponent<GameplayUIManager>().ShowNoLivesPanel();
-
         _transitionAnim.SetTrigger("End");
+        AudioManager.Instance.PlaySFX(SFXClip.UI_TransitionSlash);
     }
 
     private void CheckAndShowDailyRewards()
     {
-        if (DailyRewardSystem.Instance == null)
-        {
-            return;
-        }
+        StartCoroutine(CheckAndShowDailyRewardsWhenReady());
+    }
+
+    private IEnumerator CheckAndShowDailyRewardsWhenReady()
+    {
+        while (SaveManager.Instance == null || !SaveManager.Instance.IsDataLoaded || DailyRewardSystem.Instance == null)
+            yield return null;
+
+        yield return null;
 
         bool canClaim = DailyRewardSystem.Instance.CanClaimToday();
-        Debug.Log($"[UIManager] CanClaimToday: {canClaim}");
+        Debug.Log($"[SceneTransition] CanClaimToday (ready): {canClaim}");
 
         if (canClaim)
-        {
             StartCoroutine(ShowDailyRewardsAfterDelay(1f));
-        }
     }
 
     private IEnumerator ShowDailyRewardsAfterDelay(float delay)
