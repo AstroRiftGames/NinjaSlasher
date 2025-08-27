@@ -25,12 +25,12 @@ public class DebugUIManager : MonoBehaviour
         debugStarsText.text = sb.ToString();
     }
 
-#if UNITY_EDITOR
     public void DeleteSaveDataFromUI()
     {
-        SaveManager.Instance.DeleteSaveData();
+        SaveManager.Instance.ResetAllLocalSaves(notify: true);
+
         ShowStarsDebug();
-        Debug.Log("[UIManager] Progreso borrado.");
+
+        Debug.Log("[UIManager] Progreso borrado (deep reset local).");
     }
-#endif
 }

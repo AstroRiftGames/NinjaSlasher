@@ -36,6 +36,21 @@ public class LevelProgressionManager : MonoBehaviourSingleton<LevelProgressionMa
         isInitialized = true;
     }
 
+    private void OnEnable()
+    {
+        SaveManager.OnDataLoaded += HandleDataLoaded;
+    }
+
+    private void OnDisable()
+    {
+        SaveManager.OnDataLoaded -= HandleDataLoaded;
+    }
+
+    private void HandleDataLoaded(GameData _)
+    {
+        OnProgressionUpdated?.Invoke();
+    }
+
     public bool IsLevelUnlocked(int levelId)
     {
         if (!isInitialized)
