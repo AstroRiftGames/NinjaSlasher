@@ -20,8 +20,14 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
     public bool IsDataLoaded => isDataLoaded;
     private bool hasAuthIntegration = false;
 
+    private bool _resetInProgress;
+    public bool ResetInProgress => _resetInProgress;
+
     public static event Action<GameData> OnDataLoaded;
     public static event Action<GameData> OnDataSaved;
+
+    internal void BeginReset() => _resetInProgress = true;
+    internal void EndReset() => _resetInProgress = false;
 
     public override void Awake()
     {
@@ -685,7 +691,7 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
 
     public void SaveOnApplicationEvent()
     {
-        UpdateActivePowerUps();
+        if (_resetInProgress) return;
         SaveData();
     }
 
@@ -703,26 +709,13 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
 
     public void DeleteSaveData()
     {
-        if (File.Exists(saveFilePath))
-        {
-            File.Delete(saveFilePath);
-            if (debugMode)
-                Debug.Log($"[SaveManager] Save file deleted: {saveFilePath}");
-        }
-
-        gameData = new GameData();
-        InitializeNewGameData();
-        SaveData();
-
-        if (debugMode)
-            Debug.Log("[SaveManager] Save data reset for current user");
+        ResetAllLocalSaves(notify: true);
     }
 
     #endregion
 
     #region Debug Methods
 
-#if UNITY_EDITOR
     [ContextMenu("Print User Info")]
     public void DebugPrintUserInfo()
     {
@@ -773,7 +766,78 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
         Debug.Log($"[DEBUG] lastRewardTimestamp: {d.lastRewardTimestamp}");
     }
 
-#endif
+    public void ResetAllLocalSaves(bool notify = true)
+    {
+        try
+        {
+            string rootFile = Path.Combine(Application.persistentDataPath, SaveFileName);
+            SafeDeleteFile(rootFile);
+
+            string userDataRoot = Path.Combine(Application.persistentDataPath, USER_DATA_FOLDER);
+            if (Directory.Exists(userDataRoot))
+            {
+                foreach (var dir in Directory.GetDirectories(userDataRoot))
+                {
+                    string f = Path.Combine(dir, SaveFileName);
+                    SafeDeleteFile(f);
+
+                    TryDeleteDirectoryIfEmpty(dir);
+                }
+            }
+                     
+            gameData = new GameData();
+            InitializeNewGameData();
+            isDataLoaded = true;
+            SaveData();
+
+            if (debugMode)
+            {
+                Debug.Log($"[SaveManager] Deep local reset completed.\n" +
+                          $"Root: {rootFile}\nUserData: {userDataRoot}\nCurrentPath: {saveFilePath}");
+            }
+
+            if (notify)
+            {
+                OnDataLoaded?.Invoke(gameData);
+            }
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"[SaveManager] ResetAllLocalSaves error: {e.Message}");
+        }
+    }
+
+    private void SafeDeleteFile(string path)
+    {
+        try
+        {
+            if (File.Exists(path))
+            {
+                File.Delete(path);
+                if (debugMode) Debug.Log($"[SaveManager] Deleted file: {path}");
+            }
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"[SaveManager] Failed to delete '{path}': {e.Message}");
+        }
+    }
+
+    private void TryDeleteDirectoryIfEmpty(string dir)
+    {
+        try
+        {
+            if (!Directory.Exists(dir)) return;
+            bool noFiles = Directory.GetFiles(dir).Length == 0;
+            bool noDirs = Directory.GetDirectories(dir).Length == 0;
+            if (noFiles && noDirs)
+                Directory.Delete(dir, recursive: false);
+        }
+        catch (Exception e)
+        {
+            if (debugMode) Debug.Log($"[SaveManager] Could not clean empty dir '{dir}': {e.Message}");
+        }
+    }
 
     #endregion
 }
