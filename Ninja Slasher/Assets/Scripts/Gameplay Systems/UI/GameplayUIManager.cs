@@ -145,13 +145,7 @@ public class GameplayUIManager : MonoBehaviour
     public void OnBackToSelectionPressed()
     {
         HideLifeLostPanel();
-
-        if (LifeManager.Instance != null && LifeManager.Instance.HasPendingDeduction())
-        {
-            LifeManager.Instance.OnLevelExit();
-        }
-
-        GameManager.Instance.GoToLevelSelection();
+        GameManager.Instance.GoToLevelSelection(confirmPendingDeduction: true);
     }
 
     private void OnLivesChanged(int lives)

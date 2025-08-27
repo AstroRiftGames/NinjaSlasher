@@ -109,7 +109,7 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
             _levelStarted = false;
         }
 
-        GoToLevelSelection();
+        GoToLevelSelection(confirmPendingDeduction: false);
     }
 
     public void OnLevelFailed()
@@ -168,9 +168,9 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
         }
     }
 
-    public void GoToLevelSelection()
+    public void GoToLevelSelection(bool confirmPendingDeduction = true)
     {
-        if (_levelStarted || LifeManager.Instance.HasPendingDeduction())
+        if (confirmPendingDeduction && (_levelStarted || LifeManager.Instance.HasPendingDeduction()))
         {
             LifeManager.Instance.OnLevelExit();
             _levelStarted = false;

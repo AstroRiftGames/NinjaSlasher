@@ -125,7 +125,9 @@ public class ButtonManager : MonoBehaviour
         _pauseButton.onClick.AddListener(UIManager.Instance.ShowHidePauseCanvas);
         _resumeButton.onClick.AddListener(UIManager.Instance.ShowHidePauseCanvas);
         _restartButton.onClick.AddListener(OnRestartPressed);
-        _quitButton.onClick.AddListener(UIManager.Instance.ShowLevelSelector);
+
+        _quitButton.onClick.AddListener(() => GameManager.Instance.GoToLevelSelection(confirmPendingDeduction: true));
+
         _retryButton.onClick.AddListener(GetComponent<GameplayUIManager>().OnRetryPressed);
         _backToSelectionButton.onClick.AddListener(GetComponent<GameplayUIManager>().OnBackToSelectionPressed);
     }
