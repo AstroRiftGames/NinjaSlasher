@@ -1,8 +1,12 @@
+using System.Threading.Tasks;
 using UnityEngine;
 
 public class AutoSaveManager : MonoBehaviourSingleton<AutoSaveManager>
 {
     private SaveManager saveManager;
+
+    private bool _isSuspended;
+    public bool IsSuspended => _isSuspended;
 
     void Start()
     {
@@ -188,6 +192,58 @@ public class AutoSaveManager : MonoBehaviourSingleton<AutoSaveManager>
         if (Time.frameCount % 300 == 0)
         {
             saveManager?.UpdateActivePowerUps();
+        }
+    }
+
+    public void SuspendAutoSave()
+    {
+        _isSuspended = true;
+        Debug.Log("[AutoSaveManager] AutoSave SUSPENDIDO");
+    }
+
+    public void ResumeAutoSave()
+    {
+        _isSuspended = false;
+        Debug.Log("[AutoSaveManager] AutoSave REANUDADO");
+    }
+
+    public void FactoryResetLocalOnly(bool notify = true)
+    {
+        if (!CheckSaveManager()) return;
+
+        SuspendAutoSave();
+        saveManager.BeginReset();
+        try
+        {
+            ShowSaveIndicator("Reiniciando...");
+            saveManager.ResetAllLocalSaves(notify);
+            Debug.Log("[AutoSaveManager] FactoryResetLocalOnly completado.");
+        }
+        finally
+        {
+            saveManager.EndReset();
+            ResumeAutoSave();
+        }
+    }
+
+    public async Task FactoryResetLocalAndCloudAsync(bool notify = true)
+    {
+        if (!CheckSaveManager()) return;
+
+        SuspendAutoSave();
+        saveManager.BeginReset();
+        try
+        {
+            ShowSaveIndicator("Reiniciando (nube)...");
+
+            await Task.Yield();
+            saveManager.ResetAllLocalSaves(notify);
+            Debug.Log("[AutoSaveManager] FactoryResetLocalAndCloudAsync completado.");
+        }
+        finally
+        {
+            saveManager.EndReset();
+            ResumeAutoSave();
         }
     }
 

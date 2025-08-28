@@ -7,14 +7,21 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
     [SerializeField] private string _appKey = "233038335";
     [SerializeField] private string _rewardedAdUnitId = "88ic5ya7o0vd1t02";
     [SerializeField] private string _interstitialAdUnitId = "y2is2h4ghz01hst6";
-    [SerializeField] private string _bannerAdUnitId = "jhznuyu8snjchhmv";
 
     //[Header("Debug")]
     //[SerializeField] private bool _enableTestSuite;
 
     private LevelPlayRewardedAd _rewardedAd;
     private LevelPlayInterstitialAd _interstitialAd;
-    private LevelPlayBannerAd _bannerAd;
+
+    public enum RewardType
+    {
+        ExtraLife,
+        DoubleDailyReward,
+        None
+    }
+
+    private RewardType _currentRewardType = RewardType.ExtraLife;
 
     void Start()
     {
@@ -74,14 +81,6 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
         _interstitialAd.OnAdClosed += OnInterstitialAdClosed;
         _interstitialAd.OnAdClicked += OnInterstitialAdClicked;
 
-        //_bannerAd = new LevelPlayBannerAd(_bannerAdUnitId);
-
-        //_bannerAd.OnAdLoaded += OnBannerAdLoaded;
-        //_bannerAd.OnAdLoadFailed += OnBannerAdLoadFailed;
-        //_bannerAd.OnAdDisplayed += OnBannerAdDisplayed;
-        //_bannerAd.OnAdDisplayFailed += OnBannerAdDisplayFailed;
-        //_bannerAd.OnAdClicked += OnBannerAdClicked;
-
         LoadAds();
     }
 
@@ -126,46 +125,6 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
     public void LaunchTestSuite()
     {
         LevelPlay.LaunchTestSuite();
-    }
-
-    [ContextMenu("Show Banner Ad")]
-    public void ShowBannerAd()
-    {
-        if (_bannerAd != null)
-        {
-            _bannerAd.DestroyAd();
-        }
-
-        _bannerAd = new LevelPlayBannerAd(_bannerAdUnitId);
-
-        _bannerAd.OnAdLoaded += OnBannerAdLoaded;
-        _bannerAd.OnAdLoadFailed += OnBannerAdLoadFailed;
-        _bannerAd.OnAdDisplayed += OnBannerAdDisplayed;
-        _bannerAd.OnAdDisplayFailed += OnBannerAdDisplayFailed;
-        _bannerAd.OnAdClicked += OnBannerAdClicked;
-
-        Debug.Log("Loading Banner Ad");
-        _bannerAd.LoadAd();
-    }
-
-    [ContextMenu("Hide Banner Ad")]
-    public void HideBannerAd()
-    {
-        if (_bannerAd != null)
-        {
-            Debug.Log("Hidding Banner Ad");
-            _bannerAd.HideAd();
-        }
-    }
-
-    [ContextMenu("Destroy Banner Ad")]
-    public void DestroyBannerAd()
-    {
-        if (_bannerAd != null)
-        {
-            Debug.Log("Destroying Banner Ad");
-            _bannerAd.DestroyAd();
-        }
     }
 
     [ContextMenu("Reload All Ads")]
@@ -246,33 +205,6 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
         Debug.Log("Interstitial Ad clicked");
     }
 
-    private void OnBannerAdLoaded(LevelPlayAdInfo adInfo)
-    {
-        Debug.Log($"Banner Ad loaded. Network: {adInfo.adNetwork}");
-        _bannerAd?.ShowAd();
-    }
-
-    private void OnBannerAdLoadFailed(LevelPlayAdError error)
-    {
-        Debug.LogError($"Error loading Banner Ad: {error.ErrorMessage}");
-        Invoke(nameof(RetryBannerLoad), 15f);
-    }
-
-    private void OnBannerAdDisplayed(LevelPlayAdInfo adInfo)
-    {
-        Debug.Log("Banner Ad showed");
-    }
-
-    private void OnBannerAdDisplayFailed(LevelPlayAdDisplayInfoError error)
-    {
-        Debug.LogError($"Error showing Banner Ad: {error.LevelPlayError.ErrorMessage}");
-    }
-
-    private void OnBannerAdClicked(LevelPlayAdInfo adInfo)
-    {
-        Debug.Log("Banner Ad clicked");
-    }
-
     private void LoadRewardedAd()
     {
         _rewardedAd?.LoadAd();
@@ -283,16 +215,47 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
         _interstitialAd?.LoadAd();
     }
 
-    private void RetryBannerLoad()
-    {
-        ShowBannerAd(); // Reintentar cargar banner
-    }
-
-    private void GiveReward(LevelPlayReward reward)
+    public void GiveReward(LevelPlayReward reward)
     {
         Debug.Log($"Otorgando reward: {reward.Name} x{reward.Amount}");
 
-        // lógica de recompensa
+        switch (_currentRewardType)
+        {
+            case RewardType.ExtraLife:
+                if (LifeManager.Instance != null)
+                {
+                    LifeManager.Instance.AddLife();
+                    Debug.Log("Vida extra otorgada");
+                }
+                break;
+
+            case RewardType.DoubleDailyReward:
+                if (DailyRewardSystem.Instance != null)
+                {
+                    DailyRewardSystem.Instance.DoubleTodaysReward();
+                    Debug.Log("Recompensa diaria duplicada!");
+                }
+                break;
+
+            case RewardType.None:
+            default:
+                Debug.Log("Recompensa genérica");
+                break;
+        }
+
+        _currentRewardType = RewardType.None;
+    }
+
+    public void ShowRewardedAdForExtraLife()
+    {
+        _currentRewardType = RewardType.ExtraLife;
+        ShowRewardedAd();
+    }
+
+    public void ShowRewardedAdForDoubleDailyReward()
+    {
+        _currentRewardType = RewardType.DoubleDailyReward;
+        ShowRewardedAd();
     }
 
     public bool IsRewardedAdReady()
@@ -305,9 +268,27 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
         return _interstitialAd != null && _interstitialAd.IsAdReady();
     }
 
-    public bool IsBannerAdLoaded()
+    [ContextMenu("Test Show Extra Life Ad")]
+    public void TestShowExtraLifeAd()
     {
-        return _bannerAd != null;
+        ShowRewardedAdForExtraLife();
+    }
+
+    [ContextMenu("Test Double Daily Reward")]
+    public void TestDoubleDailyReward()
+    {
+        _currentRewardType = RewardType.DoubleDailyReward;
+        ProcessDoubleDailyRewardDirect();
+    }
+
+    private void ProcessDoubleDailyRewardDirect()
+    {
+        if (DailyRewardSystem.Instance != null)
+        {
+            DailyRewardSystem.Instance.DoubleTodaysReward();
+            Debug.Log("Recompensa diaria duplicada (test)");
+        }
+        _currentRewardType = RewardType.None;
     }
 
     void OnDestroy()
@@ -336,16 +317,6 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
             _interstitialAd.OnAdClosed -= OnInterstitialAdClosed;
             _interstitialAd.OnAdClicked -= OnInterstitialAdClicked;
             _interstitialAd.DestroyAd();
-        }
-
-        if (_bannerAd != null)
-        {
-            _bannerAd.OnAdLoaded -= OnBannerAdLoaded;
-            _bannerAd.OnAdLoadFailed -= OnBannerAdLoadFailed;
-            _bannerAd.OnAdDisplayed -= OnBannerAdDisplayed;
-            _bannerAd.OnAdDisplayFailed -= OnBannerAdDisplayFailed;
-            _bannerAd.OnAdClicked -= OnBannerAdClicked;
-            _bannerAd.DestroyAd();
         }
     }
 }
