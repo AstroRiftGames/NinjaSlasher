@@ -1,3 +1,4 @@
+using TMPro;
 using UnityEngine;
 
 public class Chain : MonoBehaviour
@@ -29,12 +30,6 @@ public class Chain : MonoBehaviour
             AdjustRotation();
             AdjustPosition();
             AdjustSize();
-
-            if(Input.GetKeyDown(KeyCode.B))
-            {
-                BreakChain();
-                ReleaseBall();
-            }
         }
     }
 
@@ -81,14 +76,15 @@ public class Chain : MonoBehaviour
         }
     }
 
-    private void BreakChain()
+    public void BreakChain()
     {
+        _sentinel.Animator.SetTrigger("onHit");
         _isActive = false;
         _renderer.enabled = false;
         Destroy(gameObject, 2f);
     }
 
-    private void ReleaseBall()
+    public void ReleaseBall()
     {
         _ball.TryGetComponent(out DemolitionBall ball);
         ball.enabled = false;

@@ -24,6 +24,7 @@ public class SentinelCore : MonoBehaviour
     {
         if (collision.CompareTag("Player"))
         {
+            _sentinel.Animator.SetTrigger("onHit");
             KillSentinel();
         }
     }

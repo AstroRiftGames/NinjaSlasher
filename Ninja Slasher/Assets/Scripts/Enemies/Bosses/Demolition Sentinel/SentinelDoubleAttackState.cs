@@ -19,6 +19,7 @@ public class SentinelDoubleAttackState<SentinelStates> : State<SentinelStates>
 
     private IEnumerator DoubleAttack()
     {
+        _sentinel.Animator.SetTrigger("onDouble");
         for (int i = 0; i < _sentinel.AmountOfAttacks; i++)
         {
             _sentinel.SetTargetDirection();

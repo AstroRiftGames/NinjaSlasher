@@ -26,7 +26,11 @@ public class DemolitionSentinel : BossEnemy
 
     [SerializeField] private SentinelCore _core;
     public SentinelCore Core => _core;
-    public void SetVulnerability(bool value) => _isVulnerable = value;
+    public void SetVulnerability(bool value)
+    {
+        _isVulnerable = value;
+        _animator.SetBool("isVulnerable", value);
+    }
     private bool _isVulnerable;
     public void SetJustAttacked(bool value) => _justAttacked = value;
     private bool _justAttacked;
@@ -46,6 +50,9 @@ public class DemolitionSentinel : BossEnemy
     [SerializeField] private float _cooldown;
     [SerializeField] private DemolitionBall[] _balls;
     public DemolitionBall[] Balls => _balls;
+    [SerializeField] Chain _rightChain;
+    [SerializeField] Chain _leftChain;
+    [SerializeField] float _waitTime;
 
     [Header("Double Attack")]
     public float TimeBetweenAttacks => _timeBetweenAttacks;
@@ -74,6 +81,12 @@ public class DemolitionSentinel : BossEnemy
         InitializeTree();
         _currentBall = _balls[0];
 
+        StartCoroutine(Activate());
+    }
+
+    public IEnumerator Activate()
+    {
+        yield return new WaitForSeconds(_waitTime);
         ChooseAttack();
     }
 
@@ -81,6 +94,25 @@ public class DemolitionSentinel : BossEnemy
     {
         _fsm.OnUpdate();
         _root.Execute();
+
+        if (Input.GetKeyDown(KeyCode.V))
+        {
+            _rightChain.BreakChain();
+            _rightChain.ReleaseBall();
+            _animator.SetBool("hasRightArm", false);
+            _animator.SetTrigger("onHit");
+        }
+
+        if (Input.GetKeyDown(KeyCode.B))
+        {
+            _leftChain.BreakChain();
+            _leftChain.ReleaseBall();
+            _animator.SetBool("hasLeftArm", false);
+            _animator.SetTrigger("onHit");
+        }
+
+        if (Input.GetKeyDown(KeyCode.L)) SetVulnerability(true);
+        if(Input.GetKeyDown(KeyCode.M)) SetVulnerability(false);
     }
 
     #endregion
@@ -97,6 +129,7 @@ public class DemolitionSentinel : BossEnemy
     {
         _isRightBallTurn = !_isRightBallTurn;
         _currentBall = _balls[_isRightBallTurn ? 1 : 0];
+        Animator.SetBool("isRightBallTurn", _isRightBallTurn);
     }
 
     public IEnumerator ReturnBalls()
@@ -185,10 +218,15 @@ public class DemolitionSentinel : BossEnemy
     }
 
     #region QUESTIONS
-    bool QDoubleAttack() => !_justAttacked && (_isDoubleAttacking || (!_isAttacking && _nextAttack == SentinelAttacks.Double));
-    bool QHeavyAttack() => !_justAttacked && (_isHeavyAttacking || (!_isAttacking && _nextAttack == SentinelAttacks.Heavy));
-    bool QSweepAttack() => !_justAttacked && (_isSweepAttacking || (!_isAttacking && _nextAttack == SentinelAttacks.Sweep));
-    bool QVulnerable() => _balls.Length <= 0;
+    //bool QDoubleAttack() => !_justAttacked && (_isDoubleAttacking || (!_isAttacking && _nextAttack == SentinelAttacks.Double));
+    //bool QHeavyAttack() => !_justAttacked && (_isHeavyAttacking || (!_isAttacking && _nextAttack == SentinelAttacks.Heavy));
+    //bool QSweepAttack() => !_justAttacked && (_isSweepAttacking || (!_isAttacking && _nextAttack == SentinelAttacks.Sweep));
+    //bool QVulnerable() => _isVulnerable;
+
+    bool QDoubleAttack() => !_isAttacking && Input.GetKeyDown(KeyCode.H);
+    bool QHeavyAttack() => !_isAttacking && Input.GetKeyDown(KeyCode.J);
+    bool QSweepAttack() => !_isAttacking && Input.GetKeyDown(KeyCode.K);
+    bool QVulnerable() => _isVulnerable;
 
     #endregion
 

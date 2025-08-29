@@ -19,6 +19,7 @@ public class SentinelHeavyAttackState<SentinelStates> : State<SentinelStates>
 
     private IEnumerator HeavyAttack()
     {
+        _sentinel.Animator.SetTrigger("onHeavy");
         _sentinel.SetTargetDirection();
         yield return new WaitForSeconds(_sentinel.ChargingTime);
         _sentinel.CurrentBall.HeavyThrow(_sentinel.TargetDir);

@@ -19,6 +19,7 @@ public class SentinelSweepAttackState<SentinelStates> : State<SentinelStates>
 
     private IEnumerator SweepAttack()
     {
+        _sentinel.Animator.SetTrigger("onSweep");
         Quaternion initRot = _sentinel.CurrentBall.Anchor.rotation;
         Quaternion targetRot = initRot * Quaternion.Euler(0, 0, 180 * (_sentinel.IsRightBallTurn ? -1 : 1));
 
