@@ -1,7 +1,10 @@
 using System;
 using System.Collections;
 using System.Linq;
+using TMPro.EditorUtilities;
+using Unity.Burst.Intrinsics;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 
 public enum SentinelStates
@@ -42,7 +45,7 @@ public class DemolitionSentinel : BossEnemy
     public Vector3 TargetDir => _targetDir;
     Vector3 _targetDir;
     public bool IsRightBallTurn => _isRightBallTurn;
-    private bool _isRightBallTurn;
+    private bool _isRightBallTurn = true;
     public DemolitionBall CurrentBall => _currentBall;
     DemolitionBall _currentBall;
 
@@ -121,34 +124,35 @@ public class DemolitionSentinel : BossEnemy
 
     public void SetTargetDirection()
     {
-        Vector2 dir = _player.position - _currentBall.Anchor.position;
+        Vector2 dir = _player.position - _currentBall.PivotPoint.position;
         _targetDir = dir.normalized;
+    }
+
+    public void SetTargetDirection(Vector2 dir)
+    {
+        _targetDir = dir.normalized;
+        AimArm(CurrentBall.PivotPoint);
+    }
+
+    public void AimArm( Transform arm)
+    {
+        float angle = (Mathf.Atan2(_targetDir.y, _targetDir.x) * Mathf.Rad2Deg);
+        arm.transform.rotation = Quaternion.Euler(0, 0, angle);
     }
 
     public void ChangeBall()
     {
         _isRightBallTurn = !_isRightBallTurn;
-        _currentBall = _balls[_isRightBallTurn ? 1 : 0];
+        _currentBall = _balls[_isRightBallTurn ? 0 : 1];
         Animator.SetBool("isRightBallTurn", _isRightBallTurn);
     }
 
-    public IEnumerator ReturnBalls()
+    public void ReturnOneBall(DemolitionBall ball)
     {
-        foreach (var ball in _balls)
-        {
-            Vector3 initPos = ball.transform.position;
-            Vector3 targetPos = new Vector3(ball == _balls[0] ? -2.5f : 2.5f, 0, 0);
-
-            float t = 0;
-            while (t < 1)
-            {
-                t += Time.deltaTime / _timeBetweenAttacks;
-                ball.transform.position = Vector3.Lerp(initPos, targetPos, t);
-                yield return null;
-            }
-        }
+        SetTargetDirection(Vector2.down);
+        AimArm(ball.PivotPoint);
+        StartCoroutine(ball.Return(_timeBetweenAttacks));
     }
-
 
     public void RemoveBall(DemolitionBall ball)
     {
@@ -223,9 +227,9 @@ public class DemolitionSentinel : BossEnemy
     //bool QSweepAttack() => !_justAttacked && (_isSweepAttacking || (!_isAttacking && _nextAttack == SentinelAttacks.Sweep));
     //bool QVulnerable() => _isVulnerable;
 
-    bool QDoubleAttack() => !_isAttacking && Input.GetKeyDown(KeyCode.H);
-    bool QHeavyAttack() => !_isAttacking && Input.GetKeyDown(KeyCode.J);
-    bool QSweepAttack() => !_isAttacking && Input.GetKeyDown(KeyCode.K);
+    bool QDoubleAttack() => !_justAttacked && (_isDoubleAttacking || (!_isAttacking && Input.GetKeyDown(KeyCode.H)));
+    bool QHeavyAttack() => !_justAttacked && (_isHeavyAttacking || (!_isAttacking && Input.GetKeyDown(KeyCode.J)));
+    bool QSweepAttack() => !_justAttacked && (_isSweepAttacking || (!_isAttacking && Input.GetKeyDown(KeyCode.K)));
     bool QVulnerable() => _isVulnerable;
 
     #endregion

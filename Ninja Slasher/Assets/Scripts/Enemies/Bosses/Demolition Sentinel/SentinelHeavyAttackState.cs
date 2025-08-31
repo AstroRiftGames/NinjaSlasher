@@ -20,13 +20,21 @@ public class SentinelHeavyAttackState<SentinelStates> : State<SentinelStates>
     private IEnumerator HeavyAttack()
     {
         _sentinel.Animator.SetTrigger("onHeavy");
-        _sentinel.SetTargetDirection();
+        
         yield return new WaitForSeconds(_sentinel.ChargingTime);
-        _sentinel.CurrentBall.HeavyThrow(_sentinel.TargetDir);
-        _sentinel.ChangeBall();
+
+        _sentinel.SetTargetDirection();
+        _sentinel.AimArm(_sentinel.Balls[_sentinel.IsRightBallTurn ? 0 : 1].PivotPoint);
+
+        yield return new WaitForSeconds(.25f);
+
+        _sentinel.CurrentBall.HeavyThrow();
+        
+        yield return new WaitForSeconds(1f);
+
+        if (_sentinel.Balls.Length == 2) _sentinel.ChangeBall();
         _sentinel._isHeavyAttacking = false;
         _sentinel.SetIsAttacking(false);
         _sentinel.SetJustAttacked(true);
-        _sentinel.StartCoroutine(_sentinel.ReturnBalls());
     }
 }

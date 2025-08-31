@@ -23,13 +23,17 @@ public class SentinelDoubleAttackState<SentinelStates> : State<SentinelStates>
         for (int i = 0; i < _sentinel.AmountOfAttacks; i++)
         {
             _sentinel.SetTargetDirection();
-            _sentinel.CurrentBall.Throw(_sentinel.TargetDir);
+            _sentinel.AimArm(_sentinel.Balls[_sentinel.IsRightBallTurn ? 0 : 1].PivotPoint);
+
+            yield return new WaitForSeconds(.25f);
+
+            _sentinel.CurrentBall.Throw();
             _sentinel.ChangeBall();
-            yield return new WaitForSeconds(_sentinel.TimeBetweenAttacks);
+
+            yield return new WaitForSeconds(1f);
         }
         _sentinel._isDoubleAttacking = false;
         _sentinel.SetIsAttacking(false);
         _sentinel.SetJustAttacked(true);
-        _sentinel.StartCoroutine(_sentinel.ReturnBalls());
     }
 }

@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Threading.Tasks;
 using UnityEngine;
 
 public class SentinelSweepAttackState<SentinelStates> : State<SentinelStates>
@@ -20,29 +21,12 @@ public class SentinelSweepAttackState<SentinelStates> : State<SentinelStates>
     private IEnumerator SweepAttack()
     {
         _sentinel.Animator.SetTrigger("onSweep");
-        Quaternion initRot = _sentinel.CurrentBall.Anchor.rotation;
-        Quaternion targetRot = initRot * Quaternion.Euler(0, 0, 180 * (_sentinel.IsRightBallTurn ? -1 : 1));
 
-        float n = 0;
-        while (n < 1)
-        {
-            n += Time.deltaTime / (_sentinel.SweepDuration/2);
-            _sentinel.CurrentBall.Anchor.rotation = Quaternion.Slerp(initRot, targetRot, n);
-            yield return null;
-        }
-
-        n = 0;
-        while (n < 1)
-        {
-            n += Time.deltaTime / (_sentinel.SweepDuration/2);
-            _sentinel.CurrentBall.Anchor.rotation = Quaternion.Slerp(targetRot, initRot, n);
-            yield return null;
-        }
+        yield return new WaitForSeconds(1.5f);
 
         _sentinel._isSweepAttacking = false;
         _sentinel.SetIsAttacking(false);
         _sentinel.SetJustAttacked(true);
         _sentinel.ChangeBall();
-        _sentinel.StartCoroutine(_sentinel.ReturnBalls());
     }
 }

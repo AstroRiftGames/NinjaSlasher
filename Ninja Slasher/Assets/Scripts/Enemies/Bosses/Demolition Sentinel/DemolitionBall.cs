@@ -1,21 +1,22 @@
 using System;
+using System.Collections;
+using System.Linq;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class DemolitionBall : MonoBehaviour
 {
-    [SerializeField] Transform _anchor;
-    public Transform Anchor => _anchor;
+    [SerializeField] Transform _pivotPoint;
+    [SerializeField] DemolitionSentinel _sentinel;
+    public Transform PivotPoint => _pivotPoint;
     [SerializeField] float _maxDistance;
-    [SerializeField] float _minDistance;
     [SerializeField] float _force;
-
-    bool _isRetrieving;
-
+    public bool IsReturning => _isReturning;
+    private bool _isReturning;
+    public void SetReturn(bool value) => _isReturning = value;
 
     public Rigidbody2D RB => _rb;
     private Rigidbody2D _rb;
-
-    public EventHandler<DemolitionBall> OnMaxDistanceReached;
 
 
     [Header("HeavyAttack")]
@@ -29,37 +30,55 @@ public class DemolitionBall : MonoBehaviour
     }
 
     private void Update()
-    { 
-        if (IsMaxDistanceReached())
+    {
+        CheckMaxDistanceReached();
+    }
+
+    private void CheckMaxDistanceReached()
+    {
+        Vector2 v = transform.position - _sentinel.transform.position;
+        float dis = v.magnitude;
+        Vector2 dir = v.normalized;
+
+        if (dis > _maxDistance)
         {
-            Retrieve();
+            Stop();
+            Vector2 newPos = (Vector2)_sentinel.transform.position + (dir * _maxDistance - dir);
+            transform.SetPositionAndRotation(newPos, Quaternion.identity);
+            if(!_isReturning) _sentinel.ReturnOneBall(this);
         }
+    }
 
-        if(_isRetrieving && IsBackOn())
+    public void Stop()
+    {
+        _rb.linearVelocity = Vector2.zero;
+    }
+
+    public IEnumerator Return(float lapse)
+    {
+        SetReturn(true);
+        Vector3 initPos = transform.localPosition;
+        Vector3 targetPos = new Vector3(3f, 0, 0);
+        float t = 0;
+        while (t < 1)
         {
-            _rb.linearVelocity = Vector2.zero;
-            _isRetrieving = false;
+            t += Time.deltaTime / lapse;
+            transform.localPosition = Vector3.Lerp(initPos, targetPos, t);
+            transform.localRotation = Quaternion.Lerp(transform.localRotation, Quaternion.Euler(Vector3.zero), t);
+            yield return null;
         }
+        SetReturn(false);
     }
 
-    private bool IsMaxDistanceReached()
+    public void Throw()
     {
-        return Vector2.Distance(transform.localToWorldMatrix.GetPosition(), _anchor.localToWorldMatrix.GetPosition()) >= _maxDistance;
+        transform.localRotation.Set(0, 0, 0, 0);
+        _rb.AddForce(transform.right * _force, ForceMode2D.Impulse);
     }
 
-    private bool IsBackOn()
+    public void HeavyThrow()
     {
-        return Vector2.Distance(transform.localToWorldMatrix.GetPosition(), _anchor.localToWorldMatrix.GetPosition()) <= _minDistance;
-    }
-
-    public void Throw(Vector2 direction)
-    {
-        _rb.AddForce(direction * _force, ForceMode2D.Impulse);
-    }
-
-    public void HeavyThrow(Vector2 direction)
-    {
-        Throw(direction);
+        Throw();
         _heavyAttack = true;
     }
 
@@ -77,29 +96,23 @@ public class DemolitionBall : MonoBehaviour
         }
     }
 
-
-    private void Retrieve()
-    {
-        Vector2 dir = (_anchor.localToWorldMatrix.GetPosition() - transform.localToWorldMatrix.GetPosition()).normalized;
-        _isRetrieving = true;
-        _rb.linearVelocity = Vector2.zero;
-        Throw(dir);
-    }
-
     private void OnCollisionEnter2D(Collision2D collision)
     {
         if(collision.gameObject.CompareTag("Player"))
         {
             collision.gameObject.TryGetComponent(out Controller player);
             player.Die();
+            Stop();
+            if (!_isReturning) _sentinel.ReturnOneBall(this);
         }
         if (_heavyAttack) CreateDamageArea(collision.transform.position);
-        Retrieve();
+        Stop();
+        if (!_isReturning) _sentinel.ReturnOneBall(this);
     }
 
 
     private void OnDrawGizmos()
     {
-        Gizmos.DrawWireSphere(_anchor.position, _maxDistance);
+        Gizmos.DrawWireSphere(_sentinel.transform.position, _maxDistance);
     }
 }
