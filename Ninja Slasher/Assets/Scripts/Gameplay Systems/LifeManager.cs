@@ -1,14 +1,6 @@
 using System;
 using UnityEngine;
 
-/// <summary>
-/// Sistema de vidas con deducción virtual consistente:
-/// - Si regenera/suma vidas durante un nivel, la deducción virtual se recalcula (CurrentLives - 1).
-/// - Unifica el evento para UI: siempre emitimos las vidas "mostrables" (GetDisplayLives()).
-/// - Carga en Awake() para evitar carreras con GameManager.Start().
-/// - No duplica confirmación en pérdida de foco (dejamos que GameManager lo haga).
-/// - Usa DateTime.UtcNow para mayor estabilidad temporal.
-/// </summary>
 public class LifeManager : MonoBehaviourSingleton<LifeManager>
 {
     [Header("LIVES SETTINGS")]
@@ -23,6 +15,13 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
     private int _virtualLives;
     private bool _hasVirtualDeduction = false;
 
+    [Header("ADS CONFIGURATION")]
+    [SerializeField] private int lossesRequiredForAd = 2;
+    [SerializeField] private bool enableConsecutiveLossAds = true;
+    [SerializeField] private bool enableNoLivesAds = true;
+
+    private int currentConsecutiveLosses = 0;
+
     private bool _levelInProgress = false;
 
     public event Action<int> OnLivesChanged;
@@ -31,6 +30,7 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
     {
         base.Awake();
         InitializeFromSave();
+        LoadAdsProgress();
     }
 
     private void Start()
@@ -163,6 +163,8 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
             _hasVirtualDeduction = false;
             _levelInProgress = false;
 
+            CheckLifeLossAds();
+
             Persist("Vida perdida (confirmada)");
             EmitDisplayLivesChanged();
 
@@ -175,6 +177,8 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
             CurrentLives = Mathf.Max(0, CurrentLives - 1);
             _lastLifeUsedUtc = DateTime.UtcNow;
             _virtualLives = CurrentLives;
+
+            CheckLifeLossAds();
 
             Persist("Vida perdida (directa)");
             EmitDisplayLivesChanged();
@@ -190,6 +194,8 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
             _virtualLives = CurrentLives;
             _hasVirtualDeduction = false;
             _levelInProgress = false;
+
+            ResetLossCounter();
 
             Debug.Log($"[LifeManager] Nivel completado. Descuento cancelado. Vidas mantenidas: {CurrentLives}");
             EmitDisplayLivesChanged();
@@ -274,5 +280,84 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
     private void EmitDisplayLivesChanged()
     {
         OnLivesChanged?.Invoke(GetDisplayLives());
+    }
+
+    private void LoadAdsProgress()
+    {
+        currentConsecutiveLosses = PlayerPrefs.GetInt("ConsecutiveLosses", 0);
+        Debug.Log($"Derrotas consecutivas cargadas: {currentConsecutiveLosses}");
+    }
+
+    private void SaveAdsProgress()
+    {
+        PlayerPrefs.SetInt("ConsecutiveLosses", currentConsecutiveLosses);
+        PlayerPrefs.Save();
+    }
+
+    private void CheckLifeLossAds()
+    {
+        if (enableNoLivesAds && CurrentLives == 0)
+        {
+            Debug.Log("¡Jugador sin vidas! Mostrando anuncio intersticial...");
+            ShowNoLivesAd();
+            ResetLossCounter();
+        }
+        else if (enableConsecutiveLossAds)
+        {
+            currentConsecutiveLosses++;
+            Debug.Log($"Vida perdida. Derrotas consecutivas: {currentConsecutiveLosses}/{lossesRequiredForAd}");
+
+            if (currentConsecutiveLosses >= lossesRequiredForAd)
+            {
+                ShowConsecutiveLossAd();
+                ResetLossCounter();
+            }
+        }
+
+        SaveAdsProgress();
+    }
+
+    private void ShowConsecutiveLossAd()
+    {
+        Debug.Log($"¡{lossesRequiredForAd} derrotas consecutivas! Mostrando publicidad intersticial...");
+
+        if (AdsManager.Instance != null && AdsManager.Instance.IsInterstitialAdReady())
+        {
+            AdsManager.Instance.ShowInterstitialAd();
+        }
+        else
+        {
+            Debug.LogWarning("AdsManager no disponible o anuncio intersticial no listo para derrotas consecutivas");
+            if (AdsManager.Instance != null)
+            {
+                AdsManager.Instance.ReloadAllAds();
+            }
+        }
+    }
+
+    private void ShowNoLivesAd()
+    {
+        if (AdsManager.Instance != null && AdsManager.Instance.IsInterstitialAdReady())
+        {
+            AdsManager.Instance.ShowInterstitialAd();
+        }
+        else
+        {
+            Debug.LogWarning("AdsManager no disponible o anuncio intersticial no listo para 0 vidas");
+            if (AdsManager.Instance != null)
+            {
+                AdsManager.Instance.ReloadAllAds();
+            }
+        }
+    }
+
+    private void ResetLossCounter()
+    {
+        if (currentConsecutiveLosses > 0)
+        {
+            Debug.Log($"Contador de derrotas reseteado (era: {currentConsecutiveLosses})");
+        }
+        currentConsecutiveLosses = 0;
+        SaveAdsProgress();
     }
 }
