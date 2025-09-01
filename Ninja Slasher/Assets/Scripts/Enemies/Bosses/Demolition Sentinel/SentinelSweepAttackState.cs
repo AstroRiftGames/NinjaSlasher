@@ -22,11 +22,12 @@ public class SentinelSweepAttackState<SentinelStates> : State<SentinelStates>
     {
         _sentinel.Animator.SetTrigger("onSweep");
 
+        _sentinel.SetTargetDirection(Vector2.down);
+
         yield return new WaitForSeconds(1.5f);
 
         _sentinel._isSweepAttacking = false;
         _sentinel.SetIsAttacking(false);
         _sentinel.SetJustAttacked(true);
-        _sentinel.ChangeBall();
     }
 }

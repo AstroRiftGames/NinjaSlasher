@@ -28,6 +28,14 @@ public class SentinelDoubleAttackState<SentinelStates> : State<SentinelStates>
             yield return new WaitForSeconds(.25f);
 
             _sentinel.CurrentBall.Throw();
+
+            while (_sentinel.CurrentBall.IsOut)
+            {
+                yield return null;
+            }
+
+            _sentinel.SetTargetDirection(Vector2.down);
+            _sentinel.AimArm(_sentinel.CurrentBall.PivotPoint);
             _sentinel.ChangeBall();
 
             yield return new WaitForSeconds(1f);

@@ -14,6 +14,9 @@ public class DemolitionBall : MonoBehaviour
     public bool IsReturning => _isReturning;
     private bool _isReturning;
     public void SetReturn(bool value) => _isReturning = value;
+    public bool IsOut => _isOut;
+    private bool _isOut;
+    public void SetIsOut(bool value) => _isOut = value;
 
     public Rigidbody2D RB => _rb;
     private Rigidbody2D _rb;
@@ -68,10 +71,12 @@ public class DemolitionBall : MonoBehaviour
             yield return null;
         }
         SetReturn(false);
+        SetIsOut(false);
     }
 
     public void Throw()
     {
+        SetIsOut(true);
         transform.localRotation.Set(0, 0, 0, 0);
         _rb.AddForce(transform.right * _force, ForceMode2D.Impulse);
     }

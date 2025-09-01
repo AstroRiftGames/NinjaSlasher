@@ -20,8 +20,6 @@ public class SentinelHeavyAttackState<SentinelStates> : State<SentinelStates>
     private IEnumerator HeavyAttack()
     {
         _sentinel.Animator.SetTrigger("onHeavy");
-        
-        yield return new WaitForSeconds(_sentinel.ChargingTime);
 
         _sentinel.SetTargetDirection();
         _sentinel.AimArm(_sentinel.Balls[_sentinel.IsRightBallTurn ? 0 : 1].PivotPoint);
@@ -29,10 +27,16 @@ public class SentinelHeavyAttackState<SentinelStates> : State<SentinelStates>
         yield return new WaitForSeconds(.25f);
 
         _sentinel.CurrentBall.HeavyThrow();
-        
-        yield return new WaitForSeconds(1f);
 
+        while (_sentinel.CurrentBall.IsOut)
+        {
+            yield return null;
+        }
+
+        _sentinel.SetTargetDirection(Vector2.down);
+        _sentinel.AimArm(_sentinel.CurrentBall.PivotPoint);
         if (_sentinel.Balls.Length == 2) _sentinel.ChangeBall();
+
         _sentinel._isHeavyAttacking = false;
         _sentinel.SetIsAttacking(false);
         _sentinel.SetJustAttacked(true);

@@ -18,6 +18,7 @@ public enum SentinelStates
 
 public enum SentinelAttacks
 {
+    None,
     Heavy,
     Double,
     Sweep,
@@ -38,7 +39,7 @@ public class DemolitionSentinel : BossEnemy
     public void SetJustAttacked(bool value) => _justAttacked = value;
     private bool _justAttacked;
 
-    private SentinelAttacks _nextAttack;
+    private SentinelAttacks _nextAttack = SentinelAttacks.None;
     private bool _isAttacking;
     public void SetIsAttacking(bool value) => _isAttacking = value;
 
@@ -89,6 +90,9 @@ public class DemolitionSentinel : BossEnemy
 
     public IEnumerator Activate()
     {
+        SetTargetDirection(Vector2.down);
+        AimArm(_balls[0].PivotPoint);
+        AimArm(_balls[1].PivotPoint);
         yield return new WaitForSeconds(_waitTime);
         ChooseAttack();
     }
@@ -97,6 +101,9 @@ public class DemolitionSentinel : BossEnemy
     {
         _fsm.OnUpdate();
         _root.Execute();
+
+        Debug.DrawRay(transform.position, _targetDir * 15f, Color.yellow);
+
 
         if (Input.GetKeyDown(KeyCode.V))
         {
@@ -115,7 +122,7 @@ public class DemolitionSentinel : BossEnemy
         }
 
         if (Input.GetKeyDown(KeyCode.L)) SetVulnerability(true);
-        if(Input.GetKeyDown(KeyCode.M)) SetVulnerability(false);
+        if (Input.GetKeyDown(KeyCode.M)) SetVulnerability(false);
     }
 
     #endregion
@@ -149,8 +156,6 @@ public class DemolitionSentinel : BossEnemy
 
     public void ReturnOneBall(DemolitionBall ball)
     {
-        SetTargetDirection(Vector2.down);
-        AimArm(ball.PivotPoint);
         StartCoroutine(ball.Return(_timeBetweenAttacks));
     }
 
@@ -222,15 +227,15 @@ public class DemolitionSentinel : BossEnemy
     }
 
     #region QUESTIONS
-    //bool QDoubleAttack() => !_justAttacked && (_isDoubleAttacking || (!_isAttacking && _nextAttack == SentinelAttacks.Double));
-    //bool QHeavyAttack() => !_justAttacked && (_isHeavyAttacking || (!_isAttacking && _nextAttack == SentinelAttacks.Heavy));
-    //bool QSweepAttack() => !_justAttacked && (_isSweepAttacking || (!_isAttacking && _nextAttack == SentinelAttacks.Sweep));
-    //bool QVulnerable() => _isVulnerable;
-
-    bool QDoubleAttack() => !_justAttacked && (_isDoubleAttacking || (!_isAttacking && Input.GetKeyDown(KeyCode.H)));
-    bool QHeavyAttack() => !_justAttacked && (_isHeavyAttacking || (!_isAttacking && Input.GetKeyDown(KeyCode.J)));
-    bool QSweepAttack() => !_justAttacked && (_isSweepAttacking || (!_isAttacking && Input.GetKeyDown(KeyCode.K)));
+    bool QDoubleAttack() =>!_justAttacked && (_isDoubleAttacking || (!_isAttacking && _nextAttack == SentinelAttacks.Double));
+    bool QHeavyAttack() => !_justAttacked && (_isHeavyAttacking || (!_isAttacking && _nextAttack == SentinelAttacks.Heavy));
+    bool QSweepAttack() => !_justAttacked && (_isSweepAttacking || (!_isAttacking && _nextAttack == SentinelAttacks.Sweep));
     bool QVulnerable() => _isVulnerable;
+
+    //bool QDoubleAttack() => !_justAttacked && (_isDoubleAttacking || (!_isAttacking && Input.GetKeyDown(KeyCode.H)));
+    //bool QHeavyAttack() => !_justAttacked && (_isHeavyAttacking || (!_isAttacking && Input.GetKeyDown(KeyCode.J)));
+    //bool QSweepAttack() => !_justAttacked && (_isSweepAttacking || (!_isAttacking && Input.GetKeyDown(KeyCode.K)));
+    //bool QVulnerable() => _isVulnerable;
 
     #endregion
 
