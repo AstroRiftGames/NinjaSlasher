@@ -261,14 +261,14 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 619504295799351094}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: 0.025101855, w: 0.99968493}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: -2.323, y: 4.7560673, z: -0.04386761}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 3857458411051322388}
   m_Father: {fileID: 2544680679605446878}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 2.877}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &645991535746002682
 GameObject:
   m_ObjectHideFlags: 0
@@ -347,9 +347,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d207e58a207dd0e43b1bce4f26fc3c0f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _pivotPoint: {fileID: 0}
+  _pivotPoint: {fileID: 2667468769402574519}
   _sentinel: {fileID: 0}
-  _maxDistance: 15
+  _maxDistance: 30
   _force: 25
   _heavyAttackRadius: 1.5
   _heavyAttack: 0
@@ -614,8 +614,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2003716529886187616}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: 0.0030149142, w: 0.99999547}
-  m_LocalPosition: {x: -0.2124181, y: -0.013239861, z: 0.04386761}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -0.2, y: 0.2, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -623,7 +623,7 @@ Transform:
   - {fileID: 2888538932375325571}
   - {fileID: 306553072449702269}
   m_Father: {fileID: 988072010014504148}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: -61.505}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &2599318377215535688
 GameObject:
   m_ObjectHideFlags: 0
@@ -1546,7 +1546,7 @@ BoxCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: -1.1125, y: 0}
+  m_Offset: {x: 1.1125, y: 0}
   m_SpriteTilingProperty:
     border: {x: 0.45416668, y: 0, z: 0.4666667, w: 0}
     pivot: {x: 0, y: 0.5}
@@ -1756,8 +1756,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5636698370615154411}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: 0.9996464, w: 0.026591694}
-  m_LocalPosition: {x: 0.1989768, y: -0.005007744, z: 0.04386761}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -0.2, y: -0.2, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -1765,7 +1765,7 @@ Transform:
   - {fileID: 3417426380369802618}
   - {fileID: 6627611693319338456}
   m_Father: {fileID: 2667468769402574519}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 176.952}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &6183352287991432218
 GameObject:
   m_ObjectHideFlags: 0
@@ -1877,13 +1877,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6248056072731098567}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0.008758494, w: 0.9999617}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 1.9017564, y: 0.002968094, z: 0}
   m_LocalScale: {x: 0.99999964, y: 0.99999964, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 3857458411051322388}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 29.208}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &6249579233294079991
 GameObject:
   m_ObjectHideFlags: 0
@@ -2018,9 +2018,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d207e58a207dd0e43b1bce4f26fc3c0f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _pivotPoint: {fileID: 0}
+  _pivotPoint: {fileID: 988072010014504148}
   _sentinel: {fileID: 0}
-  _maxDistance: 15
+  _maxDistance: 30
   _force: 25
   _heavyAttackRadius: 1.5
   _heavyAttack: 0
@@ -2343,7 +2343,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7488844409469582484}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 2.319975, y: 4.7560673, z: -0.04386761}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0

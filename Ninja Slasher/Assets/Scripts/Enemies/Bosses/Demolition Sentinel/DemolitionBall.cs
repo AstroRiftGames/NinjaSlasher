@@ -63,13 +63,20 @@ public class DemolitionBall : MonoBehaviour
         Vector3 initPos = transform.localPosition;
         Vector3 targetPos = new Vector3(3f, 0, 0);
         float t = 0;
-        while (t < 1)
+        while (t < 1 && enabled)
         {
             t += Time.deltaTime / lapse;
             transform.localPosition = Vector3.Lerp(initPos, targetPos, t);
             transform.localRotation = Quaternion.Lerp(transform.localRotation, Quaternion.Euler(Vector3.zero), t);
             yield return null;
         }
+        SetReturn(false);
+        SetIsOut(false);
+    }
+
+    public void Release()
+    {
+        StopAllCoroutines();
         SetReturn(false);
         SetIsOut(false);
     }

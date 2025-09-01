@@ -1,5 +1,5 @@
-using TMPro;
 using UnityEngine;
+using System;
 
 public class Chain : MonoBehaviour
 {
@@ -7,6 +7,7 @@ public class Chain : MonoBehaviour
     [SerializeField] Transform _ball;
     [SerializeField] DemolitionSentinel _sentinel;
 
+    public bool IsActive => _isActive;
     private bool _isActive = true;
 
     SpriteRenderer _renderer;
@@ -73,32 +74,55 @@ public class Chain : MonoBehaviour
         {
             BreakChain();
             ReleaseBall();
+            _sentinel.StopAttack();
         }
     }
 
     public void BreakChain()
     {
-        _sentinel.Animator.SetTrigger("onHit");
-        _isActive = false;
         _renderer.enabled = false;
-        Destroy(gameObject, 2f);
+        _collider.enabled = false;
+        _isActive = false;
+        _sentinel.Animator.SetTrigger("onHit");
+    }
+
+    public void RepairChain()
+    {
+        _renderer.enabled = true;
+        _collider.enabled = true;
+        _isActive = true;
     }
 
     public void ReleaseBall()
     {
         _ball.TryGetComponent(out DemolitionBall ball);
-        ball.enabled = false;
+        ball.Release();
         _sentinel.RemoveBall(ball);
+        ball.enabled = false;
 
         _ball.TryGetComponent(out Rigidbody2D rb);
         rb.gravityScale = 1;
         rb.mass = 25;
 
         _ball.TryGetComponent(out Collider2D col);
-        col.enabled = true;
+        col.excludeLayers = LayerMask.GetMask("Player");
 
         _ball.transform.SetParent(null);
+    }
 
-        Destroy(_ball.gameObject, 2f);
+    public void RecoverBall()
+    {
+        _ball.TryGetComponent(out DemolitionBall ball);
+        ball.enabled = true;
+        _sentinel.AddBall(ball, _ball.name.Contains("Right", StringComparison.OrdinalIgnoreCase));
+
+        _ball.TryGetComponent(out Rigidbody2D rb);
+        rb.gravityScale = 0;
+        rb.mass = 1;
+
+        _ball.TryGetComponent(out Collider2D col);
+        col.includeLayers = LayerMask.GetMask("Player");
+
+        _ball.transform.SetParent(_anchor);
     }
 }

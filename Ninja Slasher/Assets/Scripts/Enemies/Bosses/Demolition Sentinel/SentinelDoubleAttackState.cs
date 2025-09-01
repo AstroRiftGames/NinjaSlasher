@@ -36,7 +36,7 @@ public class SentinelDoubleAttackState<SentinelStates> : State<SentinelStates>
 
             _sentinel.SetTargetDirection(Vector2.down);
             _sentinel.AimArm(_sentinel.CurrentBall.PivotPoint);
-            _sentinel.ChangeBall();
+            if(_sentinel.Balls.Length >= 2) _sentinel.ChangeBall();
 
             yield return new WaitForSeconds(1f);
         }

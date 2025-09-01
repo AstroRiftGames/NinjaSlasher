@@ -35,7 +35,7 @@ public class SentinelHeavyAttackState<SentinelStates> : State<SentinelStates>
 
         _sentinel.SetTargetDirection(Vector2.down);
         _sentinel.AimArm(_sentinel.CurrentBall.PivotPoint);
-        if (_sentinel.Balls.Length == 2) _sentinel.ChangeBall();
+        if (_sentinel.Balls.Length >= 2) _sentinel.ChangeBall();
 
         _sentinel._isHeavyAttacking = false;
         _sentinel.SetIsAttacking(false);
