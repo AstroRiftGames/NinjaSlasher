@@ -57,7 +57,7 @@ public class DemolitionBall : MonoBehaviour
         _rb.linearVelocity = Vector2.zero;
     }
 
-    public IEnumerator Return(float lapse)
+    public IEnumerator Return(float lapse = 1)
     {
         SetReturn(true);
         Vector3 initPos = transform.localPosition;
@@ -79,6 +79,7 @@ public class DemolitionBall : MonoBehaviour
         StopAllCoroutines();
         SetReturn(false);
         SetIsOut(false);
+        _heavyAttack = false;
     }
 
     public void Throw()
@@ -100,7 +101,7 @@ public class DemolitionBall : MonoBehaviour
 
         foreach(var col in cols)
         {
-            if (col.gameObject.CompareTag("Player"))
+            if(col.gameObject.CompareTag("Player"))
             {
                 col.TryGetComponent(out Controller player);
                 player.Die();
@@ -117,14 +118,12 @@ public class DemolitionBall : MonoBehaviour
             Stop();
             if (!_isReturning) _sentinel.ReturnOneBall(this);
         }
-        if (_heavyAttack) CreateDamageArea(collision.transform.position);
+        if(_heavyAttack)
+        {
+            _heavyAttack = false;
+            CreateDamageArea(collision.transform.position);
+        }
         Stop();
-        if (!_isReturning) _sentinel.ReturnOneBall(this);
-    }
-
-
-    private void OnDrawGizmos()
-    {
-        Gizmos.DrawWireSphere(_sentinel.transform.position, _maxDistance);
+        if(!_isReturning) _sentinel.ReturnOneBall(this);
     }
 }

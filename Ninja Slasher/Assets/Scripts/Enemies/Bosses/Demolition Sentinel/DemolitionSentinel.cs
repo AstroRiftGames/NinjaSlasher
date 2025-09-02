@@ -1,10 +1,7 @@
 using System;
 using System.Collections;
 using System.Linq;
-using TMPro.EditorUtilities;
-using Unity.Burst.Intrinsics;
 using UnityEngine;
-using UnityEngine.UIElements;
 
 
 public enum SentinelStates
@@ -34,8 +31,14 @@ public class DemolitionSentinel : BossEnemy
     {
         _isVulnerable = value;
         _animator.SetBool("isVulnerable", value);
+        if(value)
+        {
+            _vulnerableEntryTime = Time.time;
+        }
     }
     private bool _isVulnerable;
+    private float _vulnerableEntryTime;
+    [SerializeField] float _vulnerableTime;
     public void SetJustAttacked(bool value) => _justAttacked = value;
     private bool _justAttacked;
 
@@ -103,11 +106,60 @@ public class DemolitionSentinel : BossEnemy
         _root.Execute();
         _animator.SetBool("hasRightArm", _rightChain.IsActive);
         _animator.SetBool("hasLeftArm", _leftChain.IsActive);
+        if(_isVulnerable)
+        {
+            CheckVulnerableTime();
+        }
+
+        Debug.Log($"IsVulnerable: {QVulnerable()},\n NextAttack: {_nextAttack},\n Double: {QDoubleAttack()},\n Sweep: {QSweepAttack()},\n Heavy: {QHeavyAttack()}, \n State: {_fsm.CurrentState},\n IsAtacking: {_isAttacking},\n JustAttacked: {_justAttacked}");
     }
 
     #endregion
 
-    #region RESOURCES
+        #region RESOURCES
+
+    void CheckVulnerableTime()
+    {
+        if(Time.time >= _vulnerableEntryTime + _vulnerableTime)
+        {
+            StartCoroutine(Recover());
+        }
+    }
+
+    private IEnumerator Recover()
+    {
+        _animator.SetTrigger("onRecover");
+        SetIsVulnerable(false);
+        _core.enabled = false;
+        _balls = new DemolitionBall[2];
+
+        yield return new WaitForSeconds(1f);
+
+        _rightChain.RepairChain();
+        _rightChain.RecoverBall();
+        
+        yield return new WaitForSeconds(1f);
+
+        _leftChain.RepairChain();
+        _leftChain.RecoverBall();
+
+        yield return new WaitForSeconds(1f);
+
+        _fsm.Transition(SentinelStates.Idle);
+        SetJustAttacked(false);
+        SetIsAttacking(false);
+
+        yield return new WaitForSeconds(1f);
+
+        SetTargetDirection(Vector2.down);
+        AimArm(_balls[0].PivotPoint);
+        AimArm(_balls[1].PivotPoint);
+
+        yield return new WaitForSeconds(.5f);
+        ChooseAttack();
+        _currentBall = _balls[0];
+        _isRightBallTurn = true;
+    }
 
     public void SetTargetDirection()
     {
@@ -141,7 +193,6 @@ public class DemolitionSentinel : BossEnemy
 
     public void RemoveBall(DemolitionBall ball)
     {
-        Debug.Log($"Remove {ball.name}");
         DemolitionBall[] list = new DemolitionBall[_balls.Length - 1];
         foreach(DemolitionBall b in _balls)
         {   
@@ -155,26 +206,19 @@ public class DemolitionSentinel : BossEnemy
 
     public void AddBall(DemolitionBall ball, bool isRightBall)
     {
-        _balls.Append(ball);
-        if(_balls.Length >= 2 && isRightBall)
+        if(isRightBall)
         {
-            _balls.Reverse();
+            _balls[0] = ball;
         }
-        _currentBall = _balls[0];
-        _isRightBallTurn = true;
+        else
+        {
+            _balls[1] = ball;
+        }
     }
 
     public void ChooseAttack()
     {
         float r = UnityEngine.Random.Range(0f, 1f);
-        _nextAttack = r switch
-        {
-            >= .67f => SentinelAttacks.Double,
-            >= .34f and < .67f => SentinelAttacks.Sweep,
-            < .34f => SentinelAttacks.Heavy,
-            _ => SentinelAttacks.Double,
-        };
-
         switch(r)
         {
             case >= .67f:
@@ -201,21 +245,30 @@ public class DemolitionSentinel : BossEnemy
 
     public void StopAttack()
     {
-        if(_balls.Length >= 1)
+        StopAllCoroutines();
+
+        _fsm.Transition(SentinelStates.Idle);
+
+        _isDoubleAttacking = false;
+        _isHeavyAttacking = false;
+        _isSweepAttacking = false;
+        SetIsAttacking(false);
+        SetJustAttacked(false);
+
+        if (_balls.Length >= 1)
         {
             _currentBall = _balls[0];
+            _isRightBallTurn = !_isRightBallTurn;
             SetTargetDirection(Vector2.down);
             AimArm(_currentBall.PivotPoint);
         }
         else
         {
             _nextAttack = SentinelAttacks.None;
+            SetIsVulnerable(true);
         }
-        _isDoubleAttacking = false;
-        _isHeavyAttacking = false;
-        _isSweepAttacking = false;
-        SetIsAttacking(false);
-        SetJustAttacked(false);
+        ChooseAttack();
+
     }
 
     #endregion
@@ -232,15 +285,25 @@ public class DemolitionSentinel : BossEnemy
         _fsm = new FSM<SentinelStates>(idle);
 
         idle.AddTransition(SentinelStates.HeavyAttack, heavyAttack);
-        idle.AddTransition(SentinelStates.SweepAttack, sweepAttack);
         idle.AddTransition(SentinelStates.DoubleAttack, doubleAttack);
+        idle.AddTransition(SentinelStates.SweepAttack, sweepAttack);
         idle.AddTransition(SentinelStates.Vulenrable, vulnerable);
         heavyAttack.AddTransition(SentinelStates.Idle, idle);
+        heavyAttack.AddTransition(SentinelStates.SweepAttack, sweepAttack);
+        heavyAttack.AddTransition(SentinelStates.DoubleAttack, doubleAttack);
         heavyAttack.AddTransition(SentinelStates.Vulenrable, vulnerable);
         sweepAttack.AddTransition(SentinelStates.Idle, idle);
+        sweepAttack.AddTransition(SentinelStates.HeavyAttack, heavyAttack);
+        sweepAttack.AddTransition(SentinelStates.DoubleAttack, doubleAttack);
         sweepAttack.AddTransition(SentinelStates.Vulenrable, vulnerable);
         doubleAttack.AddTransition(SentinelStates.Idle, idle);
+        doubleAttack.AddTransition(SentinelStates.HeavyAttack, heavyAttack);
+        doubleAttack.AddTransition(SentinelStates.SweepAttack, sweepAttack);
         doubleAttack.AddTransition(SentinelStates.Vulenrable, vulnerable);
+        vulnerable.AddTransition(SentinelStates.Idle, idle);
+        vulnerable.AddTransition(SentinelStates.HeavyAttack, heavyAttack);
+        vulnerable.AddTransition(SentinelStates.SweepAttack, sweepAttack);
+        vulnerable.AddTransition(SentinelStates.DoubleAttack, doubleAttack);
     }
 
     public void InitializeTree()
@@ -260,15 +323,10 @@ public class DemolitionSentinel : BossEnemy
     }
 
     #region QUESTIONS
-    bool QDoubleAttack() =>!_justAttacked && (_isDoubleAttacking || (!_isAttacking && _nextAttack == SentinelAttacks.Double));
+    bool QDoubleAttack() =>!_justAttacked && _balls.Length >= 2 && (_isDoubleAttacking || (!_isAttacking && _nextAttack == SentinelAttacks.Double));
     bool QHeavyAttack() => !_justAttacked && (_isHeavyAttacking || (!_isAttacking && _nextAttack == SentinelAttacks.Heavy));
     bool QSweepAttack() => !_justAttacked && (_isSweepAttacking || (!_isAttacking && _nextAttack == SentinelAttacks.Sweep));
     bool QVulnerable() => _isVulnerable;
-
-    //bool QDoubleAttack() => !_justAttacked && (_isDoubleAttacking || (!_isAttacking && Input.GetKeyDown(KeyCode.H)));
-    //bool QHeavyAttack() => !_justAttacked && (_isHeavyAttacking || (!_isAttacking && Input.GetKeyDown(KeyCode.J)));
-    //bool QSweepAttack() => !_justAttacked && (_isSweepAttacking || (!_isAttacking && Input.GetKeyDown(KeyCode.K)));
-    //bool QVulnerable() => _isVulnerable;
 
     #endregion
 

@@ -5,6 +5,7 @@ public class Chain : MonoBehaviour
 {
     [SerializeField] Transform _anchor;
     [SerializeField] Transform _ball;
+    public Transform Ball => _ball;
     [SerializeField] DemolitionSentinel _sentinel;
 
     public bool IsActive => _isActive;
@@ -112,10 +113,6 @@ public class Chain : MonoBehaviour
 
     public void RecoverBall()
     {
-        _ball.TryGetComponent(out DemolitionBall ball);
-        ball.enabled = true;
-        _sentinel.AddBall(ball, _ball.name.Contains("Right", StringComparison.OrdinalIgnoreCase));
-
         _ball.TryGetComponent(out Rigidbody2D rb);
         rb.gravityScale = 0;
         rb.mass = 1;
@@ -124,5 +121,10 @@ public class Chain : MonoBehaviour
         col.includeLayers = LayerMask.GetMask("Player");
 
         _ball.transform.SetParent(_anchor);
+
+        _ball.TryGetComponent(out DemolitionBall ball);
+        ball.enabled = true;
+        _sentinel.AddBall(ball, _ball.name.Contains("Right", StringComparison.OrdinalIgnoreCase));
+        ball.StartCoroutine(ball.Return());
     }
 }

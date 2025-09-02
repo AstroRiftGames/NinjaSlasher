@@ -22,7 +22,7 @@ public class SentinelHeavyAttackState<SentinelStates> : State<SentinelStates>
         _sentinel.Animator.SetTrigger("onHeavy");
 
         _sentinel.SetTargetDirection();
-        _sentinel.AimArm(_sentinel.Balls[_sentinel.IsRightBallTurn ? 0 : 1].PivotPoint);
+        _sentinel.AimArm(_sentinel.Balls[(_sentinel.Balls.Length >= 2) ? (_sentinel.IsRightBallTurn ? 0 : 1) : 0].PivotPoint);
 
         yield return new WaitForSeconds(.25f);
 

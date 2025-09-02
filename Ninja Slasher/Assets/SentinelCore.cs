@@ -14,15 +14,9 @@ public class SentinelCore : MonoBehaviour
     {
         _collider.enabled = true;
     }
-
-
-    private void Update()
+    private void OnDisable()
     {
-        if (Input.GetKeyDown(KeyCode.O))
-        {
-            _sentinel.Animator.SetTrigger("onHit");
-            KillSentinel();
-        }
+        _collider.enabled = false;
     }
 
     private void KillSentinel()
