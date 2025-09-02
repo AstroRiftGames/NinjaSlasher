@@ -110,8 +110,6 @@ public class DemolitionSentinel : BossEnemy
         {
             CheckVulnerableTime();
         }
-
-        Debug.Log($"IsVulnerable: {QVulnerable()},\n NextAttack: {_nextAttack},\n Double: {QDoubleAttack()},\n Sweep: {QSweepAttack()},\n Heavy: {QHeavyAttack()}, \n State: {_fsm.CurrentState},\n IsAtacking: {_isAttacking},\n JustAttacked: {_justAttacked}");
     }
 
     #endregion

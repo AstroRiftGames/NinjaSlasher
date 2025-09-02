@@ -21,7 +21,15 @@ public class SentinelCore : MonoBehaviour
 
     private void KillSentinel()
     {
-        _sentinel.Die();
+        _sentinel.StopAllCoroutines();
+        for (int n = 0; n < _sentinel.Balls.Length; n++)
+        {
+            _sentinel.Balls[n].Chain.StopAllCoroutines();
+            _sentinel.Balls[n].StopAllCoroutines();
+            _sentinel.Balls[n].Chain.enabled = false;
+            _sentinel.Balls[n].enabled = false;
+        }
+        _sentinel.enabled = false;
     }
 
     private void OnTriggerEnter2D(Collider2D collision)

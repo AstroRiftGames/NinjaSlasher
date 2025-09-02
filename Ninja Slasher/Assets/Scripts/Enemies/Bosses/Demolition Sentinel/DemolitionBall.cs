@@ -8,6 +8,8 @@ public class DemolitionBall : MonoBehaviour
 {
     [SerializeField] Transform _pivotPoint;
     [SerializeField] DemolitionSentinel _sentinel;
+    [SerializeField] Chain _chain;
+    public Chain Chain => _chain;
     public Transform PivotPoint => _pivotPoint;
     [SerializeField] float _maxDistance;
     [SerializeField] float _force;
