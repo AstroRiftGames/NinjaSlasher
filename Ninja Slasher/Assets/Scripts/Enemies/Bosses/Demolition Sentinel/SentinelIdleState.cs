@@ -16,14 +16,9 @@ public class SentinelIdleState<SentinelStates> : State<SentinelStates>
 
     public override void Execute()
     {
-        if(Time.time >= _enterTime + _sentinel.Cooldown)
+        if (Time.time >= _enterTime + _sentinel.Cooldown)
         {   
             _sentinel.SetJustAttacked(false);
         }
-    }
-
-    public override void Sleep()
-    {
-        
     }
 }
