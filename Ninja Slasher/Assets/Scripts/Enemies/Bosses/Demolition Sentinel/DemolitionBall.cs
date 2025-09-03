@@ -22,6 +22,7 @@ public class DemolitionBall : MonoBehaviour
 
     public Rigidbody2D RB => _rb;
     private Rigidbody2D _rb;
+    [SerializeField] Animator _animator;
 
 
     [Header("HeavyAttack")]
@@ -117,6 +118,7 @@ public class DemolitionBall : MonoBehaviour
 
     private void OnCollisionEnter2D(Collision2D collision)
     {
+        _animator.SetTrigger("OnImpact");
         if(collision.gameObject.CompareTag("Player"))
         {
             collision.gameObject.TryGetComponent(out Controller player);
