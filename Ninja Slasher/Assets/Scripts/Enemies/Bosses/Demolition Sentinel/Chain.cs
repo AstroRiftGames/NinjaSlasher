@@ -9,25 +9,31 @@ public class Chain : MonoBehaviour
     public Transform BallT => _ballT;
     [SerializeField] Transform _ballT;
     [SerializeField] DemolitionSentinel _sentinel;
+    [SerializeField] GameObject _chain;
 
     public bool IsActive => _isActive;
     private bool _isActive = true;
+    private bool _isMoving;
 
     SpriteRenderer _renderer;
     BoxCollider2D _collider;
+    Animator _animator;
+    public void SetIsMoving(bool value) => _isMoving = value;
 
     private void Awake()
     {
-        TryGetComponent(out SpriteRenderer r);
+        _chain.TryGetComponent(out SpriteRenderer r);
         _renderer = r;
         TryGetComponent(out BoxCollider2D col);
         _collider = col;
+        TryGetComponent(out Animator anim);
+        _animator = anim;
         _ballT.TryGetComponent(out DemolitionBall ball);
         _ball = ball;
     }
     private void Start()
     {
-        transform.position = _anchor.position;
+        _chain.transform.position = _anchor.position;
     }
     private void Update()
     {
@@ -38,6 +44,7 @@ public class Chain : MonoBehaviour
             AdjustSize();
             _collider.enabled = _ball.IsOut;
         }
+        _animator.SetBool("IsMoving", _isMoving);
     }
 
 
@@ -52,7 +59,7 @@ public class Chain : MonoBehaviour
         _renderer.size = GetSize(true);
 
         _collider.size = GetSize(false);
-        _collider.offset = new Vector2(0, -_collider.size.y / 2 + .25f);
+        _collider.offset = new Vector2(0, -_collider.size.y / 2);
         
     }
 
@@ -65,7 +72,7 @@ public class Chain : MonoBehaviour
     {
         Vector2 dir = _ballT.position - _anchor.position;
         float angle = (Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg);
-        transform.rotation = Quaternion.Euler(0, 0, angle+90);
+        _chain.transform.rotation = Quaternion.Euler(0, 0, angle+90);
     }
 
 

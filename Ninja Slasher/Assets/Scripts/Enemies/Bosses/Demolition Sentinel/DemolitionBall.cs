@@ -57,11 +57,13 @@ public class DemolitionBall : MonoBehaviour
     public void Stop()
     {
         _rb.linearVelocity = Vector2.zero;
+        _chain.SetIsMoving(false);
     }
 
     public IEnumerator Return(float lapse = 1)
     {
         SetReturn(true);
+        _chain.SetIsMoving(true);
         Vector3 initPos = transform.localPosition;
         Vector3 targetPos = new Vector3(3f, 0, 0);
         float t = 0;
@@ -74,6 +76,7 @@ public class DemolitionBall : MonoBehaviour
         }
         SetReturn(false);
         SetIsOut(false);
+        _chain.SetIsMoving(false);
     }
 
     public void Release()
@@ -87,6 +90,7 @@ public class DemolitionBall : MonoBehaviour
     public void Throw()
     {
         SetIsOut(true);
+        _chain.SetIsMoving(true);
         transform.localRotation.Set(0, 0, 0, 0);
         _rb.AddForce(transform.right * _force, ForceMode2D.Impulse);
     }
