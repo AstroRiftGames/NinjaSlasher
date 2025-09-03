@@ -65,8 +65,7 @@ public class PreGameUIManager : MonoBehaviour
         }
         UIManager.Instance.ShowHidePreGameCanvas();
         UIManager.Instance.LoadLevelScene(_pendingSceneName);
-        PlayLevelMusic();
-        
+        PlayLevelMusic();        
     }
 
     void PlayLevelMusic()
@@ -174,7 +173,7 @@ public class PreGameUIManager : MonoBehaviour
         var primary = config.GetPrimaryObjective();
         if (_primaryGoalText) 
         {
-            _primaryGoalText.text = primary != null ? primary.description : "-";            
+            _primaryGoalText.text = primary != null ? primary.description : "-";
         }
 
         isObjectiveComplete = SaveManager.Instance?.IsObjectiveCompleted(levelId, primary) ?? false;

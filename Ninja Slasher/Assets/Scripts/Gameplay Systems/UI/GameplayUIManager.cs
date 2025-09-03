@@ -148,6 +148,12 @@ public class GameplayUIManager : MonoBehaviour
         GameManager.Instance.GoToLevelSelection(confirmPendingDeduction: true);
     }
 
+    public void ContinueToLevelSelector()
+    {
+        UIManager.Instance.ShowHideResultsCanvas();
+        GameManager.Instance.GoToLevelSelection(confirmPendingDeduction: false);
+    }
+
     private void OnLivesChanged(int lives)
     {
         UpdateLivesUI(lives);

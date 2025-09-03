@@ -197,6 +197,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4817948468535724968}
   - component: {fileID: 6391668477862170959}
+  - component: {fileID: 7744289200786642663}
   - component: {fileID: 2234693890108503027}
   - component: {fileID: 8005450151810578804}
   - component: {fileID: 8143181119019381039}
@@ -255,6 +256,25 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 722aa2e224178e54298c554e738e3c65, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &7744289200786642663
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 52824968843742465}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 42808e9c86e95b44294265c88f6f7501, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _starsContainer: {fileID: 5551734843940761804}
+  _primaryGoalText: {fileID: 1141360457182241250}
+  _secondaryGoalTexts:
+  - {fileID: 8978147730868348659}
+  - {fileID: 6457590068692375192}
+  _starNotAcquired: {r: 0, g: 0, b: 0, a: 1}
+  _starAcquired: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
 --- !u!114 &2234693890108503027
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -269,7 +289,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _loadbar: {fileID: 1849321518658053213}
   _text: {fileID: 2729558723510681730}
-  _anim: {fileID: 6973623856018609253}
+  _textAnim: {fileID: 6973623856018609253}
 --- !u!114 &8005450151810578804
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -333,9 +353,9 @@ MonoBehaviour:
   _quitButton: {fileID: 7176478184289864605}
   _retryButton: {fileID: 2699599212305255478}
   _backToSelectionButton: {fileID: 7398403889087604999}
+  _continueButton: {fileID: 6346068968050499822}
   _closeNoLivesPanelButton: {fileID: 5006839643699555438}
   _adForMoreLifeButton: {fileID: 3441522450924437654}
-  _extraRewardButton: {fileID: 0}
   levelButtonImages:
   - {fileID: 8743509129116817641}
   - {fileID: 7918285490582237830}
@@ -384,6 +404,7 @@ MonoBehaviour:
   _profileCanvas: {fileID: 2143553200154032731}
   _dailyRewardCanvas: {fileID: 1998993559515070088}
   _noLivesCanvas: {fileID: 6906844305474624790}
+  _resultsCanvas: {fileID: 4043851716376149841}
 --- !u!114 &8174576930485009954
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -465,6 +486,9 @@ MonoBehaviour:
   - {fileID: 985537168061110366}
   _starNotAcquired: {r: 0, g: 0, b: 0, a: 1}
   _starAcquired: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
+  _resultStarsContainer: {fileID: 5551734843940761804}
+  _resultsPrimaryGoalText: {fileID: 0}
+  _resultsSecondaryGoalTexts: []
 --- !u!114 &2013167558497469319
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3391,7 +3415,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 101.04}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0}
 --- !u!222 &4239679454823350885
 CanvasRenderer:
@@ -10471,7 +10495,7 @@ GameObject:
   - component: {fileID: 7226052891874558979}
   - component: {fileID: 8978147730868348659}
   m_Layer: 5
-  m_Name: Text (TMP) (1)
+  m_Name: Text (TMP)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -24449,7 +24473,7 @@ GameObject:
   - component: {fileID: 1024537742489467490}
   - component: {fileID: 6346068968050499822}
   m_Layer: 5
-  m_Name: Button
+  m_Name: ContinueButton
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -27616,7 +27640,7 @@ GameObject:
   - component: {fileID: 116207990941091352}
   - component: {fileID: 6457590068692375192}
   m_Layer: 5
-  m_Name: Text (TMP) (2)
+  m_Name: Text (TMP)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -33942,7 +33966,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 101.04}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0}
 --- !u!222 &7091207949421668730
 CanvasRenderer:
@@ -37186,7 +37210,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5851887138258138565}
   m_Layer: 5
-  m_Name: ContinueButton
+  m_Name: ButtonHandler
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -38445,7 +38469,7 @@ MonoBehaviour:
   m_ChildForceExpandWidth: 1
   m_ChildForceExpandHeight: 1
   m_ChildControlWidth: 1
-  m_ChildControlHeight: 0
+  m_ChildControlHeight: 1
   m_ChildScaleWidth: 0
   m_ChildScaleHeight: 0
   m_ReverseArrangement: 0

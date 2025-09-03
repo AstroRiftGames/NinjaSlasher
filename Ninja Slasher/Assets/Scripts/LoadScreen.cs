@@ -8,7 +8,7 @@ public class LoadManager : MonoBehaviour
 {
     [SerializeField] private Slider _loadbar;
     [SerializeField] private TextMeshProUGUI _text;
-    [SerializeField] private Animator _anim;
+    [SerializeField] private Animator _textAnim;
 
     private void Start()
     {
@@ -32,7 +32,7 @@ public class LoadManager : MonoBehaviour
             if (_loadbar.value >= 1)
             {
                 _text.text = "TAP TO CONTINUE";
-                _anim.SetTrigger("Tap");
+                _textAnim.SetTrigger("Tap");
                 if (Input.touchCount > 0)
                 {
                     Touch touch = Input.GetTouch(0);

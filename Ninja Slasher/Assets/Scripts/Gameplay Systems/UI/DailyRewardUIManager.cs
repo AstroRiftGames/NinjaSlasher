@@ -378,7 +378,7 @@ public class DailyRewardDayUI
         Color textColor = active ? Color.black : Color.gray;
 
         if (rewardIcon != null) rewardIcon.color = active ? Color.white : Color.gray;
-        if (quantityText != null) quantityText.color = textColor;
+        if (quantityText != null) quantityText.color = Color.white;
         if (rewardNameText != null) rewardNameText.color = textColor;
     }
 

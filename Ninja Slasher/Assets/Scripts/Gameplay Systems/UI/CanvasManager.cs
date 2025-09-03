@@ -12,6 +12,7 @@ public class CanvasManager : MonoBehaviour
     [SerializeField] private Canvas _profileCanvas;
     [SerializeField] private Canvas _dailyRewardCanvas;
     [SerializeField] private Canvas _noLivesCanvas;
+    [SerializeField] private Canvas _resultsCanvas;
     //[SerializeField] private Canvas _extraLifeCanvas;
 
     public void OpenCanvas(Canvas canvas) => canvas.enabled = true;
@@ -22,6 +23,14 @@ public class CanvasManager : MonoBehaviour
         AudioManager.Instance.PlaySFX(SFXClip.UI_Select);
         if (state) OpenCanvas(canvas);
         else CloseCanvas(canvas);
+    }
+
+    public void ShowHideResultsCanvas()
+    {
+        bool isCanvasActive = !_resultsCanvas.enabled;
+        ShowHideCanvas(_resultsCanvas, isCanvasActive);
+        if (isCanvasActive)
+            GetComponent<ResultsUIManager>().ShowResultsPanel();
     }
 
     public void ShowHideDailyRewardCanvas()
