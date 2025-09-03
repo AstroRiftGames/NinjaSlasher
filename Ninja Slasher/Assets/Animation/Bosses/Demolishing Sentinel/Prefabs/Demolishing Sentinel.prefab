@@ -165,12 +165,12 @@ SpriteRenderer:
   m_SortingLayerID: -1990236565
   m_SortingLayer: 1
   m_SortingOrder: 1
-  m_Sprite: {fileID: 6769666768331356648, guid: d69175972270d15448d8c44bf5a08a39, type: 3}
+  m_Sprite: {fileID: 1808563684976849409, guid: 874bbdd2b2e7c914198a278997499472, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_FlipX: 1
+  m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 2
-  m_Size: {x: 2, y: 0.553}
+  m_Size: {x: 0.47, y: 2.58}
   m_AdaptiveModeThreshold: 0.519
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
@@ -189,7 +189,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _anchor: {fileID: 6627611693319338456}
-  _ball: {fileID: 1439354683577528312}
+  _ballT: {fileID: 1439354683577528312}
   _sentinel: {fileID: 0}
 --- !u!61 &3587995723296907397
 BoxCollider2D:
@@ -225,17 +225,17 @@ BoxCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: -1.1125, y: 0}
+  m_Offset: {x: 0, y: 1}
   m_SpriteTilingProperty:
-    border: {x: 0.45416668, y: 0, z: 0.4666667, w: 0}
-    pivot: {x: 0, y: 0.5}
-    oldSize: {x: 2.225, y: 0.54583335}
-    newSize: {x: 2, y: 0.553}
+    border: {x: 0, y: 0, z: 0, w: 0}
+    pivot: {x: 0.5, y: 0.95348835}
+    oldSize: {x: 0.47, y: 2.58}
+    newSize: {x: 0.47, y: 2.58}
     adaptiveTilingThreshold: 0.519
     drawMode: 2
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 2.225, y: 0.54583335}
+  m_Size: {x: 0.5458333, y: 2.225}
   m_EdgeRadius: 0
 --- !u!1 &619504295799351094
 GameObject:
@@ -349,6 +349,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _pivotPoint: {fileID: 2667468769402574519}
   _sentinel: {fileID: 0}
+  _chain: {fileID: 0}
   _maxDistance: 30
   _force: 25
   _heavyAttackRadius: 1.5
@@ -1486,12 +1487,12 @@ SpriteRenderer:
   m_SortingLayerID: -1990236565
   m_SortingLayer: 1
   m_SortingOrder: 1
-  m_Sprite: {fileID: 6769666768331356648, guid: d69175972270d15448d8c44bf5a08a39, type: 3}
+  m_Sprite: {fileID: 1808563684976849409, guid: 874bbdd2b2e7c914198a278997499472, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 2
-  m_Size: {x: 2, y: 0.553}
+  m_Size: {x: 0.47, y: 2.58}
   m_AdaptiveModeThreshold: 0.519
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
@@ -1510,7 +1511,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _anchor: {fileID: 306553072449702269}
-  _ball: {fileID: 1545774628022403645}
+  _ballT: {fileID: 1545774628022403645}
   _sentinel: {fileID: 0}
 --- !u!61 &4849476223715052603
 BoxCollider2D:
@@ -1546,12 +1547,12 @@ BoxCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: 1.1125, y: 0}
+  m_Offset: {x: 0, y: -0.98}
   m_SpriteTilingProperty:
-    border: {x: 0.45416668, y: 0, z: 0.4666667, w: 0}
-    pivot: {x: 0, y: 0.5}
-    oldSize: {x: 2.225, y: 0.54583335}
-    newSize: {x: 2, y: 0.553}
+    border: {x: 0, y: 0, z: 0, w: 0}
+    pivot: {x: 0.5, y: 0.95348835}
+    oldSize: {x: 0.47, y: 2.58}
+    newSize: {x: 0.47, y: 2.58}
     adaptiveTilingThreshold: 0.519
     drawMode: 2
     adaptiveTiling: 0
@@ -2020,6 +2021,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _pivotPoint: {fileID: 988072010014504148}
   _sentinel: {fileID: 0}
+  _chain: {fileID: 0}
   _maxDistance: 30
   _force: 25
   _heavyAttackRadius: 1.5

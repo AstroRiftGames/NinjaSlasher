@@ -43,8 +43,8 @@ public class Chain : MonoBehaviour
 
     private Vector2 GetSize(bool _isRenderer)
     {
-        float scale = _renderer.flipX ? -1 : 1;
-        return  new Vector2(CalculateLength() * (_isRenderer ? scale : 1), .553f);
+        float scale = _renderer.flipY ? -1 : 1;
+        return  new Vector2(0.47f, CalculateLength() * (_isRenderer ? scale : 1));
     }
 
     private void AdjustSize()
@@ -52,7 +52,7 @@ public class Chain : MonoBehaviour
         _renderer.size = GetSize(true);
 
         _collider.size = GetSize(false);
-        _collider.offset = new Vector2(_collider.size.x / 2, 0);
+        _collider.offset = new Vector2(0, -_collider.size.y / 2 + .25f);
         
     }
 
@@ -65,7 +65,7 @@ public class Chain : MonoBehaviour
     {
         Vector2 dir = _ballT.position - _anchor.position;
         float angle = (Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg);
-        transform.rotation = Quaternion.Euler(0, 0, angle);
+        transform.rotation = Quaternion.Euler(0, 0, angle+90);
     }
 
 
