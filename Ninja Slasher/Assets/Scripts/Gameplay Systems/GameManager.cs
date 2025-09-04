@@ -108,8 +108,8 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
             LifeManager.Instance.OnLevelCompleted();
             _levelStarted = false;
         }
-
-        GoToLevelSelection(confirmPendingDeduction: false);
+        UIManager.Instance.ShowHideResultsCanvas();
+        //GoToLevelSelection(confirmPendingDeduction: false);
     }
 
     public void OnLevelFailed()

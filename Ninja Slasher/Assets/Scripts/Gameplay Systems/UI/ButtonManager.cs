@@ -36,11 +36,11 @@ public class ButtonManager : MonoBehaviour
     [SerializeField] private Button _quitButton;
     [SerializeField] private Button _retryButton;
     [SerializeField] private Button _backToSelectionButton;
+    [SerializeField] private Button _continueButton;
 
     [Header("NO LIVES PANEL BUTTONS")]
     [SerializeField] private Button _closeNoLivesPanelButton;
     [SerializeField] private Button _adForMoreLifeButton;
-    [SerializeField] private Button _extraRewardButton;
 
     [Header("PROGRESSION UI")]
     [SerializeField] private Image[] levelButtonImages;
@@ -130,6 +130,7 @@ public class ButtonManager : MonoBehaviour
 
         _retryButton.onClick.AddListener(GetComponent<GameplayUIManager>().OnRetryPressed);
         _backToSelectionButton.onClick.AddListener(GetComponent<GameplayUIManager>().OnBackToSelectionPressed);
+        _continueButton.onClick.AddListener(GetComponent<GameplayUIManager>().ContinueToLevelSelector);
     }
 
     private void SetupLevelProgression()

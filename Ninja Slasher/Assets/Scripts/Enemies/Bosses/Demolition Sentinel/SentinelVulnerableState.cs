@@ -9,7 +9,13 @@ public class SentinelVulnerableState<SentinelStates> : State<SentinelStates>
 
     public override void Enter()
     {
-        _sentinel.SetVulnerability(true);
+        _sentinel.Animator.SetBool("isVulnerable", true);
         _sentinel.Core.enabled = true;
+    }
+
+    public override void Sleep()
+    {
+        _sentinel.Animator.SetBool("isVulnerable", false);
+        _sentinel.Core.enabled = false;
     }
 }
