@@ -32,6 +32,8 @@ public enum SFXClip
     UI_Transition,
     UI_ShowConfig,
     UI_Claim,
+    E_Scout_Hit,
+    E_Scout_SendReport,
 }
 
 [Serializable]
