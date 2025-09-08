@@ -16,6 +16,12 @@ public class GuardBot : Enemy
 
     private float _direction => transform.localScale.x > 0 ? 1 : -1;
 
+    bool _isAlert;
+    bool _hasPlayedDetectionSFX;
+    float _lastDetectionTime;
+    [SerializeField] float _resetDelay = 5f;
+
+
     public override void Awake()
     {
         base.Awake();
@@ -84,8 +90,11 @@ public class GuardBot : Enemy
         _target = GetPlayerPos();
         _isPushing = true;
         _animator.SetTrigger("OnDetection");
+        AudioManager.Instance.PlaySFXAtPosition(SFXClip.E_Guard_Detection, transform.position);
         _currentSpeed = 0;
-        yield return new WaitForSeconds(1.6f);
+        yield return new WaitForSeconds(3f);
+        _animator.SetTrigger("OnPushStart");
+        AudioManager.Instance.PlaySFXAtPosition(SFXClip.E_Guard_Charge, transform.position);
         _currentSpeed = _speed * _speedMultiplier;
         yield return new WaitForSeconds(2f);
         _isPushing = false;
@@ -112,6 +121,11 @@ public class GuardBot : Enemy
         return _player.transform.position;
     }
 
+    public override void Die()
+    {
+        AudioManager.Instance.PlaySFXAtPosition(SFXClip.E_Guard_Death, transform.position);
+        base.Die();
+    }
 
     private void OnDrawGizmos()
     {

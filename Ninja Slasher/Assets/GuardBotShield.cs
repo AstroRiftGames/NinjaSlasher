@@ -16,4 +16,10 @@ public class GuardBotShield : VulnerabilityCheck
     {
         _col.isTrigger = _bot != null && _bot.IsPushing;
     }
+
+    public override void ManageColision()
+    {
+        base.ManageColision();
+        AudioManager.Instance.PlaySFXAtPosition(SFXClip.E_Guard_Colision, _bot.transform.position);
+    }
 }
