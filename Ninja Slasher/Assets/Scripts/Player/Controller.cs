@@ -27,6 +27,7 @@ public class Controller : MonoBehaviour
     private Vector2 _wishedDirection;
     private Vector2 lastSwipeDelta;
     private bool _isMirrored;
+    private bool _isFlipped;
 
 
     [Space]
@@ -360,6 +361,7 @@ public class Controller : MonoBehaviour
             return;
         }
         SetIsDashing(true);
+        AudioManager.Instance.PlaySFXAtPosition(SFXClip.P_Movement, transform.position);
 
         MoveTracker.RegisterMove();
         _lastDashDirection = _wishedDirection;
@@ -380,6 +382,15 @@ public class Controller : MonoBehaviour
         if (isParrying) return;
 
         Collider2D[] hits = Physics2D.OverlapCircleAll(transform.position, 2f, LayerMask.GetMask("Projectiles"));
+
+        SFXClip clip = SFXClip.P_FailedParry;
+        if (hits.Length > 0)
+        {
+            clip = SFXClip.P_SuccesfulParry;
+            Debug.Log("ChangedClip");
+        }
+        AudioManager.Instance.PlaySFXAtPosition(clip, transform.position);
+
         foreach (var hit in hits)
         {
             Projectile proj = hit.GetComponent<Projectile>();
@@ -395,6 +406,7 @@ public class Controller : MonoBehaviour
     {
         if (_parryInputDetected)
         {
+            Debug.Log("Parry Input");
             _parryInputDetected = false;
             return true;
         }
@@ -480,6 +492,7 @@ public class Controller : MonoBehaviour
         {
             if (_isDashing)
             {
+                AudioManager.Instance.PlaySFXAtPosition(SFXClip.P_Attack, transform.position);
                 collision.GetComponent<Enemy>().Die();
             }
             else
@@ -572,6 +585,8 @@ public class Controller : MonoBehaviour
     public void SetIsDashing(bool value) => _isDashing = value;
     public bool IsMirrored() => _isMirrored;
     public void SetIsMirrored(bool newValue) => _isMirrored = newValue;
+    public bool IsFlipped() => _isFlipped;
+    public void SetIsFlipped(bool newValue) => _isFlipped = newValue;
 
     public void ForceExitSurface() => _currentSurface = null;
 
@@ -615,9 +630,12 @@ public class Controller : MonoBehaviour
         float angle = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg;
         _playerView.SpriteContainer.transform.rotation = Quaternion.Euler(0, 0, angle);
 
+        Debug.Log("Angle: " + angle);
+        SetIsFlipped((angle > -180 && angle <= -90) || angle <= 180 && angle > 90);
 
         Vector3 newScale = _playerView.SpriteContainer.transform.localScale;
         newScale.x = IsMirrored() ? -1 : 1;
+        newScale.y = IsFlipped() ? -1 : 1;
         _playerView.SpriteContainer.transform.localScale = newScale;
     }
     private void SetGrabbingAnimation()

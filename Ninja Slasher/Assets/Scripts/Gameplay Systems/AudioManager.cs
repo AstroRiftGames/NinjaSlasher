@@ -32,6 +32,17 @@ public enum SFXClip
     UI_Transition,
     UI_ShowConfig,
     UI_Claim,
+    E_Scout_Hit,
+    E_Scout_SendReport,
+    E_Blaze_Detection,
+    E_Blaze_Shoot,
+    E_Guard_Detection,
+    E_Guard_Charge,
+    E_Guard_Colision,
+    E_Guard_Death,
+    P_Attack,
+    P_FailedParry,
+    P_SuccesfulParry,
 }
 
 [Serializable]
