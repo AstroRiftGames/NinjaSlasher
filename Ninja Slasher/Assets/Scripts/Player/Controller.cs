@@ -361,6 +361,7 @@ public class Controller : MonoBehaviour
             return;
         }
         SetIsDashing(true);
+        AudioManager.Instance.PlaySFXAtPosition(SFXClip.P_Movement, transform.position);
 
         MoveTracker.RegisterMove();
         _lastDashDirection = _wishedDirection;
@@ -381,6 +382,15 @@ public class Controller : MonoBehaviour
         if (isParrying) return;
 
         Collider2D[] hits = Physics2D.OverlapCircleAll(transform.position, 2f, LayerMask.GetMask("Projectiles"));
+
+        SFXClip clip = SFXClip.P_FailedParry;
+        if (hits.Length > 0)
+        {
+            clip = SFXClip.P_SuccesfulParry;
+            Debug.Log("ChangedClip");
+        }
+        AudioManager.Instance.PlaySFXAtPosition(clip, transform.position);
+
         foreach (var hit in hits)
         {
             Projectile proj = hit.GetComponent<Projectile>();
@@ -396,6 +406,7 @@ public class Controller : MonoBehaviour
     {
         if (_parryInputDetected)
         {
+            Debug.Log("Parry Input");
             _parryInputDetected = false;
             return true;
         }
@@ -481,6 +492,7 @@ public class Controller : MonoBehaviour
         {
             if (_isDashing)
             {
+                AudioManager.Instance.PlaySFXAtPosition(SFXClip.P_Attack, transform.position);
                 collision.GetComponent<Enemy>().Die();
             }
             else
