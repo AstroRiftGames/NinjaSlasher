@@ -34,6 +34,8 @@ public class ButtonManager : MonoBehaviour
     [SerializeField] private Button _resumeButton;
     [SerializeField] private Button _restartButton;
     [SerializeField] private Button _quitButton;
+    [SerializeField] private Button _musicPausePanelButton;
+    [SerializeField] private Button _sfxPausePanelButton;
     [SerializeField] private Button _retryButton;
     [SerializeField] private Button _backToSelectionButton;
     [SerializeField] private Button _continueButton;
@@ -125,8 +127,10 @@ public class ButtonManager : MonoBehaviour
         _pauseButton.onClick.AddListener(UIManager.Instance.ShowHidePauseCanvas);
         _resumeButton.onClick.AddListener(UIManager.Instance.ShowHidePauseCanvas);
         _restartButton.onClick.AddListener(OnRestartPressed);
-
         _quitButton.onClick.AddListener(() => GameManager.Instance.GoToLevelSelection(confirmPendingDeduction: true));
+
+        _musicPausePanelButton.onClick.AddListener(_audioToggle.MusicButtonClicked);
+        _sfxPausePanelButton.onClick.AddListener(_audioToggle.SFXButtonClicked);
 
         _retryButton.onClick.AddListener(GetComponent<GameplayUIManager>().OnRetryPressed);
         _backToSelectionButton.onClick.AddListener(GetComponent<GameplayUIManager>().OnBackToSelectionPressed);
