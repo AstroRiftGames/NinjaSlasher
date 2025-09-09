@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-public class GameManager : MonoBehaviourSingleton<GameManager>
+public class LevelManager : MonoBehaviourSingleton<LevelManager>
 {
     public LevelController levelController;
 
@@ -109,7 +109,6 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
             _levelStarted = false;
         }
         UIManager.Instance.ShowHideResultsCanvas();
-        //GoToLevelSelection(confirmPendingDeduction: false);
     }
 
     public void OnLevelFailed()
@@ -131,6 +130,17 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
 
         if (_levelStarted)
         {
+            if (AnalyticsManager.Instance != null)
+            {
+                int currentLevelId = GetCurrentLevelId();
+                float attemptTime = levelController?.TimeTaken ?? 0f;
+                AnalyticsManager.Instance.RecordLevelFailed(
+                    currentLevelId,
+                    "playerDeath",
+                    attemptTime
+                );
+            }
+
             LifeManager.Instance.UseLife();
             _levelStarted = false;
         }
@@ -170,6 +180,12 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
 
     public void GoToLevelSelection(bool confirmPendingDeduction = true)
     {
+        if (AnalyticsManager.Instance != null)
+        {
+            string currentScene = SceneManager.GetActiveScene().name;
+            AnalyticsManager.Instance.RecordScreenTransition(currentScene, "LevelSelection");
+        }
+
         if (confirmPendingDeduction && (_levelStarted || LifeManager.Instance.HasPendingDeduction()))
         {
             LifeManager.Instance.OnLevelExit();

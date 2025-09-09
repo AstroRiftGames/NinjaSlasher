@@ -127,7 +127,8 @@ public class ButtonManager : MonoBehaviour
         _pauseButton.onClick.AddListener(UIManager.Instance.ShowHidePauseCanvas);
         _resumeButton.onClick.AddListener(UIManager.Instance.ShowHidePauseCanvas);
         _restartButton.onClick.AddListener(OnRestartPressed);
-        _quitButton.onClick.AddListener(() => GameManager.Instance.GoToLevelSelection(confirmPendingDeduction: true));
+
+        _quitButton.onClick.AddListener(() => LevelManager.Instance.GoToLevelSelection(confirmPendingDeduction: true));
 
         _musicPausePanelButton.onClick.AddListener(_audioToggle.MusicButtonClicked);
         _sfxPausePanelButton.onClick.AddListener(_audioToggle.SFXButtonClicked);
@@ -237,7 +238,7 @@ public class ButtonManager : MonoBehaviour
 
     private void ShowLevelLockedMessage(int levelId)
     {
-        Debug.Log($"[ButtonManager] Nivel {levelId} está bloqueado");
+        Debug.Log($"[ButtonManager] Nivel {levelId} estï¿½ bloqueado");
     }
 
     public void RefreshLevelProgression()
@@ -272,7 +273,7 @@ public class ButtonManager : MonoBehaviour
 
     private void OnRestartPressed()
     {
-        GameManager.Instance.RestartLevel();
+        LevelManager.Instance.RestartLevel();
         UIManager.Instance.ShowHidePauseCanvas();
     }
 

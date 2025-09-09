@@ -24,7 +24,7 @@ public class EnemyTracker : MonoBehaviour, ITracker
 
         if (enemies.Count <= 0)
         {
-            if (GameManager.Instance != null && GameManager.Instance.PlayerHasDied)
+            if (LevelManager.Instance != null && LevelManager.Instance.PlayerHasDied)
             {
                 return;
             }
