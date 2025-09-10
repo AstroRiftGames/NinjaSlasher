@@ -383,21 +383,14 @@ public class Controller : MonoBehaviour
 
         Collider2D[] hits = Physics2D.OverlapCircleAll(transform.position, 2f, LayerMask.GetMask("Projectiles"));
 
-        SFXClip clip = SFXClip.P_FailedParry;
-        if (hits.Length > 0)
-        {
-            clip = SFXClip.P_SuccesfulParry;
-            Debug.Log("ChangedClip");
-        }
-        AudioManager.Instance.PlaySFXAtPosition(clip, transform.position);
-
+        AudioManager.Instance.PlaySFXAtPosition(SFXClip.P_ParrySwing, transform.position);
         foreach (var hit in hits)
         {
             Projectile proj = hit.GetComponent<Projectile>();
             if (proj != null && proj.IsParryable)
             {
                 _parryInputDetected = true;
-                return;
+                AudioManager.Instance.PlaySFXAtPosition(SFXClip.P_ProjectileParried, transform.position);
             }
         }
     }
