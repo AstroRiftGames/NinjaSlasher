@@ -42,8 +42,8 @@ public enum SFXClip
     E_Guard_Colision,
     E_Guard_Death,
     P_Attack,
-    P_FailedParry,
-    P_SuccesfulParry,
+    P_ParrySwing,
+    P_ProjectileParried,
     P_Die
 }
 
@@ -155,7 +155,7 @@ public class AudioManager : MonoBehaviourSingleton<AudioManager>
         }
         else
         {
-            Debug.Log($"Clip de música '{clipType}' no encontrado");
+            Debug.Log($"Clip de mï¿½sica '{clipType}' no encontrado");
         }
     }
 
