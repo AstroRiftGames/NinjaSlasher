@@ -49,9 +49,15 @@ public class CanvasManager : MonoBehaviour
 
     public void ShowHideCreditsCanvas()
     {
-        bool isCanvasActive = !_creditsCanvas.enabled;
+        bool isCanvasActive = !_creditsCanvas.gameObject.activeInHierarchy;
         ShowHideCanvas(_profileCanvas, !isCanvasActive);
-        ShowHideCanvas(_creditsCanvas, isCanvasActive);
+        _creditsCanvas.gameObject.SetActive(isCanvasActive);
+
+        if (isCanvasActive)
+            AudioManager.Instance.PlayMusic(MusicClip.Credits, isCanvasActive);
+        else 
+            AudioManager.Instance.PlayMusic(MusicClip.MainMenu, !isCanvasActive);
+
     }
     
     public void ShowHideProfileCanvas()

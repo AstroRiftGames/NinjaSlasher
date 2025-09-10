@@ -15,7 +15,8 @@ public enum MusicClip
     Area5,
     BossLevel,
     Victory,
-    GameOver
+    GameOver,
+    Credits
 }
 
 [Serializable]
