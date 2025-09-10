@@ -9,7 +9,6 @@ public class ButtonManager : MonoBehaviour
     [SerializeField] private Button _testLevelButton;
     [SerializeField] private Button _configDropdownButton;
     [SerializeField] private Button _calendarButton;
-    [SerializeField] private Button _heartButton;
 
     [Header("CONFIG DROPDOWN BUTTONS")]
     [SerializeField] private Button _musicButton;
