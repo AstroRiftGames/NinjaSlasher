@@ -10,6 +10,7 @@ public class Projectile : MonoBehaviour
     public Transform Shooter => _shooter;
     [SerializeField] protected LayerMask enemyLayer;
     [SerializeField] protected LayerMask playerLayer;
+    [SerializeField] protected LayerMask scenarioLayer;
     [SerializeField] private Animator _animator;
     [SerializeField] private float _impactTime;
 
@@ -48,10 +49,8 @@ public class Projectile : MonoBehaviour
 
     public void OnCollisionEnter2D(Collision2D collision)
     {
-            string colTag = collision.gameObject.tag;
-        if(collision.gameObject.layer == LayerMask.GetMask("Scenario") ||
-            collision.gameObject.layer == LayerMask.GetMask("Obstacles") ||
-            !IsParryable && colTag is "Player" or "Boss")
+        string colTag = collision.gameObject.tag;
+        if(colTag is "Player" or "Boss" or "Scenario" or "Ceiling" or "Floor")
         {
             ManageCollision(collision.collider);
         }
@@ -78,6 +77,7 @@ public class Projectile : MonoBehaviour
         _animator.SetTrigger("OnImpact");
         _rb.linearVelocity = Vector2.zero;
 
+        Debug.Log("Projectile Collide");
         Destroy(gameObject, _impactTime);
     }
 
