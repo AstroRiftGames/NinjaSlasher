@@ -63,8 +63,8 @@ public class AnalyticsManager : MonoBehaviourSingleton<AnalyticsManager>
             var gameStartEvent = new CustomEvent("gameStart")
             {
                 { "sessionId", Guid.NewGuid().ToString() },
-                { "timestamp", DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ") },
-                { "platform", Application.platform.ToString() },
+                { "eventTime", DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ") },
+                { "devicePlatform", Application.platform.ToString() },
                 { "version", Application.version }
             };
 
@@ -86,8 +86,8 @@ public class AnalyticsManager : MonoBehaviourSingleton<AnalyticsManager>
             var gameEndEvent = new CustomEvent("gameEnd")
             {
                 { "sessionDuration", sessionDuration },
-                { "timestamp", DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ") },
-                { "platform", Application.platform.ToString() }
+                { "eventTime", DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ") },
+                { "devicePlatform", Application.platform.ToString() }
             };
 
             AnalyticsService.Instance.RecordEvent(gameEndEvent);
@@ -110,7 +110,7 @@ public class AnalyticsManager : MonoBehaviourSingleton<AnalyticsManager>
                 { "levelId", levelId },
                 { "starsEarned", starsEarned },
                 { "completionTime", completionTime },
-                { "timestamp", DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ") }
+                { "eventTime", DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ") }
             };
 
             AnalyticsService.Instance.RecordEvent(levelCompletedEvent);
@@ -134,7 +134,7 @@ public class AnalyticsManager : MonoBehaviourSingleton<AnalyticsManager>
                 { "failReason", failReason },
                 { "attemptTime", attemptTime },
                 { "attemptNumber", attemptNumber },
-                { "timestamp", DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ") }
+                { "eventTime", DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ") }
             };
 
             AnalyticsService.Instance.RecordEvent(levelFailedEvent);
@@ -157,7 +157,7 @@ public class AnalyticsManager : MonoBehaviourSingleton<AnalyticsManager>
                 { "currentLives", currentLives },
                 { "totalLivesLost", totalLivesLost },
                 { "lossReason", lossReason },
-                { "timestamp", DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ") }
+                { "eventTime", DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ") }
             };
 
             AnalyticsService.Instance.RecordEvent(lifeLostEvent);
@@ -179,7 +179,7 @@ public class AnalyticsManager : MonoBehaviourSingleton<AnalyticsManager>
             {
                 { "newLifeCount", newLifeCount },
                 { "restoreMethod", restoreMethod },
-                { "timestamp", DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ") }
+                { "eventTime", DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ") }
             };
 
             AnalyticsService.Instance.RecordEvent(lifeRestoredEvent);
@@ -202,7 +202,7 @@ public class AnalyticsManager : MonoBehaviourSingleton<AnalyticsManager>
                 { "actionType", actionType },
                 { "actionDetails", actionDetails },
                 { "currentLevel", currentLevel },
-                { "timestamp", DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ") }
+                { "eventTime", DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ") }
             };
 
             AnalyticsService.Instance.RecordEvent(playerActionEvent);
@@ -224,7 +224,7 @@ public class AnalyticsManager : MonoBehaviourSingleton<AnalyticsManager>
             {
                 { "fromScreen", fromScreen },
                 { "toScreen", toScreen },
-                { "timestamp", DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ") }
+                { "eventTime", DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ") }
             };
 
             AnalyticsService.Instance.RecordEvent(screenTransitionEvent);
