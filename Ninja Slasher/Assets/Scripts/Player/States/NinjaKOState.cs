@@ -13,6 +13,7 @@ public class NinjaKOState<NinjaStates> : State<NinjaStates>
     {
         _controller.Die();
         _controller.View.Animator.SetTrigger("OnKO");
+        AudioManager.Instance.PlaySFX(SFXClip.P_Die);
     }
 
     public override void Execute()

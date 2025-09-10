@@ -564,7 +564,7 @@ public class Controller : MonoBehaviour
         {
             if (_isDead) return;
             _isDead = true;
-
+            
             var levelController = FindObjectOfType<LevelController>();
             if (levelController != null)
             {

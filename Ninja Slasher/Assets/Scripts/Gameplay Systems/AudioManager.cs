@@ -44,6 +44,7 @@ public enum SFXClip
     P_Attack,
     P_FailedParry,
     P_SuccesfulParry,
+    P_Die
 }
 
 [Serializable]
