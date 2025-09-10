@@ -15,7 +15,8 @@ public enum MusicClip
     Area5,
     BossLevel,
     Victory,
-    GameOver
+    GameOver,
+    Credits
 }
 
 [Serializable]
@@ -43,6 +44,7 @@ public enum SFXClip
     P_Attack,
     P_FailedParry,
     P_SuccesfulParry,
+    P_Die
 }
 
 [Serializable]
