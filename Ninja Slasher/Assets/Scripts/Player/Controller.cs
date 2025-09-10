@@ -571,7 +571,7 @@ public class Controller : MonoBehaviour
                 levelController.MarkLevelAsFailed();
             }
 
-            GameManager.Instance.OnPlayerLose();
+            LevelManager.Instance.OnPlayerLose();
             _fsm.Transition(NinjaStates.KO);
         }
     }
@@ -630,7 +630,6 @@ public class Controller : MonoBehaviour
         float angle = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg;
         _playerView.SpriteContainer.transform.rotation = Quaternion.Euler(0, 0, angle);
 
-        Debug.Log("Angle: " + angle);
         SetIsFlipped((angle > -180 && angle <= -90) || angle <= 180 && angle > 90);
 
         Vector3 newScale = _playerView.SpriteContainer.transform.localScale;

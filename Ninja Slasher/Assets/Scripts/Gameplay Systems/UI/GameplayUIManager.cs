@@ -139,19 +139,19 @@ public class GameplayUIManager : MonoBehaviour
             LifeManager.Instance.OnLevelExit();
         }
 
-        GameManager.Instance.RestartLevel();
+        LevelManager.Instance.RestartLevel();
     }
 
     public void OnBackToSelectionPressed()
     {
         HideLifeLostPanel();
-        GameManager.Instance.GoToLevelSelection(confirmPendingDeduction: true);
+        LevelManager.Instance.GoToLevelSelection(confirmPendingDeduction: true);
     }
 
     public void ContinueToLevelSelector()
     {
         UIManager.Instance.ShowHideResultsCanvas();
-        GameManager.Instance.GoToLevelSelection(confirmPendingDeduction: false);
+        LevelManager.Instance.GoToLevelSelection(confirmPendingDeduction: false);
     }
 
     private void OnLivesChanged(int lives)
@@ -205,9 +205,9 @@ public class GameplayUIManager : MonoBehaviour
         if (_levelTimerText != null)
             _levelTimerText.text = "00:00";
 
-        if (GameManager.Instance != null)
+        if (LevelManager.Instance != null)
         {
-            GameManager.Instance.OnLevelFailed();
+            LevelManager.Instance.OnLevelFailed();
         }
     }
 

@@ -20,6 +20,8 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
     [SerializeField] private bool enableConsecutiveLossAds = true;
     [SerializeField] private bool enableNoLivesAds = true;
 
+    private int totalLivesLostThisSession = 0;
+
     private int currentConsecutiveLosses = 0;
 
     private bool _levelInProgress = false;
@@ -106,9 +108,18 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
         else
             _virtualLives = CurrentLives;
 
+        if (AnalyticsManager.Instance != null && toGenerate > 0)
+        {
+            AnalyticsManager.Instance.RecordLifeRestored(
+                CurrentLives,
+                "timeRegeneration"
+            );
+        }
+
         Persist("Vida regenerada");
         EmitDisplayLivesChanged();
     }
+
 
     private void CheckOfflineRegeneration()
     {
@@ -150,7 +161,6 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
         var context = PowerUpManager.Instance?.context;
         if (context != null && context.SecondChanceActive)
         {
-            Debug.Log("[PowerUp] Second Chance: vida NO restada.");
             EmitDisplayLivesChanged();
             return;
         }
@@ -163,12 +173,20 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
             _hasVirtualDeduction = false;
             _levelInProgress = false;
 
+            totalLivesLostThisSession++;
+            if (AnalyticsManager.Instance != null)
+            {
+                AnalyticsManager.Instance.RecordLifeLost(
+                    CurrentLives,
+                    totalLivesLostThisSession,
+                    "levelFailed"
+                );
+            }
+
             CheckLifeLossAds();
 
             Persist("Vida perdida (confirmada)");
             EmitDisplayLivesChanged();
-
-            Debug.Log($"[LifeManager] Nivel perdido. Descuento confirmado. Vidas: {CurrentLives}");
         }
         else
         {
@@ -178,12 +196,20 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
             _lastLifeUsedUtc = DateTime.UtcNow;
             _virtualLives = CurrentLives;
 
+            totalLivesLostThisSession++;
+            if (AnalyticsManager.Instance != null)
+            {
+                AnalyticsManager.Instance.RecordLifeLost(
+                    CurrentLives,
+                    totalLivesLostThisSession,
+                    "directUse"
+                );
+            }
+
             CheckLifeLossAds();
 
             Persist("Vida perdida (directa)");
             EmitDisplayLivesChanged();
-
-            Debug.Log($"[LifeManager] Vida usada. Restantes: {CurrentLives}");
         }
     }
 
@@ -197,7 +223,6 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
 
             ResetLossCounter();
 
-            Debug.Log($"[LifeManager] Nivel completado. Descuento cancelado. Vidas mantenidas: {CurrentLives}");
             EmitDisplayLivesChanged();
         }
     }
@@ -214,8 +239,6 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
 
             Persist("Vida perdida por abandono");
             EmitDisplayLivesChanged();
-
-            Debug.Log($"[LifeManager] Nivel abandonado. Descuento confirmado. Vidas: {CurrentLives}");
         }
     }
 
@@ -233,10 +256,16 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
         else
             _virtualLives = CurrentLives;
 
+        if (AnalyticsManager.Instance != null)
+        {
+            AnalyticsManager.Instance.RecordLifeRestored(
+                CurrentLives,
+                "manualAdd"
+            );
+        }
+
         Persist("Vida ganada");
         EmitDisplayLivesChanged();
-
-        Debug.Log($"[LifeManager] Vida agregada. Total: {CurrentLives}");
     }
 
     public void FillAllLives()
@@ -254,8 +283,6 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
 
         Persist("Vidas completas");
         EmitDisplayLivesChanged();
-
-        Debug.Log($"[LifeManager] Vidas llenadas: {previousLives} -> {CurrentLives}");
     }
 
     public float GetRechargeProgress()
@@ -285,7 +312,6 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
     private void LoadAdsProgress()
     {
         currentConsecutiveLosses = PlayerPrefs.GetInt("ConsecutiveLosses", 0);
-        Debug.Log($"Derrotas consecutivas cargadas: {currentConsecutiveLosses}");
     }
 
     private void SaveAdsProgress()
@@ -298,14 +324,12 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
     {
         if (enableNoLivesAds && CurrentLives == 0)
         {
-            Debug.Log("¡Jugador sin vidas! Mostrando anuncio intersticial...");
             ShowNoLivesAd();
             ResetLossCounter();
         }
         else if (enableConsecutiveLossAds)
         {
             currentConsecutiveLosses++;
-            Debug.Log($"Vida perdida. Derrotas consecutivas: {currentConsecutiveLosses}/{lossesRequiredForAd}");
 
             if (currentConsecutiveLosses >= lossesRequiredForAd)
             {
@@ -319,15 +343,12 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
 
     private void ShowConsecutiveLossAd()
     {
-        Debug.Log($"¡{lossesRequiredForAd} derrotas consecutivas! Mostrando publicidad intersticial...");
-
         if (AdsManager.Instance != null && AdsManager.Instance.IsInterstitialAdReady())
         {
             AdsManager.Instance.ShowInterstitialAd();
         }
         else
         {
-            Debug.LogWarning("AdsManager no disponible o anuncio intersticial no listo para derrotas consecutivas");
             if (AdsManager.Instance != null)
             {
                 AdsManager.Instance.ReloadAllAds();
@@ -343,7 +364,6 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
         }
         else
         {
-            Debug.LogWarning("AdsManager no disponible o anuncio intersticial no listo para 0 vidas");
             if (AdsManager.Instance != null)
             {
                 AdsManager.Instance.ReloadAllAds();

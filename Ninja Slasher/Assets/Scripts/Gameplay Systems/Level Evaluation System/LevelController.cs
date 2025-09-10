@@ -170,6 +170,15 @@ public class LevelController : MonoBehaviour
             Debug.Log($"Objetivo completado: {completed.objectiveName}");
         }
 
+        if (AnalyticsManager.Instance != null)
+        {
+            AnalyticsManager.Instance.RecordLevelCompleted(
+                levelConfiguration.levelId,
+                result.starsEarned,
+                stats.timeTaken
+            );
+        }
+
         return result.starsEarned;
     }
 
