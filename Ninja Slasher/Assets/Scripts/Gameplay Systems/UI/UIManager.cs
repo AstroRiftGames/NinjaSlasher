@@ -61,7 +61,7 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
     public void ShowHidePauseCanvas() => _canvasManager.ShowHidePauseCanvas();
     public void ShowHideCreditsCanvas() => _canvasManager.ShowHideCreditsCanvas();
     public void ShowHideProfileCanvas() => _canvasManager.ShowHideProfileCanvas();
-    //public void ShowHideExtraLifeCanvas() => _canvasManager.ShowHideExtraLifeCanvas();
+    public void ShowHideUserIconsCanvas() => _canvasManager.ShowHideUserIconsCanvas();
     public void ShowHideResultsCanvas() => _canvasManager.ShowHideResultsCanvas();
     public void ShowHideDailyRewardCanvas() => _canvasManager.ShowHideDailyRewardCanvas();
     public void ShowHideNoLivesCanvas() => _canvasManager.ShowHideNoLivesCanvas();

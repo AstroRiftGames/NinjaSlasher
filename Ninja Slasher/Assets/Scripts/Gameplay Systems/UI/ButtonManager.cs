@@ -20,6 +20,8 @@ public class ButtonManager : MonoBehaviour
     [SerializeField] private Button _closeProfileButton;
     [SerializeField] private Button _creditsButton;
     [SerializeField] private Button _closeCreditsButton;
+    [SerializeField] private Image _userIconImage;
+    [SerializeField] private Button[] _userIconButtonGroup;
 
     [Header("DAILY REWARDS BUTTONS")]
     [SerializeField] private Button _closeCalendarButton;
@@ -162,10 +164,21 @@ public class ButtonManager : MonoBehaviour
         _closeNoLivesPanelButton.onClick.AddListener(UIManager.Instance.ShowHideNoLivesCanvas);
         _adForMoreLifeButton.onClick.AddListener(AdsManager.Instance.ShowRewardedAdForExtraLife);
 
-        _userIconButton.onClick.AddListener(UIManager.Instance.ShowHideProfileCanvas);
+        _userIconButton.onClick.AddListener(UIManager.Instance.ShowHideUserIconsCanvas);
         _creditsButton.onClick.AddListener(UIManager.Instance.ShowHideCreditsCanvas);
         _closeProfileButton.onClick.AddListener(UIManager.Instance.ShowHideProfileCanvas);
         _closeCreditsButton.onClick.AddListener(UIManager.Instance.ShowHideCreditsCanvas);
+
+        foreach (var img in _userIconButtonGroup)
+        {
+            img.onClick.AddListener(() =>
+            {
+                Image icon = img.transform.GetChild(0).GetComponent<Image>();
+                _userIconImage.sprite = icon.sprite;
+                _userIconImage.color = icon.color;  //SE NECESITA SPRITE CON EL COLOR PARA QUITAR ESTO
+                UIManager.Instance.ShowHideUserIconsCanvas();
+            });
+        }
 
         _calendarButton.onClick.AddListener(UIManager.Instance.ShowHideDailyRewardCanvas);
         _configDropdownButton.onClick.AddListener(_configPanelManager.OpenCloseConfigPanel);

@@ -13,7 +13,7 @@ public class CanvasManager : MonoBehaviour
     [SerializeField] private Canvas _dailyRewardCanvas;
     [SerializeField] private Canvas _noLivesCanvas;
     [SerializeField] private Canvas _resultsCanvas;
-    //[SerializeField] private Canvas _extraLifeCanvas;
+    [SerializeField] private Canvas _userIconsCanvas;
 
     public void OpenCanvas(Canvas canvas) => canvas.enabled = true;
     public void CloseCanvas(Canvas canvas) => canvas.enabled = false;
@@ -23,6 +23,12 @@ public class CanvasManager : MonoBehaviour
         AudioManager.Instance.PlaySFX(SFXClip.UI_Select);
         if (state) OpenCanvas(canvas);
         else CloseCanvas(canvas);
+    }
+
+    public void ShowHideUserIconsCanvas()
+    {
+        bool isCanvasActive = !_userIconsCanvas.enabled;
+        ShowHideCanvas(_userIconsCanvas, isCanvasActive);
     }
 
     public void ShowHideResultsCanvas()
@@ -66,11 +72,6 @@ public class CanvasManager : MonoBehaviour
         ShowHideCanvas(_profileCanvas, isCanvasActive);
     }
 
-    //public void ShowHideExtraLifeCanvas()
-    //{
-    //    bool isCanvasActive = !_extraLifeCanvas.enabled;
-    //    ShowHideCanvas(_extraLifeCanvas, isCanvasActive);
-    //}
     public void ShowHidePreGameCanvas()
     {
         bool isCanvasActive = !_preGameCanvas.enabled;
