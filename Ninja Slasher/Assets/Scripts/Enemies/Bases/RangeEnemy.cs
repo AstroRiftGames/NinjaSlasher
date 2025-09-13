@@ -16,7 +16,14 @@ public class RangeEnemy : Enemy
     [SerializeField] private float _cooldDown;
     [SerializeField] protected Transform _refPoint;
     private float _lastAttack;
+    private GenericPool<Projectile> _pool;
     protected void SetLastAttack() => _lastAttack = Time.time;
+
+    public override void Awake()
+    {
+        base.Awake();
+        _pool = new GenericPool<Projectile>(_data.Projectile, 5, transform);
+    }
 
     public override void OnEnable()
     {
@@ -79,9 +86,9 @@ public class RangeEnemy : Enemy
 
     protected void Shoot()
     {
-        var projectile = Instantiate(_data.Projectile, _refPoint.position, Quaternion.identity)
-                    .GetComponent<Projectile>();
-        projectile.Initialize(_dirToTarget.normalized, transform);
+        var projectile = _pool.Get();
+        projectile.transform.SetPositionAndRotation(_refPoint.position, Quaternion.identity);
+        projectile.Initialize(_dirToTarget.normalized, transform, _pool);
     }
 
 #if UNITY_EDITOR

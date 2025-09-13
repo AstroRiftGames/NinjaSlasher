@@ -22,9 +22,9 @@ public class MultiattackDrone : BossEnemy
     private bool _flyingAway;
 
     [Header("Bullet Prefabs")]
+    [SerializeField] GameObject _coneBullet;
     [SerializeField] GameObject _riccochetBullet;
     [SerializeField] GameObject _burstBullet;
-    [SerializeField] GameObject _coneShots;
 
     [Header("Attacking Parameters")]
     [SerializeField] float _cooldown;
@@ -35,11 +35,21 @@ public class MultiattackDrone : BossEnemy
     [SerializeField] int _coneAmount;
     [SerializeField] float _timeBetweenShots;
     private AttackType _nextAttack;
+    private GenericPool<Projectile> _conePool;
+    private GenericPool<Projectile> _ricochetPool;
+    private GenericPool<Projectile> _burstPool;
 
     [Header("Vulnerability Parameters")]
     [SerializeField] float _vulnerabilityTime;
     private bool _isVulnerable;
 
+    public override void Awake()
+    {
+        base.Awake();
+        _conePool = new GenericPool<Projectile>(_coneBullet, _coneAmount*2, transform);
+        _ricochetPool = new GenericPool<Projectile>(_riccochetBullet, 5, transform);
+        _burstPool = new GenericPool<Projectile>(_burstBullet, _burstAmount*2, transform);
+    }
 
     private void Update()
     {
@@ -148,24 +158,27 @@ public class MultiattackDrone : BossEnemy
         GameObject prefab = type switch
         {
             AttackType.Burst => _burstBullet,
-            AttackType.Cone => _coneShots,
+            AttackType.Cone => _coneBullet,
             AttackType.Ricochet => _riccochetBullet,
             _ => _burstBullet,
         };
 
-        if(type == AttackType.Cone)
+        if (type == AttackType.Cone)
         {
-            GameObject cone = Instantiate(prefab, _shootingPoint.position, _shootingPoint.parent.rotation);
-            for(int n = 0; n < cone.transform.childCount;n++)
+            Projectile cone = _conePool.Get();
+            cone.enabled = false;
+            for (int n = 0; n < cone.transform.childCount; n++)
             {
                 cone.transform.GetChild(n).TryGetComponent(out Projectile newProjectile);
-                newProjectile.Initialize(transform);
+                newProjectile.Initialize(transform, _conePool);
             }
         }
         else
         {
-            Instantiate(prefab, _shootingPoint.position, Quaternion.identity).TryGetComponent(out Projectile newProjectile);
-            newProjectile.Initialize(GetDirToPlayer(), transform);
+            GenericPool<Projectile> pool = type == AttackType.Ricochet ? _ricochetPool: _burstPool;
+            Projectile projectile = pool.Get();
+            projectile.transform.SetPositionAndRotation(_shootingPoint.position, Quaternion.identity);
+            projectile.Initialize(GetDirToPlayer(), transform, pool);
         }
     }
 
