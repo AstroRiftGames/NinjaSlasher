@@ -11,7 +11,14 @@ public class ExplosiveProjectile : Projectile
         {
             DamagePlayer(playerCol.gameObject);
         }
-        Destroy(gameObject);
+        if (OwnerPool == null)
+        {
+            Destroy(gameObject, ImpactTime);
+        }
+        else
+        {
+            OwnerPool.Return(this);
+        }
     }
 
     public override void SetDirection(Vector2 direction)

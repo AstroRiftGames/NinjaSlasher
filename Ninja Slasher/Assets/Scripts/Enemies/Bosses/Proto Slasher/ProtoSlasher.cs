@@ -29,6 +29,7 @@ public class ProtoSlasher : BossEnemy
     [Header("Projectiles Burst")]
     [SerializeField] int _projectilesAmount;
     [SerializeField] float _timeBetweenShots;
+    GenericPool<Projectile> _burstPool;
     [SerializeField] GameObject _burstProjectilePrefab;
     [SerializeField] int _burstsToEnergy;
     private int _burstsShot;
@@ -36,6 +37,7 @@ public class ProtoSlasher : BossEnemy
     [Header("Energy Shot")]
     [SerializeField] GameObject _energyProjectilePrefab;
     [SerializeField] float _chargingTime;
+    GenericPool<Projectile> _energyPool;
 
     [Header("Parry")]
     [SerializeField] int _maxEnergyParries;
@@ -48,7 +50,14 @@ public class ProtoSlasher : BossEnemy
     bool _isVulnerable;
     [SerializeField] float _vulnerableTime;
 
-    private void Update()
+    public override void Awake()
+    {
+        base.Awake();
+        _energyPool = new GenericPool<Projectile>(_energyProjectilePrefab, 5, transform);
+        _burstPool = new GenericPool<Projectile>(_burstProjectilePrefab, _projectilesAmount * _burstsToEnergy, transform);
+    }
+
+    public override void CustomUpdate()
     {
         _dirToPlayer = GetDirToPlayer();
         if (_isShooting)
@@ -110,7 +119,7 @@ public class ProtoSlasher : BossEnemy
         _burstsShot++;
         for (int n = 0; n < _projectilesAmount; n++) 
         {
-            Shoot(_burstProjectilePrefab);
+            Shoot(_burstPool);
             yield return new WaitForSeconds(_timeBetweenShots);
         }
         _isShooting = false;
@@ -119,7 +128,7 @@ public class ProtoSlasher : BossEnemy
     {
         _isShooting = true;
         yield return new WaitForSeconds(_chargingTime);
-        Shoot(_energyProjectilePrefab);
+        Shoot(_energyPool);
         _energyParries = 0;
         _burstsShot = 0;
         _isShooting = false;
@@ -142,9 +151,10 @@ public class ProtoSlasher : BossEnemy
         _body.rotation = Quaternion.Euler(0, 0, angle);
     }
 
-    private void Shoot(GameObject projectile)
+    private void Shoot(GenericPool<Projectile> pool)
     {
-        Instantiate(projectile, _refPoint.position, Quaternion.identity).TryGetComponent(out Projectile newProjectile);
+        Projectile newProjectile = pool.Get();
+        newProjectile.transform.SetPositionAndRotation(_refPoint.position, Quaternion.identity);
         newProjectile.Initialize(_dirToPlayer, transform);
     }
     #endregion

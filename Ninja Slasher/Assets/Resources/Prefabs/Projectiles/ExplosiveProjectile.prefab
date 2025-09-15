@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 4327615162532763416}
   - component: {fileID: 6513293042258872434}
   - component: {fileID: -157035170857624699}
+  - component: {fileID: 2468683705389787050}
   m_Layer: 8
   m_Name: ExplosiveProjectile
   m_TagString: Projectile
@@ -173,7 +174,32 @@ MonoBehaviour:
   playerLayer:
     serializedVersion: 2
     m_Bits: 1024
+  scenarioLayer:
+    serializedVersion: 2
+    m_Bits: 192
   _animator: {fileID: 0}
   _impactTime: 0
   isParryable: 1
   _explosionRange: 2
+--- !u!95 &2468683705389787050
+Animator:
+  serializedVersion: 7
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2649408524852647323}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 0}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_AnimatePhysics: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0

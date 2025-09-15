@@ -1,3 +1,4 @@
+using Managers;
 using System.Collections;
 using System.Threading.Tasks;
 using UnityEngine;
@@ -27,7 +28,8 @@ public class GuardBot : Enemy
         base.Awake();
         _currentSpeed = _speed;
     }
-    public virtual void Update()
+
+    public override void CustomUpdate()
     {
         if (!CheckDistanceToTarget(_target)) 
         {

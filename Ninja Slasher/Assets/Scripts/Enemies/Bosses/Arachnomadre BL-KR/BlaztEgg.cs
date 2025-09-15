@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Runtime.CompilerServices;
 using UnityEngine;
 
@@ -16,7 +17,13 @@ public class BlaztEgg : MonoBehaviour
             BL4ZT newEnemy = Instantiate(BlaztPrefab, transform.position + Vector3.up *.5f, Quaternion.identity).GetComponentInChildren<BL4ZT>();
             newEnemy.SetArachnomadre(_arachnomadre);
             _arachnomadre.IncreaseEggsAmount();
-            Destroy(gameObject, .5f);
+            StartCoroutine(ReturnEgg());
         }
+    }
+
+    IEnumerator ReturnEgg()
+    {
+        yield return new WaitForSeconds(.5f);
+        _arachnomadre.Pool.Return(this);
     }
 }
