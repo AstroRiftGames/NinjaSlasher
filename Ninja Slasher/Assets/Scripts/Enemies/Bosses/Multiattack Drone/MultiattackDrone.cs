@@ -51,7 +51,7 @@ public class MultiattackDrone : BossEnemy
         _burstPool = new GenericPool<Projectile>(_burstBullet, _burstAmount*2, transform);
     }
 
-    private void Update()
+    public override void CustomUpdate()
     {
         if(!_isVulnerable)
         {

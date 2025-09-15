@@ -33,7 +33,7 @@ public class OM3GA : RangeEnemy
         base.Start();
         _ray.enabled = false;
     }
-    public override void Update()
+    public override void CustomUpdate()
     {
         UpdateTarget();
         _isAttacking = _hasLOS;

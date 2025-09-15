@@ -1,3 +1,5 @@
+using Managers;
+using System;
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -130,9 +132,15 @@ public class Controller : MonoBehaviour
     void OnEnable()
     {
         _isDead = false;
+        CustomUpdateManager.Instance.SubscribeToUpdate(CustomUpdate);
     }
 
-    private void Update()
+    private void OnDisable()
+    {
+        CustomUpdateManager.Instance.UnsubscribeFromUpdate(CustomUpdate);
+    }
+
+    private void CustomUpdate()
     {
         _root.Execute();
         _fsm.OnUpdate();

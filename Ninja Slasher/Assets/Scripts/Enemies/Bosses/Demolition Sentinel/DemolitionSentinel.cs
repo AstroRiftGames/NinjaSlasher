@@ -100,7 +100,7 @@ public class DemolitionSentinel : BossEnemy
         ChooseAttack();
     }
 
-    private void Update()
+    public override void CustomUpdate()
     {
         _fsm.OnUpdate();
         _root.Execute();

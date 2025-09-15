@@ -1,3 +1,4 @@
+using Managers;
 using UnityEngine;
 
 public class ScoutBot : Enemy
@@ -8,7 +9,7 @@ public class ScoutBot : Enemy
     float _lastDetectionTime;
     [SerializeField] float _resetDelay = 5f;
 
-    public void Update()
+    public override void CustomUpdate()
     {
         bool hasLOS = CheckLOS(_player);
         bool canDetectPlayer = _isAlert || hasLOS;

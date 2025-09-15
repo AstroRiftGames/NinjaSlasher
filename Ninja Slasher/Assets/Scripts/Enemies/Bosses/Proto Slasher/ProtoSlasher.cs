@@ -57,7 +57,7 @@ public class ProtoSlasher : BossEnemy
         _burstPool = new GenericPool<Projectile>(_burstProjectilePrefab, _projectilesAmount * _burstsToEnergy, transform);
     }
 
-    private void Update()
+    public override void CustomUpdate()
     {
         _dirToPlayer = GetDirToPlayer();
         if (_isShooting)

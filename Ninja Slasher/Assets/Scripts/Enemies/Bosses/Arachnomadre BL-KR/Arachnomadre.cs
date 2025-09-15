@@ -1,3 +1,4 @@
+using Managers;
 using System.Collections;
 using Unity.VisualScripting;
 using UnityEngine;
@@ -56,7 +57,7 @@ public class Arachnomadre : BossEnemy
         _pool = new GenericPool<BlaztEgg>(_blaztEgg, _blaztEggsAmount, transform);
     }
 
-    private void Update()
+    public override void CustomUpdate()
     {
         if (!_isVulnerable) 
         {

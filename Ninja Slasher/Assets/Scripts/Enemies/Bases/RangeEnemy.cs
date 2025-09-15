@@ -1,3 +1,4 @@
+using Managers;
 using UnityEngine;
 
 public class RangeEnemy : Enemy
@@ -27,10 +28,12 @@ public class RangeEnemy : Enemy
 
     public override void OnEnable()
     {
+        base.OnEnable();
         _target = FindAnyObjectByType<Controller>().transform;
     }
 
-    public virtual void Update()
+
+    public override void CustomUpdate()
     {
         UpdateTarget();
 
