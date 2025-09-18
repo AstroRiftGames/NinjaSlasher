@@ -1,10 +1,10 @@
+using Managers;
 using Unity.VisualScripting;
 using UnityEngine;
 
 public class KRUSH9 : Enemy
 {
     [SerializeField] float _attackSpeed;
-    private Animator _animator;
 
     public override void Awake()
     {
@@ -18,10 +18,8 @@ public class KRUSH9 : Enemy
         _animator.SetFloat("Speed", _attackSpeed);
     }
 
-#if UNITY_EDITOR
-    private void Update()
+    public override void CustomUpdate()
     {
         _animator.SetFloat("Speed", _attackSpeed);
     }
-#endif
 }

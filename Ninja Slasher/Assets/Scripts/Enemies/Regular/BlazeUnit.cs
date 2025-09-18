@@ -8,9 +8,9 @@ public class BlazeUnit : RangeEnemy
     float _lastDetectionTime;
     [SerializeField] float _resetDelay = 5f;
 
-    public override void Update()
+    public override void CustomUpdate()
     {
-        base.Update();
+        base.CustomUpdate();
         bool canDetectPlayer = _isAlert || _hasLOS;
 
         if (canDetectPlayer && !_hasPlayedDetectionSFX)

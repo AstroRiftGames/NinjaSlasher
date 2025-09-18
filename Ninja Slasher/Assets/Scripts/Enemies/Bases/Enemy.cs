@@ -1,3 +1,4 @@
+using Managers;
 using UnityEngine;
 
 public class Enemy : MonoBehaviour
@@ -22,12 +23,16 @@ public class Enemy : MonoBehaviour
 
     public virtual void OnEnable()
     {
-        VulnerabilityCheck.OnVulnerabilityCheckColision += DetectCollision;
+        VulnerabilityCheck.OnVulnerabilityCheckColision -= DetectCollision;
+        CustomUpdateManager.Instance.SubscribeToUpdate(CustomUpdate);
     }
+
     public virtual void OnDisable()
     {
-        VulnerabilityCheck.OnVulnerabilityCheckColision -= DetectCollision;
+        VulnerabilityCheck.OnVulnerabilityCheckColision += DetectCollision;
+        CustomUpdateManager.Instance.UnsubscribeFromUpdate(CustomUpdate);
     }
+
 
     public virtual void Awake()
     {
@@ -50,6 +55,7 @@ public class Enemy : MonoBehaviour
         CheckVulnerability();
     }
 
+    public virtual void CustomUpdate() { }
     protected void DetectCollision(Direction dir)
     {
 #if UNITY_EDITOR

@@ -1,3 +1,4 @@
+using Managers;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -17,6 +18,18 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
         InitializeManagers();
     }
 
+    private void OnEnable()
+    {
+        SceneManager.sceneLoaded += OnSceneLoaded;
+        CustomUpdateManager.Instance.SubscribeToUpdate(CustomUpdate);
+    }
+
+    private void OnDisable()
+    {
+        SceneManager.sceneLoaded -= OnSceneLoaded;
+        CustomUpdateManager.Instance.UnsubscribeFromUpdate(CustomUpdate);
+    }
+
     private void Start()
     {
         _buttonManager.SetupButtons();
@@ -32,17 +45,7 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
         _sceneTransitionManager = GetComponent<SceneTransitionManager>();
     }
 
-    private void OnEnable()
-    {
-        SceneManager.sceneLoaded += OnSceneLoaded;
-    }
-
-    private void OnDisable()
-    {
-        SceneManager.sceneLoaded -= OnSceneLoaded;
-    }
-
-    private void Update()
+    private void CustomUpdate()
     {
         _gameplayUIManager.UpdateUI();
     }
