@@ -14,6 +14,7 @@ public class CanvasManager : MonoBehaviour
     [SerializeField] private Canvas _noLivesCanvas;
     [SerializeField] private Canvas _resultsCanvas;
     [SerializeField] private Canvas _userIconsCanvas;
+    [SerializeField] private Canvas _userNicknameEditCanvas;
 
     public void OpenCanvas(Canvas canvas) => canvas.enabled = true;
     public void CloseCanvas(Canvas canvas) => canvas.enabled = false;
@@ -23,6 +24,12 @@ public class CanvasManager : MonoBehaviour
         AudioManager.Instance.PlaySFX(SFXClip.UI_Select);
         if (state) OpenCanvas(canvas);
         else CloseCanvas(canvas);
+    }
+
+    public void ShowHideUserNicknameEditCanvas()
+    {
+        bool isCanvasActive = !_userNicknameEditCanvas.enabled;
+        ShowHideCanvas(_userNicknameEditCanvas, isCanvasActive);
     }
 
     public void ShowHideUserIconsCanvas()

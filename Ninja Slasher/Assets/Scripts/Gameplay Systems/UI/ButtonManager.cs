@@ -17,6 +17,8 @@ public class ButtonManager : MonoBehaviour
 
     [Header("PROFILE BUTTONS")]
     [SerializeField] private Button _userIconButton;
+    [SerializeField] private Button _userNicknameButton;
+    [SerializeField] private string _userNicknameText;
     [SerializeField] private Button _closeProfileButton;
     [SerializeField] private Button _creditsButton;
     [SerializeField] private Button _closeCreditsButton;
@@ -155,6 +157,11 @@ public class ButtonManager : MonoBehaviour
         }
     }
 
+    public void OpenURLButtonClicked(string url)
+    {
+        UIManager.Instance.OpenURL(url);
+    }
+
     private void SetupLevelSelectorButtons()
     {
         _musicButton.onClick.AddListener(_audioToggle.MusicButtonClicked);
@@ -165,6 +172,8 @@ public class ButtonManager : MonoBehaviour
         _adForMoreLifeButton.onClick.AddListener(AdsManager.Instance.ShowRewardedAdForExtraLife);
 
         _userIconButton.onClick.AddListener(UIManager.Instance.ShowHideUserIconsCanvas);
+        _userNicknameText = LoginManager.Instance.PlayerName;
+        _userNicknameButton.onClick.AddListener(UIManager.Instance.ShowHideUserNicknameEditCanvas);
         _creditsButton.onClick.AddListener(UIManager.Instance.ShowHideCreditsCanvas);
         _closeProfileButton.onClick.AddListener(UIManager.Instance.ShowHideProfileCanvas);
         _closeCreditsButton.onClick.AddListener(UIManager.Instance.ShowHideCreditsCanvas);

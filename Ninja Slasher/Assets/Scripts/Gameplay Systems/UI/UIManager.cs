@@ -56,6 +56,11 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
             _gameplayUIManager.OnSceneLoaded();
     }
 
+    public void OpenURL(string url)
+    {
+        Application.OpenURL(url);
+    }
+
     public void ShowLevelSelector() => _sceneTransitionManager.ShowLevelSelector();
     public void LoadLevelScene(string sceneName) => _sceneTransitionManager.LoadLevelScene(sceneName);
     public void RestartLevel() => _sceneTransitionManager.RestartLevel();
@@ -65,6 +70,7 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
     public void ShowHideCreditsCanvas() => _canvasManager.ShowHideCreditsCanvas();
     public void ShowHideProfileCanvas() => _canvasManager.ShowHideProfileCanvas();
     public void ShowHideUserIconsCanvas() => _canvasManager.ShowHideUserIconsCanvas();
+    public void ShowHideUserNicknameEditCanvas() => _canvasManager.ShowHideUserNicknameEditCanvas();
     public void ShowHideResultsCanvas() => _canvasManager.ShowHideResultsCanvas();
     public void ShowHideDailyRewardCanvas() => _canvasManager.ShowHideDailyRewardCanvas();
     public void ShowHideNoLivesCanvas() => _canvasManager.ShowHideNoLivesCanvas();
