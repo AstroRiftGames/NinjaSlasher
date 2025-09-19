@@ -87,6 +87,7 @@ public class Chain : MonoBehaviour
         {
             BreakChain();
             ReleaseBall();
+            AudioManager.Instance.PlaySFXAtPosition(SFXClip.B_Sentinel_Damaged, _sentinel.transform.position);
             _sentinel.StopAttack();
         }
     }
