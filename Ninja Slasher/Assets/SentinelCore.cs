@@ -37,6 +37,9 @@ public class SentinelCore : MonoBehaviour
         if (collision.CompareTag("Player"))
         {
             _sentinel.Animator.SetTrigger("onHit");
+            AudioManager.Instance.PlaySFXAtPosition(SFXClip.B_Sentinel_Defeated, _sentinel.transform.position);
+
+            //TODO: Agregar SFX Defeated idle en loop luego de SFX Defeated
             KillSentinel();
         }
     }

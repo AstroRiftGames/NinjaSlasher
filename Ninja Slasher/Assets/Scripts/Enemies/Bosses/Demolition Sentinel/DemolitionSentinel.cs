@@ -93,6 +93,7 @@ public class DemolitionSentinel : BossEnemy
 
     public IEnumerator Activate()
     {
+        AudioManager.Instance.PlaySFXAtPosition(SFXClip.B_Sentinel_Intro, transform.position);
         SetTargetDirection(Vector2.down);
         AimArm(_balls[0].PivotPoint);
         AimArm(_balls[1].PivotPoint);

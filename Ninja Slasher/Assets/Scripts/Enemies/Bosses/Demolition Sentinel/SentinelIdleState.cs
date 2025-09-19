@@ -12,6 +12,9 @@ public class SentinelIdleState<SentinelStates> : State<SentinelStates>
     public override void Enter()
     {
         _enterTime = Time.time;
+        AudioManager.Instance.PlaySFXAtPosition(SFXClip.B_Sentinel_Idle, _sentinel.transform.position);
+
+        //TODO: Configurar SFX idle en loop.
     }
 
     public override void Execute()
@@ -21,4 +24,6 @@ public class SentinelIdleState<SentinelStates> : State<SentinelStates>
             _sentinel.SetJustAttacked(false);
         }
     }
+
+    //TODO: Detener SFX idle en método Sleep()
 }

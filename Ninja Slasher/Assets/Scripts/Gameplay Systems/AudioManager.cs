@@ -43,6 +43,15 @@ public enum SFXClip
     P_Attack,
     P_ParrySwing,
     P_ProjectileParried,
+    B_Sentinel_Intro,
+    B_Sentinel_Idle,
+    B_Sentinel_Damaged,
+    B_Sentinel_Defeated,
+    B_Sentinel_Defeated_Idle,
+    B_Sentinel_Vulnerable,
+    B_Sentinel_Vulnerable_Idle,
+    B_Sentinel_Recovered,
+    B_Sentinel_Sweep,
 }
 
 [Serializable]
