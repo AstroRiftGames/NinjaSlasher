@@ -74,70 +74,70 @@ public class LevelProgressionManager : MonoBehaviourSingleton<LevelProgressionMa
         PlayerPrefs.Save();
     }
 
-    private void CheckConsecutiveLevelAd(int levelId, int starsEarned)
-    {
-        if (!enableConsecutiveLevelAds)
-            return;
+    //private void CheckConsecutiveLevelAd(int levelId, int starsEarned)
+    //{
+    //    if (!enableConsecutiveLevelAds)
+    //        return;
 
-        if (lastCompletedLevel == -1 || levelId == lastCompletedLevel + 1)
-        {
-            currentConsecutiveWins++;
-            lastCompletedLevel = levelId;
+    //    if (lastCompletedLevel == -1 || levelId == lastCompletedLevel + 1)
+    //    {
+    //        currentConsecutiveWins++;
+    //        lastCompletedLevel = levelId;
 
-            Debug.Log($"Nivel {levelId} jugado consecutivamente. Total intentos: {currentConsecutiveWins}/{levelsRequiredForAd}");
+    //        Debug.Log($"Nivel {levelId} jugado consecutivamente. Total intentos: {currentConsecutiveWins}/{levelsRequiredForAd}");
 
-            if (currentConsecutiveWins >= levelsRequiredForAd)
-            {
-                ShowConsecutiveLevelAd();
-                ResetConsecutiveCounter();
-            }
-        }
-        else
-        {
-            ResetConsecutiveCounter();
-            currentConsecutiveWins = 1;
-            lastCompletedLevel = levelId;
-            Debug.Log($"Secuencia reiniciada. Nuevo inicio en nivel {levelId}");
-        }
+    //        if (currentConsecutiveWins >= levelsRequiredForAd)
+    //        {
+    //            ShowConsecutiveLevelAd();
+    //            ResetConsecutiveCounter();
+    //        }
+    //    }
+    //    else
+    //    {
+    //        ResetConsecutiveCounter();
+    //        currentConsecutiveWins = 1;
+    //        lastCompletedLevel = levelId;
+    //        Debug.Log($"Secuencia reiniciada. Nuevo inicio en nivel {levelId}");
+    //    }
 
-        SaveConsecutiveProgress();
-    }
+    //    SaveConsecutiveProgress();
+    //}
 
-    private void ShowConsecutiveLevelAd()
-    {
-        Debug.Log($"¡{levelsRequiredForAd} niveles jugados consecutivamente! Mostrando publicidad intersticial...");
+    //private void ShowConsecutiveLevelAd()
+    //{
+    //    Debug.Log($"¡{levelsRequiredForAd} niveles jugados consecutivamente! Mostrando publicidad intersticial...");
 
-        if (AdsManager.Instance != null && AdsManager.Instance.IsInterstitialAdReady())
-        {
-            AdsManager.Instance.ShowInterstitialAd();
-        }
-        else
-        {
-            Debug.LogWarning("AdsManager no disponible o anuncio intersticial no listo");
-            if (AdsManager.Instance != null)
-            {
-                AdsManager.Instance.ReloadAllAds();
-            }
-        }
-    }
+    //    if (AdsManager.Instance != null && AdsManager.Instance.IsInterstitialAdReady())
+    //    {
+    //        AdsManager.Instance.ShowInterstitialAd();
+    //    }
+    //    else
+    //    {
+    //        Debug.LogWarning("AdsManager no disponible o anuncio intersticial no listo");
+    //        if (AdsManager.Instance != null)
+    //        {
+    //            AdsManager.Instance.ReloadAllAds();
+    //        }
+    //    }
+    //}
 
-    private void ShowAreaUnlockAd(int newAreaId)
-    {
-        Debug.Log($"¡Nueva área {newAreaId} desbloqueada! Mostrando publicidad de celebración...");
+    //private void ShowAreaUnlockAd(int newAreaId)
+    //{
+    //    Debug.Log($"¡Nueva área {newAreaId} desbloqueada! Mostrando publicidad de celebración...");
 
-        if (AdsManager.Instance != null && AdsManager.Instance.IsInterstitialAdReady())
-        {
-            AdsManager.Instance.ShowInterstitialAd();
-        }
-        else
-        {
-            Debug.LogWarning("AdsManager no disponible o anuncio intersticial no listo para área desbloqueada");
-            if (AdsManager.Instance != null)
-            {
-                AdsManager.Instance.ReloadAllAds();
-            }
-        }
-    }
+    //    if (AdsManager.Instance != null && AdsManager.Instance.IsInterstitialAdReady())
+    //    {
+    //        AdsManager.Instance.ShowInterstitialAd();
+    //    }
+    //    else
+    //    {
+    //        Debug.LogWarning("AdsManager no disponible o anuncio intersticial no listo para área desbloqueada");
+    //        if (AdsManager.Instance != null)
+    //        {
+    //            AdsManager.Instance.ReloadAllAds();
+    //        }
+    //    }
+    //}
 
     private void ResetConsecutiveCounter()
     {
@@ -211,10 +211,10 @@ public class LevelProgressionManager : MonoBehaviourSingleton<LevelProgressionMa
             SaveManager.Instance?.UnlockNewArea(newAreaId);
             OnNewAreaUnlocked?.Invoke(newAreaId);
 
-            if (enableAreaUnlockAds)
-            {
-                ShowAreaUnlockAd(newAreaId);
-            }
+            //if (enableAreaUnlockAds)
+            //{
+            //    ShowAreaUnlockAd(newAreaId);
+            //}
         }
     }
 
@@ -247,7 +247,7 @@ public class LevelProgressionManager : MonoBehaviourSingleton<LevelProgressionMa
         SaveManager.Instance?.ShowProgressionDebug();
         SaveManager.Instance?.UpdateLevelProgression(levelId, starsEarned);
 
-        CheckConsecutiveLevelAd(levelId, starsEarned);
+        //CheckConsecutiveLevelAd(levelId, starsEarned);
 
         var (currentHighest, currentArea, totalStars) = SaveManager.Instance?.GetProgressionData() ?? (1, 1, 0);
 

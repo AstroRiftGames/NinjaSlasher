@@ -169,7 +169,7 @@ public class ButtonManager : MonoBehaviour
         _profileButton.onClick.AddListener(UIManager.Instance.ShowHideProfileCanvas);
 
         _closeNoLivesPanelButton.onClick.AddListener(UIManager.Instance.ShowHideNoLivesCanvas);
-        _adForMoreLifeButton.onClick.AddListener(AdsManager.Instance.ShowRewardedAdForExtraLife);
+        //_adForMoreLifeButton.onClick.AddListener(AdsManager.Instance.ShowRewardedAdForExtraLife);
 
         _userIconButton.onClick.AddListener(UIManager.Instance.ShowHideUserIconsCanvas);
         _userNicknameText = LoginManager.Instance.PlayerName;
