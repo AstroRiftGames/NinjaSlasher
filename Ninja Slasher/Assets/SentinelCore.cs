@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 
 public class SentinelCore : MonoBehaviour
@@ -17,6 +18,7 @@ public class SentinelCore : MonoBehaviour
     private void OnDisable()
     {
         _collider.enabled = false;
+
     }
 
     private void KillSentinel()
@@ -37,10 +39,16 @@ public class SentinelCore : MonoBehaviour
         if (collision.CompareTag("Player"))
         {
             _sentinel.Animator.SetTrigger("onHit");
-            AudioManager.Instance.PlaySFXAtPosition(SFXClip.B_Sentinel_Defeated, _sentinel.transform.position);
-
-            //TODO: Agregar SFX Defeated idle en loop luego de SFX Defeated
+            StartCoroutine(PlayFeedback(3f));
             KillSentinel();
         }
+    }
+
+    IEnumerator PlayFeedback(float time)
+    {
+
+        AudioManager.Instance.PlaySFXAtPosition(SFXClip.B_Sentinel_Defeated, _sentinel.transform.position);
+        yield return new WaitForSeconds(time);
+        AudioManager.Instance.PlayLoopedSFXAtPosition(SFXClip.B_Sentinel_Defeated_Idle, _sentinel.transform.position);
     }
 }
