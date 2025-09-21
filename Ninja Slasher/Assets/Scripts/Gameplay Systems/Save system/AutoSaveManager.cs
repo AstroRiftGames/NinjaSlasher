@@ -12,14 +12,14 @@ public class AutoSaveManager : MonoBehaviourSingleton<AutoSaveManager>
     {
         InitializeSaveManager();
 
-        if (SaveIndicatorUI.Instance != null)
-        {
-            Debug.Log("[AutoSaveManager] SaveIndicatorUI encontrado correctamente");
-        }
-        else
-        {
-            Debug.LogWarning("[AutoSaveManager] SaveIndicatorUI NO encontrado");
-        }
+        //if (SaveIndicatorUI.Instance != null)
+        //{
+        //    Debug.Log("[AutoSaveManager] SaveIndicatorUI encontrado correctamente");
+        //}
+        //else
+        //{
+        //    Debug.LogWarning("[AutoSaveManager] SaveIndicatorUI NO encontrado");
+        //}
 
         Application.focusChanged += OnApplicationFocusChanged;
     }
@@ -56,25 +56,23 @@ public class AutoSaveManager : MonoBehaviourSingleton<AutoSaveManager>
     {
         if (!hasFocus)
         {
-            ShowSaveIndicator("Guardando...");
+            ShowSaveIndicator("SAVING...");
             saveManager?.SaveOnApplicationEvent();
         }
     }
 
     void OnApplicationQuit()
     {
-        ShowSaveIndicator("Guardando...");
+        ShowSaveIndicator("SAVING...");
         saveManager?.SaveOnApplicationEvent();
-        Debug.Log("[AutoSaveManager] Guardado automático al cerrar aplicación");
     }
 
     void OnApplicationPause(bool pauseStatus)
     {
         if (pauseStatus)
         {
-            ShowSaveIndicator("Guardando...");
+            ShowSaveIndicator("SAVING...");
             saveManager?.SaveOnApplicationEvent();
-            Debug.Log("[AutoSaveManager] Guardado automático al pausar aplicación");
         }
     }
 
@@ -86,7 +84,7 @@ public class AutoSaveManager : MonoBehaviourSingleton<AutoSaveManager>
     {
         if (!CheckSaveManager()) return;
 
-        ShowSaveIndicator("Guardando...");
+        ShowSaveIndicator("SAVING...");
         saveManager.UpdateLevelProgress(levelId + 1);
         saveManager.UpdateStars(levelId, starsEarned);
         saveManager.UpdateGameStats(enemiesKilled, maxCombo, playTime, true);
@@ -96,7 +94,7 @@ public class AutoSaveManager : MonoBehaviourSingleton<AutoSaveManager>
     {
         if (!CheckSaveManager()) return;
 
-        ShowSaveIndicator("Guardando...", 1f);
+        ShowSaveIndicator("SAVING...", 1f);
         saveManager.UpdateGameStats(enemiesKilled, maxCombo, playTime, false);
     }
 
@@ -104,7 +102,7 @@ public class AutoSaveManager : MonoBehaviourSingleton<AutoSaveManager>
     {
         if (!CheckSaveManager()) return;
 
-        ShowSaveIndicator("Área desbloqueada!");
+        ShowSaveIndicator("SAVING...");
         saveManager.UnlockArea(areaId);
     }
 
@@ -112,7 +110,7 @@ public class AutoSaveManager : MonoBehaviourSingleton<AutoSaveManager>
     {
         if (!CheckSaveManager()) return;
 
-        ShowSaveIndicator("Guardando...", 1f);
+        ShowSaveIndicator("SAVING...", 1f);
         saveManager.AddPowerUpToInventory(powerUpType, quantity);
     }
 
@@ -120,7 +118,7 @@ public class AutoSaveManager : MonoBehaviourSingleton<AutoSaveManager>
     {
         if (!CheckSaveManager()) return;
 
-        ShowSaveIndicator("Guardando...");
+        ShowSaveIndicator("SAVING...");
         saveManager.ActivatePowerUp(powerUpType, duration);
     }
 
@@ -128,7 +126,7 @@ public class AutoSaveManager : MonoBehaviourSingleton<AutoSaveManager>
     {
         if (!CheckSaveManager()) return;
 
-        ShowSaveIndicator("Guardando...");
+        ShowSaveIndicator("SAVING...");
         saveManager.SaveDailyRewardData(rewardData);
     }
 
@@ -136,7 +134,7 @@ public class AutoSaveManager : MonoBehaviourSingleton<AutoSaveManager>
     {
         if (!CheckSaveManager()) return;
 
-        ShowSaveIndicator("Guardando...", 1f);
+        ShowSaveIndicator("SAVING...", 1f);
         saveManager.UpdateLives(newLives, lastRegenTime, canRegen);
     }
 
@@ -144,7 +142,7 @@ public class AutoSaveManager : MonoBehaviourSingleton<AutoSaveManager>
     {
         if (!CheckSaveManager()) return;
 
-        ShowSaveIndicator("Guardando...", 1f);
+        ShowSaveIndicator("SAVING...", 1f);
         saveManager.SetMusicVolume(musicVolume);
         saveManager.SetSFXVolume(sfxVolume);
     }
@@ -153,7 +151,7 @@ public class AutoSaveManager : MonoBehaviourSingleton<AutoSaveManager>
     {
         if (!CheckSaveManager()) return;
 
-        ShowSaveIndicator("Guardando...");
+        ShowSaveIndicator("SAVING...");
         saveManager.DeactivatePowerUp(powerUpType);
     }
 
@@ -167,17 +165,13 @@ public class AutoSaveManager : MonoBehaviourSingleton<AutoSaveManager>
         {
             SaveIndicatorUI.Instance.ShowSaveIndicator(duration, message);
         }
-        else
-        {
-            Debug.LogWarning("[AutoSaveManager] SaveIndicatorUI no encontrado.");
-        }
     }
 
     public void ForceSave()
     {
         if (!CheckSaveManager()) return;
 
-        ShowSaveIndicator("Guardando datos...");
+        ShowSaveIndicator("SAVING...");
         saveManager.SaveData();
     }
 
@@ -215,7 +209,7 @@ public class AutoSaveManager : MonoBehaviourSingleton<AutoSaveManager>
         saveManager.BeginReset();
         try
         {
-            ShowSaveIndicator("Reiniciando...");
+            ShowSaveIndicator("RESET...");
             saveManager.ResetAllLocalSaves(notify);
             Debug.Log("[AutoSaveManager] FactoryResetLocalOnly completado.");
         }
@@ -234,7 +228,7 @@ public class AutoSaveManager : MonoBehaviourSingleton<AutoSaveManager>
         saveManager.BeginReset();
         try
         {
-            ShowSaveIndicator("Reiniciando (nube)...");
+            ShowSaveIndicator("RESET (cloud)...");
 
             await Task.Yield();
             saveManager.ResetAllLocalSaves(notify);

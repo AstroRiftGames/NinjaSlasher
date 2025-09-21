@@ -241,9 +241,9 @@ public class DailyRewardUIManager : MonoBehaviourSingleton<DailyRewardUIManager>
         //                AdsManager.Instance != null &&
         //                AdsManager.Instance.IsRewardedAdReady();
 
-        bool canDouble = dailyRewardSystem.CanDoubleToday();
+        //bool canDouble = dailyRewardSystem.CanDoubleToday();
 
-        bool hasDoubledToday = dailyRewardSystem.HasDoubledToday();
+        //bool hasDoubledToday = dailyRewardSystem.HasDoubledToday();
 
         //_doubleDailyRewardButton.interactable = canDouble;
 

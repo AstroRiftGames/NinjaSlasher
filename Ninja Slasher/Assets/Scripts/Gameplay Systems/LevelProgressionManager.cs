@@ -64,15 +64,15 @@ public class LevelProgressionManager : MonoBehaviourSingleton<LevelProgressionMa
     {
         currentConsecutiveWins = PlayerPrefs.GetInt("ConsecutiveWins", 0);
         lastCompletedLevel = PlayerPrefs.GetInt("LastCompletedLevel", -1);
-        Debug.Log($"Progreso consecutivo cargado: {currentConsecutiveWins} intentos, último nivel: {lastCompletedLevel}");
+        //Debug.Log($"Progreso consecutivo cargado: {currentConsecutiveWins} intentos, último nivel: {lastCompletedLevel}");
     }
 
-    private void SaveConsecutiveProgress()
-    {
-        PlayerPrefs.SetInt("ConsecutiveWins", currentConsecutiveWins);
-        PlayerPrefs.SetInt("LastCompletedLevel", lastCompletedLevel);
-        PlayerPrefs.Save();
-    }
+    //private void SaveConsecutiveProgress()
+    //{
+    //    PlayerPrefs.SetInt("ConsecutiveWins", currentConsecutiveWins);
+    //    PlayerPrefs.SetInt("LastCompletedLevel", lastCompletedLevel);
+    //    PlayerPrefs.Save();
+    //}
 
     //private void CheckConsecutiveLevelAd(int levelId, int starsEarned)
     //{
