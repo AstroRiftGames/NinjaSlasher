@@ -1,9 +1,11 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using DG.Tweening;
 
 public class PreGameUIManager : MonoBehaviour
 {
@@ -23,8 +25,35 @@ public class PreGameUIManager : MonoBehaviour
     [SerializeField] private Sprite _starNotAcquiredSprite;
     [SerializeField] private Sprite _starAcquiredSprite;
 
+    [Header("NINJA TEXT ANIMATIONS")]
+    [SerializeField] private bool useNinjaAnimations = true;
+    [SerializeField] private float titleAnimationDelay = 0.6f;
+    [SerializeField] private float characterDelay = 0.05f;
+    [SerializeField] private float titleAnimationDuration = 0.8f;
+    [SerializeField] private float objectiveDelay = 0.3f;
+    [SerializeField] private float slashEffectDuration = 0.4f;
+    [SerializeField] private float flashDuration = 0.15f;
+    [SerializeField] private float objectiveStagger = 0.1f;
+
     private bool isObjectiveComplete = false;
     private List<PowerUpSlotUI> _slots = new();
+    private Dictionary<TextMeshProUGUI, string> originalTexts = new Dictionary<TextMeshProUGUI, string>();
+
+    private void Awake()
+    {
+        CacheOriginalTexts();
+    }
+
+    private void CacheOriginalTexts()
+    {
+        if (_title != null) originalTexts[_title] = _title.text;
+        if (_primaryGoalText != null) originalTexts[_primaryGoalText] = _primaryGoalText.text;
+
+        foreach (var txt in _secondaryGoalTexts)
+        {
+            if (txt != null) originalTexts[txt] = txt.text;
+        }
+    }
 
     public void ShowConfirmationPanel(string sceneName)
     {
@@ -39,8 +68,156 @@ public class PreGameUIManager : MonoBehaviour
 
         ShowPreGameTitle();
         SetGoals();
-
         ShowPreGamePowerUps();
+
+        if (useNinjaAnimations)
+        {
+            StartCoroutine(DelayedAnimations());
+        }
+    }
+
+    private IEnumerator DelayedAnimations()
+    {
+        if (_title != null)
+        {
+            Color titleColor = _title.color;
+            _title.color = new Color(titleColor.r, titleColor.g, titleColor.b, 0f);
+        }
+
+        HideAllObjectiveStrokes();
+
+        yield return new WaitForSeconds(titleAnimationDelay);
+
+        StartCoroutine(AnimateTitle());
+
+        yield return new WaitForSeconds(0.15f);
+        StartCoroutine(AnimateObjectives());
+    }
+
+    private IEnumerator AnimateTitle()
+    {
+        if (_title == null) yield break;
+
+        Color originalColor = _title.color;
+        originalColor.a = 1f;
+
+        _title.DOColor(originalColor, flashDuration * 0.5f);
+        _title.transform.DOPunchScale(Vector3.one * 0.2f, flashDuration, 1, 0.8f);
+
+        if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.PlaySFX(SFXClip.UI_Select);
+        }
+
+        yield return new WaitForSeconds(flashDuration);
+    }
+
+    private IEnumerator AnimateObjectives()
+    {
+        List<TextMeshProUGUI> objectiveList = new List<TextMeshProUGUI>();
+
+        if (_primaryGoalText != null) objectiveList.Add(_primaryGoalText);
+        objectiveList.AddRange(_secondaryGoalTexts.Where(t => t != null && !string.IsNullOrEmpty(t.text)));
+
+        foreach (var obj in objectiveList)
+        {
+            Color color = obj.color;
+            obj.color = new Color(color.r, color.g, color.b, 0f);
+            obj.transform.localScale = new Vector3(0.8f, 0.8f, 1f);
+        }
+
+        for (int i = 0; i < objectiveList.Count; i++)
+        {
+            var objective = objectiveList[i];
+            Color originalColor = objective.color;
+            originalColor.a = 1f;
+
+            objective.DOColor(originalColor, flashDuration * 0.7f);
+            objective.transform.DOScale(Vector3.one, flashDuration * 0.7f)
+                .SetEase(Ease.OutBack);
+            objective.transform.DOPunchPosition(new Vector3(UnityEngine.Random.Range(-5f, 5f), 0, 0), flashDuration, 1, 0.5f);
+
+            AnimateObjectiveIfCompleted(objective, i);
+
+            if (AudioManager.Instance != null && i % 2 == 0)
+            {
+                AudioManager.Instance.PlaySFX(SFXClip.UI_Select);
+            }
+
+            yield return new WaitForSeconds(objectiveStagger);
+        }
+    }
+
+    private void AnimateObjectiveIfCompleted(TextMeshProUGUI objectiveText, int strokeIndex = 0)
+    {
+        Image slashImage = objectiveText.GetComponentInChildren<Image>();
+
+        if (slashImage != null && slashImage.enabled)
+        {
+            Sequence slashSequence = DOTween.Sequence();
+
+            float incrementalDelay = flashDuration * 2.5f + (strokeIndex * 0.5f);
+            slashSequence.AppendInterval(incrementalDelay);
+
+            slashSequence.Append(slashImage.transform.DOScaleX(1f, flashDuration * 1.5f)
+                .SetEase(Ease.OutQuart));
+
+            slashSequence.Join(slashImage.DOFade(1f, flashDuration * 1.2f));
+
+            slashSequence.AppendCallback(() => {
+                slashImage.transform.DOPunchScale(Vector3.one * 0.1f, 0.1f, 1, 0.8f);
+
+                if (AudioManager.Instance != null)
+                {
+                    AudioManager.Instance.PlaySFX(SFXClip.UI_TapSplashScreen);
+                }
+            });
+        }
+    }
+
+    private void HideAllObjectiveStrokes()
+    {
+        List<TextMeshProUGUI> allObjectives = new List<TextMeshProUGUI>();
+
+        if (_primaryGoalText != null) allObjectives.Add(_primaryGoalText);
+        allObjectives.AddRange(_secondaryGoalTexts.Where(t => t != null));
+
+        foreach (var objective in allObjectives)
+        {
+            Image slashImage = objective.GetComponentInChildren<Image>();
+            if (slashImage != null)
+            {
+                bool wasEnabled = slashImage.enabled;
+
+                Color originalColor = slashImage.color;
+                slashImage.color = new Color(originalColor.r, originalColor.g, originalColor.b, 0f);
+                slashImage.transform.localScale = new Vector3(0f, 1f, 1f);
+            }
+        }
+    }
+
+    public void ResetTexts()
+    {
+        foreach (var kvp in originalTexts)
+        {
+            if (kvp.Key != null)
+            {
+                kvp.Key.text = kvp.Value;
+                kvp.Key.transform.localScale = Vector3.one;
+                kvp.Key.transform.rotation = Quaternion.identity;
+                Color color = kvp.Key.color;
+                kvp.Key.color = new Color(color.r, color.g, color.b, 1f);
+
+                Image slashImage = kvp.Key.GetComponentInChildren<Image>();
+                if (slashImage != null)
+                {
+                    slashImage.transform.localScale = Vector3.one;
+                    Color slashColor = slashImage.color;
+                    float alpha = slashImage.enabled ? 1f : 0f;
+                    slashImage.color = new Color(slashColor.r, slashColor.g, slashColor.b, alpha);
+                }
+            }
+        }
     }
 
     private void OnEnable()
@@ -67,7 +244,7 @@ public class PreGameUIManager : MonoBehaviour
         }
         UIManager.Instance.ShowHidePreGameCanvas();
         UIManager.Instance.LoadLevelScene(_pendingSceneName);
-        PlayLevelMusic();        
+        PlayLevelMusic();
     }
 
     void PlayLevelMusic()
@@ -115,6 +292,9 @@ public class PreGameUIManager : MonoBehaviour
         var cfgMgr = LevelConfigurationManager.Instance;
         var config = cfgMgr != null ? cfgMgr.GetConfigurationForLevel(levelId) : null;
         _title.text = config.levelName;
+
+        if (originalTexts.ContainsKey(_title))
+            originalTexts[_title] = _title.text;
     }
 
     public void ShowPreGamePowerUps()
@@ -173,9 +353,11 @@ public class PreGameUIManager : MonoBehaviour
         }
 
         var primary = config.GetPrimaryObjective();
-        if (_primaryGoalText) 
+        if (_primaryGoalText)
         {
             _primaryGoalText.text = primary != null ? primary.description : "-";
+            if (originalTexts.ContainsKey(_primaryGoalText))
+                originalTexts[_primaryGoalText] = _primaryGoalText.text;
         }
 
         isObjectiveComplete = SaveManager.Instance?.IsObjectiveCompleted(levelId, primary) ?? false;
@@ -199,6 +381,9 @@ public class PreGameUIManager : MonoBehaviour
             if (i < secondaries.Length && secondaries[i] != null)
             {
                 _secondaryGoalTexts[i].text = secondaries[i].description;
+                if (originalTexts.ContainsKey(_secondaryGoalTexts[i]))
+                    originalTexts[_secondaryGoalTexts[i]] = _secondaryGoalTexts[i].text;
+
                 isObjectiveComplete = SaveManager.Instance?.IsObjectiveCompleted(levelId, secondaries[i]) ?? false;
                 if (isObjectiveComplete)
                 {
