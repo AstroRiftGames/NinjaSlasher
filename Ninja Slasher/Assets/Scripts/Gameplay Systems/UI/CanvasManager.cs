@@ -107,8 +107,7 @@ public class CanvasManager : MonoBehaviour
 
         if (isCanvasActive)
         {
-            ShowCanvasAnimated(_resultsCanvas);
-            StartCoroutine(DelayedResultsShow());
+            ShowResultsCanvasWithSequence();
         }
         else
         {
@@ -116,9 +115,36 @@ public class CanvasManager : MonoBehaviour
         }
     }
 
+    private void ShowResultsCanvasWithSequence()
+    {
+        _resultsCanvas.enabled = true;
+        RectTransform canvasRect = _resultsCanvas.GetComponent<RectTransform>();
+        CanvasGroup canvasGroup = GetOrAddCanvasGroup(_resultsCanvas);
+
+        canvasGroup.alpha = 0f;
+        canvasRect.localScale = Vector3.zero;
+
+        AudioManager.Instance.PlaySFX(SFXClip.UI_Select);
+
+        Sequence panelSequence = DOTween.Sequence();
+
+        panelSequence.Append(canvasGroup.DOFade(1f, _animationDuration * 0.6f));
+        panelSequence.Join(canvasRect.DOScale(Vector3.one, _animationDuration)
+            .SetEase(_openEase));
+
+        panelSequence.Append(canvasRect.DOScale(_popScaleMultiplier, 0.1f)
+            .SetEase(Ease.OutQuad));
+        panelSequence.Append(canvasRect.DOScale(Vector3.one, 0.1f)
+            .SetEase(Ease.InQuad));
+
+        panelSequence.OnComplete(() => {
+            StartCoroutine(DelayedResultsShow());
+        });
+    }
+
     private IEnumerator DelayedResultsShow()
     {
-        yield return new WaitForSeconds(0.2f);
+        yield return new WaitForSeconds(0.1f);
         GetComponent<ResultsUIManager>().ShowResultsPanel();
     }
 
