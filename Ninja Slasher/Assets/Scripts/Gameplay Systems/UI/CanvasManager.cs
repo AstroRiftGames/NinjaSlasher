@@ -1,6 +1,7 @@
 using System.Collections;
 using UnityEngine;
 using DG.Tweening;
+using System.Collections.Generic;
 
 public class CanvasManager : MonoBehaviour
 {
@@ -18,11 +19,21 @@ public class CanvasManager : MonoBehaviour
     [SerializeField] private Canvas _userIconsCanvas;
     [SerializeField] private Canvas _userNicknameEditCanvas;
 
-    [Header("ANIMATION SETTINGS")]
-    [SerializeField] private float _animationDuration = 0.3f;
-    [SerializeField] private Ease _openEase = Ease.OutBack;
-    [SerializeField] private Ease _closeEase = Ease.InBack;
-    [SerializeField] private Vector3 _popScaleMultiplier = new Vector3(1.1f, 1.1f, 1f);
+    [Header("PANEL REFERENCES")]
+    [SerializeField] private RectTransform _profilePanel;
+    [SerializeField] private RectTransform _dailyRewardPanel;
+    [SerializeField] private RectTransform _resultsPanel;
+    [SerializeField] private RectTransform _preGamePanel;
+    [SerializeField] private RectTransform _pausePanel;
+    [SerializeField] private RectTransform _noLivesPanel;
+
+    [Header("SLASH ANIMATION")]
+    [SerializeField] private float _animationDuration = 0.5f;
+    [SerializeField] private float _slashDistance = 300f;
+    [SerializeField] private Ease _slashEase = Ease.OutBack;
+
+    private Dictionary<RectTransform, Vector2> _originalPositions = new Dictionary<RectTransform, Vector2>();
+    private Dictionary<RectTransform, Vector3> _originalScales = new Dictionary<RectTransform, Vector3>();
 
     private bool _hasAnimatedButtons = false;
 
@@ -33,72 +44,100 @@ public class CanvasManager : MonoBehaviour
     {
         AudioManager.Instance.PlaySFX(SFXClip.UI_Select);
 
-        if (state)
-            ShowCanvasAnimated(canvas);
-        else
-            HideCanvasAnimated(canvas);
-    }
+        canvas.enabled = state;
 
-    private void ShowCanvasAnimated(Canvas canvas)
-    {
-        canvas.enabled = true;
-        RectTransform canvasRect = canvas.GetComponent<RectTransform>();
-        CanvasGroup canvasGroup = GetOrAddCanvasGroup(canvas);
+        RectTransform panelToAnimate = GetPanelForCanvas(canvas);
 
-        canvasGroup.alpha = 0f;
-        canvasRect.localScale = Vector3.zero;
-
-        Sequence openSequence = DOTween.Sequence();
-
-        openSequence.Append(canvasGroup.DOFade(1f, _animationDuration * 0.6f));
-        openSequence.Join(canvasRect.DOScale(Vector3.one, _animationDuration)
-            .SetEase(_openEase));
-
-        openSequence.Append(canvasRect.DOScale(_popScaleMultiplier, 0.1f)
-            .SetEase(Ease.OutQuad));
-        openSequence.Append(canvasRect.DOScale(Vector3.one, 0.1f)
-            .SetEase(Ease.InQuad));
-    }
-
-    private void HideCanvasAnimated(Canvas canvas)
-    {
-        RectTransform canvasRect = canvas.GetComponent<RectTransform>();
-        CanvasGroup canvasGroup = GetOrAddCanvasGroup(canvas);
-
-        Sequence closeSequence = DOTween.Sequence();
-
-        closeSequence.Append(canvasRect.DOScale(Vector3.zero, _animationDuration)
-            .SetEase(_closeEase));
-        closeSequence.Join(canvasGroup.DOFade(0f, _animationDuration * 0.8f));
-
-        closeSequence.OnComplete(() => canvas.enabled = false);
-    }
-
-    private CanvasGroup GetOrAddCanvasGroup(Canvas canvas)
-    {
-        CanvasGroup canvasGroup = canvas.GetComponent<CanvasGroup>();
-        if (canvasGroup == null)
-            canvasGroup = canvas.gameObject.AddComponent<CanvasGroup>();
-        return canvasGroup;
-    }
-
-    public void ShowConfigDropdownAnimated(RectTransform configPanel, bool isOpen)
-    {
-        if (isOpen)
+        if (panelToAnimate != null)
         {
-            Vector2 startPos = configPanel.anchoredPosition + new Vector2(0, 200f);
-            configPanel.anchoredPosition = startPos;
-            configPanel.gameObject.SetActive(true);
+            if (state)
+                ShowPanelSlashAnimation(panelToAnimate);
+            else
+                HidePanelSlashAnimation(panelToAnimate, canvas);
+        }
+    }
 
-            configPanel.DOAnchorPosY(startPos.y - 200f, _animationDuration)
-                .SetEase(Ease.OutBounce);
-        }
-        else
+    private RectTransform GetPanelForCanvas(Canvas canvas)
+    {
+        if (canvas == _profileCanvas) return _profilePanel;
+        if (canvas == _dailyRewardCanvas) return _dailyRewardPanel;
+        if (canvas == _resultsCanvas) return _resultsPanel;
+        if (canvas == _preGameCanvas) return _preGamePanel;
+        if (canvas == _pauseCanvas) return _pausePanel;
+        if (canvas == _noLivesCanvas) return _noLivesPanel;
+
+        return null;
+    }
+
+    private void ShowPanelSlashAnimation(RectTransform panel)
+    {
+        if (panel == null) return;
+
+        DOTween.Kill(panel);
+
+        Vector2 originalPos = GetOriginalPosition(panel);
+        Vector3 originalScale = GetOriginalScale(panel);
+
+        panel.localScale = new Vector3(0.05f, 0.05f, 1f);
+        panel.anchoredPosition = originalPos + new Vector2(_slashDistance, _slashDistance);
+
+        Sequence slashSequence = DOTween.Sequence();
+
+        slashSequence.Append(panel.DOAnchorPos(originalPos, _animationDuration * 0.7f)
+            .SetEase(Ease.InOutQuad));
+
+        slashSequence.Append(panel.DOScale(originalScale, _animationDuration * 0.3f)
+            .SetEase(_slashEase));
+    }
+
+    private void HidePanelSlashAnimation(RectTransform panel, Canvas canvas)
+    {
+        if (panel == null)
         {
-            configPanel.DOAnchorPosY(configPanel.anchoredPosition.y + 200f, _animationDuration)
-                .SetEase(Ease.InBack)
-                .OnComplete(() => configPanel.gameObject.SetActive(false));
+            canvas.enabled = false;
+            return;
         }
+
+        DOTween.Kill(panel);
+
+        Vector2 currentPos = panel.anchoredPosition;
+
+        Sequence hideSequence = DOTween.Sequence();
+
+        hideSequence.Append(panel.DOAnchorPos(currentPos + new Vector2(_slashDistance, _slashDistance), _animationDuration)
+            .SetEase(Ease.InBack));
+        hideSequence.Join(panel.DOScale(Vector3.zero, _animationDuration)
+            .SetEase(Ease.InBack));
+
+        hideSequence.OnComplete(() => {
+            panel.anchoredPosition = GetOriginalPosition(panel);
+            panel.localScale = GetOriginalScale(panel);
+            canvas.enabled = false;
+        });
+    }
+
+    private Vector2 GetOriginalPosition(RectTransform panel)
+    {
+        if (_originalPositions.ContainsKey(panel))
+        {
+            return _originalPositions[panel];
+        }
+
+        Vector2 pos = panel.anchoredPosition;
+        _originalPositions[panel] = pos;
+        return pos;
+    }
+
+    private Vector3 GetOriginalScale(RectTransform panel)
+    {
+        if (_originalScales.ContainsKey(panel))
+        {
+            return _originalScales[panel];
+        }
+
+        Vector3 scale = panel.localScale;
+        _originalScales[panel] = scale;
+        return scale;
     }
 
     public void ShowHideResultsCanvas()
@@ -107,45 +146,27 @@ public class CanvasManager : MonoBehaviour
 
         if (isCanvasActive)
         {
-            ShowResultsCanvasWithSequence();
+            _resultsCanvas.enabled = true;
+            if (_resultsPanel != null)
+            {
+                ShowPanelSlashAnimation(_resultsPanel);
+                StartCoroutine(DelayedResultsShow());
+            }
+            else
+            {
+                GetComponent<ResultsUIManager>()?.ShowResultsPanel();
+            }
         }
         else
         {
-            HideCanvasAnimated(_resultsCanvas);
+            HidePanelSlashAnimation(_resultsPanel, _resultsCanvas);
         }
-    }
-
-    private void ShowResultsCanvasWithSequence()
-    {
-        _resultsCanvas.enabled = true;
-        RectTransform canvasRect = _resultsCanvas.GetComponent<RectTransform>();
-        CanvasGroup canvasGroup = GetOrAddCanvasGroup(_resultsCanvas);
-
-        canvasGroup.alpha = 0f;
-        canvasRect.localScale = Vector3.zero;
-
-        AudioManager.Instance.PlaySFX(SFXClip.UI_Select);
-
-        Sequence panelSequence = DOTween.Sequence();
-
-        panelSequence.Append(canvasGroup.DOFade(1f, _animationDuration * 0.6f));
-        panelSequence.Join(canvasRect.DOScale(Vector3.one, _animationDuration)
-            .SetEase(_openEase));
-
-        panelSequence.Append(canvasRect.DOScale(_popScaleMultiplier, 0.1f)
-            .SetEase(Ease.OutQuad));
-        panelSequence.Append(canvasRect.DOScale(Vector3.one, 0.1f)
-            .SetEase(Ease.InQuad));
-
-        panelSequence.OnComplete(() => {
-            StartCoroutine(DelayedResultsShow());
-        });
     }
 
     private IEnumerator DelayedResultsShow()
     {
-        yield return new WaitForSeconds(0.1f);
-        GetComponent<ResultsUIManager>().ShowResultsPanel();
+        yield return new WaitForSeconds(_animationDuration + 0.1f);
+        GetComponent<ResultsUIManager>()?.ShowResultsPanel();
     }
 
     public void ShowHideUserNicknameEditCanvas()
@@ -166,12 +187,16 @@ public class CanvasManager : MonoBehaviour
 
         if (isCanvasActive)
         {
-            ShowCanvasAnimated(_dailyRewardCanvas);
-            GetComponent<DailyRewardUIManager>().ShowDailyReward();
+            _dailyRewardCanvas.enabled = true;
+            if (_dailyRewardPanel != null)
+            {
+                ShowPanelSlashAnimation(_dailyRewardPanel);
+            }
+            GetComponent<DailyRewardUIManager>()?.ShowDailyReward();
         }
         else
         {
-            HideCanvasAnimated(_dailyRewardCanvas);
+            HidePanelSlashAnimation(_dailyRewardPanel, _dailyRewardCanvas);
         }
     }
 
@@ -184,7 +209,6 @@ public class CanvasManager : MonoBehaviour
     public void ShowHideCreditsCanvas()
     {
         bool isCanvasActive = !_creditsCanvas.gameObject.activeInHierarchy;
-
         ShowHideCanvas(_profileCanvas, !isCanvasActive);
 
         if (isCanvasActive)
@@ -201,19 +225,7 @@ public class CanvasManager : MonoBehaviour
     private IEnumerator DelayedCreditsShow()
     {
         yield return new WaitForSeconds(_animationDuration + 0.1f);
-
         _creditsCanvas.gameObject.SetActive(true);
-        RectTransform creditsRect = _creditsCanvas.GetComponent<RectTransform>();
-        CanvasGroup creditsGroup = GetOrAddCanvasGroup(_creditsCanvas);
-
-        creditsGroup.alpha = 0f;
-        creditsRect.anchoredPosition = new Vector2(creditsRect.anchoredPosition.x, -500f);
-
-        Sequence creditsSequence = DOTween.Sequence();
-        creditsSequence.Append(creditsGroup.DOFade(1f, _animationDuration));
-        creditsSequence.Join(creditsRect.DOAnchorPosY(0f, _animationDuration)
-            .SetEase(Ease.OutBack));
-
         AudioManager.Instance.PlayMusic(MusicClip.Credits, true);
     }
 
@@ -229,12 +241,16 @@ public class CanvasManager : MonoBehaviour
 
         if (isCanvasActive)
         {
-            ShowCanvasAnimated(_preGameCanvas);
-            GetComponent<PreGameUIManager>().ShowPreGamePowerUps();
+            _preGameCanvas.enabled = true;
+            if (_preGamePanel != null)
+            {
+                ShowPanelSlashAnimation(_preGamePanel);
+            }
+            GetComponent<PreGameUIManager>()?.ShowPreGamePowerUps();
         }
         else
         {
-            HideCanvasAnimated(_preGameCanvas);
+            HidePanelSlashAnimation(_preGamePanel, _preGameCanvas);
         }
     }
 
@@ -252,13 +268,11 @@ public class CanvasManager : MonoBehaviour
         if (enabled && !_hasAnimatedButtons)
         {
             _hasAnimatedButtons = true;
-
             ButtonManager buttonManager = GetComponent<ButtonManager>();
             if (buttonManager != null)
             {
                 HideLevelButtons(buttonManager);
             }
-
             StartCoroutine(TriggerButtonAnimation());
         }
     }
@@ -287,7 +301,6 @@ public class CanvasManager : MonoBehaviour
     private void HideLevelButtons(ButtonManager buttonManager)
     {
         var levelButtons = buttonManager.GetLevelButtons();
-
         foreach (var button in levelButtons)
         {
             if (button != null)
@@ -300,13 +313,6 @@ public class CanvasManager : MonoBehaviour
     public void SetSplashCanvasEnabled(bool enabled) => _splashCanvas.enabled = enabled;
     public void SetGameplayCanvasEnabled(bool enabled) => _gameplayCanvas.enabled = enabled;
     public void SetPauseCanvasEnabled(bool enabled) => _pauseCanvas.enabled = enabled;
-
-    public void SetAnimationParameters(float duration, Ease openEase, Ease closeEase)
-    {
-        _animationDuration = duration;
-        _openEase = openEase;
-        _closeEase = closeEase;
-    }
 
     private void OnDisable()
     {
