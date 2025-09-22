@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 
 public class CanvasManager : MonoBehaviour
@@ -15,6 +16,8 @@ public class CanvasManager : MonoBehaviour
     [SerializeField] private Canvas _resultsCanvas;
     [SerializeField] private Canvas _userIconsCanvas;
     [SerializeField] private Canvas _userNicknameEditCanvas;
+
+    private bool _hasAnimatedButtons = false;
 
     public void OpenCanvas(Canvas canvas) => canvas.enabled = true;
     public void CloseCanvas(Canvas canvas) => canvas.enabled = false;
@@ -70,7 +73,6 @@ public class CanvasManager : MonoBehaviour
             AudioManager.Instance.PlayMusic(MusicClip.Credits, isCanvasActive);
         else 
             AudioManager.Instance.PlayMusic(MusicClip.MainMenu, !isCanvasActive);
-
     }
     
     public void ShowHideProfileCanvas()
@@ -94,7 +96,58 @@ public class CanvasManager : MonoBehaviour
         Time.timeScale = isCanvasActive ? 0 : 1;
     }
 
-    public void SetLevelsCanvasEnabled(bool enabled) => _levelsCanvas.enabled = enabled;
+    public void SetLevelsCanvasEnabled(bool enabled)
+    {
+        _levelsCanvas.enabled = enabled;
+
+        if (enabled && !_hasAnimatedButtons)
+        {
+            _hasAnimatedButtons = true;
+
+            ButtonManager buttonManager = GetComponent<ButtonManager>();
+            if (buttonManager != null)
+            {
+                HideLevelButtons(buttonManager);
+            }
+
+            StartCoroutine(TriggerButtonAnimation());
+        }
+    }
+
+    private IEnumerator TriggerButtonAnimation()
+    {
+        yield return null;
+        yield return new WaitForSeconds(0.3f);
+
+        if (_dailyRewardCanvas.enabled)
+        {
+            while (_dailyRewardCanvas.enabled)
+            {
+                yield return new WaitForSeconds(0.1f);
+            }
+            yield return new WaitForSeconds(0.5f);
+        }
+
+        ButtonManager buttonManager = GetComponent<ButtonManager>();
+        if (buttonManager != null)
+        {
+            buttonManager.TriggerNinjaWaveAnimation();
+        }
+    }
+
+    private void HideLevelButtons(ButtonManager buttonManager)
+    {
+        var levelButtons = buttonManager.GetLevelButtons();
+
+        foreach (var button in levelButtons)
+        {
+            if (button != null)
+            {
+                button.gameObject.SetActive(false);
+            }
+        }
+    }
+
     public void SetSplashCanvasEnabled(bool enabled) => _splashCanvas.enabled = enabled;
     public void SetGameplayCanvasEnabled(bool enabled) => _gameplayCanvas.enabled = enabled;
     public void SetPauseCanvasEnabled(bool enabled) => _pauseCanvas.enabled = enabled;

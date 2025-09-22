@@ -322,7 +322,7 @@ public class ButtonManager : MonoBehaviour
         return LevelProgressionManager.Instance.IsLevelUnlocked(levelId);
     }
 
-    public void AnimateHeavyDrop()
+    public void AnimateDrop()
     {
         for (int i = 0; i < levelButtons.Length; i++)
         {
@@ -400,18 +400,27 @@ public class ButtonManager : MonoBehaviour
 
         foreach (var button in levelButtons)
         {
-            if (button != null) button.transform.DOKill();
+            if (button != null)
+            {
+                button.gameObject.SetActive(true);
+                button.transform.DOKill();
+            }
         }
 
-        AnimateHeavyDrop();
+        AnimateDrop();
     }
 
-    public void SetNinjaWaveParameters(float distance, float delay, bool rotation, bool impact)
+    public void SetWaveParameters(float distance, float delay, bool rotation, bool impact)
     {
         fallDistance = distance;
         waveDelay = delay;
         addRotationEffect = rotation;
         addImpactEffect = impact;
+    }
+
+    public Button[] GetLevelButtons()
+    {
+        return levelButtons;
     }
 
 #if UNITY_EDITOR
