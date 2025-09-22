@@ -59,7 +59,7 @@ public class ButtonManager : MonoBehaviour
     [SerializeField] private Sprite _starNotAcquiredSprite;
     [SerializeField] private Sprite _starAcquiredSprite;
 
-    [Header("ANIMACIONES NINJA WAVE")]
+    [Header("ANIMATION SETTINGS")]
     [SerializeField] private float fallDistance = 800f;
     [SerializeField] private float waveDelay = 0.08f;
     [SerializeField] private bool addRotationEffect = true;

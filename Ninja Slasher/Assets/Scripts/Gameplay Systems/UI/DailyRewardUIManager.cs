@@ -83,7 +83,7 @@ public class DailyRewardUIManager : MonoBehaviourSingleton<DailyRewardUIManager>
     {
         DailyRewardSystem.OnRewardClaimed += OnRewardClaimed;
         DailyRewardSystem.OnRewardAvailabilityChanged += OnRewardAvailabilityChanged;
-        DailyRewardSystem.OnRewardDoubled += OnRewardDoubled;
+        //DailyRewardSystem.OnRewardDoubled += OnRewardDoubled;
     }
 
     void UnsubscribeFromEvents()
@@ -118,7 +118,7 @@ public class DailyRewardUIManager : MonoBehaviourSingleton<DailyRewardUIManager>
 
         UpdateWeeklyProgress();
         UpdateClaimButton();
-        UpdateDoubleRewardButton();
+        //UpdateDoubleRewardButton();
     }
 
     void UpdateWeeklyProgress()
@@ -228,13 +228,13 @@ public class DailyRewardUIManager : MonoBehaviourSingleton<DailyRewardUIManager>
         if (claimButton) claimButton.interactable = canClaim;
     }
 
-    private void OnRewardDoubled()
-    {
-        UpdateDoubleRewardButton();
-    }
+    //private void OnRewardDoubled()
+    //{
+    //    UpdateDoubleRewardButton();
+    //}
 
-    void UpdateDoubleRewardButton()
-    {
+    //void UpdateDoubleRewardButton()
+    //{
         //if (_doubleDailyRewardButton == null || dailyRewardSystem == null) return;
 
         //bool canDouble = dailyRewardSystem.CanDoubleToday() &&
@@ -266,7 +266,7 @@ public class DailyRewardUIManager : MonoBehaviourSingleton<DailyRewardUIManager>
         //        _doubleRewardButtonText.text = "UNAVAILABLE";
         //    }
         //}
-    }
+    //}
 
 
     //private void OnDoubleRewardPressed()

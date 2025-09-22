@@ -9,7 +9,7 @@ public static class LevelSelectionUI
     {
         if (!LevelProgressionManager.Instance.IsLevelUnlocked(levelId))
         {
-            return "BLOQUEADO";
+            return "LOCKED";
         }
 
         var saveData = SaveManager.Instance.GetGameData();
@@ -18,7 +18,7 @@ public static class LevelSelectionUI
             return $"{stars}/3";
         }
 
-        return "DISPONIBLE";
+        return "AVAILABLE";
     }
 
     public static bool ShouldShowLock(int levelId)
