@@ -97,15 +97,6 @@ public class GameplayUIManager : MonoBehaviour
         if (context == null)
             return;
 
-        //string status = "";
-        //if (context.ExtraTimeActive) status += "Power up activo: Tiempo Extra\n";
-        //if (context.DashTurboActive) status += "Power up activo: Dash Turbo\n";
-        //if (context.ParryPerfectActive) status += "Power up activo: Parry Perfect\n";
-        //if (context.ComboMasterActive) status += "Power up activo: Combo Master\n";
-        //if (context.SecondChanceActive) status += "Power up activo: Second Chance\n";
-
-        //_powerUpsText.text = status.Length > 0 ? status : "Sin Power Ups activos";
-
         var time = PowerUpManager.Instance.puTimeLeft;
         var hours = (int)(time / 3600);
         var minutes = (int)((time % 3600) / 60);

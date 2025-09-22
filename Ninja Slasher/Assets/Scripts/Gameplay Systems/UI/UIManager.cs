@@ -54,6 +54,8 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
     {
         if (_gameplayUIManager != null)
             _gameplayUIManager.OnSceneLoaded();
+
+        _buttonManager.TriggerNinjaWaveAnimation();
     }
 
     public void OpenURL(string url)
