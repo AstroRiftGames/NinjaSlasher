@@ -54,8 +54,9 @@ public class ButtonManager : MonoBehaviour
 
     [SerializeField] private string[] sceneNames;
 
-    [SerializeField] private Color _starNotAcquired = Color.black;
-    [SerializeField] private Color _starAcquired = Color.yellow;
+    [Header("STAR SPRITES")]
+    [SerializeField] private Sprite _starNotAcquiredSprite;
+    [SerializeField] private Sprite _starAcquiredSprite;
 
 #if UNITY_EDITOR
     [SerializeField] private Button deleteSaveButton;
@@ -231,11 +232,18 @@ public class ButtonManager : MonoBehaviour
                     if (isLevelUnlocked)
                     {
                         bool isEarned = i < starsEarned;
-                        starImage.color = isEarned ? _starAcquired : _starNotAcquired;
+                        SetStar(starImage, isEarned);
                     }
                 }
             }
         }
+    }
+
+    private void SetStar(Image img, bool acquired)
+    {
+        if (!img) return;
+        img.sprite = acquired ? _starAcquiredSprite : _starNotAcquiredSprite;
+        img.color = Color.white;
     }
 
     private int GetStars(int levelId)

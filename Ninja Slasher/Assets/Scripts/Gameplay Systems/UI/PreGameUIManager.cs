@@ -18,8 +18,10 @@ public class PreGameUIManager : MonoBehaviour
     [SerializeField] private Transform _starsContainer;
     [SerializeField] private TextMeshProUGUI _primaryGoalText;
     [SerializeField] private TextMeshProUGUI[] _secondaryGoalTexts;
-    [SerializeField] private Color _starNotAcquired = Color.black;
-    [SerializeField] private Color _starAcquired = Color.yellow;
+
+    [Header("STAR SPRITES")]
+    [SerializeField] private Sprite _starNotAcquiredSprite;
+    [SerializeField] private Sprite _starAcquiredSprite;
 
     private bool isObjectiveComplete = false;
     private List<PowerUpSlotUI> _slots = new();
@@ -181,12 +183,12 @@ public class PreGameUIManager : MonoBehaviour
         if (isObjectiveComplete)
         {
             _primaryGoalText.GetComponentInChildren<Image>().enabled = true;
-            _starsContainer.GetChild(0).GetComponent<Image>().color = _starAcquired;
+            SetStar(0, true);
         }
         else
         {
             _primaryGoalText.GetComponentInChildren<Image>().enabled = false;
-            _starsContainer.GetChild(0).GetComponent<Image>().color = _starNotAcquired;
+            SetStar(0, false);
         }
 
         var secondaries = config.GetSecondaryObjectives();
@@ -201,12 +203,12 @@ public class PreGameUIManager : MonoBehaviour
                 if (isObjectiveComplete)
                 {
                     _secondaryGoalTexts[i].GetComponentInChildren<Image>().enabled = true;
-                    _starsContainer.GetChild(i + 1).GetComponent<Image>().color = _starAcquired;
+                    SetStar(i + 1, true);
                 }
                 else
                 {
                     _secondaryGoalTexts[i].GetComponentInChildren<Image>().enabled = false;
-                    _starsContainer.GetChild(i + 1).GetComponent<Image>().color = _starNotAcquired;
+                    SetStar(i + 1, false);
                 }
             }
             else
@@ -214,6 +216,14 @@ public class PreGameUIManager : MonoBehaviour
                 _secondaryGoalTexts[i].text = string.Empty;
             }
         }
+    }
+
+    private void SetStar(int idx, bool acquired)
+    {
+        var img = _starsContainer.GetChild(idx).GetComponent<Image>();
+        if (!img) return;
+
+        img.sprite = acquired ? _starAcquiredSprite : _starNotAcquiredSprite;
     }
 
     private int GetLevelIdFromSceneName(string name)
