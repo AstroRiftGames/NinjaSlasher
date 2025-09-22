@@ -88,6 +88,8 @@ public class CanvasManager : MonoBehaviour
 
         slashSequence.Append(panel.DOScale(originalScale, _animationDuration * 0.3f)
             .SetEase(_slashEase));
+
+        slashSequence.SetUpdate(true);
     }
 
     private void HidePanelSlashAnimation(RectTransform panel, Canvas canvas)
@@ -114,6 +116,8 @@ public class CanvasManager : MonoBehaviour
             panel.localScale = GetOriginalScale(panel);
             canvas.enabled = false;
         });
+
+        hideSequence.SetUpdate(true);
     }
 
     private Vector2 GetOriginalPosition(RectTransform panel)
@@ -257,8 +261,32 @@ public class CanvasManager : MonoBehaviour
     public void ShowHidePauseCanvas()
     {
         bool isCanvasActive = !_pauseCanvas.enabled;
-        ShowHideCanvas(_pauseCanvas, isCanvasActive);
-        Time.timeScale = isCanvasActive ? 0 : 1;
+
+        if (isCanvasActive)
+        {
+            _pauseCanvas.enabled = true;
+            if (_pausePanel != null)
+            {
+                ShowPanelSlashAnimation(_pausePanel);
+            }
+            StartCoroutine(DelayedPause());
+        }
+        else
+        {
+            Time.timeScale = 1;
+            HidePanelSlashAnimation(_pausePanel, _pauseCanvas);
+        }
+
+        if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.PlaySFX(SFXClip.UI_Select);
+        }
+    }
+
+    private IEnumerator DelayedPause()
+    {
+        yield return new WaitForSecondsRealtime(0.1f);
+        Time.timeScale = 0;
     }
 
     public void SetLevelsCanvasEnabled(bool enabled)
