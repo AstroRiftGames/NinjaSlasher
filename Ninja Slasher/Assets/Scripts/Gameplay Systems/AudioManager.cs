@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Rendering.Universal;
 
 [Serializable]
 public enum MusicClip
@@ -44,7 +45,16 @@ public enum SFXClip
     P_Attack,
     P_ParrySwing,
     P_ProjectileParried,
-    P_Die
+    B_Sentinel_Intro,
+    B_Sentinel_Idle,
+    B_Sentinel_Damaged,
+    B_Sentinel_Defeated,
+    B_Sentinel_Defeated_Idle,
+    B_Sentinel_Vulnerable,
+    B_Sentinel_Vulnerable_Idle,
+    B_Sentinel_Recovered,
+    B_Sentinel_Sweep,
+    P_Die,
 }
 
 [Serializable]
@@ -213,6 +223,45 @@ public class AudioManager : MonoBehaviourSingleton<AudioManager>
             AudioSource.PlayClipAtPoint(audioData.clip, position,
                 audioData.volume * sfxVolume * masterVolume * volumeMultiplier);
         }
+    }
+
+    public Dictionary<SFXClip, AudioSource> srcDict = new Dictionary<SFXClip, AudioSource>();
+
+    public void PlayLoopedSFXAtPosition(SFXClip clip, Vector3 position, float volumeMultiplier = 1f)
+    {
+        if (sfxDict.ContainsKey(clip))
+        {
+            var audioData = sfxDict[clip];
+
+            GameObject newObj = Instantiate(new GameObject(audioData.clip.name), position, Quaternion.identity);
+            newObj.transform.SetPositionAndRotation(position, Quaternion.identity);
+
+            AudioSource src = newObj.AddComponent<AudioSource>();
+            srcDict.Add(clip, src);
+            string msg = "";
+            foreach (AudioSource element in srcDict.Values)
+            {
+                msg += $"{element.gameObject.name}, ";
+            }
+            Debug.Log(msg);
+            src.loop = true;
+            src.clip = audioData.clip;
+            src.volume = audioData.volume * sfxVolume * masterVolume * volumeMultiplier;
+
+            src.Play();
+        }
+    }
+
+    public void StopSFX(SFXClip clip)
+    {
+        srcDict.TryGetValue(clip, out AudioSource src);
+        if (src == null)
+        {
+            Debug.Log( clip + " not found in array");
+        }
+        srcDict.Remove(clip);
+        src.Stop();
+        Destroy(src.gameObject);
     }
 
     public void PlaySFXWithRandomPitch(SFXClip clipType, float minPitch = 0.8f, float maxPitch = 1.2f, float volumeMultiplier = 1f)

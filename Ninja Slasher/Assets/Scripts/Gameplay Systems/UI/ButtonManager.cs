@@ -1,3 +1,4 @@
+using DG.Tweening;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
@@ -17,9 +18,13 @@ public class ButtonManager : MonoBehaviour
 
     [Header("PROFILE BUTTONS")]
     [SerializeField] private Button _userIconButton;
+    [SerializeField] private Button _userNicknameButton;
+    [SerializeField] private string _userNicknameText;
     [SerializeField] private Button _closeProfileButton;
     [SerializeField] private Button _creditsButton;
     [SerializeField] private Button _closeCreditsButton;
+    [SerializeField] private Image _userIconImage;
+    [SerializeField] private Button[] _userIconButtonGroup;
 
     [Header("DAILY REWARDS BUTTONS")]
     [SerializeField] private Button _closeCalendarButton;
@@ -50,8 +55,15 @@ public class ButtonManager : MonoBehaviour
 
     [SerializeField] private string[] sceneNames;
 
-    [SerializeField] private Color _starNotAcquired = Color.black;
-    [SerializeField] private Color _starAcquired = Color.yellow;
+    [Header("STAR SPRITES")]
+    [SerializeField] private Sprite _starNotAcquiredSprite;
+    [SerializeField] private Sprite _starAcquiredSprite;
+
+    [Header("ANIMATION SETTINGS")]
+    [SerializeField] private float fallDistance = 800f;
+    [SerializeField] private float waveDelay = 0.08f;
+    [SerializeField] private bool addRotationEffect = true;
+    [SerializeField] private bool addImpactEffect = true;
 
 #if UNITY_EDITOR
     [SerializeField] private Button deleteSaveButton;
@@ -153,6 +165,11 @@ public class ButtonManager : MonoBehaviour
         }
     }
 
+    public void OpenURLButtonClicked(string url)
+    {
+        UIManager.Instance.OpenURL(url);
+    }
+
     private void SetupLevelSelectorButtons()
     {
         _musicButton.onClick.AddListener(_audioToggle.MusicButtonClicked);
@@ -160,12 +177,25 @@ public class ButtonManager : MonoBehaviour
         _profileButton.onClick.AddListener(UIManager.Instance.ShowHideProfileCanvas);
 
         _closeNoLivesPanelButton.onClick.AddListener(UIManager.Instance.ShowHideNoLivesCanvas);
-        _adForMoreLifeButton.onClick.AddListener(AdsManager.Instance.ShowRewardedAdForExtraLife);
+        //_adForMoreLifeButton.onClick.AddListener(AdsManager.Instance.ShowRewardedAdForExtraLife);
 
-        _userIconButton.onClick.AddListener(UIManager.Instance.ShowHideProfileCanvas);
+        _userIconButton.onClick.AddListener(UIManager.Instance.ShowHideUserIconsCanvas);
+        _userNicknameText = LoginManager.Instance.PlayerName;
+        _userNicknameButton.onClick.AddListener(UIManager.Instance.ShowHideUserNicknameEditCanvas);
         _creditsButton.onClick.AddListener(UIManager.Instance.ShowHideCreditsCanvas);
         _closeProfileButton.onClick.AddListener(UIManager.Instance.ShowHideProfileCanvas);
         _closeCreditsButton.onClick.AddListener(UIManager.Instance.ShowHideCreditsCanvas);
+
+        foreach (var img in _userIconButtonGroup)
+        {
+            img.onClick.AddListener(() =>
+            {
+                Image icon = img.transform.GetChild(0).GetComponent<Image>();
+                _userIconImage.sprite = icon.sprite;
+                _userIconImage.color = icon.color;  //SE NECESITA SPRITE CON EL COLOR PARA QUITAR ESTO
+                UIManager.Instance.ShowHideUserIconsCanvas();
+            });
+        }
 
         _calendarButton.onClick.AddListener(UIManager.Instance.ShowHideDailyRewardCanvas);
         _configDropdownButton.onClick.AddListener(_configPanelManager.OpenCloseConfigPanel);
@@ -209,11 +239,18 @@ public class ButtonManager : MonoBehaviour
                     if (isLevelUnlocked)
                     {
                         bool isEarned = i < starsEarned;
-                        starImage.color = isEarned ? _starAcquired : _starNotAcquired;
+                        SetStar(starImage, isEarned);
                     }
                 }
             }
         }
+    }
+
+    private void SetStar(Image img, bool acquired)
+    {
+        if (!img) return;
+        img.sprite = acquired ? _starAcquiredSprite : _starNotAcquiredSprite;
+        img.color = Color.white;
     }
 
     private int GetStars(int levelId)
@@ -237,7 +274,7 @@ public class ButtonManager : MonoBehaviour
 
     private void ShowLevelLockedMessage(int levelId)
     {
-        Debug.Log($"[ButtonManager] Nivel {levelId} est� bloqueado");
+        Debug.Log($"[ButtonManager] Nivel {levelId} esta bloqueado");
     }
 
     public void RefreshLevelProgression()
@@ -283,6 +320,107 @@ public class ButtonManager : MonoBehaviour
             return levelId == 1;
         }
         return LevelProgressionManager.Instance.IsLevelUnlocked(levelId);
+    }
+
+    public void AnimateDrop()
+    {
+        for (int i = 0; i < levelButtons.Length; i++)
+        {
+            AnimateHeavySingleButton(i);
+        }
+    }
+
+    private void AnimateHeavySingleButton(int buttonIndex)
+    {
+        if (buttonIndex >= levelButtons.Length) return;
+
+        Button button = levelButtons[buttonIndex];
+        RectTransform rectTransform = button.GetComponent<RectTransform>();
+
+        Vector2 finalPosition = rectTransform.anchoredPosition;
+
+        rectTransform.anchoredPosition = finalPosition + Vector2.up * (fallDistance * 1.5f);
+
+        if (addRotationEffect)
+        {
+            float heavyRotation = Random.Range(-90f, 90f);
+            rectTransform.rotation = Quaternion.Euler(0, 0, heavyRotation);
+        }
+
+        float heavyDelay = buttonIndex * (waveDelay * 3f);
+
+        Sequence heavySequence = DOTween.Sequence();
+        heavySequence.AppendInterval(heavyDelay);
+
+        heavySequence.Append(
+            rectTransform.DOAnchorPos(finalPosition, 0.35f)
+                .SetEase(Ease.InQuart)
+        );
+
+        if (addRotationEffect)
+        {
+            heavySequence.Join(
+                rectTransform.DORotate(Vector3.zero, 0.25f)
+                    .SetEase(Ease.InOutSine)
+            );
+        }
+
+        heavySequence.AppendCallback(() => CreateHeavyImpactEffect(button));
+    }
+
+    private void CreateHeavyImpactEffect(Button button)
+    {
+        RectTransform rectTransform = button.GetComponent<RectTransform>();
+
+        Vector2 sideShake = new Vector2(Random.Range(-15f, 15f), 0f);
+        rectTransform.DOPunchAnchorPos(sideShake, 0.4f, 8, 1f);
+
+        rectTransform.DOPunchScale(Vector3.one * 0.2f, 0.3f, 6, 0.8f);
+
+        Image buttonImage = button.GetComponent<Image>();
+        if (buttonImage != null)
+        {
+            Color originalColor = buttonImage.color;
+            buttonImage.DOColor(Color.white, 0.05f)
+                .OnComplete(() => buttonImage.DOColor(originalColor, 0.2f));
+        }
+
+        if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.PlaySFX(SFXClip.UI_Select);
+        }
+    }
+
+    public void TriggerNinjaWaveAnimation()
+    {
+        if (levelButtons == null || levelButtons.Length == 0)
+        {
+            return;
+        }
+
+        foreach (var button in levelButtons)
+        {
+            if (button != null)
+            {
+                button.gameObject.SetActive(true);
+                button.transform.DOKill();
+            }
+        }
+
+        AnimateDrop();
+    }
+
+    public void SetWaveParameters(float distance, float delay, bool rotation, bool impact)
+    {
+        fallDistance = distance;
+        waveDelay = delay;
+        addRotationEffect = rotation;
+        addImpactEffect = impact;
+    }
+
+    public Button[] GetLevelButtons()
+    {
+        return levelButtons;
     }
 
 #if UNITY_EDITOR

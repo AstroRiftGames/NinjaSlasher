@@ -94,6 +94,7 @@ public class DemolitionBall : MonoBehaviour
         _chain.SetIsMoving(true);
         transform.localRotation.Set(0, 0, 0, 0);
         _rb.AddForce(transform.right * _force, ForceMode2D.Impulse);
+        AudioManager.Instance.PlaySFXAtPosition(SFXClip.B_Sentinel_Sweep, transform.position);
     }
 
     public void HeavyThrow()

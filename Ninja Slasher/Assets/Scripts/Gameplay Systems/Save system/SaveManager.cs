@@ -7,7 +7,7 @@ using UnityEngine;
 public class SaveManager : MonoBehaviourSingleton<SaveManager>
 {
     [Header("Save Settings")]
-    [SerializeField] private bool debugMode = true;
+    //[SerializeField] private bool debugMode = true;
     [SerializeField] private bool autoMigration = true;
 
     private static string SaveFileName = "ninja_save.json";
@@ -58,14 +58,14 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
                 MigrateToAuthenticatedUser();
             }
 
-            if (debugMode)
-                Debug.Log("[SaveManager] Authentication integration enabled");
+            //if (debugMode)
+            //    Debug.Log("[SaveManager] Authentication integration enabled");
         }
-        else
-        {
-            if (debugMode)
-                Debug.Log("[SaveManager] No authentication available, using offline mode");
-        }
+        //else
+        //{
+        //    if (debugMode)
+        //        Debug.Log("[SaveManager] No authentication available, using offline mode");
+        //}
     }
 
     void OnDestroy()
@@ -81,8 +81,8 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
 
     public void LoadData()
     {
-        if (debugMode)
-            Debug.Log($"[SaveManager] Loading data from: {saveFilePath}");
+        //if (debugMode)
+        //    Debug.Log($"[SaveManager] Loading data from: {saveFilePath}");
 
         if (TryLoadFromCurrentPath())
         {
@@ -91,8 +91,8 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
             return;
         }
 
-        if (debugMode)
-            Debug.Log("[SaveManager] Creating new game data");
+        //if (debugMode)
+        //    Debug.Log("[SaveManager] Creating new game data");
 
         gameData = new GameData();
         InitializeNewGameData();
@@ -131,7 +131,7 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
         }
         catch (Exception e)
         {
-            Debug.LogError($"[SaveManager] Failed to load save file: {e.Message}");
+            //Debug.LogError($"[SaveManager] Failed to load save file: {e.Message}");
             return false;
         }
     }
@@ -141,8 +141,8 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
         string authenticatedUserId = GetAuthenticatedUserId();
         if (authenticatedUserId == currentUserId) return;
 
-        if (debugMode)
-            Debug.Log($"[SaveManager] Migrating from {currentUserId} to {authenticatedUserId}");
+        //if (debugMode)
+        //    Debug.Log($"[SaveManager] Migrating from {currentUserId} to {authenticatedUserId}");
 
         GameData offlineData = gameData;
 
@@ -153,12 +153,12 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
 
         if (TryLoadFromCurrentPath())
         {
-            if (debugMode) Debug.Log("[SaveManager] Loaded existing authenticated user data");
+            //if (debugMode) Debug.Log("[SaveManager] Loaded existing authenticated user data");
             if (offlineData != null)
             {
                 MergeGameData(offlineData, gameData);
                 SaveData();
-                if (debugMode) Debug.Log("[SaveManager] Merged offline changes into authenticated save");
+                //if (debugMode) Debug.Log("[SaveManager] Merged offline changes into authenticated save");
             }
         }
         else if (autoMigration && offlineData != null)
@@ -166,7 +166,7 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
             // Si no existe, migramos el estado actual tal cual
             gameData = offlineData;
             SaveData();
-            if (debugMode) Debug.Log("[SaveManager] Migrated data to authenticated user");
+            //if (debugMode) Debug.Log("[SaveManager] Migrated data to authenticated user");
         }
 
         OnDataLoaded?.Invoke(gameData);
@@ -271,8 +271,8 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
 
     private void OnAuthenticationChanged(bool isAuthenticated)
     {
-        if (debugMode)
-            Debug.Log($"[SaveManager] Authentication state changed: {isAuthenticated}");
+        //if (debugMode)
+        //    Debug.Log($"[SaveManager] Authentication state changed: {isAuthenticated}");
 
         if (isAuthenticated)
         {
@@ -282,8 +282,8 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
 
     private void OnUserSignedIn(string playerId)
     {
-        if (debugMode)
-            Debug.Log($"[SaveManager] User signed in with ID: {playerId}");
+        //if (debugMode)
+        //    Debug.Log($"[SaveManager] User signed in with ID: {playerId}");
 
         MigrateToAuthenticatedUser();
     }
@@ -336,8 +336,8 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
 
             File.WriteAllText(saveFilePath, json);
 
-            if (debugMode)
-                Debug.Log($"[SaveManager] Data saved successfully to: {saveFilePath}");
+            //if (debugMode)
+            //    Debug.Log($"[SaveManager] Data saved successfully to: {saveFilePath}");
 
             OnDataSaved?.Invoke(gameData);
         }
@@ -790,11 +790,11 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
             isDataLoaded = true;
             SaveData();
 
-            if (debugMode)
-            {
-                Debug.Log($"[SaveManager] Deep local reset completed.\n" +
-                          $"Root: {rootFile}\nUserData: {userDataRoot}\nCurrentPath: {saveFilePath}");
-            }
+            //if (debugMode)
+            //{
+            //    Debug.Log($"[SaveManager] Deep local reset completed.\n" +
+            //              $"Root: {rootFile}\nUserData: {userDataRoot}\nCurrentPath: {saveFilePath}");
+            //}
 
             if (notify)
             {
@@ -814,7 +814,7 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
             if (File.Exists(path))
             {
                 File.Delete(path);
-                if (debugMode) Debug.Log($"[SaveManager] Deleted file: {path}");
+                //if (debugMode) Debug.Log($"[SaveManager] Deleted file: {path}");
             }
         }
         catch (Exception e)
@@ -835,7 +835,7 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
         }
         catch (Exception e)
         {
-            if (debugMode) Debug.Log($"[SaveManager] Could not clean empty dir '{dir}': {e.Message}");
+            //if (debugMode) Debug.Log($"[SaveManager] Could not clean empty dir '{dir}': {e.Message}");
         }
     }
 
