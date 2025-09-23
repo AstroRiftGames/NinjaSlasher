@@ -357,8 +357,9 @@ MonoBehaviour:
   _pausePanel: {fileID: 8988648835701947447}
   _noLivesPanel: {fileID: 7173057723244740267}
   _animationDuration: 0.5
-  _slashDistance: 300
-  _slashEase: 27
+  _openEase: 27
+  _closeEase: 26
+  _scaleOvershoot: 1.05
 --- !u!114 &8143181119019381039
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -31552,7 +31553,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -6, y: 37460.523}
+  m_AnchoredPosition: {x: -6, y: 39560.523}
   m_SizeDelta: {x: 0, y: 474.516}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &5402028810875196302

@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 using TMPro;
+using DG.Tweening;
 
 public class LoadManager : MonoBehaviour
 {
@@ -10,11 +11,15 @@ public class LoadManager : MonoBehaviour
     [SerializeField] private TextMeshProUGUI _text;
     [SerializeField] private Animator _textAnim;
 
+    [SerializeField] private float _loadingDuration = 3f;
+    [SerializeField] private Ease _loadingEase = Ease.OutQuart;
+
     private void Start()
     {
         SceneLoad(SceneManager.GetActiveScene().buildIndex);
         _text.text = "LOADING...";
     }
+
     public void SceneLoad(int sceneIndex)
     {
         StartCoroutine(LoadAsync(sceneIndex));
@@ -26,9 +31,11 @@ public class LoadManager : MonoBehaviour
         AsyncOperation asyncOperation = SceneManager.LoadSceneAsync(sceneIndex);
         asyncOperation.allowSceneActivation = false;
 
+        _loadbar.value = 0f;
+        _loadbar.DOValue(1f, _loadingDuration).SetEase(_loadingEase);
+
         while (!asyncOperation.isDone)
         {
-            _loadbar.value += Mathf.Lerp(0f, 1f, 0.2f) * Time.deltaTime;
             if (_loadbar.value >= 1)
             {
                 _text.text = "TAP TO CONTINUE";
@@ -36,7 +43,6 @@ public class LoadManager : MonoBehaviour
                 if (Input.touchCount > 0)
                 {
                     Touch touch = Input.GetTouch(0);
-
                     if (touch.phase == TouchPhase.Began)
                     {
                         AudioManager.Instance.PlaySFX(SFXClip.UI_TapSplashScreen);
@@ -46,7 +52,6 @@ public class LoadManager : MonoBehaviour
                         asyncOperation.allowSceneActivation = true;
                     }
                 }
-
 #if UNITY_EDITOR
                 if (Input.anyKeyDown)
                 {
@@ -58,7 +63,6 @@ public class LoadManager : MonoBehaviour
                 }
 #endif
             }
-
             yield return null;
         }
     }
