@@ -29,6 +29,7 @@ public class Controller : MonoBehaviour
     private Vector2 _wishedDirection;
     private Vector2 lastSwipeDelta;
     private bool _isMirrored;
+    private bool _isFlipped;
 
 
     [Space]
@@ -585,6 +586,8 @@ public class Controller : MonoBehaviour
     public void SetIsDashing(bool value) => _isDashing = value;
     public bool IsMirrored() => _isMirrored;
     public void SetIsMirrored(bool newValue) => _isMirrored = newValue;
+    public bool IsFlipped() => _isFlipped;
+    public void SetIsFlipped(bool newValue) => _isFlipped = newValue;
 
     public void ForceExitSurface() => _currentSurface = null;
 
@@ -628,9 +631,11 @@ public class Controller : MonoBehaviour
         float angle = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg;
         _playerView.SpriteContainer.transform.rotation = Quaternion.Euler(0, 0, angle);
 
+        SetIsFlipped((angle > -180 && angle <= -90) || angle <= 180 && angle > 90);
 
         Vector3 newScale = _playerView.SpriteContainer.transform.localScale;
         newScale.x = IsMirrored() ? -1 : 1;
+        newScale.y = IsFlipped() ? -1 : 1;
         _playerView.SpriteContainer.transform.localScale = newScale;
     }
     private void SetGrabbingAnimation()
