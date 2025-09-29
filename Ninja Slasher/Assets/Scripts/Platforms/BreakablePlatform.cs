@@ -1,6 +1,5 @@
 using UnityEngine;
 using System.Collections.Generic;
-using System.Linq;
 using System.Collections;
 
 public class BreakablePlatform : PlatformBase
@@ -28,16 +27,18 @@ public class BreakablePlatform : PlatformBase
         _renderer = renderer;
     }
 
+
     protected override void InitializePlatform()
     {
         remainingUses = maxUses;
     }
 
+    public override void OnPlayerExit(GameObject player) { }
+
     public override void OnPlayerEnter(GameObject player)
     {
-        View view = player.GetComponent<View>();
-        if (view != null)
-            playerRb = view.RB;
+        player.TryGetComponent(out Rigidbody2D rb);
+        playerRb = rb;
         if (!isActive) return;
 
 
@@ -49,7 +50,12 @@ public class BreakablePlatform : PlatformBase
         }
     }
 
-    public override void OnPlayerExit(GameObject player) { }
+    private void ThrowPlayer()
+    {
+        playerRb.linearVelocity = new Vector2(playerRb.linearVelocity.x, -falloffVelocity);
+        playerRb.TryGetComponent(out Controller controller);
+        controller.ForceExitSurface();
+    }
 
     public override void OnPlatformUpdate() { }
 
@@ -59,12 +65,6 @@ public class BreakablePlatform : PlatformBase
 
         DeactivateWhole();
         GeneratePieces();
-        if (playerRb != null)
-        {
-            playerRb.linearVelocity = new Vector2(playerRb.linearVelocity.x, -falloffVelocity);
-            playerRb.TryGetComponent(out Controller controller);
-            controller.ForceExitSurface();
-        }
         StartCoroutine(DestroyNextFrame());
     }
 
@@ -124,6 +124,7 @@ public class BreakablePlatform : PlatformBase
     private IEnumerator DestroyNextFrame()
     {
         yield return null;
+        ThrowPlayer();
         Destroy(gameObject);
     }
 }
