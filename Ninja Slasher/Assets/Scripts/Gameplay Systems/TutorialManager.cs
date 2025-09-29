@@ -1,11 +1,13 @@
 using UnityEngine;
-using TMPro;
 using System.Collections;
 
-public class TutorialManager : MonoBehaviourSingleton<TutorialManager>
+public class TutorialManager : MonoBehaviour
 {
+    public static TutorialManager Instance { get; private set; }
+
     [Header("UI REFERENCES")]
-    [SerializeField] private GameObject[] tutorialTexts;
+    [SerializeField] private GameObject[] tutorialTextsLevel1;
+    [SerializeField] private GameObject[] tutorialTextsLevel2;
 
     [Header("INDICATORS")]
     [SerializeField] private GameObject handAnimation;
@@ -16,15 +18,24 @@ public class TutorialManager : MonoBehaviourSingleton<TutorialManager>
     [Header("SETTINGS")]
     [SerializeField] private bool skipTutorial = false;
     [SerializeField] private float textDisplayTime = 5f;
+    [SerializeField] private int currentLevel = 1;
 
     private bool tutorialActive = false;
+    private int currentTextIndex = 0;
+
     private bool hasPerformedFirstDash = false;
     private bool hasKilledFirstEnemy = false;
+    private bool hasPerformedCombo = false;
     private int enemiesKilledCount = 0;
 
-    private int currentTextIndex = 0;
     private bool waitingForDash = false;
     private bool waitingForEnemyKill = false;
+    private bool waitingForCombo = false;
+
+    private void Awake()
+    {
+        Instance = this;
+    }
 
     private void Start()
     {
@@ -53,28 +64,72 @@ public class TutorialManager : MonoBehaviourSingleton<TutorialManager>
 
     private void ShowCurrentText()
     {
-        if (currentTextIndex >= tutorialTexts.Length)
+        GameObject[] currentTutorialTexts = GetCurrentTutorialTexts();
+
+        if (currentTextIndex >= currentTutorialTexts.Length)
         {
             CompleteTutorial();
             return;
         }
 
-        HideAllTexts();
-
-        if (tutorialTexts[currentTextIndex] != null)
+        if (currentLevel == 2)
         {
-            tutorialTexts[currentTextIndex].SetActive(true);
+            ShowAllLevel2Texts();
+        }
+        else
+        {
+            HideAllTexts();
+            if (currentTutorialTexts[currentTextIndex] != null)
+            {
+                currentTutorialTexts[currentTextIndex].SetActive(true);
+            }
         }
 
         ConfigureTextBehavior(currentTextIndex);
     }
 
+    private void ShowAllLevel2Texts()
+    {
+        HideAllTexts();
+
+        if (tutorialTextsLevel2 != null)
+        {
+            for (int i = 0; i < tutorialTextsLevel2.Length; i++)
+            {
+                if (tutorialTextsLevel2[i] != null)
+                {
+                    tutorialTextsLevel2[i].SetActive(true);
+                }
+            }
+        }
+    }
+
+    private GameObject[] GetCurrentTutorialTexts()
+    {
+        return currentLevel == 2 ? tutorialTextsLevel2 : tutorialTextsLevel1;
+    }
+
     private void ConfigureTextBehavior(int textIndex)
+    {
+        if (currentLevel == 2)
+        {
+            ConfigureLevel2Behavior(textIndex);
+        }
+        else
+        {
+            ConfigureLevel1Behavior(textIndex);
+        }
+    }
+
+    private void ConfigureLevel1Behavior(int textIndex)
     {
         switch (textIndex)
         {
             case 0:
-                ShowHandAnimation(true);
+                if (handAnimation != null)
+                {
+                    handAnimation.SetActive(true);
+                }
                 if (playerController != null)
                 {
                     playerController.SetInputEnabled(true);
@@ -83,7 +138,10 @@ public class TutorialManager : MonoBehaviourSingleton<TutorialManager>
                 break;
 
             case 1:
-                HideHandAnimation();
+                if (handAnimation != null)
+                {
+                    handAnimation.SetActive(false);
+                }
                 waitingForEnemyKill = true;
                 break;
 
@@ -101,13 +159,30 @@ public class TutorialManager : MonoBehaviourSingleton<TutorialManager>
         }
     }
 
+    private void ConfigureLevel2Behavior(int textIndex)
+    {
+        switch (textIndex)
+        {
+            case 0:
+                if (playerController != null)
+                {
+                    playerController.SetInputEnabled(true);
+                }
+                StartCoroutine(HideTextAfterDelay(textDisplayTime, () => {
+                    CompleteTutorial();
+                }));
+                break;
+        }
+    }
+
     private IEnumerator HideTextAfterDelay(float delay, System.Action onComplete = null)
     {
         yield return new WaitForSecondsRealtime(delay);
 
-        if (currentTextIndex < tutorialTexts.Length && tutorialTexts[currentTextIndex] != null)
+        GameObject[] currentTutorialTexts = GetCurrentTutorialTexts();
+        if (currentTextIndex < currentTutorialTexts.Length && currentTutorialTexts[currentTextIndex] != null)
         {
-            tutorialTexts[currentTextIndex].SetActive(false);
+            currentTutorialTexts[currentTextIndex].SetActive(false);
         }
 
         onComplete?.Invoke();
@@ -115,13 +190,15 @@ public class TutorialManager : MonoBehaviourSingleton<TutorialManager>
 
     private void CheckForActionCompletion()
     {
+        GameObject[] currentTutorialTexts = GetCurrentTutorialTexts();
+
         if (waitingForDash && hasPerformedFirstDash)
         {
             waitingForDash = false;
 
-            if (tutorialTexts[currentTextIndex] != null)
+            if (currentTutorialTexts[currentTextIndex] != null)
             {
-                tutorialTexts[currentTextIndex].SetActive(false);
+                currentTutorialTexts[currentTextIndex].SetActive(false);
             }
 
             currentTextIndex++;
@@ -132,9 +209,22 @@ public class TutorialManager : MonoBehaviourSingleton<TutorialManager>
         {
             waitingForEnemyKill = false;
 
-            if (tutorialTexts[currentTextIndex] != null)
+            if (currentTutorialTexts[currentTextIndex] != null)
             {
-                tutorialTexts[currentTextIndex].SetActive(false);
+                currentTutorialTexts[currentTextIndex].SetActive(false);
+            }
+
+            currentTextIndex++;
+            ShowCurrentText();
+        }
+
+        if (waitingForCombo && hasPerformedCombo)
+        {
+            waitingForCombo = false;
+
+            if (currentTutorialTexts[currentTextIndex] != null)
+            {
+                currentTutorialTexts[currentTextIndex].SetActive(false);
             }
 
             currentTextIndex++;
@@ -144,10 +234,7 @@ public class TutorialManager : MonoBehaviourSingleton<TutorialManager>
 
     public void OnDashPerformed()
     {
-        if (!tutorialActive)
-        {
-            return;
-        }
+        if (!tutorialActive) return;
 
         if (!hasPerformedFirstDash)
         {
@@ -158,10 +245,7 @@ public class TutorialManager : MonoBehaviourSingleton<TutorialManager>
 
     public void OnEnemyKilled()
     {
-        if (!tutorialActive)
-        {
-            return;
-        }
+        if (!tutorialActive) return;
 
         enemiesKilledCount++;
 
@@ -172,12 +256,27 @@ public class TutorialManager : MonoBehaviourSingleton<TutorialManager>
         }
     }
 
+    public void OnComboPerformed()
+    {
+        if (!tutorialActive || currentLevel != 2) return;
+
+        if (!hasPerformedCombo)
+        {
+            hasPerformedCombo = true;
+            CheckForActionCompletion();
+        }
+    }
+
     private void CompleteTutorial()
     {
         tutorialActive = false;
 
         HideAllTexts();
-        HideHandAnimation();
+
+        if (currentLevel == 1 && handAnimation != null)
+        {
+            handAnimation.SetActive(false);
+        }
 
         if (playerController != null)
         {
@@ -191,15 +290,21 @@ public class TutorialManager : MonoBehaviourSingleton<TutorialManager>
 
         waitingForDash = false;
         waitingForEnemyKill = false;
+        waitingForCombo = false;
         hasPerformedFirstDash = false;
         hasKilledFirstEnemy = false;
+        hasPerformedCombo = false;
         enemiesKilledCount = 0;
         currentTextIndex = 0;
 
         StopAllCoroutines();
 
         HideAllTexts();
-        HideHandAnimation();
+
+        if (currentLevel == 1 && handAnimation != null)
+        {
+            handAnimation.SetActive(false);
+        }
 
         if (playerController != null)
         {
@@ -209,30 +314,36 @@ public class TutorialManager : MonoBehaviourSingleton<TutorialManager>
 
     private void HideAllTexts()
     {
-        for (int i = 0; i < tutorialTexts.Length; i++)
+        if (tutorialTextsLevel1 != null)
         {
-            if (tutorialTexts[i] != null)
+            for (int i = 0; i < tutorialTextsLevel1.Length; i++)
             {
-                tutorialTexts[i].SetActive(false);
+                if (tutorialTextsLevel1[i] != null)
+                {
+                    tutorialTextsLevel1[i].SetActive(false);
+                }
             }
         }
-    }
 
-    private void ShowHandAnimation(bool show)
-    {
-        if (handAnimation != null)
+        if (tutorialTextsLevel2 != null)
         {
-            handAnimation.SetActive(show);
+            for (int i = 0; i < tutorialTextsLevel2.Length; i++)
+            {
+                if (tutorialTextsLevel2[i] != null)
+                {
+                    tutorialTextsLevel2[i].SetActive(false);
+                }
+            }
         }
-    }
-
-    private void HideHandAnimation()
-    {
-        ShowHandAnimation(false);
     }
 
     public bool IsTutorialActive()
     {
         return tutorialActive;
+    }
+
+    public void SetCurrentLevel(int level)
+    {
+        currentLevel = level;
     }
 }
