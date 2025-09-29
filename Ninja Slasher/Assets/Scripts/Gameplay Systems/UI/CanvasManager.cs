@@ -153,6 +153,8 @@ public class CanvasManager : MonoBehaviour
 
         if (isCanvasActive)
         {
+            GetComponent<ResultsUIManager>()?.PrepareResultsIntro();
+
             ShowCanvasAnimated(_resultsCanvas);
             StartCoroutine(DelayedResultsShow());
         }
@@ -253,7 +255,6 @@ public class CanvasManager : MonoBehaviour
         Time.timeScale = isCanvasActive ? 0 : 1;
     }
 
-    // Resto de métodos sin cambios
     public void SetLevelsCanvasEnabled(bool enabled)
     {
         _levelsCanvas.enabled = enabled;
