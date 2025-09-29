@@ -1,6 +1,5 @@
 using UnityEngine;
 using System.Collections.Generic;
-using System.Linq;
 using System.Collections;
 
 public class BreakablePlatform : PlatformBase
@@ -14,9 +13,8 @@ public class BreakablePlatform : PlatformBase
 
 
 
-
+    [SerializeField] GameObject _wholePlatform;
     SpriteRenderer _renderer;
-    BoxCollider2D[] _colliders;
     List<List<int>> pieces = new List<List<int>>();
     Vector3[] _coords;
     [Header("BREAKING")]
@@ -25,21 +23,22 @@ public class BreakablePlatform : PlatformBase
 
     private void Awake()
     {
-        TryGetComponent(out SpriteRenderer renderer);
+        _wholePlatform.TryGetComponent(out SpriteRenderer renderer);
         _renderer = renderer;
-        _colliders = GetComponents<BoxCollider2D>();
     }
+
 
     protected override void InitializePlatform()
     {
         remainingUses = maxUses;
     }
 
+    public override void OnPlayerExit(GameObject player) { }
+
     public override void OnPlayerEnter(GameObject player)
     {
-        View view = player.GetComponent<View>();
-        if (view != null)
-            playerRb = view.RB;
+        player.TryGetComponent(out Rigidbody2D rb);
+        playerRb = rb;
         if (!isActive) return;
 
 
@@ -51,7 +50,12 @@ public class BreakablePlatform : PlatformBase
         }
     }
 
-    public override void OnPlayerExit(GameObject player) { }
+    private void ThrowPlayer()
+    {
+        playerRb.linearVelocity = new Vector2(playerRb.linearVelocity.x, -falloffVelocity);
+        playerRb.TryGetComponent(out Controller controller);
+        controller.ForceExitSurface();
+    }
 
     public override void OnPlatformUpdate() { }
 
@@ -61,23 +65,12 @@ public class BreakablePlatform : PlatformBase
 
         DeactivateWhole();
         GeneratePieces();
-        if (playerRb != null)
-        {
-            playerRb.linearVelocity = new Vector2(playerRb.linearVelocity.x, -falloffVelocity);
-            playerRb.TryGetComponent(out Controller controller);
-            controller.ForceExitSurface();
-        }
-
         StartCoroutine(DestroyNextFrame());
     }
 
     private void DeactivateWhole()
     {
-        _renderer.enabled = false;
-        foreach (Collider2D col in _colliders)
-        {
-            col.enabled = false;
-        }
+        _wholePlatform.SetActive(false);
     }
 
     private void GeneratePieces()
@@ -131,6 +124,7 @@ public class BreakablePlatform : PlatformBase
     private IEnumerator DestroyNextFrame()
     {
         yield return null;
+        ThrowPlayer();
         Destroy(gameObject);
     }
 }
