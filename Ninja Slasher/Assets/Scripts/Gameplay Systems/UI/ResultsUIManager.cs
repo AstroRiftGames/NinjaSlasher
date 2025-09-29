@@ -3,6 +3,9 @@ using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 using TMPro;
 using DG.Tweening;
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
 
 public class ResultsUIManager : MonoBehaviourSingleton<ResultsUIManager>
 {
@@ -19,6 +22,13 @@ public class ResultsUIManager : MonoBehaviourSingleton<ResultsUIManager>
     [SerializeField] private float _starAnimationDelay = 0.2f;
     [SerializeField] private float _starOffscreenDistance = 1200f;
     [SerializeField] private Ease _starAnimationEase = Ease.OutBounce;
+
+    [Header("STROKE ANIMATION SETTINGS")]
+    [SerializeField] private bool useStrokeAnimations = true;
+    [SerializeField] private float strokeAnimationDelay = 0.3f;
+    [SerializeField] private float slashEffectDuration = 0.4f;
+    [SerializeField] private float flashDuration = 0.15f;
+    [SerializeField] private float strokeStagger = 0.5f;
 
     private bool isObjectiveComplete = false;
     private Vector2[] _originalStarPositions;
@@ -44,8 +54,12 @@ public class ResultsUIManager : MonoBehaviourSingleton<ResultsUIManager>
         }
 
         SetupGoalTexts(config, levelId);
-
         AnimateStars(config, levelId);
+
+        if (useStrokeAnimations)
+        {
+            StartCoroutine(AnimateObjectiveStrokes(config, levelId));
+        }
     }
 
     private void SetupGoalTexts(LevelConfiguration config, int levelId)
@@ -81,7 +95,15 @@ public class ResultsUIManager : MonoBehaviourSingleton<ResultsUIManager>
 
         if (_primaryGoalText)
         {
-            _primaryGoalText.GetComponentInChildren<Image>().enabled = isObjectiveComplete;
+            Image slashImage = _primaryGoalText.GetComponentInChildren<Image>();
+            if (slashImage != null)
+            {
+                slashImage.enabled = isObjectiveComplete;
+                if (useStrokeAnimations && isObjectiveComplete)
+                {
+                    HideStroke(slashImage);
+                }
+            }
         }
 
         var secondaries = config.GetSecondaryObjectives();
@@ -92,8 +114,82 @@ public class ResultsUIManager : MonoBehaviourSingleton<ResultsUIManager>
             if (i < secondaries.Length && secondaries[i] != null)
             {
                 isObjectiveComplete = SaveManager.Instance?.IsObjectiveCompleted(levelId, secondaries[i]) ?? false;
-                _secondaryGoalTexts[i].GetComponentInChildren<Image>().enabled = isObjectiveComplete;
+                Image slashImage = _secondaryGoalTexts[i].GetComponentInChildren<Image>();
+                if (slashImage != null)
+                {
+                    slashImage.enabled = isObjectiveComplete;
+                    if (useStrokeAnimations && isObjectiveComplete)
+                    {
+                        HideStroke(slashImage);
+                    }
+                }
             }
+        }
+    }
+
+    private void HideStroke(Image slashImage)
+    {
+        Color originalColor = slashImage.color;
+        slashImage.color = new Color(originalColor.r, originalColor.g, originalColor.b, 0f);
+        slashImage.transform.localScale = new Vector3(0f, 1f, 1f);
+    }
+
+    private IEnumerator AnimateObjectiveStrokes(LevelConfiguration config, int levelId)
+    {
+        yield return new WaitForSeconds(strokeAnimationDelay);
+
+        List<(TextMeshProUGUI objective, bool completed)> objectiveList = new List<(TextMeshProUGUI, bool)>();
+
+        var primary = config.GetPrimaryObjective();
+        bool primaryCompleted = SaveManager.Instance?.IsObjectiveCompleted(levelId, primary) ?? false;
+        if (_primaryGoalText != null)
+        {
+            objectiveList.Add((_primaryGoalText, primaryCompleted));
+        }
+
+        var secondaries = config.GetSecondaryObjectives();
+        for (int i = 0; i < _secondaryGoalTexts.Length && i < secondaries.Length; i++)
+        {
+            if (_secondaryGoalTexts[i] != null && secondaries[i] != null)
+            {
+                bool secondaryCompleted = SaveManager.Instance?.IsObjectiveCompleted(levelId, secondaries[i]) ?? false;
+                objectiveList.Add((_secondaryGoalTexts[i], secondaryCompleted));
+            }
+        }
+
+        int strokeIndex = 0;
+        foreach (var (objective, completed) in objectiveList)
+        {
+            if (completed)
+            {
+                AnimateStrokeForObjective(objective, strokeIndex);
+                strokeIndex++;
+                yield return new WaitForSeconds(strokeStagger);
+            }
+        }
+    }
+
+    private void AnimateStrokeForObjective(TextMeshProUGUI objectiveText, int strokeIndex)
+    {
+        Image slashImage = objectiveText.GetComponentInChildren<Image>();
+
+        if (slashImage != null && slashImage.enabled)
+        {
+            Sequence slashSequence = DOTween.Sequence();
+
+            slashSequence.Append(slashImage.transform.DOScaleX(1f, slashEffectDuration * 1.5f)
+                .SetEase(Ease.OutQuart));
+
+            slashSequence.Join(slashImage.DOFade(1f, slashEffectDuration * 1.2f));
+
+            slashSequence.AppendCallback(() => {
+                slashImage.transform.DOPunchScale(Vector3.one * 0.1f, 0.1f, 1, 0.8f);
+
+                if (AudioManager.Instance != null)
+                {
+                    AudioManager.Instance.PlaySFX(SFXClip.UI_TapSplashScreen);
+                }
+            });
         }
     }
 
