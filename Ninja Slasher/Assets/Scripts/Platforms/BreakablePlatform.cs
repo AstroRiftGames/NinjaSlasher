@@ -14,9 +14,8 @@ public class BreakablePlatform : PlatformBase
 
 
 
-
+    [SerializeField] GameObject _wholePlatform;
     SpriteRenderer _renderer;
-    BoxCollider2D[] _colliders;
     List<List<int>> pieces = new List<List<int>>();
     Vector3[] _coords;
     [Header("BREAKING")]
@@ -25,9 +24,8 @@ public class BreakablePlatform : PlatformBase
 
     private void Awake()
     {
-        TryGetComponent(out SpriteRenderer renderer);
+        _wholePlatform.TryGetComponent(out SpriteRenderer renderer);
         _renderer = renderer;
-        _colliders = GetComponents<BoxCollider2D>();
     }
 
     protected override void InitializePlatform()
@@ -67,17 +65,12 @@ public class BreakablePlatform : PlatformBase
             playerRb.TryGetComponent(out Controller controller);
             controller.ForceExitSurface();
         }
-
         StartCoroutine(DestroyNextFrame());
     }
 
     private void DeactivateWhole()
     {
-        _renderer.enabled = false;
-        foreach (Collider2D col in _colliders)
-        {
-            col.enabled = false;
-        }
+        _wholePlatform.SetActive(false);
     }
 
     private void GeneratePieces()
