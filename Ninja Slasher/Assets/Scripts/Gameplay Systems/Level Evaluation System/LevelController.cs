@@ -248,6 +248,11 @@ public class LevelController : MonoBehaviour
     {
         levelFailed = true;
         levelCompleted = true;
+
+        if (LevelManager.Instance != null)
+        {
+            LevelManager.Instance.TriggerLevelDefeat("levelMarkedAsFailed");
+        }
     }
 
     public LevelProgressData GetLevelProgressSummary()

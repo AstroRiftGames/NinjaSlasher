@@ -55,6 +55,8 @@ public enum SFXClip
     B_Sentinel_Recovered,
     B_Sentinel_Sweep,
     P_Die,
+    UI_Victory,
+    UI_Defeat
 }
 
 [Serializable]
@@ -367,5 +369,19 @@ public class AudioManager : MonoBehaviourSingleton<AudioManager>
         {
             musicSource.pitch = musicDict[currentMusicClip].pitch;
         }
+    }
+
+    public float GetSFXDuration(SFXClip clipType)
+    {
+        if (sfxDict.ContainsKey(clipType))
+        {
+            var audioData = sfxDict[clipType];
+            if (audioData.clip != null)
+            {
+                return audioData.clip.length;
+            }
+        }
+
+        return 0f;
     }
 }
