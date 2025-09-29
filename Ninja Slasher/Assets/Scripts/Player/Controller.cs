@@ -52,6 +52,7 @@ public class Controller : MonoBehaviour
 
     private bool _isDead = false;
     private bool _isInvincible;
+    private bool inputEnabled = true;
 
 
     #region FSM && DECISION TREE
@@ -161,6 +162,8 @@ public class Controller : MonoBehaviour
     #region INPUT DETECTION
     private void CheckSwipe()
     {
+        if (!CanProcessInput()) return;
+
 #if UNITY_EDITOR
         if (Input.GetMouseButtonDown(0))
         {
@@ -349,6 +352,16 @@ public class Controller : MonoBehaviour
         _lastDash = Time.time;
 
         _dashInputDetected = true;
+
+        NotifyTutorialDashPerformed();
+    }
+
+    private void NotifyTutorialDashPerformed()
+    {
+        if (TutorialManager.Instance != null)
+        {
+            TutorialManager.Instance.OnDashPerformed();
+        }
     }
 
     public bool CanDashFromInput()
@@ -387,6 +400,7 @@ public class Controller : MonoBehaviour
     #region PARRYING
     private void TryStartParryLogic()
     {
+        if (!CanProcessInput()) return;
         if (isParrying) return;
 
         Collider2D[] hits = Physics2D.OverlapCircleAll(transform.position, 2f, LayerMask.GetMask("Projectiles"));
@@ -575,6 +589,16 @@ public class Controller : MonoBehaviour
             LevelManager.Instance.OnPlayerLose();
             _fsm.Transition(NinjaStates.KO);
         }
+    }
+
+    public void SetInputEnabled(bool enabled)
+    {
+        inputEnabled = enabled;
+    }
+
+    private bool CanProcessInput()
+    {
+        return inputEnabled;
     }
 
     #region RESOURCES

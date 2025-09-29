@@ -27,7 +27,7 @@ public class CanvasManager : MonoBehaviour
     [SerializeField] private RectTransform _noLivesPanel;
 
     [Header("ANIMATION")]
-    [SerializeField] private float _animationDuration = 0.3f;
+    [SerializeField] private float _animationDuration = 0.1f;
     [SerializeField] private Ease _openEase = Ease.OutBack;
     [SerializeField] private Ease _closeEase = Ease.InBack;
     [SerializeField] private float _scaleOvershoot = 1.05f;
@@ -166,7 +166,7 @@ public class CanvasManager : MonoBehaviour
 
     private IEnumerator DelayedResultsShow()
     {
-        yield return new WaitForSeconds(_animationDuration + 0.1f);
+        yield return new WaitForSeconds(_animationDuration);
         GetComponent<ResultsUIManager>()?.ShowResultsPanel();
     }
 

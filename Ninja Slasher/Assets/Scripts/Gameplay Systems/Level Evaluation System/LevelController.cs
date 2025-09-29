@@ -93,6 +93,7 @@ public class LevelController : MonoBehaviour
     public Action<float> OnTimeChanged;
     public Action OnTimeExpired;
 
+    private bool isTimerPaused = false;
     public float TimeTaken => levelConfiguration.levelDuration - currentTime;
 
     private void Start()
@@ -129,13 +130,16 @@ public class LevelController : MonoBehaviour
     {
         while (currentTime > 0 && !levelCompleted)
         {
-            currentTime -= Time.deltaTime;
-            OnTimeChanged?.Invoke(currentTime);
-
-            if (currentTime <= 0)
+            if (!isTimerPaused)
             {
-                OnTimeExpired?.Invoke();
-                break;
+                currentTime -= Time.deltaTime;
+                OnTimeChanged?.Invoke(currentTime);
+
+                if (currentTime <= 0)
+                {
+                    OnTimeExpired?.Invoke();
+                    break;
+                }
             }
 
             yield return null;
@@ -217,11 +221,13 @@ public class LevelController : MonoBehaviour
         return GameObject.FindGameObjectsWithTag("Enemy").Length;
     }
 
-    public void AddTime(float timeToAdd)
+    public void AddTime(float seconds)
     {
-        currentTime += timeToAdd;
+        currentTime += seconds;
 
         OnTimeChanged?.Invoke(currentTime);
+
+        Debug.Log($"[LevelController] +{seconds}s agregados. Tiempo actual: {currentTime:F1}s");
     }
 
     private float ApplyTimePowerUps(float baseDuration)
@@ -276,5 +282,20 @@ public class LevelController : MonoBehaviour
                 Debug.Log($"  - {objectiveId}");
             }
         }
+    }
+
+    public void PauseTimer()
+    {
+        isTimerPaused = true;
+    }
+
+    public void ResumeTimer()
+    {
+        isTimerPaused = false;
+    }
+
+    public bool IsTimerPaused()
+    {
+        return isTimerPaused;
     }
 }

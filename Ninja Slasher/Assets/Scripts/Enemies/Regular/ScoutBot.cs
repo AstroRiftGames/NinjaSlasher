@@ -49,6 +49,11 @@ private bool CheckLOS(Transform target)
 
     public override void Die()
     {
+        if (TutorialManager.Instance != null)
+        {
+            TutorialManager.Instance.OnEnemyKilled();
+        }
+
         AudioManager.Instance.PlaySFXAtPosition(SFXClip.E_Scout_Hit, transform.position);
         base.Die();
     }
