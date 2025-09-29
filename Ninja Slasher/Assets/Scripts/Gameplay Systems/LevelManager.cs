@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections;
 using UnityEngine.SceneManagement;
 
 public class LevelManager : MonoBehaviourSingleton<LevelManager>
@@ -99,59 +100,76 @@ public class LevelManager : MonoBehaviourSingleton<LevelManager>
         int starsEarned = levelController.Evaluate(stats);
         int currentLevelId = GetCurrentLevelId();
 
-#if UNITY_EDITOR
-        ShowLevelCompletionSummary(currentLevelId);
-#endif
-
         if (_levelStarted)
         {
             LifeManager.Instance.OnLevelCompleted();
             _levelStarted = false;
         }
+
+        StartCoroutine(HandleVictoryWithDelay());
+    }
+
+    private IEnumerator HandleVictoryWithDelay()
+    {
+        AudioManager.Instance.PlaySFX(SFXClip.UI_Victory);
+
+        float soundDuration = AudioManager.Instance.GetSFXDuration(SFXClip.UI_Victory);
+
+        if (soundDuration <= 0f)
+        {
+            soundDuration = 2.0f;
+        }
+
+        yield return new WaitForSeconds(soundDuration);
+
         UIManager.Instance.ShowHideResultsCanvas();
     }
 
-    public void OnLevelFailed()
+    private void HandleLevelDefeat(string reason = "unknown")
     {
-        if (LifeManager.Instance != null)
+        AudioManager.Instance.PlaySFX(SFXClip.UI_Defeat);
+
+        if (levelController != null)
         {
-            LifeManager.Instance.UseLife();
+            levelController.StopTimer(true);
         }
 
-        if (UIManager.Instance != null)
+        if (_levelStarted && AnalyticsManager.Instance != null)
         {
-            UIManager.Instance.ShowLifeLostPanel();
+            int currentLevelId = GetCurrentLevelId();
+            float attemptTime = levelController?.TimeTaken ?? 0f;
+            AnalyticsManager.Instance.RecordLevelFailed(
+                currentLevelId,
+                reason,
+                attemptTime
+            );
         }
-    }
-
-    public void OnPlayerLose()
-    {
-        _playerHasDied = true;
 
         if (_levelStarted)
         {
-            if (AnalyticsManager.Instance != null)
-            {
-                int currentLevelId = GetCurrentLevelId();
-                float attemptTime = levelController?.TimeTaken ?? 0f;
-                AnalyticsManager.Instance.RecordLevelFailed(
-                    currentLevelId,
-                    "playerDeath",
-                    attemptTime
-                );
-            }
-
             LifeManager.Instance.UseLife();
             _levelStarted = false;
         }
 
+        StartCoroutine(HandleDefeatUIWithDelay());
+    }
+
+    private IEnumerator HandleDefeatUIWithDelay()
+    {
+        float soundDuration = AudioManager.Instance.GetSFXDuration(SFXClip.UI_Defeat);
+
+        if (soundDuration <= 0f)
+        {
+            soundDuration = 1.5f;
+        }
+
+        yield return new WaitForSeconds(soundDuration);
+
         if (LifeManager.Instance.GetRealLives() <= 0)
         {
             GoToLevelSelection();
-            return;
         }
-
-        if (LifeManager.Instance.CanPlay())
+        else if (LifeManager.Instance.CanPlay())
         {
             UIManager.Instance.ShowLifeLostPanel();
         }
@@ -159,6 +177,22 @@ public class LevelManager : MonoBehaviourSingleton<LevelManager>
         {
             UIManager.Instance.ShowNoLivesPanel();
         }
+    }
+
+    public void TriggerLevelDefeat(string reason)
+    {
+        HandleLevelDefeat(reason);
+    }
+
+    public void OnLevelFailed()
+    {
+        HandleLevelDefeat("timeExpired");
+    }
+
+    public void OnPlayerLose()
+    {
+        _playerHasDied = true;
+        HandleLevelDefeat("playerDeath");
     }
 
     private void OnLivesChanged(int newLives)
@@ -278,19 +312,5 @@ public class LevelManager : MonoBehaviourSingleton<LevelManager>
             LifeManager.Instance.OnLevelExit();
             _levelStarted = false;
         }
-    }
-
-    private void ShowLevelCompletionSummary(int levelId)
-    {
-        var summary = levelController?.GetLevelProgressSummary();
-        if (summary == null) return;
-
-        Debug.Log($"[GameManager] Resumen del Nivel {levelId}:\n" +
-                  $"Completado: {summary.isCompleted}\n" +
-                  $"Estrellas: {summary.maxStarsEarned}/3\n" +
-                  $"Objetivos: {summary.completedObjectiveIds.Count}\n" +
-                  $"Mejor tiempo: {(summary.bestTimeSeconds < float.MaxValue ? summary.bestTimeSeconds.ToString("F2") + "s" : "N/A")}\n" +
-                  $"Mejores movimientos: {(summary.bestMoves < int.MaxValue ? summary.bestMoves.ToString() : "N/A")}\n" +
-                  $"Parry Kill logrado: {(summary.parryKillAchieved ? "Sí" : "No")}");
     }
 }
