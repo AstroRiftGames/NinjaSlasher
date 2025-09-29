@@ -30,32 +30,16 @@ public class EnemyTracker : MonoBehaviour, ITracker
                 return;
             }
 
-            StartCoroutine(PlayVictorySoundAndShowResults());
+            float elapsedTime = Time.time - startTime;
+            LevelStats stats = new LevelStats
+            {
+                timeTaken = elapsedTime,
+                enemiesDefeated = totalEnemies,
+                totalEnemies = totalEnemies
+            };
+
+            OnAllEnemiesDefeated?.Invoke(stats);
         }
-    }
-
-    private IEnumerator PlayVictorySoundAndShowResults()
-    {
-        AudioManager.Instance.PlaySFX(SFXClip.UI_Victory);
-
-        float soundDuration = AudioManager.Instance.GetSFXDuration(SFXClip.UI_Victory);
-
-        if (soundDuration <= 0f)
-        {
-            soundDuration = 2.0f;
-        }
-
-        yield return new WaitForSeconds(soundDuration);
-
-        float elapsedTime = Time.time - startTime;
-        LevelStats stats = new LevelStats
-        {
-            timeTaken = elapsedTime,
-            enemiesDefeated = totalEnemies,
-            totalEnemies = totalEnemies
-        };
-
-        OnAllEnemiesDefeated?.Invoke(stats);
     }
 
     public void ResetTracker()

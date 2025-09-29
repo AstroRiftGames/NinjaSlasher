@@ -106,6 +106,22 @@ public class LevelManager : MonoBehaviourSingleton<LevelManager>
             _levelStarted = false;
         }
 
+        StartCoroutine(HandleVictoryWithDelay());
+    }
+
+    private IEnumerator HandleVictoryWithDelay()
+    {
+        AudioManager.Instance.PlaySFX(SFXClip.UI_Victory);
+
+        float soundDuration = AudioManager.Instance.GetSFXDuration(SFXClip.UI_Victory);
+
+        if (soundDuration <= 0f)
+        {
+            soundDuration = 2.0f;
+        }
+
+        yield return new WaitForSeconds(soundDuration);
+
         UIManager.Instance.ShowHideResultsCanvas();
     }
 
