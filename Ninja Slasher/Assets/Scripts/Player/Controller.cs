@@ -448,6 +448,11 @@ public class Controller : MonoBehaviour
                 proj.ReflectBackwards(transform, newDir);
             }
         }
+
+        if (TutorialManager.Instance != null)
+        {
+            TutorialManager.Instance.OnParryPerformed();
+        }
     }
     #endregion
 

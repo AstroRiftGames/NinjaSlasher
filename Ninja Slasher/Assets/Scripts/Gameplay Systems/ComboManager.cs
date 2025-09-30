@@ -52,7 +52,14 @@ public class ComboManager : MonoBehaviourSingleton<ComboManager>
         comboActive = true;
 
         if (level >= 2)
+        {
             GiveBonus(level);
+
+            if (TutorialManager.Instance != null)
+            {
+                TutorialManager.Instance.OnComboPerformed();
+            }
+        }
 
         OnComboUpdated?.Invoke(level);
     }

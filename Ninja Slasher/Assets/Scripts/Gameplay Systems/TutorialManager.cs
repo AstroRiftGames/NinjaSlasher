@@ -8,6 +8,7 @@ public class TutorialManager : MonoBehaviour
     [Header("UI REFERENCES")]
     [SerializeField] private GameObject[] tutorialTextsLevel1;
     [SerializeField] private GameObject[] tutorialTextsLevel2;
+    [SerializeField] private GameObject[] tutorialTextsLevel3;
 
     [Header("INDICATORS")]
     [SerializeField] private GameObject handAnimation;
@@ -22,15 +23,18 @@ public class TutorialManager : MonoBehaviour
 
     private bool tutorialActive = false;
     private int currentTextIndex = 0;
+    private bool canCompleteParryTutorial = false;
 
     private bool hasPerformedFirstDash = false;
     private bool hasKilledFirstEnemy = false;
     private bool hasPerformedCombo = false;
     private int enemiesKilledCount = 0;
+    private bool hasPerformedParry;
 
     private bool waitingForDash = false;
     private bool waitingForEnemyKill = false;
     private bool waitingForCombo = false;
+    private bool waitingForParry;
 
     private void Awake()
     {
@@ -66,6 +70,12 @@ public class TutorialManager : MonoBehaviour
     {
         GameObject[] currentTutorialTexts = GetCurrentTutorialTexts();
 
+        if (currentTutorialTexts == null || currentTutorialTexts.Length == 0)
+        {
+            CompleteTutorial();
+            return;
+        }
+
         if (currentTextIndex >= currentTutorialTexts.Length)
         {
             CompleteTutorial();
@@ -75,6 +85,10 @@ public class TutorialManager : MonoBehaviour
         if (currentLevel == 2)
         {
             ShowAllLevel2Texts();
+        }
+        else if (currentLevel == 3)
+        {
+            ShowAllLevel3Texts();
         }
         else
         {
@@ -104,20 +118,73 @@ public class TutorialManager : MonoBehaviour
         }
     }
 
+    private void ShowAllLevel3Texts()
+    {
+        HideAllTexts();
+
+        if (tutorialTextsLevel3 != null)
+        {
+            for (int i = 0; i < tutorialTextsLevel3.Length; i++)
+            {
+                if (tutorialTextsLevel3[i] != null)
+                {
+                    tutorialTextsLevel3[i].SetActive(true);
+                }
+            }
+        }
+    }
+
+    private void HideAllLevel2Texts()
+    {
+        if (tutorialTextsLevel2 != null)
+        {
+            for (int i = 0; i < tutorialTextsLevel2.Length; i++)
+            {
+                if (tutorialTextsLevel2[i] != null)
+                {
+                    tutorialTextsLevel2[i].SetActive(false);
+                }
+            }
+        }
+    }
+
+    private void HideAllLevel3Texts()
+    {
+        if (tutorialTextsLevel3 != null)
+        {
+            for (int i = 0; i < tutorialTextsLevel3.Length; i++)
+            {
+                if (tutorialTextsLevel3[i] != null)
+                {
+                    tutorialTextsLevel3[i].SetActive(false);
+                }
+            }
+        }
+    }
+
     private GameObject[] GetCurrentTutorialTexts()
     {
-        return currentLevel == 2 ? tutorialTextsLevel2 : tutorialTextsLevel1;
+        return currentLevel switch
+        {
+            2 => tutorialTextsLevel2,
+            3 => tutorialTextsLevel3,
+            _ => tutorialTextsLevel1
+        };
     }
 
     private void ConfigureTextBehavior(int textIndex)
     {
-        if (currentLevel == 2)
+        switch (currentLevel)
         {
-            ConfigureLevel2Behavior(textIndex);
-        }
-        else
-        {
-            ConfigureLevel1Behavior(textIndex);
+            case 2:
+                ConfigureLevel2Behavior(textIndex);
+                break;
+            case 3:
+                ConfigureLevel3Behavior(textIndex);
+                break;
+            default:
+                ConfigureLevel1Behavior(textIndex);
+                break;
         }
     }
 
@@ -168,11 +235,30 @@ public class TutorialManager : MonoBehaviour
                 {
                     playerController.SetInputEnabled(true);
                 }
-                StartCoroutine(HideTextAfterDelay(textDisplayTime, () => {
-                    CompleteTutorial();
-                }));
+                waitingForCombo = true;
                 break;
         }
+    }
+
+    private void ConfigureLevel3Behavior(int textIndex)
+    {
+        switch (textIndex)
+        {
+            case 0:
+                if (playerController != null)
+                {
+                    playerController.SetInputEnabled(true);
+                }
+                waitingForParry = true;
+                StartCoroutine(EnableParryTutorialCompletion());
+                break;
+        }
+    }
+
+    private IEnumerator EnableParryTutorialCompletion()
+    {
+        yield return new WaitForSeconds(0.5f);
+        canCompleteParryTutorial = true;
     }
 
     private IEnumerator HideTextAfterDelay(float delay, System.Action onComplete = null)
@@ -222,13 +308,18 @@ public class TutorialManager : MonoBehaviour
         {
             waitingForCombo = false;
 
-            if (currentTutorialTexts[currentTextIndex] != null)
-            {
-                currentTutorialTexts[currentTextIndex].SetActive(false);
-            }
+            HideAllLevel2Texts();
 
-            currentTextIndex++;
-            ShowCurrentText();
+            CompleteTutorial();
+        }
+
+        if (waitingForParry && hasPerformedParry)
+        {
+            waitingForParry = false;
+
+            HideAllLevel3Texts();
+
+            CompleteTutorial();
         }
     }
 
@@ -267,6 +358,18 @@ public class TutorialManager : MonoBehaviour
         }
     }
 
+    public void OnParryPerformed()
+    {
+        if (!tutorialActive || currentLevel != 3) return;
+        if (!canCompleteParryTutorial) return;
+
+        if (!hasPerformedParry)
+        {
+            hasPerformedParry = true;
+            CheckForActionCompletion();
+        }
+    }
+
     private void CompleteTutorial()
     {
         tutorialActive = false;
@@ -291,9 +394,12 @@ public class TutorialManager : MonoBehaviour
         waitingForDash = false;
         waitingForEnemyKill = false;
         waitingForCombo = false;
+        waitingForParry = false;
         hasPerformedFirstDash = false;
         hasKilledFirstEnemy = false;
         hasPerformedCombo = false;
+        hasPerformedParry = false;
+        canCompleteParryTutorial = false;
         enemiesKilledCount = 0;
         currentTextIndex = 0;
 
@@ -332,6 +438,17 @@ public class TutorialManager : MonoBehaviour
                 if (tutorialTextsLevel2[i] != null)
                 {
                     tutorialTextsLevel2[i].SetActive(false);
+                }
+            }
+        }
+
+        if (tutorialTextsLevel3 != null)
+        {
+            for (int i = 0; i < tutorialTextsLevel3.Length; i++)
+            {
+                if (tutorialTextsLevel3[i] != null)
+                {
+                    tutorialTextsLevel3[i].SetActive(false);
                 }
             }
         }
