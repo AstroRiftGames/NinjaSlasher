@@ -8,6 +8,7 @@ public class EnemyTracker : MonoBehaviour, ITracker
     private List<Enemy> enemies = new();
     private float startTime;
     private int totalEnemies;
+    private bool levelEnded = false;
 
     public static event Action<LevelStats> OnAllEnemiesDefeated;
 
@@ -17,6 +18,7 @@ public class EnemyTracker : MonoBehaviour, ITracker
         enemies.AddRange(found);
         totalEnemies = enemies.Count;
         startTime = Time.time;
+        levelEnded = false;
     }
 
     public void OnEnemyKilled(Enemy enemy)
@@ -25,10 +27,17 @@ public class EnemyTracker : MonoBehaviour, ITracker
 
         if (enemies.Count <= 0)
         {
+            if (levelEnded)
+            {
+                return;
+            }
+
             if (LevelManager.Instance != null && LevelManager.Instance.PlayerHasDied)
             {
                 return;
             }
+
+            levelEnded = true;
 
             float elapsedTime = Time.time - startTime;
             LevelStats stats = new LevelStats
@@ -47,5 +56,6 @@ public class EnemyTracker : MonoBehaviour, ITracker
         enemies.Clear();
         totalEnemies = 0;
         startTime = 0;
+        levelEnded = false;
     }
 }
