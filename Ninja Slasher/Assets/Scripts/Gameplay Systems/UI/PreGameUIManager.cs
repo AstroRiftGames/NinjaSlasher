@@ -38,6 +38,7 @@ public class PreGameUIManager : MonoBehaviour
     private bool isObjectiveComplete = false;
     private List<PowerUpSlotUI> _slots = new();
     private Dictionary<TextMeshProUGUI, string> originalTexts = new Dictionary<TextMeshProUGUI, string>();
+    private List<Sequence> activeSequences = new List<Sequence>();
 
     private void Awake()
     {
@@ -155,6 +156,7 @@ public class PreGameUIManager : MonoBehaviour
         if (slashImage != null && slashImage.enabled)
         {
             Sequence slashSequence = DOTween.Sequence();
+            activeSequences.Add(slashSequence);
 
             float incrementalDelay = flashDuration * 2.5f + (strokeIndex * 0.5f);
             slashSequence.AppendInterval(incrementalDelay);
@@ -165,12 +167,19 @@ public class PreGameUIManager : MonoBehaviour
             slashSequence.Join(slashImage.DOFade(1f, flashDuration * 1.2f));
 
             slashSequence.AppendCallback(() => {
-                slashImage.transform.DOPunchScale(Vector3.one * 0.1f, 0.1f, 1, 0.8f);
-
-                if (AudioManager.Instance != null)
+                if (slashImage != null && slashImage.gameObject != null)
                 {
-                    AudioManager.Instance.PlaySFX(SFXClip.UI_TapSplashScreen);
+                    slashImage.transform.DOPunchScale(Vector3.one * 0.1f, 0.1f, 1, 0.8f);
+
+                    if (AudioManager.Instance != null)
+                    {
+                        AudioManager.Instance.PlaySFX(SFXClip.UI_TapSplashScreen);
+                    }
                 }
+            });
+
+            slashSequence.OnKill(() => {
+                activeSequences.Remove(slashSequence);
             });
         }
     }
@@ -187,8 +196,6 @@ public class PreGameUIManager : MonoBehaviour
             Image slashImage = objective.GetComponentInChildren<Image>();
             if (slashImage != null)
             {
-                bool wasEnabled = slashImage.enabled;
-
                 Color originalColor = slashImage.color;
                 slashImage.color = new Color(originalColor.r, originalColor.g, originalColor.b, 0f);
                 slashImage.transform.localScale = new Vector3(0f, 1f, 1f);
@@ -220,6 +227,43 @@ public class PreGameUIManager : MonoBehaviour
         }
     }
 
+    public void StopAllAnimations()
+    {
+        StopAllCoroutines();
+
+        foreach (var sequence in activeSequences.ToList())
+        {
+            if (sequence != null && sequence.IsActive())
+            {
+                sequence.Kill(false);
+            }
+        }
+        activeSequences.Clear();
+
+        if (_title != null)
+        {
+            DOTween.Kill(_title);
+            DOTween.Kill(_title.transform);
+        }
+
+        List<TextMeshProUGUI> allObjectives = new List<TextMeshProUGUI>();
+        if (_primaryGoalText != null) allObjectives.Add(_primaryGoalText);
+        allObjectives.AddRange(_secondaryGoalTexts.Where(t => t != null));
+
+        foreach (var objective in allObjectives)
+        {
+            DOTween.Kill(objective);
+            DOTween.Kill(objective.transform);
+
+            Image slashImage = objective.GetComponentInChildren<Image>();
+            if (slashImage != null)
+            {
+                DOTween.Kill(slashImage);
+                DOTween.Kill(slashImage.transform);
+            }
+        }
+    }
+
     private void OnEnable()
     {
         DailyRewardSystem.OnRewardClaimed += OnDailyRewardClaimedRefresh;
@@ -228,6 +272,7 @@ public class PreGameUIManager : MonoBehaviour
     private void OnDisable()
     {
         DailyRewardSystem.OnRewardClaimed -= OnDailyRewardClaimedRefresh;
+        StopAllAnimations();
     }
 
     private void OnDailyRewardClaimedRefresh(DailyReward _)
@@ -242,45 +287,17 @@ public class PreGameUIManager : MonoBehaviour
             GetComponent<GameplayUIManager>().ShowNoLivesPanel();
             return;
         }
+
+        StopAllAnimations();
+
         UIManager.Instance.ShowHidePreGameCanvas();
         UIManager.Instance.LoadLevelScene(_pendingSceneName);
         PlayLevelMusic();
     }
 
-    void PlayLevelMusic()
-    {
-        int levelId = GetLevelIdFromSceneName(_pendingSceneName);
-        var cfgMgr = LevelConfigurationManager.Instance;
-        var config = cfgMgr != null ? cfgMgr.GetConfigurationForLevel(levelId) : null;
-
-        if (config.unlockRequirements.isBossLevel)
-        {
-            AudioManager.Instance.PlayMusic(MusicClip.BossLevel);
-            return;
-        }
-
-        switch (config.unlockRequirements.areaId)
-        {
-            case 1:
-                AudioManager.Instance.PlayMusic(MusicClip.Area1);
-                break;
-            case 2:
-                AudioManager.Instance.PlayMusic(MusicClip.Area2);
-                break;
-            case 3:
-                AudioManager.Instance.PlayMusic(MusicClip.Area3);
-                break;
-            case 4:
-                AudioManager.Instance.PlayMusic(MusicClip.Area4);
-                break;
-            case 5:
-                AudioManager.Instance.PlayMusic(MusicClip.Area5);
-                break;
-        }
-    }
-
     private void CancelLevelSelection()
     {
+        StopAllAnimations();
         UIManager.Instance.ShowHidePreGameCanvas();
         _pendingSceneName = null;
     }
@@ -409,6 +426,38 @@ public class PreGameUIManager : MonoBehaviour
         if (!img) return;
 
         img.sprite = acquired ? _starAcquiredSprite : _starNotAcquiredSprite;
+    }
+
+    void PlayLevelMusic()
+    {
+        int levelId = GetLevelIdFromSceneName(_pendingSceneName);
+        var cfgMgr = LevelConfigurationManager.Instance;
+        var config = cfgMgr != null ? cfgMgr.GetConfigurationForLevel(levelId) : null;
+
+        if (config.unlockRequirements.isBossLevel)
+        {
+            AudioManager.Instance.PlayMusic(MusicClip.BossLevel);
+            return;
+        }
+
+        switch (config.unlockRequirements.areaId)
+        {
+            case 1:
+                AudioManager.Instance.PlayMusic(MusicClip.Area1);
+                break;
+            case 2:
+                AudioManager.Instance.PlayMusic(MusicClip.Area2);
+                break;
+            case 3:
+                AudioManager.Instance.PlayMusic(MusicClip.Area3);
+                break;
+            case 4:
+                AudioManager.Instance.PlayMusic(MusicClip.Area4);
+                break;
+            case 5:
+                AudioManager.Instance.PlayMusic(MusicClip.Area5);
+                break;
+        }
     }
 
     private int GetLevelIdFromSceneName(string name)

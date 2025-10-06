@@ -239,12 +239,13 @@ public class CanvasManager : MonoBehaviour
 
         if (isCanvasActive)
         {
-            ShowCanvasAnimated(_preGameCanvas);
+            ShowHideCanvas(_preGameCanvas, isCanvasActive);
             GetComponent<PreGameUIManager>()?.ShowPreGamePowerUps();
         }
         else
         {
-            HideCanvasAnimated(_preGameCanvas);
+            GetComponent<PreGameUIManager>()?.StopAllAnimations();
+            ShowHideCanvas(_preGameCanvas, isCanvasActive);
         }
     }
 
