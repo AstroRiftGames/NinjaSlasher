@@ -56,7 +56,12 @@ public enum SFXClip
     B_Sentinel_Sweep,
     P_Die,
     UI_Victory,
-    UI_Defeat
+    UI_Defeat,
+    B_Sentinel_Double_1,
+    B_Sentinel_Double_2,
+    B_Sentinel_Heavy,
+    B_Sentinel_Impact,
+    B_Sentinel_Woosh,
 }
 
 [Serializable]
