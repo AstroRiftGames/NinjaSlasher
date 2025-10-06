@@ -27,6 +27,7 @@ public class SentinelDoubleAttackState<SentinelStates> : State<SentinelStates>
 
             yield return new WaitForSeconds(.25f);
 
+            AudioManager.Instance.PlaySFXAtPosition(_sentinel.IsRightBallTurn ? SFXClip.B_Sentinel_Double_1 : SFXClip.B_Sentinel_Double_2, _sentinel.transform.position);
             _sentinel.CurrentBall.Throw();
 
             while (_sentinel.CurrentBall.IsOut)

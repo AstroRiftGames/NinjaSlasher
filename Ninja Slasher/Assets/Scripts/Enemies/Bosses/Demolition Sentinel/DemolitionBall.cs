@@ -94,11 +94,13 @@ public class DemolitionBall : MonoBehaviour
         _chain.SetIsMoving(true);
         transform.localRotation.Set(0, 0, 0, 0);
         _rb.AddForce(transform.right * _force, ForceMode2D.Impulse);
+        AudioManager.Instance.PlaySFXAtPosition(SFXClip.B_Sentinel_Woosh, transform.position);
         AudioManager.Instance.PlaySFXAtPosition(SFXClip.B_Sentinel_Sweep, transform.position);
     }
 
     public void HeavyThrow()
     {
+        AudioManager.Instance.PlaySFXAtPosition(SFXClip.B_Sentinel_Heavy, transform.position);
         Throw();
         _heavyAttack = true;
     }
@@ -120,7 +122,8 @@ public class DemolitionBall : MonoBehaviour
     private void OnCollisionEnter2D(Collision2D collision)
     {
         _animator.SetTrigger("OnImpact");
-        if(collision.gameObject.CompareTag("Player"))
+        AudioManager.Instance.PlaySFXAtPosition(SFXClip.B_Sentinel_Impact, transform.position);
+        if (collision.gameObject.CompareTag("Player"))
         {
             collision.gameObject.TryGetComponent(out Controller player);
             player.Die();
