@@ -469,7 +469,6 @@ public class Controller : MonoBehaviour
 
             SetIsDashing(false);
             SetGrabbingAnimation();
-            HapticFeedbackController.Instance.PlayVibration(HapticFeedbackType.Medium);
             RotateSprites(colTag == "Ceiling" ? Vector2.left : Vector2.right);
 
             ElasticPlatform elasticPlatform = collision.gameObject.GetComponent<ElasticPlatform>();
@@ -487,7 +486,6 @@ public class Controller : MonoBehaviour
         {
             collision.gameObject.TryGetComponent(out Projectile projectile);
             projectile.ManageCollision(_playerView.Col);
-            HapticFeedbackController.Instance.PlayVibration(HapticFeedbackType.Heavy);
         }
     }
     private void OnCollisionExit2D(Collision2D collision)
@@ -509,11 +507,12 @@ public class Controller : MonoBehaviour
             if (_isDashing)
             {
                 AudioManager.Instance.PlaySFXAtPosition(SFXClip.P_Attack, transform.position);
-                HapticFeedbackController.Instance.PlayVibration(HapticFeedbackType.Light);
+                HapticFeedback.MediumFeedback();
                 collision.GetComponent<Enemy>().Die();
             }
             else
             {
+                HapticFeedback.HeavyFeedback();
                 Die();
             }
         }
