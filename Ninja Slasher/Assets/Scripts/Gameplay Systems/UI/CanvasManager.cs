@@ -239,6 +239,12 @@ public class CanvasManager : MonoBehaviour
 
         if (isCanvasActive)
         {
+            var buttonManager = GetComponent<ButtonManager>();
+            if (buttonManager != null)
+            {
+                buttonManager.StopAllButtonAnimations();
+            }
+
             ShowHideCanvas(_preGameCanvas, isCanvasActive);
             GetComponent<PreGameUIManager>()?.ShowPreGamePowerUps();
         }

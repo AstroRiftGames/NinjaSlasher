@@ -1,5 +1,7 @@
 using DG.Tweening;
 using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -72,6 +74,8 @@ public class ButtonManager : MonoBehaviour
 
     private AudioToggle _audioToggle;
     private ConfigDropdown _configPanelManager;
+
+    private List<Sequence> activeButtonSequences = new List<Sequence>();
 
     private void OnSaveDataLoaded(GameData _) => RefreshLevelProgression();
 
@@ -352,6 +356,8 @@ public class ButtonManager : MonoBehaviour
         float heavyDelay = buttonIndex * (waveDelay * 3f);
 
         Sequence heavySequence = DOTween.Sequence();
+        activeButtonSequences.Add(heavySequence);
+
         heavySequence.AppendInterval(heavyDelay);
 
         heavySequence.Append(
@@ -367,11 +373,22 @@ public class ButtonManager : MonoBehaviour
             );
         }
 
-        heavySequence.AppendCallback(() => CreateHeavyImpactEffect(button));
+        heavySequence.AppendCallback(() => {
+            if (button != null && button.gameObject != null)
+            {
+                CreateHeavyImpactEffect(button);
+            }
+        });
+
+        heavySequence.OnKill(() => {
+            activeButtonSequences.Remove(heavySequence);
+        });
     }
 
     private void CreateHeavyImpactEffect(Button button)
     {
+        if (button == null || button.gameObject == null) return;
+
         RectTransform rectTransform = button.GetComponent<RectTransform>();
 
         Vector2 sideShake = new Vector2(Random.Range(-15f, 15f), 0f);
@@ -384,12 +401,52 @@ public class ButtonManager : MonoBehaviour
         {
             Color originalColor = buttonImage.color;
             buttonImage.DOColor(Color.white, 0.05f)
-                .OnComplete(() => buttonImage.DOColor(originalColor, 0.2f));
+                .OnComplete(() => {
+                    if (buttonImage != null && buttonImage.gameObject != null)
+                    {
+                        buttonImage.DOColor(originalColor, 0.2f);
+                    }
+                });
         }
 
         if (AudioManager.Instance != null)
         {
             AudioManager.Instance.PlaySFX(SFXClip.UI_Select);
+        }
+    }
+
+    public void StopAllButtonAnimations()
+    {
+        foreach (var sequence in activeButtonSequences.ToList())
+        {
+            if (sequence != null && sequence.IsActive())
+            {
+                sequence.Kill(false);
+            }
+        }
+        activeButtonSequences.Clear();
+
+        if (levelButtons != null)
+        {
+            foreach (var button in levelButtons)
+            {
+                if (button != null)
+                {
+                    DOTween.Kill(button.transform);
+
+                    var rectTransform = button.GetComponent<RectTransform>();
+                    if (rectTransform != null)
+                    {
+                        DOTween.Kill(rectTransform);
+                    }
+
+                    var buttonImage = button.GetComponent<Image>();
+                    if (buttonImage != null)
+                    {
+                        DOTween.Kill(buttonImage);
+                    }
+                }
+            }
         }
     }
 
