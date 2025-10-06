@@ -12,6 +12,7 @@ public class LevelManager : MonoBehaviourSingleton<LevelManager>
     private LevelStats currentStats;
     private bool _playerHasDied;
     private bool _levelStarted = false;
+    private bool _levelEnded = false;
 
     public bool PlayerHasDied => _playerHasDied;
 
@@ -32,6 +33,7 @@ public class LevelManager : MonoBehaviourSingleton<LevelManager>
 
         _playerHasDied = false;
         _levelStarted = false;
+        _levelEnded = false;
 
         if (!LifeManager.Instance.CanPlay())
         {
@@ -73,9 +75,9 @@ public class LevelManager : MonoBehaviourSingleton<LevelManager>
         if (_levelStarted || !LifeManager.Instance.CanPlay()) return;
 
         _playerHasDied = false;
+        _levelEnded = false;
 
         ParryKillTracker.Reset();
-        //MoveTracker.ResetTracker();
 
         _levelStarted = true;
         LifeManager.Instance.OnLevelStart();
@@ -84,6 +86,11 @@ public class LevelManager : MonoBehaviourSingleton<LevelManager>
     public void OnLevelCompleted(LevelStats stats)
     {
         if (IsTestingScene()) return;
+
+        if (_levelEnded)
+        {
+            return;
+        }
 
         if (levelController == null)
             levelController = FindObjectOfType<LevelController>();
@@ -95,7 +102,9 @@ public class LevelManager : MonoBehaviourSingleton<LevelManager>
         stats.parryKillDone = ParryKillTracker.KillWithParryPerformed;
 
         ParryKillTracker.Reset();
-        levelController.StopTimer();
+
+        if (levelController != null)
+            levelController.StopTimer();
 
         int starsEarned = levelController.Evaluate(stats);
         int currentLevelId = GetCurrentLevelId();
@@ -105,6 +114,8 @@ public class LevelManager : MonoBehaviourSingleton<LevelManager>
             LifeManager.Instance.OnLevelCompleted();
             _levelStarted = false;
         }
+
+        _levelEnded = true;
 
         StartCoroutine(HandleVictoryWithDelay());
     }
@@ -127,6 +138,13 @@ public class LevelManager : MonoBehaviourSingleton<LevelManager>
 
     private void HandleLevelDefeat(string reason = "unknown")
     {
+        if (_levelEnded)
+        {
+            return;
+        }
+
+        _levelEnded = true;
+
         AudioManager.Instance.PlaySFX(SFXClip.UI_Defeat);
 
         if (levelController != null)
@@ -255,6 +273,7 @@ public class LevelManager : MonoBehaviourSingleton<LevelManager>
         }
 
         _playerHasDied = false;
+        _levelEnded = false;
         string currentScene = SceneManager.GetActiveScene().name;
 
         LifeManager.Instance.OnLevelStart();
