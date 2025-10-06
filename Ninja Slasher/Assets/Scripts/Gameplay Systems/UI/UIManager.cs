@@ -12,6 +12,9 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
     private PreGameUIManager _preGameUIManager;
     private SceneTransitionManager _sceneTransitionManager;
 
+    public bool IsHapticFeedbackActive => _isHapticFeedbackActive;
+    private bool _isHapticFeedbackActive = true;
+
     public override void Awake()
     {
         base.Awake();
@@ -69,6 +72,7 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
     public void ShowHidePauseCanvas() => _canvasManager.ShowHidePauseCanvas();
     public void ShowHideCreditsCanvas() => _canvasManager.ShowHideCreditsCanvas();
     public void ShowHideProfileCanvas() => _canvasManager.ShowHideProfileCanvas();
+    public void SwitchHapticFeedback() => _isHapticFeedbackActive = !_isHapticFeedbackActive;
     public void ShowHideUserIconsCanvas() => _canvasManager.ShowHideUserIconsCanvas();
     public void ShowHideUserNicknameEditCanvas() => _canvasManager.ShowHideUserNicknameEditCanvas();
     public void ShowHideResultsCanvas() => _canvasManager.ShowHideResultsCanvas();

@@ -507,12 +507,12 @@ public class Controller : MonoBehaviour
             if (_isDashing)
             {
                 AudioManager.Instance.PlaySFXAtPosition(SFXClip.P_Attack, transform.position);
-                HapticFeedback.MediumFeedback();
+                if(UIManager.Instance.IsHapticFeedbackActive) HapticFeedback.MediumFeedback();
                 collision.GetComponent<Enemy>().Die();
             }
             else
             {
-                HapticFeedback.HeavyFeedback();
+                if (UIManager.Instance.IsHapticFeedbackActive) HapticFeedback.HeavyFeedback();
                 Die();
             }
         }

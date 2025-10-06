@@ -15,6 +15,7 @@ public class ButtonManager : MonoBehaviour
     [SerializeField] private Button _musicButton;
     [SerializeField] private Button _sfxButton;
     [SerializeField] private Button _profileButton;
+    [SerializeField] private Button _hapticButton;
 
     [Header("PROFILE BUTTONS")]
     [SerializeField] private Button _userIconButton;
@@ -175,6 +176,7 @@ public class ButtonManager : MonoBehaviour
         _musicButton.onClick.AddListener(_audioToggle.MusicButtonClicked);
         _sfxButton.onClick.AddListener(_audioToggle.SFXButtonClicked);
         _profileButton.onClick.AddListener(UIManager.Instance.ShowHideProfileCanvas);
+        _hapticButton.onClick.AddListener(UIManager.Instance.SwitchHapticFeedback);
 
         _closeNoLivesPanelButton.onClick.AddListener(UIManager.Instance.ShowHideNoLivesCanvas);
         //_adForMoreLifeButton.onClick.AddListener(AdsManager.Instance.ShowRewardedAdForExtraLife);
