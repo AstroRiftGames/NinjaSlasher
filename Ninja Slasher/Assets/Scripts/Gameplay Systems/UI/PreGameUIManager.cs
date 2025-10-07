@@ -36,6 +36,7 @@ public class PreGameUIManager : MonoBehaviour
     [SerializeField] private float objectiveStagger = 0.1f;
 
     private bool isObjectiveComplete = false;
+    private bool _isLevelSelected = false;
     private List<PowerUpSlotUI> _slots = new();
     private Dictionary<TextMeshProUGUI, string> originalTexts = new Dictionary<TextMeshProUGUI, string>();
     private List<Sequence> activeSequences = new List<Sequence>();
@@ -43,6 +44,37 @@ public class PreGameUIManager : MonoBehaviour
     private void Awake()
     {
         CacheOriginalTexts();
+        SetupButtonListeners();
+    }
+
+    private void SetupButtonListeners()
+    {
+        _playButton.onClick.AddListener(OnPlayButtonClicked);
+        _closeButton.onClick.AddListener(OnCloseButtonClicked);
+    }
+
+    private void OnPlayButtonClicked()
+    {
+        if (_isLevelSelected)
+        {
+            OnConfirmLevelSelection();
+        }
+        else
+        {
+            UIManager.Instance.ShowHidePreGameCanvas();
+        }
+    }
+
+    private void OnCloseButtonClicked()
+    {
+        if (_isLevelSelected)
+        {
+            CancelLevelSelection();
+        }
+        else
+        {
+            UIManager.Instance.ShowHidePreGameCanvas();
+        }
     }
 
     private void CacheOriginalTexts()
@@ -59,13 +91,9 @@ public class PreGameUIManager : MonoBehaviour
     public void ShowConfirmationPanel(string sceneName)
     {
         _pendingSceneName = sceneName;
+        _isLevelSelected = true;
+
         UIManager.Instance.ShowHidePreGameCanvas();
-
-        _playButton.onClick.RemoveAllListeners();
-        _playButton.onClick.AddListener(OnConfirmLevelSelection);
-
-        _closeButton.onClick.RemoveAllListeners();
-        _closeButton.onClick.AddListener(CancelLevelSelection);
 
         ShowPreGameTitle();
         SetGoals();
@@ -118,111 +146,64 @@ public class PreGameUIManager : MonoBehaviour
         List<TextMeshProUGUI> objectiveList = new List<TextMeshProUGUI>();
 
         if (_primaryGoalText != null) objectiveList.Add(_primaryGoalText);
-        objectiveList.AddRange(_secondaryGoalTexts.Where(t => t != null && !string.IsNullOrEmpty(t.text)));
-
-        foreach (var obj in objectiveList)
-        {
-            Color color = obj.color;
-            obj.color = new Color(color.r, color.g, color.b, 0f);
-            obj.transform.localScale = new Vector3(0.8f, 0.8f, 1f);
-        }
+        objectiveList.AddRange(_secondaryGoalTexts.Where(t => t != null));
 
         for (int i = 0; i < objectiveList.Count; i++)
         {
-            var objective = objectiveList[i];
-            Color originalColor = objective.color;
-            originalColor.a = 1f;
-
-            objective.DOColor(originalColor, flashDuration * 0.7f);
-            objective.transform.DOScale(Vector3.one, flashDuration * 0.7f)
-                .SetEase(Ease.OutBack);
-            objective.transform.DOPunchPosition(new Vector3(UnityEngine.Random.Range(-5f, 5f), 0, 0), flashDuration, 1, 0.5f);
-
-            AnimateObjectiveIfCompleted(objective, i);
-
-            if (AudioManager.Instance != null && i % 2 == 0)
+            AnimateObjectiveText(objectiveList[i]);
+            if (i < objectiveList.Count - 1)
             {
-                AudioManager.Instance.PlaySFX(SFXClip.UI_Select);
+                yield return new WaitForSeconds(objectiveStagger);
             }
-
-            yield return new WaitForSeconds(objectiveStagger);
         }
     }
 
-    private void AnimateObjectiveIfCompleted(TextMeshProUGUI objectiveText, int strokeIndex = 0)
+    private void AnimateObjectiveText(TextMeshProUGUI objectiveText)
     {
-        Image slashImage = objectiveText.GetComponentInChildren<Image>();
+        if (objectiveText == null) return;
 
+        Image slashImage = objectiveText.GetComponentInChildren<Image>(true);
         if (slashImage != null && slashImage.enabled)
         {
-            Sequence slashSequence = DOTween.Sequence();
-            activeSequences.Add(slashSequence);
-
-            float incrementalDelay = flashDuration * 2.5f + (strokeIndex * 0.5f);
-            slashSequence.AppendInterval(incrementalDelay);
-
-            slashSequence.Append(slashImage.transform.DOScaleX(1f, flashDuration * 1.5f)
-                .SetEase(Ease.OutQuart));
-
-            slashSequence.Join(slashImage.DOFade(1f, flashDuration * 1.2f));
-
-            slashSequence.AppendCallback(() => {
-                if (slashImage != null && slashImage.gameObject != null)
-                {
-                    slashImage.transform.DOPunchScale(Vector3.one * 0.1f, 0.1f, 1, 0.8f);
-
-                    if (AudioManager.Instance != null)
-                    {
-                        AudioManager.Instance.PlaySFX(SFXClip.UI_TapSplashScreen);
-                    }
-                }
-            });
-
-            slashSequence.OnKill(() => {
-                activeSequences.Remove(slashSequence);
-            });
+            AnimateSlashEffect(slashImage);
         }
+
+        objectiveText.DOColor(objectiveText.color, flashDuration * 0.5f);
+        objectiveText.transform.DOPunchScale(Vector3.one * 0.15f, flashDuration, 1, 0.5f);
+
+        if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.PlaySFX(SFXClip.UI_Select);
+        }
+    }
+
+    private void AnimateSlashEffect(Image slashImage)
+    {
+        Color slashColor = slashImage.color;
+        slashImage.color = new Color(slashColor.r, slashColor.g, slashColor.b, 0f);
+        slashImage.transform.localScale = new Vector3(0f, 1f, 1f);
+
+        Sequence slashSeq = DOTween.Sequence();
+        slashSeq.Append(slashImage.transform.DOScaleX(1f, slashEffectDuration).SetEase(Ease.OutQuart));
+        slashSeq.Join(slashImage.DOFade(1f, slashEffectDuration * 0.8f));
+
+        activeSequences.Add(slashSeq);
     }
 
     private void HideAllObjectiveStrokes()
     {
         List<TextMeshProUGUI> allObjectives = new List<TextMeshProUGUI>();
-
         if (_primaryGoalText != null) allObjectives.Add(_primaryGoalText);
         allObjectives.AddRange(_secondaryGoalTexts.Where(t => t != null));
 
         foreach (var objective in allObjectives)
         {
-            Image slashImage = objective.GetComponentInChildren<Image>();
+            Image slashImage = objective.GetComponentInChildren<Image>(true);
             if (slashImage != null)
             {
-                Color originalColor = slashImage.color;
-                slashImage.color = new Color(originalColor.r, originalColor.g, originalColor.b, 0f);
-                slashImage.transform.localScale = new Vector3(0f, 1f, 1f);
-            }
-        }
-    }
-
-    public void ResetTexts()
-    {
-        foreach (var kvp in originalTexts)
-        {
-            if (kvp.Key != null)
-            {
-                kvp.Key.text = kvp.Value;
-                kvp.Key.transform.localScale = Vector3.one;
-                kvp.Key.transform.rotation = Quaternion.identity;
-                Color color = kvp.Key.color;
-                kvp.Key.color = new Color(color.r, color.g, color.b, 1f);
-
-                Image slashImage = kvp.Key.GetComponentInChildren<Image>();
-                if (slashImage != null)
-                {
-                    slashImage.transform.localScale = Vector3.one;
-                    Color slashColor = slashImage.color;
-                    float alpha = slashImage.enabled ? 1f : 0f;
-                    slashImage.color = new Color(slashColor.r, slashColor.g, slashColor.b, alpha);
-                }
+                Color slashColor = slashImage.color;
+                float alpha = slashImage.enabled ? 1f : 0f;
+                slashImage.color = new Color(slashColor.r, slashColor.g, slashColor.b, alpha);
             }
         }
     }
@@ -289,6 +270,7 @@ public class PreGameUIManager : MonoBehaviour
         }
 
         StopAllAnimations();
+        _isLevelSelected = false;
 
         UIManager.Instance.ShowHidePreGameCanvas();
         UIManager.Instance.LoadLevelScene(_pendingSceneName);
@@ -298,6 +280,7 @@ public class PreGameUIManager : MonoBehaviour
     private void CancelLevelSelection()
     {
         StopAllAnimations();
+        _isLevelSelected = false;
         UIManager.Instance.ShowHidePreGameCanvas();
         _pendingSceneName = null;
     }

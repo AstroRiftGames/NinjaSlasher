@@ -85,6 +85,12 @@ public class CanvasManager : MonoBehaviour
 
         panel.localScale = Vector3.zero;
 
+        CanvasGroup canvasGroup = panel.GetComponent<CanvasGroup>();
+        if (canvasGroup != null)
+        {
+            canvasGroup.alpha = 1f;
+        }
+
         Sequence showSequence = DOTween.Sequence();
         showSequence.Append(panel.DOScale(_scaleOvershoot, _animationDuration * 0.7f)
             .SetEase(_openEase));
@@ -96,9 +102,25 @@ public class CanvasManager : MonoBehaviour
     {
         DOTween.Kill(panel);
 
+        CanvasGroup canvasGroup = panel.GetComponent<CanvasGroup>();
+        if (canvasGroup != null)
+        {
+            DOTween.Kill(canvasGroup);
+        }
+
         panel.DOScale(0f, _animationDuration)
             .SetEase(_closeEase)
-            .OnComplete(() => canvas.enabled = false);
+            .OnComplete(() =>
+            {
+                canvas.enabled = false;
+
+                if (canvasGroup != null)
+                {
+                    canvasGroup.alpha = 1f;
+                }
+
+                panel.localScale = Vector3.one;
+            });
     }
 
     private void ShowCanvasGroupAnimated(CanvasGroup canvasGroup)
@@ -170,18 +192,6 @@ public class CanvasManager : MonoBehaviour
         GetComponent<ResultsUIManager>()?.ShowResultsPanel();
     }
 
-    public void ShowHideUserNicknameEditCanvas()
-    {
-        bool isCanvasActive = !_userNicknameEditCanvas.enabled;
-        ShowHideCanvas(_userNicknameEditCanvas, isCanvasActive);
-    }
-
-    public void ShowHideUserIconsCanvas()
-    {
-        bool isCanvasActive = !_userIconsCanvas.enabled;
-        ShowHideCanvas(_userIconsCanvas, isCanvasActive);
-    }
-
     public void ShowHideDailyRewardCanvas()
     {
         bool isCanvasActive = !_dailyRewardCanvas.enabled;
@@ -195,12 +205,6 @@ public class CanvasManager : MonoBehaviour
         {
             HideCanvasAnimated(_dailyRewardCanvas);
         }
-    }
-
-    public void ShowHideNoLivesCanvas()
-    {
-        bool isCanvasActive = !_noLivesCanvas.enabled;
-        ShowHideCanvas(_noLivesCanvas, isCanvasActive);
     }
 
     public void ShowHideCreditsCanvas()
@@ -311,9 +315,19 @@ public class CanvasManager : MonoBehaviour
         }
     }
 
+    private void ToggleCanvas(Canvas canvas)
+    {
+        bool isCanvasActive = !canvas.enabled;
+        ShowHideCanvas(canvas, isCanvasActive);
+    }
+
+    public void ShowHideUserNicknameEditCanvas() => ToggleCanvas(_userNicknameEditCanvas);
+    public void ShowHideUserIconsCanvas() => ToggleCanvas(_userIconsCanvas);
+    public void ShowHideNoLivesCanvas() => ToggleCanvas(_noLivesCanvas);
     public void SetSplashCanvasEnabled(bool enabled) => _splashCanvas.enabled = enabled;
     public void SetGameplayCanvasEnabled(bool enabled) => _gameplayCanvas.enabled = enabled;
     public void SetPauseCanvasEnabled(bool enabled) => _pauseCanvas.enabled = enabled;
+    public Canvas GetResultsCanvas() => _resultsCanvas;
 
     private void OnDisable()
     {

@@ -141,7 +141,12 @@ public class GameplayUIManager : MonoBehaviour
 
     public void ContinueToLevelSelector()
     {
-        UIManager.Instance.ShowHideResultsCanvas();
+        var canvasManager = UIManager.Instance.GetComponent<CanvasManager>();
+        if (canvasManager != null)
+        {
+            canvasManager.CloseCanvas(canvasManager.GetResultsCanvas());
+        }
+
         LevelManager.Instance.GoToLevelSelection(confirmPendingDeduction: false);
     }
 
