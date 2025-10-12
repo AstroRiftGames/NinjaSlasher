@@ -513,7 +513,6 @@ public class Controller : MonoBehaviour
             }
             else
             {
-                if (UIManager.Instance.IsHapticFeedbackActive) HapticFeedback.HeavyFeedback();
                 Die();
             }
         }
@@ -589,6 +588,8 @@ public class Controller : MonoBehaviour
             }
 
             LevelManager.Instance.OnPlayerLose();
+            if (UIManager.Instance.IsHapticFeedbackActive) HapticFeedback.HeavyFeedback();
+
             _fsm.Transition(NinjaStates.KO);
         }
     }

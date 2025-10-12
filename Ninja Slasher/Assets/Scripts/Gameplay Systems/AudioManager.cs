@@ -66,6 +66,14 @@ public enum SFXClip
     P_Landing_Ground,
     P_Landing_Stone,
     P_Landing_Wood,
+    P_KO_1,
+    P_KO_2,
+    P_KO_3,
+    P_KO_4,
+    P_KO_5,
+    P_KO_6,
+    P_KO_7,
+
 
 }
 
