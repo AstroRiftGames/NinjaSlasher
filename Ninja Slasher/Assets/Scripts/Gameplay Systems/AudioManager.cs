@@ -62,6 +62,11 @@ public enum SFXClip
     B_Sentinel_Heavy,
     B_Sentinel_Impact,
     B_Sentinel_Woosh,
+    P_Landing_General,
+    P_Landing_Ground,
+    P_Landing_Stone,
+    P_Landing_Wood,
+
 }
 
 [Serializable]

@@ -470,6 +470,7 @@ public class Controller : MonoBehaviour
             SetIsDashing(false);
             SetGrabbingAnimation();
             RotateSprites(colTag == "Ceiling" ? Vector2.left : Vector2.right);
+            AudioManager.Instance.PlaySFXAtPosition(SFXClip.P_Landing_General, transform.position);
 
             ElasticPlatform elasticPlatform = collision.gameObject.GetComponent<ElasticPlatform>();
             _lastSurfaceWasElastic = elasticPlatform != null;
