@@ -76,6 +76,7 @@ public class ButtonManager : MonoBehaviour
     private ConfigDropdown _configPanelManager;
 
     private List<Sequence> activeButtonSequences = new List<Sequence>();
+    private Dictionary<int, Vector2> savedButtonPositions = new Dictionary<int, Vector2>();
 
     private void OnSaveDataLoaded(GameData _) => RefreshLevelProgression();
 
@@ -83,6 +84,8 @@ public class ButtonManager : MonoBehaviour
     {
         _audioToggle = GetComponent<AudioToggle>();
         _configPanelManager = GetComponent<ConfigDropdown>();
+
+        SaveButtonPositions();
     }
 
     private void OnEnable()
@@ -166,6 +169,19 @@ public class ButtonManager : MonoBehaviour
             if (levelButtonImages != null && i < levelButtonImages.Length && levelButtonImages[i] != null)
             {
                 levelButtonImages[i].color = isUnlocked ? unlockedButtonColor : lockedButtonColor;
+            }
+        }
+    }
+
+    private void SaveButtonPositions()
+    {
+        savedButtonPositions.Clear();
+        for (int i = 0; i < levelButtons.Length; i++)
+        {
+            if (levelButtons[i] != null)
+            {
+                RectTransform rt = levelButtons[i].GetComponent<RectTransform>();
+                savedButtonPositions[i] = rt.anchoredPosition;
             }
         }
     }
@@ -343,7 +359,9 @@ public class ButtonManager : MonoBehaviour
         Button button = levelButtons[buttonIndex];
         RectTransform rectTransform = button.GetComponent<RectTransform>();
 
-        Vector2 finalPosition = rectTransform.anchoredPosition;
+        Vector2 finalPosition = savedButtonPositions.ContainsKey(buttonIndex)
+            ? savedButtonPositions[buttonIndex]
+            : rectTransform.anchoredPosition;
 
         rectTransform.anchoredPosition = finalPosition + Vector2.up * (fallDistance * 1.5f);
 

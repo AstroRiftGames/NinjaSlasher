@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 6649975453996204679}
   - component: {fileID: 7544159256603902730}
   - component: {fileID: 2138310273089446421}
-  - component: {fileID: 5637720496934514610}
+  - component: {fileID: 8784713919660560662}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -29,7 +29,7 @@ Transform:
   m_GameObject: {fileID: 4098407959893395448}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 2.25, y: -0.715, z: -10}
+  m_LocalPosition: {x: 1.93, y: -0.715, z: -10}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -70,7 +70,7 @@ Camera:
   far clip plane: 1000
   field of view: 34
   orthographic: 1
-  orthographic size: 5
+  orthographic size: 5.1
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2
@@ -138,7 +138,7 @@ MonoBehaviour:
     m_MipBias: 0
     m_VarianceClampScale: 0.9
     m_ContrastAdaptiveSharpening: 0
---- !u!114 &5637720496934514610
+--- !u!114 &8784713919660560662
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -147,7 +147,8 @@ MonoBehaviour:
   m_GameObject: {fileID: 4098407959893395448}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 53627c5183733664e915a2eae4c6755a, type: 3}
+  m_Script: {fileID: 11500000, guid: c81ef37d9881dbe499586ec345d02128, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  targetHorizontalSize: 21
+  targetAspect: {x: 16, y: 9}
+  alwaysRecalculateInEditor: 1
