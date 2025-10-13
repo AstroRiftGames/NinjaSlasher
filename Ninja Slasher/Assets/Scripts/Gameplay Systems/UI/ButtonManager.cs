@@ -196,13 +196,20 @@ public class ButtonManager : MonoBehaviour
         _musicButton.onClick.AddListener(_audioToggle.MusicButtonClicked);
         _sfxButton.onClick.AddListener(_audioToggle.SFXButtonClicked);
         _profileButton.onClick.AddListener(UIManager.Instance.ShowHideProfileCanvas);
-        _hapticButton.onClick.AddListener(UIManager.Instance.SwitchHapticFeedback);
+
+        if (_hapticButton != null)
+        {
+            _hapticButton.onClick.AddListener(UIManager.Instance.SwitchHapticFeedback);
+        }
 
         _closeNoLivesPanelButton.onClick.AddListener(UIManager.Instance.ShowHideNoLivesCanvas);
+
         //_adForMoreLifeButton.onClick.AddListener(AdsManager.Instance.ShowRewardedAdForExtraLife);
 
         _userIconButton.onClick.AddListener(UIManager.Instance.ShowHideUserIconsCanvas);
-        _userNicknameText = LoginManager.Instance.PlayerName;
+
+        _userNicknameText = LoginManager.Instance != null ? LoginManager.Instance.PlayerName : "Player";
+
         _userNicknameButton.onClick.AddListener(UIManager.Instance.ShowHideUserNicknameEditCanvas);
         _creditsButton.onClick.AddListener(UIManager.Instance.ShowHideCreditsCanvas);
         _closeProfileButton.onClick.AddListener(UIManager.Instance.ShowHideProfileCanvas);
@@ -214,7 +221,7 @@ public class ButtonManager : MonoBehaviour
             {
                 Image icon = img.transform.GetChild(0).GetComponent<Image>();
                 _userIconImage.sprite = icon.sprite;
-                _userIconImage.color = icon.color;  //SE NECESITA SPRITE CON EL COLOR PARA QUITAR ESTO
+                _userIconImage.color = icon.color;
                 UIManager.Instance.ShowHideUserIconsCanvas();
             });
         }
