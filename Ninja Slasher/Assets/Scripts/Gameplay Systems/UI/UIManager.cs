@@ -117,12 +117,16 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
     public void ShowConfirmationPanel(string sceneName) => _preGameUIManager.ShowConfirmationPanel(sceneName);
     public void ShowHidePreGameCanvas() => _canvasManager.ShowHidePreGameCanvas();
     public void ShowHidePauseCanvas() => _canvasManager.ShowHidePauseCanvas();
-    public void ShowHideResultsCanvas() => _canvasManager.ShowHideResultsCanvas();
-    public void ShowHideProfileCanvas() => _canvasManager.ShowHideProfileCanvas();
     public void ShowHideCreditsCanvas() => _canvasManager.ShowHideCreditsCanvas();
+    public void ShowHideProfileCanvas() => _canvasManager.ShowHideProfileCanvas();
+    public void SwitchHapticFeedback() => _isHapticFeedbackActive = !_isHapticFeedbackActive;
     public void ShowHideUserIconsCanvas() => _canvasManager.ShowHideUserIconsCanvas();
     public void ShowHideUserNicknameEditCanvas() => _canvasManager.ShowHideUserNicknameEditCanvas();
+    public void ShowHideResultsCanvas() => _canvasManager.ShowHideResultsCanvas();
     public void ShowHideDailyRewardCanvas() => _canvasManager.ShowHideDailyRewardCanvas();
     public void ShowHideNoLivesCanvas() => _canvasManager.ShowHideNoLivesCanvas();
-    public void SwitchHapticFeedback() => _isHapticFeedbackActive = !_isHapticFeedbackActive;
+    public void ShowLifeLostPanel() => _gameplayUIManager.ShowLifeLostPanel();
+    public void HideLifeLostPanel() => _gameplayUIManager.HideLifeLostPanel();
+    public void UpdateLivesUI(int lives) => _gameplayUIManager.UpdateLivesUI(lives);
+    public void ShowNoLivesPanel() => _gameplayUIManager.ShowNoLivesPanel();
 }
