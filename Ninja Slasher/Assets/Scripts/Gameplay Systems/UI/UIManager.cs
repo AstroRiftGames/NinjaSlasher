@@ -15,28 +15,72 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
     public bool IsHapticFeedbackActive => _isHapticFeedbackActive;
     private bool _isHapticFeedbackActive = true;
 
+    private bool _isInitialized = false;
+
     public override void Awake()
     {
         base.Awake();
+
+        if (this != Instance)
+        {
+            return;
+        }
+
         InitializeManagers();
     }
 
     private void OnEnable()
     {
+        if (this != Instance) return;
+
         SceneManager.sceneLoaded += OnSceneLoaded;
+
+        StartCoroutine(SafeSubscribeToCustomUpdate());
+    }
+
+    private IEnumerator SafeSubscribeToCustomUpdate()
+    {
+        while (CustomUpdateManager.Instance == null)
+        {
+            yield return null;
+        }
+
         CustomUpdateManager.Instance.SubscribeToUpdate(CustomUpdate);
     }
 
     private void OnDisable()
     {
+        if (this != Instance) return;
+
         SceneManager.sceneLoaded -= OnSceneLoaded;
-        CustomUpdateManager.Instance.UnsubscribeFromUpdate(CustomUpdate);
+
+        if (CustomUpdateManager.Instance != null)
+        {
+            CustomUpdateManager.Instance.UnsubscribeFromUpdate(CustomUpdate);
+        }
     }
 
     private void Start()
     {
+        if (this != Instance) return;
+
+        StartCoroutine(InitializeUI());
+    }
+
+    private IEnumerator InitializeUI()
+    {
+        yield return new WaitForEndOfFrame();
+
+        while (SaveManager.Instance == null ||
+               !SaveManager.Instance.IsDataLoaded)
+        {
+            yield return null;
+        }
+
         _buttonManager.SetupButtons();
         _gameplayUIManager.Initialize();
+
+        _isInitialized = true;
     }
 
     private void InitializeManagers()
@@ -50,7 +94,10 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
 
     private void CustomUpdate()
     {
-        _gameplayUIManager.UpdateUI();
+        if (_isInitialized)
+        {
+            _gameplayUIManager.UpdateUI();
+        }
     }
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
@@ -70,16 +117,12 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
     public void ShowConfirmationPanel(string sceneName) => _preGameUIManager.ShowConfirmationPanel(sceneName);
     public void ShowHidePreGameCanvas() => _canvasManager.ShowHidePreGameCanvas();
     public void ShowHidePauseCanvas() => _canvasManager.ShowHidePauseCanvas();
-    public void ShowHideCreditsCanvas() => _canvasManager.ShowHideCreditsCanvas();
+    public void ShowHideResultsCanvas() => _canvasManager.ShowHideResultsCanvas();
     public void ShowHideProfileCanvas() => _canvasManager.ShowHideProfileCanvas();
-    public void SwitchHapticFeedback() => _isHapticFeedbackActive = !_isHapticFeedbackActive;
+    public void ShowHideCreditsCanvas() => _canvasManager.ShowHideCreditsCanvas();
     public void ShowHideUserIconsCanvas() => _canvasManager.ShowHideUserIconsCanvas();
     public void ShowHideUserNicknameEditCanvas() => _canvasManager.ShowHideUserNicknameEditCanvas();
-    public void ShowHideResultsCanvas() => _canvasManager.ShowHideResultsCanvas();
     public void ShowHideDailyRewardCanvas() => _canvasManager.ShowHideDailyRewardCanvas();
     public void ShowHideNoLivesCanvas() => _canvasManager.ShowHideNoLivesCanvas();
-    public void ShowLifeLostPanel() => _gameplayUIManager.ShowLifeLostPanel();
-    public void HideLifeLostPanel() => _gameplayUIManager.HideLifeLostPanel();
-    public void UpdateLivesUI(int lives) => _gameplayUIManager.UpdateLivesUI(lives);
-    public void ShowNoLivesPanel() => _gameplayUIManager.ShowNoLivesPanel();
+    public void SwitchHapticFeedback() => _isHapticFeedbackActive = !_isHapticFeedbackActive;
 }

@@ -176,8 +176,8 @@ public class CanvasManager : MonoBehaviour
         if (isCanvasActive)
         {
             GetComponent<ResultsUIManager>()?.PrepareResultsIntro();
-
             ShowCanvasAnimated(_resultsCanvas);
+            SetGameplayCanvasEnabled(false);
             StartCoroutine(DelayedResultsShow());
         }
         else
