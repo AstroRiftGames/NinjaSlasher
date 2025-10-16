@@ -61,7 +61,8 @@ public class GuardBot : Enemy
     {
         transform.localScale = new Vector3(_target.x > transform.localToWorldMatrix.GetPosition().x ? 1 : -1, transform.localScale.y, transform.localScale.z);
 
-        bool thereIsFloor = Physics2D.Raycast(transform.position + transform.right * 2f * _direction, Vector3.down, .5f, _obstaclesLayer);
+
+        bool thereIsFloor = Physics2D.Raycast(transform.position + transform.right * -_direction, Vector3.down, .5f, _obstaclesLayer);
         if(thereIsFloor)
         {
             _rb.linearVelocityX = _direction * _currentSpeed;
@@ -84,7 +85,7 @@ public class GuardBot : Enemy
 
     private bool CheckTarget()
     {
-        return Physics2D.Raycast(_refPoint.position, transform.right * _direction, _data.Range, _playerLayer);
+        return Physics2D.Raycast(_refPoint.position, -transform.right * _direction, _data.Range, _playerLayer);
     }
 
     private IEnumerator Push()
@@ -133,8 +134,9 @@ public class GuardBot : Enemy
     {
         Gizmos.color = Color.red;
         Gizmos.DrawLine(_refPoint.position, _refPoint.position + transform.right * _data.Range * _direction);
-        Gizmos.DrawRay(transform.position + transform.right * 2f * _direction, Vector2.down *.5f);
+        Gizmos.DrawRay(transform.position + transform.right * -_direction, Vector2.down *.5f);
         Gizmos.color = Color.blue;
         Gizmos.DrawLine(_refPoint.position, _target);
+        Gizmos.color = Color.green;
     }
 }
