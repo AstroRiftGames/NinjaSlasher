@@ -145,6 +145,7 @@ public class Projectile : MonoBehaviour
         SetOwner(newShooter);
         _rb.linearVelocity = Vector2.zero;
         SetDirection(newDir);
+        SetIsParryable(false);
     }
 
     public bool IsParryable => isParryable;
