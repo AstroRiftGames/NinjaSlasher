@@ -2,11 +2,11 @@ using UnityEngine;
 
 public class SpikeDamage : MonoBehaviour
 {
-    private void OnTriggerEnter2D(Collider2D other)
+    private void OnCollisionEnter2D(Collision2D collision)
     {
-        if (other.CompareTag("Player"))
+        if (collision.gameObject.CompareTag("Player"))
         {
-            var controller = other.GetComponent<Controller>();
+            var controller = collision.gameObject.GetComponent<Controller>();
             if (controller != null)
             {
                 controller.Die();
