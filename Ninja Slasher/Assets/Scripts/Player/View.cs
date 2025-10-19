@@ -15,4 +15,17 @@ public class View : MonoBehaviour
     [SerializeField] GameObject _spriteContainer;
 
     public Portal LastUsedPortal { get; set; }
+
+    private TrailRenderer _trailRenderer;
+    public TrailRenderer TrailRendererComponent => _trailRenderer;
+
+    void Awake()
+    {
+        _trailRenderer = GetComponent<TrailRenderer>();
+
+        if (_trailRenderer != null)
+        {
+            _trailRenderer.emitting = false;
+        }
+    }
 }
