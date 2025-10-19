@@ -19,6 +19,9 @@ public class View : MonoBehaviour
     private TrailRenderer _trailRenderer;
     public TrailRenderer TrailRendererComponent => _trailRenderer;
 
+    private ParticleSystem _landingParticles;
+    public ParticleSystem LandingParticles => _landingParticles;
+
     void Awake()
     {
         _trailRenderer = GetComponent<TrailRenderer>();
@@ -27,5 +30,7 @@ public class View : MonoBehaviour
         {
             _trailRenderer.emitting = false;
         }
+
+        _landingParticles = GetComponentInChildren<ParticleSystem>();
     }
 }
