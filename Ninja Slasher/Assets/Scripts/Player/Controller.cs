@@ -597,7 +597,12 @@ public class Controller : MonoBehaviour
         {
             if (_isDead) return;
             _isDead = true;
-            
+
+            if (CameraShake.Instance != null)
+            {
+                CameraShake.Instance.TriggerShake(0.4f, 0.5f);
+            }
+
             var levelController = FindObjectOfType<LevelController>();
             if (levelController != null)
             {
