@@ -1,3 +1,4 @@
+using Managers;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -11,16 +12,75 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
     private PreGameUIManager _preGameUIManager;
     private SceneTransitionManager _sceneTransitionManager;
 
+    public bool IsHapticFeedbackActive => _isHapticFeedbackActive;
+    private bool _isHapticFeedbackActive = true;
+
+    private bool _isInitialized = false;
+
     public override void Awake()
     {
         base.Awake();
+
+        if (this != Instance)
+        {
+            return;
+        }
+
         InitializeManagers();
+    }
+
+    private void OnEnable()
+    {
+        if (this != Instance) return;
+
+        SceneManager.sceneLoaded += OnSceneLoaded;
+
+        StartCoroutine(SafeSubscribeToCustomUpdate());
+    }
+
+    private IEnumerator SafeSubscribeToCustomUpdate()
+    {
+        while (CustomUpdateManager.Instance == null)
+        {
+            yield return null;
+        }
+
+        CustomUpdateManager.Instance.SubscribeToUpdate(CustomUpdate);
+    }
+
+    private void OnDisable()
+    {
+        if (this != Instance) return;
+
+        SceneManager.sceneLoaded -= OnSceneLoaded;
+
+        if (CustomUpdateManager.Instance != null)
+        {
+            CustomUpdateManager.Instance.UnsubscribeFromUpdate(CustomUpdate);
+        }
     }
 
     private void Start()
     {
+        if (this != Instance) return;
+
+        StartCoroutine(InitializeUI());
+    }
+
+    private IEnumerator InitializeUI()
+    {
+        yield return new WaitForEndOfFrame();
+
+        while (SaveManager.Instance == null ||
+               !SaveManager.Instance.IsDataLoaded)
+        {
+            yield return null;
+        }
+
         _buttonManager.SetupButtons();
         _gameplayUIManager.Initialize();
+
+        _isInitialized = true;
     }
 
     private void InitializeManagers()
@@ -32,25 +92,23 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
         _sceneTransitionManager = GetComponent<SceneTransitionManager>();
     }
 
-    private void OnEnable()
+    private void CustomUpdate()
     {
-        SceneManager.sceneLoaded += OnSceneLoaded;
-    }
-
-    private void OnDisable()
-    {
-        SceneManager.sceneLoaded -= OnSceneLoaded;
-    }
-
-    private void Update()
-    {
-        _gameplayUIManager.UpdateUI();
+        if (_isInitialized)
+        {
+            _gameplayUIManager.UpdateUI();
+        }
     }
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
         if (_gameplayUIManager != null)
             _gameplayUIManager.OnSceneLoaded();
+    }
+
+    public void OpenURL(string url)
+    {
+        Application.OpenURL(url);
     }
 
     public void ShowLevelSelector() => _sceneTransitionManager.ShowLevelSelector();
@@ -61,7 +119,10 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
     public void ShowHidePauseCanvas() => _canvasManager.ShowHidePauseCanvas();
     public void ShowHideCreditsCanvas() => _canvasManager.ShowHideCreditsCanvas();
     public void ShowHideProfileCanvas() => _canvasManager.ShowHideProfileCanvas();
-    //public void ShowHideExtraLifeCanvas() => _canvasManager.ShowHideExtraLifeCanvas();
+    public void SwitchHapticFeedback() => _isHapticFeedbackActive = !_isHapticFeedbackActive;
+    public void ShowHideUserIconsCanvas() => _canvasManager.ShowHideUserIconsCanvas();
+    public void ShowHideUserNicknameEditCanvas() => _canvasManager.ShowHideUserNicknameEditCanvas();
+    public void ShowHideResultsCanvas() => _canvasManager.ShowHideResultsCanvas();
     public void ShowHideDailyRewardCanvas() => _canvasManager.ShowHideDailyRewardCanvas();
     public void ShowHideNoLivesCanvas() => _canvasManager.ShowHideNoLivesCanvas();
     public void ShowLifeLostPanel() => _gameplayUIManager.ShowLifeLostPanel();

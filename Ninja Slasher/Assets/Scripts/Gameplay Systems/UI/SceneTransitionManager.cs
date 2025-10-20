@@ -53,11 +53,15 @@ public class SceneTransitionManager : MonoBehaviour
     private IEnumerator ShowLevelSelectorCo()
     {
         Time.timeScale = 1;
+
+        _canvasManager.CloseCanvas(_canvasManager.GetResultsCanvas());
+
         _transitionAnim.SetTrigger("OpeningStart");
         yield return new WaitForSeconds(_transitionTime);
         _canvasManager.SetSplashCanvasEnabled(false);
         _canvasManager.SetLevelsCanvasEnabled(true);
         _canvasManager.SetPauseCanvasEnabled(false);
+        _canvasManager.SetGameplayCanvasEnabled(false);
         _transitionAnim.SetTrigger("End");
         AudioManager.Instance.PlaySFX(SFXClip.UI_TransitionSlash);
     }

@@ -1,3 +1,4 @@
+using Managers;
 using System.Collections;
 using Unity.VisualScripting;
 using UnityEngine;
@@ -32,11 +33,13 @@ public class Arachnomadre : BossEnemy
     [SerializeField] private float _maxAttackCD;
 
     [Header("SpawnAttack Parameters")]
-    [SerializeField] private GameObject _blaztEgg;
-    [SerializeField] private int _blaztEggsAmount;
     [SerializeField] private float _launchingBaseForce;
     [SerializeField] private float _timeBetweenEggs;
     [SerializeField] [Range(0f,1f)] private float _spawnAttackChance;
+    [SerializeField] private GameObject _blaztEgg;
+    [SerializeField] private int _blaztEggsAmount;
+    private GenericPool<BlaztEgg> _pool;
+    public GenericPool<BlaztEgg> Pool => _pool;
     private int _blaztsAmount;
     public void DecreaseEggsAmount() => _blaztsAmount--;
     public void IncreaseEggsAmount() => _blaztsAmount++;
@@ -48,7 +51,13 @@ public class Arachnomadre : BossEnemy
     [SerializeField] float _vulnerabilityTime;
     private bool _isVulnerable;
 
-    private void Update()
+    public override void Awake()
+    {
+        base.Awake();
+        _pool = new GenericPool<BlaztEgg>(_blaztEgg, _blaztEggsAmount, transform);
+    }
+
+    public override void CustomUpdate()
     {
         if (!_isVulnerable) 
         {
@@ -122,10 +131,11 @@ public class Arachnomadre : BossEnemy
     {
         for(int n = 0; n < _blaztEggsAmount; n++)
         {
-            Instantiate(_blaztEgg, transform.position + transform.up, Quaternion.identity).TryGetComponent(out Rigidbody2D eggRB);
+            BlaztEgg newEgg = _pool.Get();
+            newEgg.transform.SetPositionAndRotation(transform.position + transform.up, Quaternion.identity);
+            newEgg.TryGetComponent(out Rigidbody2D eggRB);
             eggRB.AddForce(SetDirection(n), ForceMode2D.Impulse);
-            eggRB.TryGetComponent(out BlaztEgg egg);
-            egg.SetArachnomadre(this);
+            newEgg.SetArachnomadre(this);
             yield return new WaitForSeconds(_timeBetweenEggs);
         }
         _isAttacking = false;

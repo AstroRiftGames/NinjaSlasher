@@ -19,16 +19,30 @@ public class SentinelDoubleAttackState<SentinelStates> : State<SentinelStates>
 
     private IEnumerator DoubleAttack()
     {
+        _sentinel.Animator.SetTrigger("onDouble");
         for (int i = 0; i < _sentinel.AmountOfAttacks; i++)
         {
             _sentinel.SetTargetDirection();
-            _sentinel.CurrentBall.Throw(_sentinel.TargetDir);
-            _sentinel.ChangeBall();
-            yield return new WaitForSeconds(_sentinel.TimeBetweenAttacks);
+            _sentinel.AimArm(_sentinel.Balls[_sentinel.IsRightBallTurn ? 0 : 1].PivotPoint);
+
+            yield return new WaitForSeconds(.25f);
+
+            AudioManager.Instance.PlaySFXAtPosition(_sentinel.IsRightBallTurn ? SFXClip.B_Sentinel_Double_1 : SFXClip.B_Sentinel_Double_2, _sentinel.transform.position);
+            _sentinel.CurrentBall.Throw();
+
+            while (_sentinel.CurrentBall.IsOut)
+            {
+                yield return null;
+            }
+
+            _sentinel.SetTargetDirection(Vector2.down);
+            _sentinel.AimArm(_sentinel.CurrentBall.PivotPoint);
+            if(_sentinel.Balls.Length >= 2) _sentinel.ChangeBall();
+
+            yield return new WaitForSeconds(1f);
         }
         _sentinel._isDoubleAttacking = false;
         _sentinel.SetIsAttacking(false);
         _sentinel.SetJustAttacked(true);
-        _sentinel.StartCoroutine(_sentinel.ReturnBalls());
     }
 }

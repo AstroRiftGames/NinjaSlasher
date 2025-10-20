@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Rendering.Universal;
 
 [Serializable]
 public enum MusicClip
@@ -15,7 +16,8 @@ public enum MusicClip
     Area5,
     BossLevel,
     Victory,
-    GameOver
+    GameOver,
+    Credits
 }
 
 [Serializable]
@@ -32,6 +34,47 @@ public enum SFXClip
     UI_Transition,
     UI_ShowConfig,
     UI_Claim,
+    E_Scout_Hit,
+    E_Scout_SendReport,
+    E_Blaze_Detection,
+    E_Blaze_Shoot,
+    E_Guard_Detection,
+    E_Guard_Charge,
+    E_Guard_Colision,
+    E_Guard_Death,
+    P_Attack,
+    P_ParrySwing,
+    P_ProjectileParried,
+    B_Sentinel_Intro,
+    B_Sentinel_Idle,
+    B_Sentinel_Damaged,
+    B_Sentinel_Defeated,
+    B_Sentinel_Defeated_Idle,
+    B_Sentinel_Vulnerable,
+    B_Sentinel_Vulnerable_Idle,
+    B_Sentinel_Recovered,
+    B_Sentinel_Sweep,
+    P_Die,
+    UI_Victory,
+    UI_Defeat,
+    B_Sentinel_Double_1,
+    B_Sentinel_Double_2,
+    B_Sentinel_Heavy,
+    B_Sentinel_Impact,
+    B_Sentinel_Woosh,
+    P_Landing_General,
+    P_Landing_Ground,
+    P_Landing_Stone,
+    P_Landing_Wood,
+    P_KO_1,
+    P_KO_2,
+    P_KO_3,
+    P_KO_4,
+    P_KO_5,
+    P_KO_6,
+    P_KO_7,
+
+
 }
 
 [Serializable]
@@ -142,7 +185,7 @@ public class AudioManager : MonoBehaviourSingleton<AudioManager>
         }
         else
         {
-            Debug.Log($"Clip de música '{clipType}' no encontrado");
+            Debug.Log($"Clip de mï¿½sica '{clipType}' no encontrado");
         }
     }
 
@@ -200,6 +243,45 @@ public class AudioManager : MonoBehaviourSingleton<AudioManager>
             AudioSource.PlayClipAtPoint(audioData.clip, position,
                 audioData.volume * sfxVolume * masterVolume * volumeMultiplier);
         }
+    }
+
+    public Dictionary<SFXClip, AudioSource> srcDict = new Dictionary<SFXClip, AudioSource>();
+
+    public void PlayLoopedSFXAtPosition(SFXClip clip, Vector3 position, float volumeMultiplier = 1f)
+    {
+        if (sfxDict.ContainsKey(clip))
+        {
+            var audioData = sfxDict[clip];
+
+            GameObject newObj = Instantiate(new GameObject(audioData.clip.name), position, Quaternion.identity);
+            newObj.transform.SetPositionAndRotation(position, Quaternion.identity);
+
+            AudioSource src = newObj.AddComponent<AudioSource>();
+            srcDict.Add(clip, src);
+            string msg = "";
+            foreach (AudioSource element in srcDict.Values)
+            {
+                msg += $"{element.gameObject.name}, ";
+            }
+            Debug.Log(msg);
+            src.loop = true;
+            src.clip = audioData.clip;
+            src.volume = audioData.volume * sfxVolume * masterVolume * volumeMultiplier;
+
+            src.Play();
+        }
+    }
+
+    public void StopSFX(SFXClip clip)
+    {
+        srcDict.TryGetValue(clip, out AudioSource src);
+        if (src == null)
+        {
+            Debug.Log( clip + " not found in array");
+        }
+        srcDict.Remove(clip);
+        src.Stop();
+        Destroy(src.gameObject);
     }
 
     public void PlaySFXWithRandomPitch(SFXClip clipType, float minPitch = 0.8f, float maxPitch = 1.2f, float volumeMultiplier = 1f)
@@ -305,5 +387,19 @@ public class AudioManager : MonoBehaviourSingleton<AudioManager>
         {
             musicSource.pitch = musicDict[currentMusicClip].pitch;
         }
+    }
+
+    public float GetSFXDuration(SFXClip clipType)
+    {
+        if (sfxDict.ContainsKey(clipType))
+        {
+            var audioData = sfxDict[clipType];
+            if (audioData.clip != null)
+            {
+                return audioData.clip.length;
+            }
+        }
+
+        return 0f;
     }
 }

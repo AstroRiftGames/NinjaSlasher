@@ -41,7 +41,7 @@ public class DailyRewardSystem : MonoBehaviourSingleton<DailyRewardSystem>
     public static event Action<bool> OnRewardAvailabilityChanged;
     public static event Action OnRewardDoubled;
 
-    private bool _hasDoubledToday = false;
+    //private bool _hasDoubledToday = false;
 
 
     public override void Awake()
@@ -74,7 +74,7 @@ public class DailyRewardSystem : MonoBehaviourSingleton<DailyRewardSystem>
     {
         LoadRewardData();
         CheckDailyReward();
-        CheckDoubleRewardStatus();
+        //CheckDoubleRewardStatus();
         OnRewardAvailabilityChanged?.Invoke(CanClaimToday());
     }
 
@@ -93,7 +93,7 @@ public class DailyRewardSystem : MonoBehaviourSingleton<DailyRewardSystem>
             }
             catch (Exception e)
             {
-                Debug.LogError("Error cargando datos de recompensas diarias: " + e.Message);
+                //Debug.LogError("Error cargando datos de recompensas diarias: " + e.Message);
                 rewardData = new DailyRewardSaveData();
             }
         }
@@ -117,7 +117,7 @@ public class DailyRewardSystem : MonoBehaviourSingleton<DailyRewardSystem>
         else
         {
             SaveManager.Instance.SaveDailyRewardData(jsonData);
-            Debug.LogWarning("[DailyRewardSystem] AutoSaveManager no encontrado");
+            //Debug.LogWarning("[DailyRewardSystem] AutoSaveManager no encontrado");
         }
     }
 
@@ -129,7 +129,7 @@ public class DailyRewardSystem : MonoBehaviourSingleton<DailyRewardSystem>
 
         if (last == DateTime.MinValue.Date)
         {
-            Debug.Log("[DailyRewardSystem] Primer d�a del sistema de recompensas");
+            Debug.Log("[DailyRewardSystem] Primer dia de recompensas");
         }
         else
         {
@@ -154,30 +154,30 @@ public class DailyRewardSystem : MonoBehaviourSingleton<DailyRewardSystem>
             OnRewardAvailabilityChanged?.Invoke(isAvailableNow);
     }
 
-    private void CheckDoubleRewardStatus()
-    {
-        var last = GetLastClaimDateSafe();
-        var currentDate = DateTime.Now.Date;
+    //private void CheckDoubleRewardStatus()
+    //{
+    //    var last = GetLastClaimDateSafe();
+    //    var currentDate = DateTime.Now.Date;
 
-        if (last != currentDate)
-        {
-            _hasDoubledToday = false;
-        }
-    }
+    //    if (last != currentDate)
+    //    {
+    //        _hasDoubledToday = false;
+    //    }
+    //}
 
     public void DoubleTodaysReward()
     {
-        if (_hasDoubledToday)
-        {
-            Debug.LogWarning("Ya se duplicó la recompensa de hoy");
-            return;
-        }
+        //if (_hasDoubledToday)
+        //{
+        //    Debug.LogWarning("Ya se duplicó la recompensa de hoy");
+        //    return;
+        //}
 
-        if (rewardData.claimedDays[rewardData.currentWeekDay])
-        {
-            Debug.LogWarning("No se puede duplicar una recompensa ya reclamada");
-            return;
-        }
+        //if (rewardData.claimedDays[rewardData.currentWeekDay])
+        //{
+        //    Debug.LogWarning("No se puede duplicar una recompensa ya reclamada");
+        //    return;
+        //}
 
         var todayReward = weeklyRewards[rewardData.currentWeekDay];
 
@@ -195,28 +195,28 @@ public class DailyRewardSystem : MonoBehaviourSingleton<DailyRewardSystem>
         rewardData.claimedDays[rewardData.currentWeekDay] = true;
         rewardData.lastClaimDate = DateTime.Now.ToString("yyyy-MM-dd");
 
-        _hasDoubledToday = true;
+        //_hasDoubledToday = true;
 
         SaveRewardData();
 
-        Debug.Log($"Recompensa diaria duplicada: {doubledReward.powerUpType} x{doubledReward.quantity}");
+        //Debug.Log($"Recompensa diaria duplicada: {doubledReward.powerUpType} x{doubledReward.quantity}");
 
         OnRewardClaimed?.Invoke(doubledReward);
         OnRewardAvailabilityChanged?.Invoke(false);
         OnRewardDoubled?.Invoke();
     }
 
-    public bool CanDoubleToday()
-    {
-        return !_hasDoubledToday &&
-               !rewardData.claimedDays[rewardData.currentWeekDay] &&
-               CanClaimToday();
-    }
+    //public bool CanDoubleToday()
+    //{
+    //    return !_hasDoubledToday &&
+    //           !rewardData.claimedDays[rewardData.currentWeekDay] &&
+    //           CanClaimToday();
+    //}
 
-    public bool HasDoubledToday()
-    {
-        return _hasDoubledToday;
-    }
+    //public bool HasDoubledToday()
+    //{
+    //    return _hasDoubledToday;
+    //}
 
     void AdvanceDay()
     {

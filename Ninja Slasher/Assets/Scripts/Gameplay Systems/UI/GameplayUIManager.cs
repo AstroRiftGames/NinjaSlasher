@@ -97,15 +97,6 @@ public class GameplayUIManager : MonoBehaviour
         if (context == null)
             return;
 
-        //string status = "";
-        //if (context.ExtraTimeActive) status += "Power up activo: Tiempo Extra\n";
-        //if (context.DashTurboActive) status += "Power up activo: Dash Turbo\n";
-        //if (context.ParryPerfectActive) status += "Power up activo: Parry Perfect\n";
-        //if (context.ComboMasterActive) status += "Power up activo: Combo Master\n";
-        //if (context.SecondChanceActive) status += "Power up activo: Second Chance\n";
-
-        //_powerUpsText.text = status.Length > 0 ? status : "Sin Power Ups activos";
-
         var time = PowerUpManager.Instance.puTimeLeft;
         var hours = (int)(time / 3600);
         var minutes = (int)((time % 3600) / 60);
@@ -116,12 +107,28 @@ public class GameplayUIManager : MonoBehaviour
     }
 
     public void ShowLifeLostPanel() => _lifeLostPanel.SetActive(true);
-    public void HideLifeLostPanel() => _lifeLostPanel.SetActive(false);
+
+    public void HideLifeLostPanel()
+    {
+        _lifeLostPanel.SetActive(false);
+
+        var canvasManager = UIManager.Instance.GetComponent<CanvasManager>();
+        if (canvasManager != null)
+        {
+            canvasManager.SetGameplayCanvasEnabled(true);
+        }
+    }
 
     public void ShowNoLivesPanel()
     {
         UIManager.Instance.ShowHideNoLivesCanvas();
         _noLivesActive = true;
+
+        var canvasManager = UIManager.Instance.GetComponent<CanvasManager>();
+        if (canvasManager != null)
+        {
+            canvasManager.SetGameplayCanvasEnabled(false);
+        }
     }
 
     public void UpdateLivesUI(int lives)
@@ -139,13 +146,24 @@ public class GameplayUIManager : MonoBehaviour
             LifeManager.Instance.OnLevelExit();
         }
 
-        GameManager.Instance.RestartLevel();
+        LevelManager.Instance.RestartLevel();
     }
 
     public void OnBackToSelectionPressed()
     {
         HideLifeLostPanel();
-        GameManager.Instance.GoToLevelSelection(confirmPendingDeduction: true);
+        LevelManager.Instance.GoToLevelSelection(confirmPendingDeduction: true);
+    }
+
+    public void ContinueToLevelSelector()
+    {
+        var canvasManager = UIManager.Instance.GetComponent<CanvasManager>();
+        if (canvasManager != null)
+        {
+            canvasManager.CloseCanvas(canvasManager.GetResultsCanvas());
+        }
+
+        LevelManager.Instance.GoToLevelSelection(confirmPendingDeduction: false);
     }
 
     private void OnLivesChanged(int lives)
@@ -199,9 +217,9 @@ public class GameplayUIManager : MonoBehaviour
         if (_levelTimerText != null)
             _levelTimerText.text = "00:00";
 
-        if (GameManager.Instance != null)
+        if (LevelManager.Instance != null)
         {
-            GameManager.Instance.OnLevelFailed();
+            LevelManager.Instance.OnLevelFailed();
         }
     }
 

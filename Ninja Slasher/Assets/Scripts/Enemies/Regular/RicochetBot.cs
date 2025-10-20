@@ -3,7 +3,7 @@ using UnityEngine;
 
 public class RicochetBot : RangeEnemy
 {
-    public override void Update()
+    public override void CustomUpdate()
     {
         TryAttack();
     }

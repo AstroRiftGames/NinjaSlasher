@@ -26,6 +26,7 @@ public abstract class PlatformBase : MonoBehaviour, IPlatform
     {
         if (collision.gameObject.CompareTag("Player"))
         {
+            Debug.Log($"{gameObject.name} detected collision wth player");
             OnPlayerEnter(collision.gameObject);
         }
     }

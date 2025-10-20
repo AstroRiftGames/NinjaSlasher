@@ -10,28 +10,42 @@ public class Projectile : MonoBehaviour
     public Transform Shooter => _shooter;
     [SerializeField] protected LayerMask enemyLayer;
     [SerializeField] protected LayerMask playerLayer;
+    [SerializeField] protected LayerMask scenarioLayer;
     [SerializeField] private Animator _animator;
     [SerializeField] private float _impactTime;
+    public float ImpactTime => _impactTime;
 
     protected Rigidbody2D _rb;
 
     protected Controller _playerInZone;
     [SerializeField] protected bool isParryable = true;
     public void SetIsParryable(bool value) => isParryable = value;
+    GenericPool<Projectile> _ownerPool;
+    public GenericPool<Projectile> OwnerPool => _ownerPool;
+    private void SetPool(GenericPool<Projectile> ownerPool) => _ownerPool = ownerPool;
 
     private void OnEnable()
     {
-        _rb = GetComponent<Rigidbody2D>();
+        TryGetComponent(out Rigidbody2D rb);
+        _rb = rb;
+        TryGetComponent(out Animator animator);
+        _animator = animator;
+        if(_animator == null)
+        {
+            _animator = GetComponentInChildren<Animator>();
+        }
     }
 
-    public void Initialize(Vector2 direction , Transform owner)
+    public void Initialize(Vector2 direction, Transform owner, GenericPool<Projectile> pool = null)
     {
+        if(pool != null) SetPool(pool);
         SetOwner(owner);
         SetDirection(direction);
     }
 
-    public void Initialize(Transform owner)
+    public void Initialize(Transform owner, GenericPool<Projectile> pool = null)
     {
+        if (pool != null) SetPool(pool);
         SetOwner(owner);
         SetDirection(transform.up);
     }
@@ -48,12 +62,10 @@ public class Projectile : MonoBehaviour
 
     public void OnCollisionEnter2D(Collision2D collision)
     {
-            string colTag = collision.gameObject.tag;
-        if(collision.gameObject.layer == LayerMask.GetMask("Scenario") ||
-            collision.gameObject.layer == LayerMask.GetMask("Obstacles") ||
-            !IsParryable && colTag is "Player" or "Boss")
+        string colTag = collision.gameObject.tag;
+        if (Shooter.tag != colTag && colTag is "Player" or "Boss" or "Scenario" or "Ceiling" or "Floor" or "Enemy")
         {
-            ManageCollision(collision.collider);
+            Collide(collision.collider);
         }
     }
 
@@ -61,7 +73,6 @@ public class Projectile : MonoBehaviour
     {
         Debug.Log($"Collided with: {collision.name}");
 
-        Collide(collision);
     }
 
     public virtual void Collide(Collider2D collision)
@@ -75,10 +86,22 @@ public class Projectile : MonoBehaviour
             DamageEnemy(collision.gameObject);
         }
 
-        _animator.SetTrigger("OnImpact");
+        if (_ownerPool == null)
+        {
+            Destroy(gameObject, _impactTime);
+        }
+        else
+        {
+            StartCoroutine(ReturnProjectile());
+        }
         _rb.linearVelocity = Vector2.zero;
+        _animator.SetTrigger("OnImpact");
+    }
 
-        Destroy(gameObject, _impactTime);
+    IEnumerator ReturnProjectile()
+    {
+        yield return new WaitForSeconds(_impactTime);
+        _ownerPool.Return(this);
     }
 
     protected void DamagePlayer(GameObject player)
@@ -122,6 +145,7 @@ public class Projectile : MonoBehaviour
         SetOwner(newShooter);
         _rb.linearVelocity = Vector2.zero;
         SetDirection(newDir);
+        SetIsParryable(false);
     }
 
     public bool IsParryable => isParryable;

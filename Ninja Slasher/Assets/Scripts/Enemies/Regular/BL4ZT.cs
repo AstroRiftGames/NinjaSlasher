@@ -44,7 +44,7 @@ public class BL4ZT : RangeEnemy
         _currentSpeed = _speed;
         SetPatrolTarget();
     }
-    public override void Update()
+    public override void CustomUpdate()
     {
         UpdateTarget();
         if(!_isActive)

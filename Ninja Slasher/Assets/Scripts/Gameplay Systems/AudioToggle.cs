@@ -10,8 +10,9 @@ public class AudioToggle : MonoBehaviour
 
     [SerializeField] private Image _musicImage;
     [SerializeField] private Image _sfxImage;
+    [SerializeField] private Image _musicPauseImage;
+    [SerializeField] private Image _sfxPauseImage;
 
-    //[SerializeField] private AudioSource _audioSource;
     [SerializeField] private bool _musicOn;
     [SerializeField] private bool _sfxOn;
 
@@ -26,11 +27,13 @@ public class AudioToggle : MonoBehaviour
         if (_sfxOn)
         {
             _sfxImage.sprite = _sfxTurnOffIcon;
+            _sfxPauseImage.sprite = _sfxTurnOffIcon;
             _sfxOn = !_sfxOn;
         }
         else
         {
             _sfxImage.sprite = _sfxTurnOnIcon;
+            _sfxPauseImage.sprite = _sfxTurnOnIcon;
             _sfxOn = !_sfxOn;
         }
         AudioManager.Instance.MuteSFX(!_sfxOn);
@@ -41,14 +44,14 @@ public class AudioToggle : MonoBehaviour
         if (_musicOn)
         {
             _musicImage.sprite = _musicTurnOffIcon;
+            _musicPauseImage.sprite = _musicTurnOffIcon;
             _musicOn = !_musicOn;
-            //_audioSource.mute = false;
         }
         else
         {
             _musicImage.sprite = _musicTurnOnIcon;
+            _musicPauseImage.sprite = _musicTurnOnIcon;
             _musicOn = !_musicOn;
-            //_audioSource.mute = true;
         }
         AudioManager.Instance.MuteMusic(!_musicOn);
     }

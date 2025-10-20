@@ -1,3 +1,4 @@
+using Managers;
 using UnityEngine;
 
 public class FlyingEnemy : Enemy
@@ -15,7 +16,7 @@ public class FlyingEnemy : Enemy
         base.Start();
         UpdateTarget(transform.position);
     }
-    public virtual void Update()
+    public override void CustomUpdate()
     {
         if(_player != null && CheckLOS(_player.position)) UpdateTarget();
 

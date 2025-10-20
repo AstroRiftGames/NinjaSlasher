@@ -1,11 +1,7 @@
+using Managers;
 using System.Collections;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Transactions;
-using Unity.VisualScripting;
 using UnityEngine;
-using UnityEngine.InputSystem.XR;
-using static UnityEngine.Rendering.DebugUI;
+using CandyCoded.HapticFeedback;
 
 public class Controller : MonoBehaviour
 {
@@ -20,6 +16,7 @@ public class Controller : MonoBehaviour
     [Space]
     [SerializeField] float _maxAngle = 70f;
     private bool _isDashing = false;
+    [SerializeField] private float slashEffectDuration;
     private float _lastDash;
     private Collider2D _currentSurface;
     private bool _lastSurfaceWasElastic = false;
@@ -27,6 +24,7 @@ public class Controller : MonoBehaviour
     private Vector2 _wishedDirection;
     private Vector2 lastSwipeDelta;
     private bool _isMirrored;
+    private bool _isFlipped;
 
 
     [Space]
@@ -49,6 +47,7 @@ public class Controller : MonoBehaviour
 
     private bool _isDead = false;
     private bool _isInvincible;
+    private bool inputEnabled = true;
 
 
     #region FSM && DECISION TREE
@@ -129,9 +128,15 @@ public class Controller : MonoBehaviour
     void OnEnable()
     {
         _isDead = false;
+        CustomUpdateManager.Instance.SubscribeToUpdate(CustomUpdate);
     }
 
-    private void Update()
+    private void OnDisable()
+    {
+        CustomUpdateManager.Instance.UnsubscribeFromUpdate(CustomUpdate);
+    }
+
+    private void CustomUpdate()
     {
         _root.Execute();
         _fsm.OnUpdate();
@@ -152,6 +157,8 @@ public class Controller : MonoBehaviour
     #region INPUT DETECTION
     private void CheckSwipe()
     {
+        if (!CanProcessInput()) return;
+
 #if UNITY_EDITOR
         if (Input.GetMouseButtonDown(0))
         {
@@ -340,6 +347,16 @@ public class Controller : MonoBehaviour
         _lastDash = Time.time;
 
         _dashInputDetected = true;
+
+        NotifyTutorialDashPerformed();
+    }
+
+    private void NotifyTutorialDashPerformed()
+    {
+        if (TutorialManager.Instance != null)
+        {
+            TutorialManager.Instance.OnDashPerformed();
+        }
     }
 
     public bool CanDashFromInput()
@@ -360,6 +377,7 @@ public class Controller : MonoBehaviour
             return;
         }
         SetIsDashing(true);
+        AudioManager.Instance.PlaySFXAtPosition(SFXClip.P_Movement, transform.position);
 
         MoveTracker.RegisterMove();
         _lastDashDirection = _wishedDirection;
@@ -377,16 +395,19 @@ public class Controller : MonoBehaviour
     #region PARRYING
     private void TryStartParryLogic()
     {
+        if (!CanProcessInput()) return;
         if (isParrying) return;
 
         Collider2D[] hits = Physics2D.OverlapCircleAll(transform.position, 2f, LayerMask.GetMask("Projectiles"));
+
+        AudioManager.Instance.PlaySFXAtPosition(SFXClip.P_ParrySwing, transform.position);
         foreach (var hit in hits)
         {
             Projectile proj = hit.GetComponent<Projectile>();
             if (proj != null && proj.IsParryable)
             {
                 _parryInputDetected = true;
-                return;
+                AudioManager.Instance.PlaySFXAtPosition(SFXClip.P_ProjectileParried, transform.position);
             }
         }
     }
@@ -395,6 +416,7 @@ public class Controller : MonoBehaviour
     {
         if (_parryInputDetected)
         {
+            Debug.Log("Parry Input");
             _parryInputDetected = false;
             return true;
         }
@@ -421,6 +443,11 @@ public class Controller : MonoBehaviour
                 proj.ReflectBackwards(transform, newDir);
             }
         }
+
+        if (TutorialManager.Instance != null)
+        {
+            TutorialManager.Instance.OnParryPerformed();
+        }
     }
     #endregion
 
@@ -444,6 +471,7 @@ public class Controller : MonoBehaviour
             SetIsDashing(false);
             SetGrabbingAnimation();
             RotateSprites(colTag == "Ceiling" ? Vector2.left : Vector2.right);
+            AudioManager.Instance.PlaySFXAtPosition(SFXClip.P_Landing_General, transform.position);
 
             ElasticPlatform elasticPlatform = collision.gameObject.GetComponent<ElasticPlatform>();
             _lastSurfaceWasElastic = elasticPlatform != null;
@@ -480,7 +508,10 @@ public class Controller : MonoBehaviour
         {
             if (_isDashing)
             {
+                AudioManager.Instance.PlaySFXAtPosition(SFXClip.P_Attack, transform.position);
+                if (UIManager.Instance.IsHapticFeedbackActive) HapticFeedback.MediumFeedback();
                 collision.GetComponent<Enemy>().Die();
+                StartCoroutine(SlashEffectCoroutine());
             }
             else
             {
@@ -495,6 +526,21 @@ public class Controller : MonoBehaviour
             {
                 rb.linearVelocity = new Vector2(0f, rb.linearVelocity.y);
             }
+        }
+    }
+
+    private IEnumerator SlashEffectCoroutine()
+    {
+        TrailRenderer slashTrail = _playerView.SlashTrail;
+
+        if (slashTrail != null)
+        {
+            slashTrail.Clear();
+            slashTrail.emitting = true;
+
+            yield return new WaitForSeconds(slashEffectDuration);
+
+            slashTrail.emitting = false;
         }
     }
     #endregion
@@ -551,16 +597,28 @@ public class Controller : MonoBehaviour
         {
             if (_isDead) return;
             _isDead = true;
-
+            
             var levelController = FindObjectOfType<LevelController>();
             if (levelController != null)
             {
                 levelController.MarkLevelAsFailed();
             }
 
-            GameManager.Instance.OnPlayerLose();
+            LevelManager.Instance.OnPlayerLose();
+            if (UIManager.Instance.IsHapticFeedbackActive) HapticFeedback.HeavyFeedback();
+
             _fsm.Transition(NinjaStates.KO);
         }
+    }
+
+    public void SetInputEnabled(bool enabled)
+    {
+        inputEnabled = enabled;
+    }
+
+    private bool CanProcessInput()
+    {
+        return inputEnabled;
     }
 
     #region RESOURCES
@@ -572,6 +630,8 @@ public class Controller : MonoBehaviour
     public void SetIsDashing(bool value) => _isDashing = value;
     public bool IsMirrored() => _isMirrored;
     public void SetIsMirrored(bool newValue) => _isMirrored = newValue;
+    public bool IsFlipped() => _isFlipped;
+    public void SetIsFlipped(bool newValue) => _isFlipped = newValue;
 
     public void ForceExitSurface() => _currentSurface = null;
 
@@ -615,9 +675,11 @@ public class Controller : MonoBehaviour
         float angle = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg;
         _playerView.SpriteContainer.transform.rotation = Quaternion.Euler(0, 0, angle);
 
+        SetIsFlipped((angle > -180 && angle <= -90) || angle <= 180 && angle > 90);
 
         Vector3 newScale = _playerView.SpriteContainer.transform.localScale;
         newScale.x = IsMirrored() ? -1 : 1;
+        newScale.y = IsFlipped() ? -1 : 1;
         _playerView.SpriteContainer.transform.localScale = newScale;
     }
     private void SetGrabbingAnimation()

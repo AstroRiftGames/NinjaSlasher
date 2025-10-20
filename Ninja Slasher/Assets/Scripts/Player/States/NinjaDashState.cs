@@ -5,10 +5,14 @@ public class NinjaDashState<NinjaStates> : State<NinjaStates> where NinjaStates 
     private Controller _controller;
     private float _dashDuration;
     private float _dashTimer;
+    private TrailRenderer _trailRenderer;
+    private ParticleSystem _takeoffParticles;
 
     public NinjaDashState(Controller controller)
     {
         _controller = controller;
+        _trailRenderer = _controller.View.TrailRendererComponent;
+        _takeoffParticles = _controller.View.LandingParticles;
     }
 
     public override void Enter()
@@ -16,6 +20,15 @@ public class NinjaDashState<NinjaStates> : State<NinjaStates> where NinjaStates 
         _controller.Dash();
         _dashDuration = _controller.Model.DashDuration;
         _dashTimer = _dashDuration;
+
+        if (_trailRenderer != null)
+        {
+            _trailRenderer.emitting = true;
+        }
+        if (_takeoffParticles != null)
+        {
+            _takeoffParticles.Play();
+        }
     }
 
     public override void Execute()
@@ -32,6 +45,14 @@ public class NinjaDashState<NinjaStates> : State<NinjaStates> where NinjaStates 
             {
                 _fsm.Transition((NinjaStates)(object) Controller.NinjaStates.Idle);
             }
+        }
+    }
+
+    public override void Sleep()
+    {
+        if (_trailRenderer != null)
+        {
+            _trailRenderer.emitting = false;
         }
     }
 }

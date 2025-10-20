@@ -1,14 +1,6 @@
 using System;
 using UnityEngine;
 
-/// <summary>
-/// Sistema de vidas con deducción virtual consistente:
-/// - Si regenera/suma vidas durante un nivel, la deducción virtual se recalcula (CurrentLives - 1).
-/// - Unifica el evento para UI: siempre emitimos las vidas "mostrables" (GetDisplayLives()).
-/// - Carga en Awake() para evitar carreras con GameManager.Start().
-/// - No duplica confirmación en pérdida de foco (dejamos que GameManager lo haga).
-/// - Usa DateTime.UtcNow para mayor estabilidad temporal.
-/// </summary>
 public class LifeManager : MonoBehaviourSingleton<LifeManager>
 {
     [Header("LIVES SETTINGS")]
@@ -23,6 +15,15 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
     private int _virtualLives;
     private bool _hasVirtualDeduction = false;
 
+    [Header("ADS CONFIGURATION")]
+    [SerializeField] private int lossesRequiredForAd = 2;
+    [SerializeField] private bool enableConsecutiveLossAds = true;
+    [SerializeField] private bool enableNoLivesAds = true;
+
+    private int totalLivesLostThisSession = 0;
+
+    private int currentConsecutiveLosses = 0;
+
     private bool _levelInProgress = false;
 
     public event Action<int> OnLivesChanged;
@@ -31,6 +32,7 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
     {
         base.Awake();
         InitializeFromSave();
+        //LoadAdsProgress();
     }
 
     private void Start()
@@ -106,9 +108,18 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
         else
             _virtualLives = CurrentLives;
 
+        if (AnalyticsManager.Instance != null && toGenerate > 0)
+        {
+            AnalyticsManager.Instance.RecordLifeRestored(
+                CurrentLives,
+                "timeRegeneration"
+            );
+        }
+
         Persist("Vida regenerada");
         EmitDisplayLivesChanged();
     }
+
 
     private void CheckOfflineRegeneration()
     {
@@ -150,7 +161,6 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
         var context = PowerUpManager.Instance?.context;
         if (context != null && context.SecondChanceActive)
         {
-            Debug.Log("[PowerUp] Second Chance: vida NO restada.");
             EmitDisplayLivesChanged();
             return;
         }
@@ -163,10 +173,20 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
             _hasVirtualDeduction = false;
             _levelInProgress = false;
 
+            totalLivesLostThisSession++;
+            if (AnalyticsManager.Instance != null)
+            {
+                AnalyticsManager.Instance.RecordLifeLost(
+                    CurrentLives,
+                    totalLivesLostThisSession,
+                    "levelFailed"
+                );
+            }
+
+            //CheckLifeLossAds();
+
             Persist("Vida perdida (confirmada)");
             EmitDisplayLivesChanged();
-
-            Debug.Log($"[LifeManager] Nivel perdido. Descuento confirmado. Vidas: {CurrentLives}");
         }
         else
         {
@@ -176,10 +196,20 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
             _lastLifeUsedUtc = DateTime.UtcNow;
             _virtualLives = CurrentLives;
 
+            totalLivesLostThisSession++;
+            if (AnalyticsManager.Instance != null)
+            {
+                AnalyticsManager.Instance.RecordLifeLost(
+                    CurrentLives,
+                    totalLivesLostThisSession,
+                    "directUse"
+                );
+            }
+
+            //CheckLifeLossAds();
+
             Persist("Vida perdida (directa)");
             EmitDisplayLivesChanged();
-
-            Debug.Log($"[LifeManager] Vida usada. Restantes: {CurrentLives}");
         }
     }
 
@@ -191,7 +221,8 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
             _hasVirtualDeduction = false;
             _levelInProgress = false;
 
-            Debug.Log($"[LifeManager] Nivel completado. Descuento cancelado. Vidas mantenidas: {CurrentLives}");
+            //ResetLossCounter();
+
             EmitDisplayLivesChanged();
         }
     }
@@ -208,8 +239,6 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
 
             Persist("Vida perdida por abandono");
             EmitDisplayLivesChanged();
-
-            Debug.Log($"[LifeManager] Nivel abandonado. Descuento confirmado. Vidas: {CurrentLives}");
         }
     }
 
@@ -227,10 +256,16 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
         else
             _virtualLives = CurrentLives;
 
+        if (AnalyticsManager.Instance != null)
+        {
+            AnalyticsManager.Instance.RecordLifeRestored(
+                CurrentLives,
+                "manualAdd"
+            );
+        }
+
         Persist("Vida ganada");
         EmitDisplayLivesChanged();
-
-        Debug.Log($"[LifeManager] Vida agregada. Total: {CurrentLives}");
     }
 
     public void FillAllLives()
@@ -248,8 +283,6 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
 
         Persist("Vidas completas");
         EmitDisplayLivesChanged();
-
-        Debug.Log($"[LifeManager] Vidas llenadas: {previousLives} -> {CurrentLives}");
     }
 
     public float GetRechargeProgress()
@@ -275,4 +308,76 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
     {
         OnLivesChanged?.Invoke(GetDisplayLives());
     }
+
+    //private void LoadAdsProgress()
+    //{
+    //    currentConsecutiveLosses = PlayerPrefs.GetInt("ConsecutiveLosses", 0);
+    //}
+
+    //private void SaveAdsProgress()
+    //{
+    //    PlayerPrefs.SetInt("ConsecutiveLosses", currentConsecutiveLosses);
+    //    PlayerPrefs.Save();
+    //}
+
+    //private void CheckLifeLossAds()
+    //{
+    //    if (enableNoLivesAds && CurrentLives == 0)
+    //    {
+    //        ShowNoLivesAd();
+    //        ResetLossCounter();
+    //    }
+    //    else if (enableConsecutiveLossAds)
+    //    {
+    //        currentConsecutiveLosses++;
+
+    //        if (currentConsecutiveLosses >= lossesRequiredForAd)
+    //        {
+    //            ShowConsecutiveLossAd();
+    //            ResetLossCounter();
+    //        }
+    //    }
+
+    //    SaveAdsProgress();
+    //}
+
+    //private void ShowConsecutiveLossAd()
+    //{
+    //    if (AdsManager.Instance != null && AdsManager.Instance.IsInterstitialAdReady())
+    //    {
+    //        AdsManager.Instance.ShowInterstitialAd();
+    //    }
+    //    else
+    //    {
+    //        if (AdsManager.Instance != null)
+    //        {
+    //            AdsManager.Instance.ReloadAllAds();
+    //        }
+    //    }
+    //}
+
+    //private void ShowNoLivesAd()
+    //{
+    //    if (AdsManager.Instance != null && AdsManager.Instance.IsInterstitialAdReady())
+    //    {
+    //        AdsManager.Instance.ShowInterstitialAd();
+    //    }
+    //    else
+    //    {
+    //        if (AdsManager.Instance != null)
+    //        {
+    //            AdsManager.Instance.ReloadAllAds();
+    //        }
+    //    }
+    //}
+
+    //private void ResetLossCounter()
+    //{
+    //    if (currentConsecutiveLosses > 0)
+    //    {
+    //        Debug.Log($"Contador de derrotas reseteado (era: {currentConsecutiveLosses})");
+    //    }
+    //    currentConsecutiveLosses = 0;
+    //    SaveAdsProgress();
+    //}
 }
