@@ -144,6 +144,7 @@ PlayerSettings:
   tvOSBundleVersion: 1.0
   bundleVersion: 1.0
   preloadedAssets:
+  - {fileID: -2949857823791618867, guid: 7f3a96480205bad4fb2e9f3c8b3b3015, type: 2}
   - {fileID: 11400000, guid: 7c1c1faaaeec09a4ba83dd575faaf8ac, type: 2}
   - {fileID: 11400000, guid: 2c1d7a5bc0f82974ea1f0c501c5910a0, type: 2}
   metroInputSource: 0
@@ -169,7 +170,6 @@ PlayerSettings:
   applicationIdentifier:
     Android: com.AstroRiftGames.NinjaSlasher
     Standalone: com.DefaultCompany.2D-URP
-    iPhone: com.astroriftgames.slashemout
   buildNumber:
     Standalone: 0
     VisionOS: 0
@@ -514,9 +514,6 @@ PlayerSettings:
   - serializedVersion: 3
     m_BuildTarget: Android
     m_Formats: 01000000
-  - serializedVersion: 3
-    m_BuildTarget: iOS
-    m_Formats: 03000000
   playModeTestRunnerEnabled: 0
   runPlayModeTestAsEditModeTest: 0
   actionOnDotNetUnhandledException: 1
@@ -798,7 +795,7 @@ PlayerSettings:
     WebGL: DOTWEEN
     Windows Store Apps: DOTWEEN
     XboxOne: DOTWEEN
-    iPhone: DOTWEEN;LEVELPLAY_DEPENDENCIES_INSTALLED
+    iPhone: DOTWEEN
     tvOS: DOTWEEN
   additionalCompilerArguments: {}
   platformArchitecture: {}
