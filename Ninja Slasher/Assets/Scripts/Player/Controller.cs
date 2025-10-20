@@ -16,6 +16,7 @@ public class Controller : MonoBehaviour
     [Space]
     [SerializeField] float _maxAngle = 70f;
     private bool _isDashing = false;
+    [SerializeField] private float slashEffectDuration;
     private float _lastDash;
     private Collider2D _currentSurface;
     private bool _lastSurfaceWasElastic = false;
@@ -508,8 +509,9 @@ public class Controller : MonoBehaviour
             if (_isDashing)
             {
                 AudioManager.Instance.PlaySFXAtPosition(SFXClip.P_Attack, transform.position);
-                if(UIManager.Instance.IsHapticFeedbackActive) HapticFeedback.MediumFeedback();
+                if (UIManager.Instance.IsHapticFeedbackActive) HapticFeedback.MediumFeedback();
                 collision.GetComponent<Enemy>().Die();
+                StartCoroutine(SlashEffectCoroutine());
             }
             else
             {
@@ -524,6 +526,21 @@ public class Controller : MonoBehaviour
             {
                 rb.linearVelocity = new Vector2(0f, rb.linearVelocity.y);
             }
+        }
+    }
+
+    private IEnumerator SlashEffectCoroutine()
+    {
+        TrailRenderer slashTrail = _playerView.SlashTrail;
+
+        if (slashTrail != null)
+        {
+            slashTrail.Clear();
+            slashTrail.emitting = true;
+
+            yield return new WaitForSeconds(slashEffectDuration);
+
+            slashTrail.emitting = false;
         }
     }
     #endregion
