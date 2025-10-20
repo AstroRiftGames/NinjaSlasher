@@ -1,12 +1,15 @@
-﻿using GooglePlayGames;
-using GooglePlayGames.BasicApi;
-using System;
+﻿using System;
 using System.Threading.Tasks;
 using TMPro;
 using Unity.Services.Authentication;
 using Unity.Services.Core;
 using UnityEngine;
 using UnityEngine.UI;
+
+#if UNITY_ANDROID
+using GooglePlayGames;
+using GooglePlayGames.BasicApi;
+#endif
 
 public class LoginManager : MonoBehaviourSingleton<LoginManager>
 {
@@ -24,7 +27,10 @@ public class LoginManager : MonoBehaviourSingleton<LoginManager>
 
     private bool isInitialized = false;
     private bool isInitializing = false;
+
+#if UNITY_ANDROID
     private string authToken = "";
+#endif
 
     [Header("Debug UI")]
     [SerializeField] private TextMeshProUGUI debugOutputText;
@@ -33,9 +39,7 @@ public class LoginManager : MonoBehaviourSingleton<LoginManager>
     public override void Awake()
     {
         base.Awake();
-
         DontDestroyOnLoad(gameObject);
-
         InitializeServices();
     }
 
@@ -44,7 +48,7 @@ public class LoginManager : MonoBehaviourSingleton<LoginManager>
         if (isInitialized || isInitializing)
         {
             if (debugMode)
-                Debug.Log("[LoginManager] Already initialized or initializing, skipping...");
+                Debug.Log("[LoginManager] Ya inicializado o inicializando, omitiendo...");
             return;
         }
 
@@ -57,21 +61,23 @@ public class LoginManager : MonoBehaviourSingleton<LoginManager>
                 await UnityServices.InitializeAsync();
 
                 if (debugMode)
-                    Debug.Log("[LoginManager] Unity Gaming Services initialized");
+                    Debug.Log("[LoginManager] Unity Gaming Services inicializado");
             }
             else
             {
                 if (debugMode)
-                    Debug.Log("[LoginManager] Unity Gaming Services already initialized");
+                    Debug.Log("[LoginManager] Unity Gaming Services ya inicializado");
             }
 
+#if UNITY_ANDROID
             PlayGamesPlatform.Activate();
+#endif
 
             isInitialized = true;
             isInitializing = false;
 
             if (debugMode)
-                Debug.Log("[LoginManager] Services initialized successfully");
+                Debug.Log("[LoginManager] Servicios inicializados correctamente");
 
             if (autoSignIn && !AuthenticationService.Instance.IsSignedIn)
             {
@@ -80,7 +86,7 @@ public class LoginManager : MonoBehaviourSingleton<LoginManager>
                 if (!cachedSuccess)
                 {
                     if (debugMode)
-                        Debug.Log("[LoginManager] No cached user, signing in anonymously...");
+                        Debug.Log("[LoginManager] Sin usuario en caché, iniciando sesión anónima...");
 
                     await SignInAnonymously();
                 }
@@ -89,7 +95,7 @@ public class LoginManager : MonoBehaviourSingleton<LoginManager>
             {
                 PlayerName = GetPlayerName();
                 if (debugMode)
-                    Debug.Log($"[LoginManager] User already authenticated: {PlayerId}");
+                    Debug.Log($"[LoginManager] Usuario ya autenticado: {PlayerId}");
 
                 OnSignInCompleted?.Invoke(PlayerId);
                 OnAuthenticationStateChanged?.Invoke(true);
@@ -97,31 +103,32 @@ public class LoginManager : MonoBehaviourSingleton<LoginManager>
         }
         catch (Exception e)
         {
-            Debug.LogError($"[LoginManager] Failed to initialize services: {e.Message}");
+            Debug.LogError($"[LoginManager] Error al inicializar servicios: {e.Message}");
             isInitializing = false;
         }
     }
 
     #region Public Methods
 
+#if UNITY_ANDROID
     public async Task<bool> SignInWithGooglePlayGames()
     {
         if (!isInitialized)
         {
-            Debug.LogError("[LoginManager] Services not initialized");
+            Debug.LogError("[LoginManager] Servicios no inicializados");
             return false;
         }
 
         try
         {
             if (debugMode)
-                Debug.Log("[LoginManager] Starting Google Play Games sign-in...");
+                Debug.Log("[LoginManager] Iniciando Google Play Games sign-in...");
 
             bool gpgSuccess = await AuthenticateWithGooglePlayGames();
 
             if (!gpgSuccess)
             {
-                OnSignInFailed?.Invoke("Google Play Games authentication failed");
+                OnSignInFailed?.Invoke("Autenticación de Google Play Games falló");
                 return false;
             }
 
@@ -130,7 +137,7 @@ public class LoginManager : MonoBehaviourSingleton<LoginManager>
             PlayerName = GetPlayerName();
 
             if (debugMode)
-                Debug.Log($"[LoginManager] Sign-in successful! Player: {PlayerId}");
+                Debug.Log($"[LoginManager] Sign-in exitoso! Jugador: {PlayerId}");
 
             OnSignInCompleted?.Invoke(PlayerId);
             OnAuthenticationStateChanged?.Invoke(true);
@@ -139,43 +146,44 @@ public class LoginManager : MonoBehaviourSingleton<LoginManager>
         }
         catch (AuthenticationException ex)
         {
-            Debug.LogError($"[LoginManager] Authentication failed: {ex.Message}");
-            OnSignInFailed?.Invoke($"Authentication failed: {ex.Message}");
+            Debug.LogError($"[LoginManager] Autenticación falló: {ex.Message}");
+            OnSignInFailed?.Invoke($"Autenticación falló: {ex.Message}");
             return false;
         }
         catch (RequestFailedException ex)
         {
-            Debug.LogError($"[LoginManager] Request failed: {ex.Message}");
-            OnSignInFailed?.Invoke($"Request failed: {ex.Message}");
+            Debug.LogError($"[LoginManager] Request falló: {ex.Message}");
+            OnSignInFailed?.Invoke($"Request falló: {ex.Message}");
             return false;
         }
         catch (Exception ex)
         {
-            Debug.LogError($"[LoginManager] Unexpected error: {ex.Message}");
-            OnSignInFailed?.Invoke($"Unexpected error: {ex.Message}");
+            Debug.LogError($"[LoginManager] Error inesperado: {ex.Message}");
+            OnSignInFailed?.Invoke($"Error inesperado: {ex.Message}");
             return false;
         }
     }
+#endif
 
     public async Task<bool> SignInAnonymously()
     {
         if (!isInitialized)
         {
-            Debug.LogError("[LoginManager] Services not initialized");
+            Debug.LogError("[LoginManager] Servicios no inicializados");
             return false;
         }
 
         try
         {
             if (debugMode)
-                Debug.Log("[LoginManager] Starting anonymous sign-in...");
+                Debug.Log("[LoginManager] Iniciando sign-in anónimo...");
 
             await AuthenticationService.Instance.SignInAnonymouslyAsync();
 
-            PlayerName = "Guest";
+            PlayerName = "Invitado";
 
             if (debugMode)
-                Debug.Log($"[LoginManager] Anonymous sign-in successful! Player: {PlayerId}");
+                Debug.Log($"[LoginManager] Sign-in anónimo exitoso! Jugador: {PlayerId}");
 
             OnSignInCompleted?.Invoke(PlayerId);
             OnAuthenticationStateChanged?.Invoke(true);
@@ -184,30 +192,31 @@ public class LoginManager : MonoBehaviourSingleton<LoginManager>
         }
         catch (Exception ex)
         {
-            Debug.LogError($"[LoginManager] Anonymous sign-in failed: {ex.Message}");
-            OnSignInFailed?.Invoke($"Anonymous sign-in failed: {ex.Message}");
+            Debug.LogError($"[LoginManager] Sign-in anónimo falló: {ex.Message}");
+            OnSignInFailed?.Invoke($"Sign-in anónimo falló: {ex.Message}");
             return false;
         }
     }
 
+#if UNITY_ANDROID
     public async Task<bool> LinkWithGooglePlayGames()
     {
         if (!IsSignedIn)
         {
-            Debug.LogError("[LoginManager] No user signed in to link");
+            Debug.LogError("[LoginManager] No hay usuario iniciado para vincular");
             return false;
         }
 
         try
         {
             if (debugMode)
-                Debug.Log("[LoginManager] Linking with Google Play Games...");
+                Debug.Log("[LoginManager] Vinculando con Google Play Games...");
 
             bool gpgSuccess = await AuthenticateWithGooglePlayGames();
 
             if (!gpgSuccess)
             {
-                OnSignInFailed?.Invoke("Google Play Games authentication failed");
+                OnSignInFailed?.Invoke("Autenticación de Google Play Games falló");
                 return false;
             }
 
@@ -216,7 +225,7 @@ public class LoginManager : MonoBehaviourSingleton<LoginManager>
             PlayerName = GetPlayerName();
 
             if (debugMode)
-                Debug.Log("[LoginManager] Account linking successful!");
+                Debug.Log("[LoginManager] Vinculación de cuenta exitosa!");
 
             OnSignInCompleted?.Invoke(PlayerId);
 
@@ -224,17 +233,18 @@ public class LoginManager : MonoBehaviourSingleton<LoginManager>
         }
         catch (AuthenticationException ex) when (ex.ErrorCode == AuthenticationErrorCodes.AccountAlreadyLinked)
         {
-            Debug.LogError("[LoginManager] Account already linked with another account");
-            OnSignInFailed?.Invoke("This account is already linked. Please sign in instead.");
+            Debug.LogError("[LoginManager] Cuenta ya vinculada con otra cuenta");
+            OnSignInFailed?.Invoke("Esta cuenta ya está vinculada. Por favor inicia sesión en su lugar.");
             return false;
         }
         catch (Exception ex)
         {
-            Debug.LogError($"[LoginManager] Linking failed: {ex.Message}");
-            OnSignInFailed?.Invoke($"Linking failed: {ex.Message}");
+            Debug.LogError($"[LoginManager] Vinculación falló: {ex.Message}");
+            OnSignInFailed?.Invoke($"Vinculación falló: {ex.Message}");
             return false;
         }
     }
+#endif
 
     public void SignOut()
     {
@@ -242,16 +252,19 @@ public class LoginManager : MonoBehaviourSingleton<LoginManager>
         {
             AuthenticationService.Instance.SignOut();
             PlayerName = "";
+
+#if UNITY_ANDROID
             authToken = "";
+#endif
 
             if (debugMode)
-                Debug.Log("[LoginManager] User signed out");
+                Debug.Log("[LoginManager] Usuario desconectado");
 
             OnAuthenticationStateChanged?.Invoke(false);
         }
         catch (Exception ex)
         {
-            Debug.LogError($"[LoginManager] Sign out failed: {ex.Message}");
+            Debug.LogError($"[LoginManager] Desconexión falló: {ex.Message}");
         }
     }
 
@@ -262,10 +275,13 @@ public class LoginManager : MonoBehaviourSingleton<LoginManager>
             await AuthenticationService.Instance.DeleteAccountAsync();
 
             PlayerName = "";
+
+#if UNITY_ANDROID
             authToken = "";
+#endif
 
             if (debugMode)
-                Debug.Log("[LoginManager] Account deleted successfully");
+                Debug.Log("[LoginManager] Cuenta eliminada exitosamente");
 
             OnAuthenticationStateChanged?.Invoke(false);
 
@@ -273,7 +289,7 @@ public class LoginManager : MonoBehaviourSingleton<LoginManager>
         }
         catch (Exception ex)
         {
-            Debug.LogError($"[LoginManager] Account deletion failed: {ex.Message}");
+            Debug.LogError($"[LoginManager] Eliminación de cuenta falló: {ex.Message}");
             return false;
         }
     }
@@ -289,14 +305,14 @@ public class LoginManager : MonoBehaviourSingleton<LoginManager>
             if (AuthenticationService.Instance.SessionTokenExists)
             {
                 if (debugMode)
-                    Debug.Log("[LoginManager] Attempting to sign in cached user...");
+                    Debug.Log("[LoginManager] Intentando iniciar sesión con usuario en caché...");
 
                 await AuthenticationService.Instance.SignInAnonymouslyAsync();
 
                 PlayerName = GetPlayerName();
 
                 if (debugMode)
-                    Debug.Log($"[LoginManager] Cached user signed in: {PlayerId}");
+                    Debug.Log($"[LoginManager] Usuario en caché inició sesión: {PlayerId}");
 
                 OnSignInCompleted?.Invoke(PlayerId);
                 OnAuthenticationStateChanged?.Invoke(true);
@@ -307,12 +323,13 @@ public class LoginManager : MonoBehaviourSingleton<LoginManager>
         catch (Exception ex)
         {
             if (debugMode)
-                Debug.Log($"[LoginManager] Cached sign-in failed: {ex.Message}");
+                Debug.Log($"[LoginManager] Sign-in en caché falló: {ex.Message}");
         }
 
         return false;
     }
 
+#if UNITY_ANDROID
     private async Task<bool> AuthenticateWithGooglePlayGames()
     {
         var tcs = new TaskCompletionSource<bool>();
@@ -322,50 +339,51 @@ public class LoginManager : MonoBehaviourSingleton<LoginManager>
             if (success == SignInStatus.Success)
             {
                 if (debugMode)
-                    Debug.Log("[LoginManager] Google Play Games authentication successful");
+                    Debug.Log("[LoginManager] Autenticación de Google Play Games exitosa");
 
-                // Get authorization code
                 PlayGamesPlatform.Instance.RequestServerSideAccess(true, code =>
                 {
                     if (!string.IsNullOrEmpty(code))
                     {
                         authToken = code;
                         if (debugMode)
-                            Debug.Log("[LoginManager] Authorization code received");
+                            Debug.Log("[LoginManager] Código de autorización recibido");
                         tcs.SetResult(true);
                     }
                     else
                     {
-                        Debug.LogError("[LoginManager] Failed to get authorization code");
+                        Debug.LogError("[LoginManager] Error al obtener código de autorización");
                         tcs.SetResult(false);
                     }
                 });
             }
             else
             {
-                Debug.LogError($"[LoginManager] Google Play Games authentication failed: {success}");
+                Debug.LogError($"[LoginManager] Autenticación de Google Play Games falló: {success}");
                 tcs.SetResult(false);
             }
         });
 
         return await tcs.Task;
     }
+#endif
 
     private string GetPlayerName()
     {
         try
         {
+#if UNITY_ANDROID
             if (PlayGamesPlatform.Instance.IsAuthenticated())
             {
-                return Social.localUser.userName ?? "Player";
+                return Social.localUser.userName ?? "Jugador";
             }
+#endif
         }
         catch
         {
-            // Fallback if we can't get the name
         }
 
-        return IsSignedIn && !string.IsNullOrEmpty(PlayerId) ? "Player" : "Guest";
+        return IsSignedIn && !string.IsNullOrEmpty(PlayerId) ? "Jugador" : "Invitado";
     }
 
     #endregion
@@ -373,11 +391,13 @@ public class LoginManager : MonoBehaviourSingleton<LoginManager>
     #region Debug Methods
 
 #if UNITY_EDITOR
+#if UNITY_ANDROID
     [ContextMenu("Sign In with Google Play Games")]
     public async void DebugSignInGPG()
     {
         await SignInWithGooglePlayGames();
     }
+#endif
 
     [ContextMenu("Sign In Anonymously")]
     public async void DebugSignInAnonymous()
@@ -402,22 +422,16 @@ public class LoginManager : MonoBehaviourSingleton<LoginManager>
 
     #endregion
 
-    // Reemplaza la sección #region Device Debug Methods con esta versión corregida:
-
     #region Device Debug Methods
 
-    // Método para mostrar info en pantalla (útil en dispositivo)
     public void LogToScreen(string message)
     {
         string timestampedMessage = $"[{System.DateTime.Now:HH:mm:ss}] {message}";
 
-        // Log normal
         Debug.Log($"[DEVICE DEBUG] {timestampedMessage}");
 
-        // Agregar a texto acumulado
         debugLog.AppendLine(timestampedMessage);
 
-        // Mantener solo las últimas 20 líneas
         var lines = debugLog.ToString().Split('\n');
         if (lines.Length > 20)
         {
@@ -429,7 +443,6 @@ public class LoginManager : MonoBehaviourSingleton<LoginManager>
             }
         }
 
-        // Actualizar UI si está asignado
         UpdateDebugText();
     }
 
@@ -439,7 +452,6 @@ public class LoginManager : MonoBehaviourSingleton<LoginManager>
         {
             debugOutputText.text = debugLog.ToString();
 
-            // Auto-scroll to bottom (optional)
             if (debugOutputText.transform.parent.GetComponent<ScrollRect>() != null)
             {
                 var scrollRect = debugOutputText.transform.parent.GetComponent<ScrollRect>();
@@ -456,151 +468,23 @@ public class LoginManager : MonoBehaviourSingleton<LoginManager>
         UpdateDebugText();
     }
 
-    // Método para testing completo en dispositivo
+#if UNITY_ANDROID
     [ContextMenu("Device: Full Auth Test")]
     public async void DeviceFullAuthTest()
     {
         LogToScreen("=== DEVICE AUTH TEST START ===");
 
-        // 1. Verificar configuración
         LogToScreen($"Package: {Application.identifier}");
         LogToScreen($"GameInfo AppID: {GooglePlayGames.GameInfo.ApplicationId}");
         LogToScreen($"GameInfo WebClient: {GooglePlayGames.GameInfo.WebClientId}");
 
-        // 2. Test initialization
-        if (!isInitialized)
-        {
-            LogToScreen("Initializing services...");
-            await Task.Delay(1000);
-        }
-
-        LogToScreen($"Initialized: {isInitialized}");
-        LogToScreen($"Unity Services: {UnityServices.State}");
-
-        // 3. Test Google Play Games
-        LogToScreen("Testing Google Play Games...");
-        bool gpgResult = await SignInWithGooglePlayGames();
-        LogToScreen($"GPG Result: {gpgResult}");
-
-        if (gpgResult)
-        {
-            LogToScreen($"GPG Success - Player: {PlayerName}");
-            LogToScreen($"Unity Auth: {AuthenticationService.Instance.IsSignedIn}");
-        }
-        else
-        {
-            LogToScreen("GPG Failed - trying anonymous...");
-            bool anonResult = await SignInAnonymously();
-            LogToScreen($"Anonymous Result: {anonResult}");
-        }
-
-        // 4. Test save integration
-        if (SaveManager.Instance != null)
-        {
-            LogToScreen("Testing save integration...");
-            var gameData = SaveManager.Instance.GetGameData();
-            LogToScreen($"Save loaded: {SaveManager.Instance.IsDataLoaded}");
-            LogToScreen($"Highest level: {gameData.highestUnlockedLevel}");
-        }
+        LogToScreen("Intentando autenticación...");
+        bool result = await SignInWithGooglePlayGames();
+        LogToScreen($"Resultado: {(result ? "ÉXITO" : "FALLO")}");
 
         LogToScreen("=== DEVICE AUTH TEST END ===");
     }
-
-    // Método para testing de Google Play Games específico
-    [ContextMenu("Device: GPG Only Test")]
-    public async void DeviceGPGOnlyTest()
-    {
-        LogToScreen("=== GPG ONLY TEST ===");
-
-        try
-        {
-            // Verificar si Google Play Games está disponible
-            LogToScreen($"GPG Platform Active: {PlayGamesPlatform.Instance != null}");
-            LogToScreen($"GPG Already Auth: {PlayGamesPlatform.Instance.IsAuthenticated()}");
-
-            if (PlayGamesPlatform.Instance.IsAuthenticated())
-            {
-                LogToScreen($"Already authenticated: {Social.localUser.userName}");
-                return;
-            }
-
-            LogToScreen("Starting GPG authentication...");
-
-            var tcs = new TaskCompletionSource<bool>();
-
-            PlayGamesPlatform.Instance.Authenticate((success) =>
-            {
-                LogToScreen($"GPG Auth Status: {success}");
-
-                if (success == SignInStatus.Success)
-                {
-                    LogToScreen($"Success! User: {Social.localUser.userName}");
-                    LogToScreen($"User ID: {Social.localUser.id}");
-
-                    // Obtener auth code
-                    PlayGamesPlatform.Instance.RequestServerSideAccess(true, (code) =>
-                    {
-                        if (!string.IsNullOrEmpty(code))
-                        {
-                            LogToScreen("Auth code received successfully");
-                            tcs.SetResult(true);
-                        }
-                        else
-                        {
-                            LogToScreen("Failed to get auth code");
-                            tcs.SetResult(false);
-                        }
-                    });
-                }
-                else
-                {
-                    LogToScreen($"GPG Auth failed: {success}");
-                    tcs.SetResult(false);
-                }
-            });
-
-            await tcs.Task;
-        }
-        catch (Exception e)
-        {
-            LogToScreen($"Exception: {e.Message}");
-        }
-
-        LogToScreen("=== GPG TEST END ===");
-    }
-
-    // Método simplificado para verificar Play Services (sin acceder a clases internas)
-    [ContextMenu("Device: Check Play Services")]
-    public void DeviceCheckPlayServices()
-    {
-        LogToScreen("=== PLAY SERVICES CHECK ===");
-
-        try
-        {
-            // Verificaciones básicas que sí podemos hacer
-            LogToScreen($"Application.platform: {Application.platform}");
-            LogToScreen($"SystemInfo.operatingSystem: {SystemInfo.operatingSystem}");
-
-            // Verificar si Google Play Games Platform está inicializado
-            LogToScreen($"PlayGamesPlatform exists: {PlayGamesPlatform.Instance != null}");
-
-            if (PlayGamesPlatform.Instance != null)
-            {
-                LogToScreen($"Platform authenticated: {PlayGamesPlatform.Instance.IsAuthenticated()}");
-            }
-
-            // Verificar Unity Services
-            LogToScreen($"Unity Services state: {UnityServices.State}");
-            LogToScreen($"Auth Service available: {AuthenticationService.Instance != null}");
-
-        }
-        catch (Exception e)
-        {
-            LogToScreen($"Play Services check error: {e.Message}");
-        }
-
-        LogToScreen("=== END PLAY SERVICES CHECK ===");
-    }
+#endif
 
     #endregion
 }

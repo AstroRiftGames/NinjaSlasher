@@ -107,12 +107,28 @@ public class GameplayUIManager : MonoBehaviour
     }
 
     public void ShowLifeLostPanel() => _lifeLostPanel.SetActive(true);
-    public void HideLifeLostPanel() => _lifeLostPanel.SetActive(false);
+
+    public void HideLifeLostPanel()
+    {
+        _lifeLostPanel.SetActive(false);
+
+        var canvasManager = UIManager.Instance.GetComponent<CanvasManager>();
+        if (canvasManager != null)
+        {
+            canvasManager.SetGameplayCanvasEnabled(true);
+        }
+    }
 
     public void ShowNoLivesPanel()
     {
         UIManager.Instance.ShowHideNoLivesCanvas();
         _noLivesActive = true;
+
+        var canvasManager = UIManager.Instance.GetComponent<CanvasManager>();
+        if (canvasManager != null)
+        {
+            canvasManager.SetGameplayCanvasEnabled(false);
+        }
     }
 
     public void UpdateLivesUI(int lives)

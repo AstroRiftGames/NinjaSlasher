@@ -61,6 +61,7 @@ public class SceneTransitionManager : MonoBehaviour
         _canvasManager.SetSplashCanvasEnabled(false);
         _canvasManager.SetLevelsCanvasEnabled(true);
         _canvasManager.SetPauseCanvasEnabled(false);
+        _canvasManager.SetGameplayCanvasEnabled(false);
         _transitionAnim.SetTrigger("End");
         AudioManager.Instance.PlaySFX(SFXClip.UI_TransitionSlash);
     }
