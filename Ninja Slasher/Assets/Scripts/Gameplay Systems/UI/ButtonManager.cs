@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 public class ButtonManager : MonoBehaviour
 {
@@ -23,7 +24,10 @@ public class ButtonManager : MonoBehaviour
     [Header("PROFILE BUTTONS")]
     [SerializeField] private Button _userIconButton;
     [SerializeField] private Button _userNicknameButton;
-    [SerializeField] private string _userNicknameText;
+    [SerializeField] private TextMeshProUGUI _userNicknameButtonText;
+    [SerializeField] private TMP_InputField _userNicknameText;
+    [SerializeField] private Button _confirmUserNicknameButton;
+    [SerializeField] private Button _closeUserNicknameEditButton;
     [SerializeField] private Button _closeProfileButton;
     [SerializeField] private Button _creditsButton;
     [SerializeField] private Button _closeCreditsButton;
@@ -209,9 +213,17 @@ public class ButtonManager : MonoBehaviour
 
         _userIconButton.onClick.AddListener(UIManager.Instance.ShowHideUserIconsCanvas);
 
-        _userNicknameText = LoginManager.Instance != null ? LoginManager.Instance.PlayerName : "Player";
+        //_userNicknameButtonText = LoginManager.Instance.PlayerName;
+        //_userNicknameButtonText = LoginManager.Instance.PlayerId;
 
         _userNicknameButton.onClick.AddListener(UIManager.Instance.ShowHideUserNicknameEditCanvas);
+        _closeUserNicknameEditButton.onClick.AddListener(UIManager.Instance.ShowHideUserNicknameEditCanvas);
+        _confirmUserNicknameButton.onClick.AddListener(() =>
+        {
+            _userNicknameButtonText.text = _userNicknameText.text;
+            UIManager.Instance.ShowHideUserNicknameEditCanvas();        
+        });
+
         _creditsButton.onClick.AddListener(UIManager.Instance.ShowHideCreditsCanvas);
         _closeProfileButton.onClick.AddListener(UIManager.Instance.ShowHideProfileCanvas);
         _closeCreditsButton.onClick.AddListener(UIManager.Instance.ShowHideCreditsCanvas);

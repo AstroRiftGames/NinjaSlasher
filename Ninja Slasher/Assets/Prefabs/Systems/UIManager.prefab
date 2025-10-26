@@ -395,7 +395,10 @@ MonoBehaviour:
   _hapticButton: {fileID: 5317552991517409729}
   _userIconButton: {fileID: 1630187699817438020}
   _userNicknameButton: {fileID: 7399997210590717546}
-  _userNicknameText: 
+  _userNicknameButtonText: {fileID: 7518242310270959467}
+  _userNicknameText: {fileID: 4254893794471024310}
+  _confirmUserNicknameButton: {fileID: 4194885997113308614}
+  _closeUserNicknameEditButton: {fileID: 429673426998776411}
   _closeProfileButton: {fileID: 8980364050638703258}
   _creditsButton: {fileID: 7630931756417172248}
   _closeCreditsButton: {fileID: 3590268528279031977}
@@ -2445,7 +2448,7 @@ GameObject:
   - component: {fileID: 7147748153845551636}
   - component: {fileID: 4194885997113308614}
   m_Layer: 5
-  m_Name: Button
+  m_Name: ConfirmButton
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -3792,7 +3795,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "tatunganashei\u200B"
+  m_text: "user\u200B"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 406170e78e964924d9c3bd2c5f4be872, type: 2}
   m_sharedMaterial: {fileID: -2883903075095480332, guid: 406170e78e964924d9c3bd2c5f4be872, type: 2}
@@ -13909,8 +13912,8 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 8965790688798390933}
   m_HandleRect: {fileID: 1594234798705716171}
   m_Direction: 2
-  m_Value: 0.99349767
-  m_Size: 0.58103704
+  m_Value: 0.46153846
+  m_Size: 1
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -29430,7 +29433,7 @@ MonoBehaviour:
   m_CaretColor: {r: 0.19607843, g: 0.19607843, b: 0.19607843, a: 1}
   m_CustomCaretColor: 0
   m_SelectionColor: {r: 0.65882355, g: 0.80784315, b: 1, a: 0.7529412}
-  m_Text: tatunganashei
+  m_Text: user
   m_CaretBlinkRate: 0.85
   m_CaretWidth: 1
   m_ReadOnly: 0
@@ -32037,7 +32040,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -10, y: 1}
+  m_AnchoredPosition: {x: -10, y: 301}
   m_SizeDelta: {x: 0, y: 153.7951}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &5402028810875196302
