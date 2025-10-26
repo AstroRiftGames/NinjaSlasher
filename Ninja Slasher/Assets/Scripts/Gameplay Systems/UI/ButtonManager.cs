@@ -17,6 +17,7 @@ public class ButtonManager : MonoBehaviour
     [SerializeField] private Button _musicButton;
     [SerializeField] private Button _sfxButton;
     [SerializeField] private Button _profileButton;
+    [SerializeField] private Image _profileButtonImage;
     [SerializeField] private Button _hapticButton;
 
     [Header("PROFILE BUTTONS")]
@@ -26,7 +27,7 @@ public class ButtonManager : MonoBehaviour
     [SerializeField] private Button _closeProfileButton;
     [SerializeField] private Button _creditsButton;
     [SerializeField] private Button _closeCreditsButton;
-    [SerializeField] private Image _userIconImage;
+    [SerializeField] private Image _userIconImagePanel;
     [SerializeField] private Button[] _userIconButtonGroup;
 
     [Header("DAILY REWARDS BUTTONS")]
@@ -220,8 +221,10 @@ public class ButtonManager : MonoBehaviour
             img.onClick.AddListener(() =>
             {
                 Image icon = img.transform.GetChild(0).GetComponent<Image>();
-                _userIconImage.sprite = icon.sprite;
-                _userIconImage.color = icon.color;
+                _userIconImagePanel.sprite = icon.sprite;
+                _userIconImagePanel.color = icon.color;
+                _profileButtonImage.sprite = icon.sprite;
+                _profileButtonImage.color = icon.color;
                 UIManager.Instance.ShowHideUserIconsCanvas();
             });
         }
