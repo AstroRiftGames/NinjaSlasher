@@ -14,6 +14,11 @@ public class ButtonManager : MonoBehaviour
     [SerializeField] private Button _configDropdownButton;
     [SerializeField] private Button _calendarButton;
 
+    [Header("CALENDAR BUTTON ICONS")]
+    [SerializeField] private Image _calendarButtonImage;
+    [SerializeField] private Sprite _calendarAvailableIcon;
+    [SerializeField] private Sprite _calendarClaimedIcon;
+
     [Header("CONFIG DROPDOWN BUTTONS")]
     [SerializeField] private Button _musicButton;
     [SerializeField] private Button _sfxButton;
@@ -90,7 +95,17 @@ public class ButtonManager : MonoBehaviour
         _audioToggle = GetComponent<AudioToggle>();
         _configPanelManager = GetComponent<ConfigDropdown>();
 
+        if (_calendarButtonImage == null && _calendarButton != null)
+        {
+            _calendarButtonImage = _calendarButton.GetComponent<Image>();
+        }
+
         SaveButtonPositions();
+    }
+
+    private void Start()
+    {
+        StartCoroutine(InitializeCalendarIcon());
     }
 
     private void OnEnable()
@@ -104,6 +119,9 @@ public class ButtonManager : MonoBehaviour
             StartCoroutine(DelayedSubscription());
         }
 
+        DailyRewardSystem.OnRewardClaimed += OnRewardClaimed;
+        DailyRewardSystem.OnRewardAvailabilityChanged += UpdateCalendarButtonIcon;
+
         SaveManager.OnDataLoaded += OnSaveDataLoaded;
     }
 
@@ -113,6 +131,9 @@ public class ButtonManager : MonoBehaviour
         {
             LevelProgressionManager.Instance.OnProgressionUpdated -= RefreshLevelProgression;
         }
+
+        DailyRewardSystem.OnRewardClaimed -= OnRewardClaimed;
+        DailyRewardSystem.OnRewardAvailabilityChanged -= UpdateCalendarButtonIcon;
 
         SaveManager.OnDataLoaded -= OnSaveDataLoaded;
     }
@@ -160,6 +181,33 @@ public class ButtonManager : MonoBehaviour
         _retryButton.onClick.AddListener(GetComponent<GameplayUIManager>().OnRetryPressed);
         _backToSelectionButton.onClick.AddListener(GetComponent<GameplayUIManager>().OnBackToSelectionPressed);
         _continueButton.onClick.AddListener(GetComponent<GameplayUIManager>().ContinueToLevelSelector);
+    }
+
+    private IEnumerator InitializeCalendarIcon()
+    {
+        while (DailyRewardSystem.Instance == null || SaveManager.Instance == null || !SaveManager.Instance.IsDataLoaded)
+        {
+            yield return null;
+        }
+
+        yield return new WaitForSeconds(0.1f);
+
+        UpdateCalendarButtonIcon(DailyRewardSystem.Instance.CanClaimToday());
+    }
+
+    private void OnRewardClaimed(DailyReward reward)
+    {
+        UpdateCalendarButtonIcon(false);
+    }
+
+    public void UpdateCalendarButtonIcon(bool isAvailable)
+    {
+        if (_calendarButtonImage == null || _calendarAvailableIcon == null || _calendarClaimedIcon == null)
+        {
+            return;
+        }
+
+        _calendarButtonImage.sprite = isAvailable ? _calendarAvailableIcon : _calendarClaimedIcon;
     }
 
     private void SetupLevelProgression()
