@@ -17,11 +17,11 @@ public class DailyRewardUIManager : MonoBehaviourSingleton<DailyRewardUIManager>
     //[SerializeField] private Button _doubleDailyRewardButton;
     //[SerializeField] private TextMeshProUGUI _doubleRewardButtonText;
 
-    [Header("BACKGROUND COLORS")]
-    public Color availableColor = Color.white;
-    public Color claimedColor = Color.green;
-    public Color lockedColor = Color.gray;
-    public Color todayColor = Color.yellow;
+    [Header("DAY LABEL COLORS")]
+    public Color availableColor;
+    public Color claimedColor;
+    public Color lockedColor;
+    public Color todayColor;
 
     private DailyRewardSystem dailyRewardSystem;
     private bool isInitialized = false;
@@ -134,7 +134,8 @@ public class DailyRewardUIManager : MonoBehaviourSingleton<DailyRewardUIManager>
             if (weeklyRewardDays[i] != null)
             {
                 DayState state = GetDayState(i, currentDay, claimedDays[i], canClaimToday);
-                weeklyRewardDays[i].UpdateDayState(state);
+                Color labelColor = GetColorForState(state);
+                weeklyRewardDays[i].UpdateDayState(state, labelColor);
             }
         }
     }
@@ -149,6 +150,23 @@ public class DailyRewardUIManager : MonoBehaviourSingleton<DailyRewardUIManager>
             return DayState.Missed;
         else
             return DayState.Locked;
+    }
+
+    Color GetColorForState(DayState state)
+    {
+        switch (state)
+        {
+            case DayState.Available:
+                return todayColor;
+            case DayState.Claimed:
+                return claimedColor;
+            case DayState.Locked:
+                return lockedColor;
+            case DayState.Missed:
+                return Color.red;
+            default:
+                return Color.white;
+        }
     }
 
     void UpdateClaimButton()
@@ -332,8 +350,13 @@ public class DailyRewardDayUI
             rewardNameText.text = reward.displayName;
     }
 
-    public void UpdateDayState(DayState state)
+    public void UpdateDayState(DayState state, Color labelColor)
     {
+        if (dayLabel != null)
+        {
+            dayLabel.color = labelColor;
+        }
+
         switch (state)
         {
             case DayState.Available:
@@ -354,39 +377,58 @@ public class DailyRewardDayUI
     void SetAvailableState()
     {
         SetElementsActive(true);
-        if (backgroundImage != null) backgroundImage.color = Color.yellow;
     }
 
     void SetClaimedState()
     {
         SetElementsActive(true);
-        if (backgroundImage != null) backgroundImage.color = Color.green;
     }
 
     void SetLockedState()
     {
         SetElementsActive(true);
-        if (backgroundImage != null) backgroundImage.color = Color.gray;
+        SetElementsAlpha(0.5f);
     }
 
     void SetMissedState()
     {
         SetElementsActive(true);
-        if (backgroundImage != null) backgroundImage.color = Color.red;
+        SetElementsAlpha(0.5f);
     }
 
     void SetElementsActive(bool active)
     {
-        Color textColor = active ? Color.black : Color.gray;
+        Color textColor = active ? Color.white : Color.gray;
 
         if (rewardIcon != null) rewardIcon.color = active ? Color.white : Color.gray;
-        if (quantityText != null) quantityText.color = Color.white;
+        if (quantityText != null) quantityText.color = textColor;
         if (rewardNameText != null) rewardNameText.color = textColor;
+    }
+
+    void SetElementsAlpha(float alpha)
+    {
+        if (rewardIcon != null)
+        {
+            Color iconColor = rewardIcon.color;
+            rewardIcon.color = new Color(iconColor.r, iconColor.g, iconColor.b, alpha);
+        }
+
+        if (quantityText != null)
+        {
+            Color quantityColor = quantityText.color;
+            quantityText.color = new Color(quantityColor.r, quantityColor.g, quantityColor.b, alpha);
+        }
+
+        if (rewardNameText != null)
+        {
+            Color nameColor = rewardNameText.color;
+            rewardNameText.color = new Color(nameColor.r, nameColor.g, nameColor.b, alpha);
+        }
     }
 
     string GetDayName(int dayIndex)
     {
-        string[] dayNames = { "TODAY", "DAY 2", "DAY 3", "DAY 4", "DAY 5", "DAY 6", "DAY 7" };
+        string[] dayNames = { "DAY 1", "DAY 2", "DAY 3", "DAY 4", "DAY 5", "DAY 6", "DAY 7" };
         return dayIndex < dayNames.Length ? dayNames[dayIndex] : $"DAY {dayIndex + 1}";
     }
 }
