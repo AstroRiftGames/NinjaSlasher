@@ -12,6 +12,7 @@ public class TutorialManager : MonoBehaviour
 
     [Header("INDICATORS")]
     [SerializeField] private GameObject handAnimation;
+    [SerializeField] private GameObject handAnimationParry;
 
     [Header("REFERENCES")]
     [SerializeField] private Controller playerController;
@@ -251,6 +252,11 @@ public class TutorialManager : MonoBehaviour
                 }
                 waitingForParry = true;
                 StartCoroutine(EnableParryTutorialCompletion());
+
+                if (handAnimationParry != null)
+                {
+                    handAnimationParry.SetActive(true);
+                }
                 break;
         }
     }
@@ -381,6 +387,11 @@ public class TutorialManager : MonoBehaviour
             handAnimation.SetActive(false);
         }
 
+        if (currentLevel == 3 && handAnimationParry != null)
+        {
+            handAnimationParry.SetActive(false);
+        }
+
         if (playerController != null)
         {
             playerController.SetInputEnabled(true);
@@ -410,6 +421,11 @@ public class TutorialManager : MonoBehaviour
         if (currentLevel == 1 && handAnimation != null)
         {
             handAnimation.SetActive(false);
+        }
+
+        if (handAnimationParry != null)
+        {
+            handAnimationParry.SetActive(false);
         }
 
         if (playerController != null)

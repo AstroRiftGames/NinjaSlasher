@@ -28,7 +28,7 @@ public class Controller : MonoBehaviour
 
 
     [Space]
-    [SerializeField] private LineRenderer swipeIndicator;
+    [SerializeField] private GameObject swipeIndicator;
     private Vector2 swipeStart;
     private bool _startedSwipe;
     private Vector2 endTouchPosition;
@@ -121,8 +121,7 @@ public class Controller : MonoBehaviour
 
     private void Start()
     {
-        if (swipeIndicator != null)
-            swipeIndicator.enabled = false;
+        if (swipeIndicator != null) swipeIndicator.SetActive(false);
     }
 
     void OnEnable()
@@ -171,22 +170,24 @@ public class Controller : MonoBehaviour
         {
             currentSwipe = (Vector2)Input.mousePosition - swipeStart;
 
-            Vector3 start = transform.position;
-
             if (_startedSwipe && currentSwipe.magnitude >= minSwipeDistance)
             {
-                if (swipeIndicator != null && !swipeIndicator.enabled)
+                if (swipeIndicator != null && !swipeIndicator.activeSelf)
                 {
-                    swipeIndicator.enabled = true;
+                    swipeIndicator.SetActive(true);
                 }
                 isSwiping = true;
 
-                Vector2 clampedDir = -currentSwipe.normalized; //GetClampedSwipeDirection(currentSwipe.normalized);
-                Vector3 end = start + (Vector3)(clampedDir * 2f);
                 if (swipeIndicator != null)
                 {
-                    swipeIndicator.SetPosition(0, start);
-                    swipeIndicator.SetPosition(1, end);
+                    Vector3 start = transform.position;
+                    Vector2 clampedDir = -currentSwipe.normalized;
+
+                    swipeIndicator.transform.position = start;
+
+                    float angle = Mathf.Atan2(clampedDir.y, clampedDir.x) * Mathf.Rad2Deg;
+
+                    swipeIndicator.transform.rotation = Quaternion.Euler(0, 0, angle);
                 }
             }
         }
@@ -197,7 +198,7 @@ public class Controller : MonoBehaviour
             _startedSwipe = false;
             if (swipeIndicator != null)
             {
-                swipeIndicator.enabled = false;
+                swipeIndicator.SetActive(false);
             }
             endTouchPosition = Input.mousePosition;
             Vector2 swipeDelta = endTouchPosition - swipeStart; // GetClampedSwipeDirection(endTouchPosition - swipeStart);
@@ -222,24 +223,24 @@ public class Controller : MonoBehaviour
                 case TouchPhase.Stationary:
                     currentSwipe = touch.position - swipeStart;
 
-                    Vector3 start = transform.position;
-
                     if (_startedSwipe &&  currentSwipe.magnitude >= minSwipeDistance)
                     {
-                        if (swipeIndicator != null && !swipeIndicator.enabled)
+                        if (swipeIndicator != null && !swipeIndicator.activeSelf)
                         {
-                            swipeIndicator.enabled = true;
+                            swipeIndicator.SetActive(true);
                         }
                         isSwiping = true;
 
-                        Vector2 clampedDir = -currentSwipe.normalized; //GetClampedSwipeDirection(currentSwipe.normalized);
-
-                        Vector3 end = start + (Vector3)(clampedDir * 2f);
-
                         if (swipeIndicator != null)
                         {
-                            swipeIndicator.SetPosition(0, start);
-                            swipeIndicator.SetPosition(1, end);
+                            Vector3 start = transform.position;
+                            Vector2 clampedDir = -currentSwipe.normalized;
+
+                            swipeIndicator.transform.position = start;
+
+                            float angle = Mathf.Atan2(clampedDir.y, clampedDir.x) * Mathf.Rad2Deg;
+                            
+                            swipeIndicator.transform.rotation = Quaternion.Euler(0, 0, angle);
                         }
                     }
                 break;
@@ -251,7 +252,7 @@ public class Controller : MonoBehaviour
                         isSwiping = false;
                         if (swipeIndicator != null)
                         {
-                            swipeIndicator.enabled = false;
+                            swipeIndicator.SetActive(false);
                         }
                         endTouchPosition = touch.position;
                         Vector2 swipeDelta = endTouchPosition - swipeStart;
@@ -269,7 +270,7 @@ public class Controller : MonoBehaviour
             {
                 isSwiping = false;
                 if (swipeIndicator != null)
-                    swipeIndicator.enabled = false;
+                    swipeIndicator.SetActive(false);
             }
         }
 #endif
