@@ -240,9 +240,10 @@ public class CanvasManager : MonoBehaviour
     public void ShowHidePreGameCanvas()
     {
         bool isCanvasActive = !_preGameCanvas.enabled;
-
+        var panelAnimation = _preGamePanel.GetComponent<Animator>();
         if (isCanvasActive)
         {
+            panelAnimation.SetTrigger("Open");
             var buttonManager = GetComponent<ButtonManager>();
             if (buttonManager != null)
             {
@@ -254,6 +255,7 @@ public class CanvasManager : MonoBehaviour
         }
         else
         {
+            panelAnimation.SetTrigger("Close");
             GetComponent<PreGameUIManager>()?.StopAllAnimations();
             ShowHideCanvas(_preGameCanvas, isCanvasActive);
         }
