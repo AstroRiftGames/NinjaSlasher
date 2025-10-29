@@ -195,14 +195,16 @@ public class CanvasManager : MonoBehaviour
     public void ShowHideDailyRewardCanvas()
     {
         bool isCanvasActive = !_dailyRewardCanvas.enabled;
-
+        var panelAnimation = _dailyRewardPanel.GetComponent<Animator>();
         if (isCanvasActive)
         {
+            panelAnimation.SetTrigger("Open");
             ShowCanvasAnimated(_dailyRewardCanvas);
             GetComponent<DailyRewardUIManager>()?.ShowDailyReward();
         }
         else
         {
+            panelAnimation.SetTrigger("Close");
             HideCanvasAnimated(_dailyRewardCanvas);
         }
     }
