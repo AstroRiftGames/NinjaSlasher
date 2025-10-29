@@ -172,9 +172,10 @@ public class CanvasManager : MonoBehaviour
     public void ShowHideResultsCanvas()
     {
         bool isCanvasActive = !_resultsCanvas.enabled;
-
+        var panelAnimation = _resultsPanel.GetComponent<Animator>();
         if (isCanvasActive)
         {
+            panelAnimation.SetTrigger("Open");
             GetComponent<ResultsUIManager>()?.PrepareResultsIntro();
             ShowCanvasAnimated(_resultsCanvas);
             SetGameplayCanvasEnabled(false);
@@ -182,6 +183,7 @@ public class CanvasManager : MonoBehaviour
         }
         else
         {
+            panelAnimation.SetTrigger("Close");
             HideCanvasAnimated(_resultsCanvas);
         }
     }
