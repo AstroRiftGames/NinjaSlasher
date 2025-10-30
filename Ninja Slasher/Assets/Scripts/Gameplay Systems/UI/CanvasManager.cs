@@ -96,6 +96,8 @@ public class CanvasManager : MonoBehaviour
             .SetEase(_openEase));
         showSequence.Append(panel.DOScale(1f, _animationDuration * 0.3f)
             .SetEase(Ease.InOutQuad));
+
+        showSequence.SetUpdate(true);
     }
 
     private void HidePanelAnimated(RectTransform panel, Canvas canvas)
@@ -120,7 +122,9 @@ public class CanvasManager : MonoBehaviour
                 }
 
                 panel.localScale = Vector3.one;
-            });
+            })
+
+            .SetUpdate(true);
     }
 
     private void ShowCanvasGroupAnimated(CanvasGroup canvasGroup)
@@ -136,6 +140,8 @@ public class CanvasManager : MonoBehaviour
             .SetEase(_openEase));
         showSequence.Append(canvasGroup.transform.DOScale(1f, _animationDuration * 0.3f)
             .SetEase(Ease.InOutQuad));
+
+        showSequence.SetUpdate(true);
     }
 
     private void HideCanvasGroupAnimated(CanvasGroup canvasGroup, Canvas canvas)
@@ -147,6 +153,8 @@ public class CanvasManager : MonoBehaviour
             .SetEase(_closeEase));
         hideSequence.Join(canvasGroup.DOFade(0f, _animationDuration * 0.8f));
         hideSequence.OnComplete(() => canvas.enabled = false);
+
+        hideSequence.SetUpdate(true);
     }
 
     private RectTransform GetPanelForCanvas(Canvas canvas)
