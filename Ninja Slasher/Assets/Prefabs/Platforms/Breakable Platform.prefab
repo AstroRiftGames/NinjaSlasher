@@ -48,6 +48,8 @@ MonoBehaviour:
   isActive: 1
   maxUses: 3
   falloffVelocity: 15
+  _columns: 3
+  _rows: 2
   _tilemap: {fileID: 8287803281622865990}
   _piecesPrefabs:
   - {fileID: 6087342536773970575, guid: a2256367c74e6cc488ab63cfa919842c, type: 3}
@@ -127,7 +129,7 @@ Grid:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6041704371113665715}
   m_Enabled: 1
-  m_CellSize: {x: 1.23, y: 1.28, z: 0}
+  m_CellSize: {x: 1.23, y: 1.23, z: 0}
   m_CellGap: {x: 0, y: 0, z: 0}
   m_CellLayout: 0
   m_CellSwizzle: 0
@@ -160,7 +162,7 @@ Transform:
   m_GameObject: {fileID: 8287803281622865990}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 0.01, y: -0.115, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -323,7 +325,7 @@ TilemapRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: a97c105638bdf8b4a8650670310a4cd3, type: 2}
+  - {fileID: 2100000, guid: 9dfc825aed78fcd4ba02077103263b40, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -341,8 +343,8 @@ TilemapRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
+  m_SortingLayerID: -1743105579
+  m_SortingLayer: -1
   m_SortingOrder: 0
   m_ChunkSize: {x: 32, y: 32, z: 32}
   m_ChunkCullingBounds: {x: 0.16500002, y: 0.13999999, z: 0}
