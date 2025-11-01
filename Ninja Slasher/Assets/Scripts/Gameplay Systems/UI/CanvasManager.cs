@@ -276,7 +276,17 @@ public class CanvasManager : MonoBehaviour
     public void ShowHidePauseCanvas()
     {
         bool isCanvasActive = !_pauseCanvas.enabled;
-        ShowHideCanvas(_pauseCanvas, isCanvasActive);
+        var panelAnimation = _pausePanel.GetComponent<Animator>();
+        if (isCanvasActive)
+        {
+            panelAnimation.SetTrigger("Open");
+            ShowHideCanvas(_pauseCanvas, isCanvasActive);
+        }
+        else
+        {
+            panelAnimation.SetTrigger("Close");
+            ShowHideCanvas(_pauseCanvas, isCanvasActive);
+        }
         Time.timeScale = isCanvasActive ? 0 : 1;
     }
 
