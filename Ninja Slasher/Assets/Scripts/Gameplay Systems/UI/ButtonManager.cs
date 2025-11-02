@@ -82,7 +82,7 @@ public class ButtonManager : MonoBehaviour
     [SerializeField] private Button deleteSaveButton;
 #endif
 
-    private AudioToggle _audioToggle;
+    private ConfigToggles _configToggles;
     private ConfigDropdown _configPanelManager;
 
     private List<Sequence> activeButtonSequences = new List<Sequence>();
@@ -92,7 +92,7 @@ public class ButtonManager : MonoBehaviour
 
     private void Awake()
     {
-        _audioToggle = GetComponent<AudioToggle>();
+        _configToggles = GetComponent<ConfigToggles>();
         _configPanelManager = GetComponent<ConfigDropdown>();
 
         if (_calendarButtonImage == null && _calendarButton != null)
@@ -175,8 +175,8 @@ public class ButtonManager : MonoBehaviour
 
         _quitButton.onClick.AddListener(() => LevelManager.Instance.GoToLevelSelection(confirmPendingDeduction: true));
 
-        _musicPausePanelButton.onClick.AddListener(_audioToggle.MusicButtonClicked);
-        _sfxPausePanelButton.onClick.AddListener(_audioToggle.SFXButtonClicked);
+        _musicPausePanelButton.onClick.AddListener(_configToggles.MusicButtonPushed);
+        _sfxPausePanelButton.onClick.AddListener(_configToggles.SFXButtonPushed);
 
         _retryButton.onClick.AddListener(GetComponent<GameplayUIManager>().OnRetryPressed);
         _backToSelectionButton.onClick.AddListener(GetComponent<GameplayUIManager>().OnBackToSelectionPressed);
@@ -246,13 +246,13 @@ public class ButtonManager : MonoBehaviour
 
     private void SetupLevelSelectorButtons()
     {
-        _musicButton.onClick.AddListener(_audioToggle.MusicButtonClicked);
-        _sfxButton.onClick.AddListener(_audioToggle.SFXButtonClicked);
+        _musicButton.onClick.AddListener(_configToggles.MusicButtonPushed);
+        _sfxButton.onClick.AddListener(_configToggles.SFXButtonPushed);
         _profileButton.onClick.AddListener(UIManager.Instance.ShowHideProfileCanvas);
 
         if (_hapticButton != null)
         {
-            _hapticButton.onClick.AddListener(UIManager.Instance.SwitchHapticFeedback);
+            _hapticButton.onClick.AddListener(_configToggles.HapticFeedbackPushed);
         }
 
         _closeNoLivesPanelButton.onClick.AddListener(UIManager.Instance.ShowHideNoLivesCanvas);

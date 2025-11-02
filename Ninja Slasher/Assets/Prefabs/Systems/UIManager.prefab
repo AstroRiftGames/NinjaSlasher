@@ -105,12 +105,16 @@ MonoBehaviour:
   _sfxTurnOffIcon: {fileID: 21300000, guid: bd717b7325ca5cf4390ec5dfd873f509, type: 3}
   _musicTurnOnIcon: {fileID: 21300000, guid: 8a694bbc315b3754fbc8b7d70032fe36, type: 3}
   _musicTurnOffIcon: {fileID: 21300000, guid: 9aa9b5d9c765dc043a1155eafdb69022, type: 3}
+  _hapticTurnOnIcon: {fileID: 21300000, guid: 1474a16e9db63f3428fbf34eaef89fc0, type: 3}
+  _hapticTurnOffIcon: {fileID: 21300000, guid: b213cf2268330064cb01dcfaf7dbdfc6, type: 3}
   _musicImage: {fileID: 4548340969661430121}
   _sfxImage: {fileID: 2899433265878094987}
+  _hapticImage: {fileID: 822961000019724562}
   _musicPauseImage: {fileID: 3868351097286519265}
   _sfxPauseImage: {fileID: 1007923029120456528}
-  _musicOn: 0
-  _sfxOn: 0
+  _isMusicOn: 0
+  _isSfxOn: 0
+  _isHapticOn: 0
 --- !u!114 &737437187067326278
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1825,6 +1829,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &822961000019724562 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 1250679703957427706, guid: 653520d3bd477804082aca8f2c39dd8f, type: 3}
+  m_PrefabInstance: {fileID: 1887272380800261352}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!114 &965960568117750130 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 1681874833336448410, guid: 653520d3bd477804082aca8f2c39dd8f, type: 3}
@@ -2821,7 +2836,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6855111597564469532, guid: 8cbe209caf0817246a97dd95c41f7b33, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 24301
+      value: 25201
       objectReference: {fileID: 0}
     - target: {fileID: 6893470059594048240, guid: 8cbe209caf0817246a97dd95c41f7b33, type: 3}
       propertyPath: m_AnchorMax.y
