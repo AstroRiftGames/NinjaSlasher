@@ -599,6 +599,10 @@ public class Controller : MonoBehaviour
             if (_isDead) return;
             _isDead = true;
 
+            _playerView.RB.bodyType= RigidbodyType2D.Dynamic;
+            _playerView.RB.gravityScale = 1f;
+            _playerView.Col.excludeLayers = LayerMask.GetMask("Projectiles", "Enemy");
+
             if (CameraShake.Instance != null)
             {
                 CameraShake.Instance.TriggerShake(0.4f, 0.5f);
