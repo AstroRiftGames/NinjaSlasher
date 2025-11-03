@@ -127,6 +127,10 @@ public class GuardBot : Enemy
     public override void Die()
     {
         AudioManager.Instance.PlaySFXAtPosition(SFXClip.E_Guard_Death, transform.position);
+        FrontCol.SetActive(false);
+        RearCol.SetActive(false);
+        UpperCol.SetActive(false);  
+        LowerCol.SetActive(false);
         base.Die();
     }
 

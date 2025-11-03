@@ -4,10 +4,10 @@ using UnityEngine;
 public class Enemy : MonoBehaviour
 {
     [SerializeField] protected EnemyData _data;
-    [SerializeField] GameObject UpperCol;
-    [SerializeField] GameObject LowerCol;
-    [SerializeField] GameObject RearCol;
-    [SerializeField] GameObject FrontCol;
+    [SerializeField] protected GameObject UpperCol;
+    [SerializeField] protected GameObject LowerCol;
+    [SerializeField] protected GameObject RearCol;
+    [SerializeField] protected GameObject FrontCol;
     [SerializeField] float _deathTime;
 
     [SerializeField] protected LayerMask _obstaclesLayer;
