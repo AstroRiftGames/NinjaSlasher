@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 5054996556004624943}
   - component: {fileID: 3200491662766527033}
   - component: {fileID: 7420499593653423527}
+  - component: {fileID: 7528716472775730299}
   m_Layer: 6
   m_Name: Scaffold
   m_TagString: Scenario
@@ -74,8 +75,8 @@ SpriteRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
+  m_SortingLayerID: 1828922263
+  m_SortingLayer: -1
   m_SortingOrder: 0
   m_Sprite: {fileID: 5586704682611232511, guid: 2d0a9e85e8de5e34783676c7aa3c6729, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -122,7 +123,7 @@ BoxCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: -0.13157892, y: 3.2388558}
+  m_Offset: {x: -0.048109055, y: 3.3229756}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0.5, y: 0.5}
@@ -132,5 +133,51 @@ BoxCollider2D:
     drawMode: 2
     adaptiveTiling: 1
   m_AutoTiling: 0
-  m_Size: {x: 9.707927, y: 0.17140293}
+  m_Size: {x: 9.540987, y: 0.19619298}
+  m_EdgeRadius: 0
+--- !u!61 &7528716472775730299
+BoxCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5175978174173164267}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_ForceSendLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ForceReceiveLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ContactCaptureLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_CallbackLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_IsTrigger: 0
+  m_UsedByEffector: 0
+  m_CompositeOperation: 0
+  m_CompositeOrder: 0
+  m_Offset: {x: 4.27783, y: -0.5372381}
+  m_SpriteTilingProperty:
+    border: {x: 0, y: 0, z: 0, w: 0}
+    pivot: {x: 0.5, y: 0.5}
+    oldSize: {x: 7.38, y: 8.39}
+    newSize: {x: 9.632004, y: 8.52453}
+    adaptiveTilingThreshold: 0.5
+    drawMode: 2
+    adaptiveTiling: 1
+  m_AutoTiling: 0
+  m_Size: {x: 0.2433281, y: 7.5241985}
   m_EdgeRadius: 0
