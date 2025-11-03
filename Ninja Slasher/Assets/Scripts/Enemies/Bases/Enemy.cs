@@ -40,7 +40,7 @@ public class Enemy : MonoBehaviour
         _rb = rb;
         TryGetComponent(out Collider2D col);
         _col = col;
-        if(_animator == null)
+        if (_animator == null)
         {
             TryGetComponent(out Animator anim);
             _animator = anim;
@@ -56,6 +56,7 @@ public class Enemy : MonoBehaviour
     }
 
     public virtual void CustomUpdate() { }
+
     protected void DetectCollision(Direction dir)
     {
 #if UNITY_EDITOR
@@ -81,7 +82,7 @@ public class Enemy : MonoBehaviour
 
         var combo = ComboManager.Instance;
         if (combo != null)
-            combo.RegisterKill();
+            combo.RegisterKill(transform.position);
 
         Destroy(gameObject, _deathTime);
     }
