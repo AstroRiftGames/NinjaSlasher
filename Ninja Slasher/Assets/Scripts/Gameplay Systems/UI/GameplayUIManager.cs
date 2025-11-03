@@ -1,7 +1,7 @@
 using System.Collections;
 using TMPro;
 using UnityEngine;
-
+using DG.Tweening;
 public class GameplayUIManager : MonoBehaviour
 {
     [Header("GAMEPLAY UI")]
@@ -10,6 +10,7 @@ public class GameplayUIManager : MonoBehaviour
     [SerializeField] private GameObject _livesTimerObj;
     [SerializeField] private TextMeshProUGUI _noLivesTimerText;
     [SerializeField] private TextMeshProUGUI _levelTimerText;
+    [SerializeField] private TextMeshProUGUI _bonusTimeText;
     [SerializeField] private GameObject _lifeLostPanel;
     [SerializeField] private TextMeshProUGUI _puRemainingTime;
 
@@ -24,6 +25,9 @@ public class GameplayUIManager : MonoBehaviour
 
         UpdateLivesUI(LifeManager.Instance?.GetDisplayLives() ?? 0);
         _lifeLostPanel.SetActive(false);
+
+        if (_bonusTimeText != null)
+            _bonusTimeText.gameObject.SetActive(false);
     }
 
     public void OnSceneLoaded()
@@ -40,6 +44,12 @@ public class GameplayUIManager : MonoBehaviour
             _levelController.OnTimeChanged += OnLevelTimeChanged;
             _levelController.OnTimeExpired += OnLevelTimeExpired;
         }
+
+        _comboManager = ComboManager.Instance;
+        if (_comboManager != null)
+        {
+            _comboManager.OnComboUpdatedWithPosition += OnComboUpdated;
+        }
     }
 
     private void UnsubscribeFromEvents()
@@ -48,6 +58,11 @@ public class GameplayUIManager : MonoBehaviour
         {
             _levelController.OnTimeChanged -= OnLevelTimeChanged;
             _levelController.OnTimeExpired -= OnLevelTimeExpired;
+        }
+
+        if (_comboManager != null)
+        {
+            _comboManager.OnComboUpdatedWithPosition -= OnComboUpdated;
         }
     }
 
@@ -156,6 +171,61 @@ public class GameplayUIManager : MonoBehaviour
             _noLivesActive = false;
             UIManager.Instance.ShowHideNoLivesCanvas();
         }
+    }
+
+    private void OnComboUpdated(int comboLevel, Vector3 position)
+    {
+        if (comboLevel < 2) return;
+
+        float bonus = comboLevel switch
+        {
+            2 => 3f,
+            3 => 4f,
+            4 => 6f,
+            _ => 3f
+        };
+
+        ShowBonusTimeText(bonus);
+    }
+
+    private void ShowBonusTimeText(float bonus)
+    {
+        if (_bonusTimeText == null) return;
+
+        StopAllCoroutines();
+
+        _bonusTimeText.text = $"+{bonus:F0}s";
+        _bonusTimeText.gameObject.SetActive(true);
+
+        StartCoroutine(AnimateBonusText());
+    }
+
+    private IEnumerator AnimateBonusText()
+    {
+        if (_bonusTimeText == null) yield break;
+
+        var rectTransform = _bonusTimeText.GetComponent<RectTransform>();
+        var canvasGroup = _bonusTimeText.GetComponent<CanvasGroup>();
+
+        if (canvasGroup == null)
+        {
+            canvasGroup = _bonusTimeText.gameObject.AddComponent<CanvasGroup>();
+        }
+
+        Vector3 originalScale = rectTransform.localScale;
+        canvasGroup.alpha = 1f;
+
+        rectTransform.localScale = originalScale * 0.5f;
+        rectTransform.DOScale(originalScale * 1.3f, 0.2f).SetEase(DG.Tweening.Ease.OutBack);
+
+        yield return new WaitForSeconds(0.2f);
+
+        rectTransform.DOScale(originalScale, 0.15f).SetEase(DG.Tweening.Ease.InOutQuad);
+
+        yield return new WaitForSeconds(1.2f);
+
+        canvasGroup.DOFade(0f, 0.3f).SetEase(DG.Tweening.Ease.InQuad)
+            .OnComplete(() => _bonusTimeText.gameObject.SetActive(false));
     }
 
     private void OnLevelTimeChanged(float time)
