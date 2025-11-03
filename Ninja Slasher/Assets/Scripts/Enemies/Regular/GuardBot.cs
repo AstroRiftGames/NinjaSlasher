@@ -134,7 +134,8 @@ public class GuardBot : Enemy
     {
         Gizmos.color = Color.red;
         Gizmos.DrawLine(_refPoint.position, _refPoint.position + transform.right * _data.Range * _direction);
-        Gizmos.DrawRay(transform.position + transform.right * -_direction, Vector2.down *.5f);
+        Gizmos.color = Color.yellow;
+        Gizmos.DrawRay(transform.position + transform.right * -_direction + transform.up*.5f, Vector2.down *.5f);
         Gizmos.color = Color.blue;
         Gizmos.DrawLine(_refPoint.position, _target);
         Gizmos.color = Color.green;
