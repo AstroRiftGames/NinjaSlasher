@@ -44,11 +44,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 178fef074bb06b648b56c3c7fa5a8e38, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  tutorialPanel: {fileID: 0}
-  tutorialText: {fileID: 0}
-  swipeIndicatorVisual: {fileID: 0}
+  tutorialTextsLevel1:
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  tutorialTextsLevel2:
+  - {fileID: 0}
+  - {fileID: 0}
+  tutorialTextsLevel3:
+  - {fileID: 0}
+  - {fileID: 0}
   handAnimation: {fileID: 0}
+  handAnimationParry: {fileID: 0}
   playerController: {fileID: 0}
-  firstTargetPlatform: {fileID: 0}
-  textDisplayDuration: 10
   skipTutorial: 0
+  textDisplayTime: 5
+  currentLevel: 1
