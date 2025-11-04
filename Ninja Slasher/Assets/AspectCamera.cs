@@ -5,6 +5,8 @@ using UnityEngine.UI;
 public class AspectCamera : MonoBehaviour
 {
     [SerializeField] private Camera mainCamera;
+    [SerializeField] private string sortingLayerName = "UI";
+    [SerializeField] private int sortingOrder = 0;
 
     private float targetAspect = 16f / 9f;
 
@@ -32,6 +34,9 @@ public class AspectCamera : MonoBehaviour
         {
             canvas.renderMode = RenderMode.ScreenSpaceCamera;
             canvas.worldCamera = mainCamera;
+
+            canvas.sortingLayerName = sortingLayerName;
+            canvas.sortingOrder = sortingOrder;
 
             CanvasScaler scaler = canvas.GetComponent<CanvasScaler>();
             if (scaler != null)
