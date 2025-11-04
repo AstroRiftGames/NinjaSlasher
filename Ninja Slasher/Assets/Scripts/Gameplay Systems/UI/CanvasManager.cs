@@ -339,6 +339,22 @@ public class CanvasManager : MonoBehaviour
         }
     }
 
+    public void ShowHideNoLivesCanvas()
+    {
+        bool isCanvasActive = !_noLivesCanvas.enabled;
+        var panelAnimation = _noLivesPanel.GetComponent<Animator>();
+        if (isCanvasActive)
+        {
+            panelAnimation.SetTrigger("Open");
+            ShowHideCanvas(_noLivesCanvas, isCanvasActive);
+        }
+        else
+        {
+            panelAnimation.SetTrigger("Close");
+            ShowHideCanvas(_noLivesCanvas, isCanvasActive);
+        }
+    }
+
     private void ToggleCanvas(Canvas canvas)
     {
         bool isCanvasActive = !canvas.enabled;
@@ -347,7 +363,6 @@ public class CanvasManager : MonoBehaviour
 
     public void ShowHideUserNicknameEditCanvas() => ToggleCanvas(_userNicknameEditCanvas);
     public void ShowHideUserIconsCanvas() => ToggleCanvas(_userIconsCanvas);
-    public void ShowHideNoLivesCanvas() => ToggleCanvas(_noLivesCanvas);
     public void SetSplashCanvasEnabled(bool enabled) => _splashCanvas.enabled = enabled;
     public void SetGameplayCanvasEnabled(bool enabled) => _gameplayCanvas.enabled = enabled;
     public void SetPauseCanvasEnabled(bool enabled) => _pauseCanvas.enabled = enabled;
