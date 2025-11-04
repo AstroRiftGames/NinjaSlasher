@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class lamp : MonoBehaviour
+public class Lamp : MonoBehaviour
 {
     bool _isFalling;
     [SerializeField] Rigidbody2D _rb;
