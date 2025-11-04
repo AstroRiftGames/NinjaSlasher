@@ -246,7 +246,17 @@ public class CanvasManager : MonoBehaviour
     public void ShowHideProfileCanvas()
     {
         bool isCanvasActive = !_profileCanvas.enabled;
-        ShowHideCanvas(_profileCanvas, isCanvasActive);
+        var panelAnimation = _profilePanel.GetComponent<Animator>();
+        if (isCanvasActive)
+        {
+            panelAnimation.SetTrigger("Open");
+            ShowHideCanvas(_profileCanvas, isCanvasActive);
+        }
+        else
+        {
+            panelAnimation.SetTrigger("Close");
+            ShowHideCanvas(_profileCanvas, isCanvasActive);
+        }
     }
 
     public void ShowHidePreGameCanvas()
