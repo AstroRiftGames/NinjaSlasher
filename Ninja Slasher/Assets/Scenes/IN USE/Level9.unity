@@ -239,7 +239,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8639206987761951752, guid: 6467ebd0801205f419112e9755a93554, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0.02
+      value: 0.159
       objectReference: {fileID: 0}
     - target: {fileID: 8639206987761951752, guid: 6467ebd0801205f419112e9755a93554, type: 3}
       propertyPath: m_LocalPosition.z
@@ -5819,6 +5819,7 @@ GameObject:
   - component: {fileID: 519420029}
   - component: {fileID: 519420030}
   - component: {fileID: 519420033}
+  - component: {fileID: 519420034}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -5913,7 +5914,7 @@ Camera:
   far clip plane: 1000
   field of view: 34
   orthographic: 1
-  orthographic size: 6.37
+  orthographic size: 6
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2
@@ -5953,10 +5954,52 @@ MonoBehaviour:
   m_GameObject: {fileID: 519420028}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 53627c5183733664e915a2eae4c6755a, type: 3}
+  m_Script: {fileID: 11500000, guid: c81ef37d9881dbe499586ec345d02128, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  targetHorizontalSize: 21
+  mainCamera: {fileID: 0}
+--- !u!114 &519420034
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 519420028}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 60863d539c85b5e4da9b8867d655d978, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _shakeDuration: 0.3
+  _shakeMagnitude: 0.2
+  _shakeIntensityCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  _useTraumaSystem: 1
+  _traumaDecay: 1.5
+  _maxShakeOffset: 0.3
+  _maxShakeRotation: 5
 --- !u!1001 &521745035
 PrefabInstance:
   m_ObjectHideFlags: 0
