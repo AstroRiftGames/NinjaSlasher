@@ -1,7 +1,8 @@
-using System.Collections;
+﻿using System.Collections;
 using TMPro;
 using UnityEngine;
 using DG.Tweening;
+
 public class GameplayUIManager : MonoBehaviour
 {
     [Header("GAMEPLAY UI")]
@@ -28,6 +29,14 @@ public class GameplayUIManager : MonoBehaviour
 
         if (_bonusTimeText != null)
             _bonusTimeText.gameObject.SetActive(false);
+
+        if (_puRemainingTime != null)
+        {
+            _puRemainingTime.text = "";
+            _puRemainingTime.gameObject.SetActive(true);
+        }
+
+        UpdatePowerUpsUI();
     }
 
     public void OnSceneLoaded()
@@ -50,6 +59,8 @@ public class GameplayUIManager : MonoBehaviour
         {
             _comboManager.OnComboUpdatedWithPosition += OnComboUpdated;
         }
+
+        PowerUpManager.OnPowerUpRemainingTextChanged += OnPowerUpRemainingTextChanged;
     }
 
     private void UnsubscribeFromEvents()
@@ -64,6 +75,8 @@ public class GameplayUIManager : MonoBehaviour
         {
             _comboManager.OnComboUpdatedWithPosition -= OnComboUpdated;
         }
+
+        PowerUpManager.OnPowerUpRemainingTextChanged -= OnPowerUpRemainingTextChanged;
     }
 
     public void UpdateUI()
@@ -89,20 +102,50 @@ public class GameplayUIManager : MonoBehaviour
         }
     }
 
-    //public void UpdatePowerUpsUI()
-    //{
-    //    var context = PowerUpManager.Instance?.context;
-    //    if (context != null && context.AnyPowerUpActive())
-    //    {
-    //        var remaining = context.GetLowestRemainingTime();
-    //        _puRemainingTime.text = $"{Mathf.CeilToInt(remaining)}s";
-    //        _puRemainingTime.gameObject.SetActive(true);
-    //    }
-    //    else
-    //    {
-    //        _puRemainingTime.gameObject.SetActive(false);
-    //    }
-    //}
+    private void UpdatePowerUpsUI()
+    {
+        if (_puRemainingTime == null || PowerUpManager.Instance == null)
+        {
+            if (_puRemainingTime != null)
+                _puRemainingTime.text = "";
+            return;
+        }
+
+        /*
+        var context = PowerUpManager.Instance.context;
+        if (context == null)
+        {
+            _puRemainingTime.text = "";
+            return;
+        }
+
+        bool isPowerUpActive = context.AnyPowerUpActive();
+
+        if (isPowerUpActive)
+        {
+            var remaining = context.GetLowestRemainingTime();
+            int seconds = Mathf.CeilToInt(remaining);
+            if (seconds > 0)
+            {
+                _puRemainingTime.text = $"{seconds}s";
+            }
+            else
+            {
+                _puRemainingTime.text = "";
+            }
+        }
+        else
+        {
+            _puRemainingTime.text = "";
+        }
+        */
+    }
+
+    private void OnPowerUpRemainingTextChanged(string text)
+    {
+        if (_puRemainingTime == null) return;
+        _puRemainingTime.text = text;
+    }
 
     public void ShowLifeLostPanel()
     {

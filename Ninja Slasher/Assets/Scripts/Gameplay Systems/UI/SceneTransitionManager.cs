@@ -39,7 +39,7 @@ public class SceneTransitionManager : MonoBehaviour
     {
         string sceneName = SceneManager.GetActiveScene().name;
         LoadLevelScene(sceneName);
-        UIManager.Instance.ShowHidePauseCanvas();
+        //UIManager.Instance.ShowHidePauseCanvas();
     }
 
     public void ShowLevelSelector()

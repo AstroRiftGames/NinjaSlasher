@@ -95,6 +95,8 @@ public class Projectile : MonoBehaviour
             StartCoroutine(ReturnProjectile());
         }
         _rb.linearVelocity = Vector2.zero;
+        collision.TryGetComponent(out Rigidbody2D rb);
+        rb.linearVelocity = Vector2.zero;
         _animator.SetTrigger("OnImpact");
     }
 
