@@ -138,12 +138,16 @@ public class Controller : MonoBehaviour
 
     private void CustomUpdate()
     {
+        if(!_isDead)
+        {
+
         _root.Execute();
         _fsm.OnUpdate();
 
         CheckSwipe();
 
         HandleParryTimer();
+        }
         UpdateAnimatorParameters();
     }
 
@@ -325,9 +329,6 @@ public class Controller : MonoBehaviour
         }
 
         Vector2 dashDir = -swipeDelta.normalized;
-
-        Debug.DrawRay(transform.position, dashDir, Color.blue,2f);
-        Debug.DrawRay(transform.position, _currentNormal, Color.blue,2f);
         
         float angle = Mathf.Atan2(dashDir.y, dashDir.x) * Mathf.Rad2Deg - Mathf.Atan2(_currentNormal.y, _currentNormal.x) * Mathf.Rad2Deg;
 
@@ -357,8 +358,6 @@ public class Controller : MonoBehaviour
 
         if(_currentNormal == Vector2.right)
         {
-
-
             if (angle is > 90 and < 180)
             {
                 dashDir = transform.up;
@@ -519,11 +518,8 @@ public class Controller : MonoBehaviour
             colTag == "Ceiling" ||
             collision.gameObject.GetComponent<PlatformBase>() != null)
         {
-            if (_currentSurface != null && collision.collider == _currentSurface)
-            {
-                return;
-            }
 
+            Debug.Log("Collided with platform");
             _currentSurface = collision.collider;
             _currentNormal = collision.GetContact(0).normal.normalized;
 
