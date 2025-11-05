@@ -213,13 +213,13 @@ public class Controller : MonoBehaviour
             }
         }
 #else
-        if (Input.touchCount > 0)
+if (Input.touchCount > 0)
         {
-            TryStartParryLogic();
             Touch touch = Input.GetTouch(0);
             switch (touch.phase)
             {
                 case TouchPhase.Began:
+                    TryStartParryLogic();
                     swipeStart = touch.position;
                     _startedSwipe = true;
                     break;
