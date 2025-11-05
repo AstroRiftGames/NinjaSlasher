@@ -60,6 +60,7 @@ public class ButtonManager : MonoBehaviour
     [Header("NO LIVES PANEL BUTTONS")]
     [SerializeField] private Button _closeNoLivesPanelButton;
     [SerializeField] private Button _adForMoreLifeButton;
+    [SerializeField] private Button _claimButton;
 
     [Header("PROGRESSION UI")]
     [SerializeField] private Image[] levelButtonImages;
@@ -263,6 +264,7 @@ public class ButtonManager : MonoBehaviour
 
         //_userNicknameButtonText = LoginManager.Instance.PlayerName;
         //_userNicknameButtonText = LoginManager.Instance.PlayerId;
+        _claimButton.onClick.AddListener(OnClaimLifeButtonPressed);
 
         _userNicknameButton.onClick.AddListener(UIManager.Instance.ShowHideUserNicknameEditCanvas);
         _closeUserNicknameEditButton.onClick.AddListener(UIManager.Instance.ShowHideUserNicknameEditCanvas);
@@ -309,6 +311,20 @@ public class ButtonManager : MonoBehaviour
                     ShowLevelLockedMessage(levelId);
                 }
             });
+        }
+    }
+
+    public void OnClaimLifeButtonPressed()
+    {
+        if (LifeManager.Instance != null)
+        {
+            LifeManager.Instance.AddLife();
+            Debug.Log("Vida reclamada exitosamente");
+
+            if (UIManager.Instance != null)
+            {
+                UIManager.Instance.ShowHideNoLivesCanvas();
+            }
         }
     }
 
