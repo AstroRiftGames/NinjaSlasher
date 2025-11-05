@@ -97,6 +97,11 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
         if (_isInitialized)
         {
             _gameplayUIManager.UpdateUI();
+
+            if (Input.GetKeyDown(KeyCode.T))
+            {
+                Cursor.visible = !Cursor.visible;
+            }
         }
     }
 
