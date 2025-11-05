@@ -63,7 +63,7 @@ public class Projectile : MonoBehaviour
     public void OnCollisionEnter2D(Collision2D collision)
     {
         string colTag = collision.gameObject.tag;
-        if (Shooter.tag != colTag && colTag is "Player" or "Boss" or "Scenario" or "Ceiling" or "Floor" or "Enemy")
+        if (Shooter.tag != colTag && colTag is "Player" or "Boss" or "Scenario" or "Ceiling" or "Floor" or "Enemy" or "Obstacle")
         {
             Collide(collision.collider);
         }
