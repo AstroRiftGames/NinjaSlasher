@@ -12,7 +12,6 @@ public class GameplayUIManager : MonoBehaviour
     [SerializeField] private TextMeshProUGUI _noLivesTimerText;
     [SerializeField] private TextMeshProUGUI _levelTimerText;
     [SerializeField] private TextMeshProUGUI _bonusTimeText;
-    [SerializeField] private GameObject _lifeLostPanel;
     [SerializeField] private TextMeshProUGUI _puRemainingTime;
 
     private bool _noLivesActive = false;
@@ -25,7 +24,6 @@ public class GameplayUIManager : MonoBehaviour
             LifeManager.Instance.OnLivesChanged += OnLivesChanged;
 
         UpdateLivesUI(LifeManager.Instance?.GetDisplayLives() ?? 0);
-        _lifeLostPanel.SetActive(false);
 
         if (_bonusTimeText != null)
             _bonusTimeText.gameObject.SetActive(false);
@@ -147,20 +145,6 @@ public class GameplayUIManager : MonoBehaviour
         _puRemainingTime.text = text;
     }
 
-    public void ShowLifeLostPanel()
-    {
-        _lifeLostPanel.SetActive(true);
-        StartCoroutine(HideLifeLostPanelCoroutine());
-    }
-
-    public void HideLifeLostPanel() => _lifeLostPanel.SetActive(false);
-
-    private IEnumerator HideLifeLostPanelCoroutine()
-    {
-        yield return new WaitForSeconds(2f);
-        HideLifeLostPanel();
-    }
-
     public void ShowNoLivesPanel()
     {
         _noLivesActive = true;
@@ -179,10 +163,13 @@ public class GameplayUIManager : MonoBehaviour
     {
         AudioManager.Instance.PlaySFX(SFXClip.UI_Select);
         UIManager.Instance.RestartLevel();
+        UIManager.Instance.ShowHideLifeLostCanvas();
+        //HideLifeLostPanel();
     }
 
     public void OnBackToSelectionPressed()
     {
+        UIManager.Instance.ShowHideLifeLostCanvas();
         AudioManager.Instance.PlaySFX(SFXClip.UI_Select);
         var canvasManager = UIManager.Instance.GetComponent<CanvasManager>();
         if (canvasManager != null)

@@ -17,6 +17,7 @@ public class CanvasManager : MonoBehaviour
     [SerializeField] private Canvas _resultsCanvas;
     [SerializeField] private Canvas _userIconsCanvas;
     [SerializeField] private Canvas _userNicknameEditCanvas;
+    [SerializeField] private Canvas _lifeLostCanvas;
 
     [Header("PANEL REFERENCES")]
     [SerializeField] private RectTransform _profilePanel;
@@ -25,6 +26,7 @@ public class CanvasManager : MonoBehaviour
     [SerializeField] private RectTransform _preGamePanel;
     [SerializeField] private RectTransform _pausePanel;
     [SerializeField] private RectTransform _noLivesPanel;
+    [SerializeField] private RectTransform _lifeLostPanel;
 
     [Header("ANIMATION")]
     [SerializeField] private float _animationDuration = 0.1f;
@@ -165,6 +167,7 @@ public class CanvasManager : MonoBehaviour
         if (canvas == _preGameCanvas) return _preGamePanel;
         if (canvas == _pauseCanvas) return _pausePanel;
         if (canvas == _noLivesCanvas) return _noLivesPanel;
+        if (canvas == _lifeLostCanvas) return _lifeLostPanel;
 
         return null;
     }
@@ -175,6 +178,23 @@ public class CanvasManager : MonoBehaviour
         if (canvasGroup == null)
             canvasGroup = canvas.gameObject.AddComponent<CanvasGroup>();
         return canvasGroup;
+    }
+
+    public void ShowHideLifeLostCanvas()
+    {
+        bool isCanvasActive = !_lifeLostCanvas.enabled;
+        var panelAnimation = _lifeLostPanel.GetComponent<Animator>();
+        if (isCanvasActive)
+        {
+            panelAnimation.SetTrigger("Open");
+            ShowCanvasAnimated(_lifeLostCanvas);
+            SetGameplayCanvasEnabled(false);
+        }
+        else
+        {
+            panelAnimation.SetTrigger("Close");
+            HideCanvasAnimated(_lifeLostCanvas);
+        }
     }
 
     public void ShowHideResultsCanvas()
