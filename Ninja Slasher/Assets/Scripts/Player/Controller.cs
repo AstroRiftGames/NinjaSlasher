@@ -138,12 +138,16 @@ public class Controller : MonoBehaviour
 
     private void CustomUpdate()
     {
+        if(!_isDead)
+        {
+
         _root.Execute();
         _fsm.OnUpdate();
 
         CheckSwipe();
 
         HandleParryTimer();
+        }
         UpdateAnimatorParameters();
     }
 
