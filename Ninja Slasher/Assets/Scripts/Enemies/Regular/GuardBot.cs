@@ -95,7 +95,7 @@ public class GuardBot : Enemy
         _animator.SetTrigger("OnDetection");
         AudioManager.Instance.PlaySFXAtPosition(SFXClip.E_Guard_Detection, transform.position);
         _currentSpeed = 0;
-        yield return new WaitForSeconds(3f);
+        yield return new WaitForSeconds(1f);
         _animator.SetTrigger("OnPushStart");
         AudioManager.Instance.PlaySFXAtPosition(SFXClip.E_Guard_Charge, transform.position);
         _currentSpeed = _speed * _speedMultiplier;
@@ -126,6 +126,7 @@ public class GuardBot : Enemy
 
     public override void Die()
     {
+        _currentSpeed = 0;
         AudioManager.Instance.PlaySFXAtPosition(SFXClip.E_Guard_Death, transform.position);
         FrontCol.SetActive(false);
         RearCol.SetActive(false);
