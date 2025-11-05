@@ -244,7 +244,6 @@ public class LevelProgressionManager : MonoBehaviourSingleton<LevelProgressionMa
 
     public void HandleLevelCompletion(int levelId, int starsEarned)
     {
-        SaveManager.Instance?.ShowProgressionDebug();
         SaveManager.Instance?.UpdateLevelProgression(levelId, starsEarned);
 
         //CheckConsecutiveLevelAd(levelId, starsEarned);
@@ -271,7 +270,6 @@ public class LevelProgressionManager : MonoBehaviourSingleton<LevelProgressionMa
         }
 
         OnProgressionUpdated?.Invoke();
-        SaveManager.Instance?.ShowProgressionDebug();
     }
 
     private bool ShouldUnlockNextLevel(int nextLevel)
