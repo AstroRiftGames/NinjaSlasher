@@ -19,6 +19,7 @@ public class Controller : MonoBehaviour
     [SerializeField] private float slashEffectDuration;
     private float _lastDash;
     private Collider2D _currentSurface;
+    private Vector2 _currentNormal;
     private bool _lastSurfaceWasElastic = false;
     private Vector2 _lastDashDirection;
     private Vector2 _wishedDirection;
@@ -325,6 +326,62 @@ public class Controller : MonoBehaviour
 
         Vector2 dashDir = -swipeDelta.normalized;
 
+        Debug.DrawRay(transform.position, dashDir, Color.blue,2f);
+        Debug.DrawRay(transform.position, _currentNormal, Color.blue,2f);
+        
+        float angle = Mathf.Atan2(dashDir.y, dashDir.x) * Mathf.Rad2Deg - Mathf.Atan2(_currentNormal.y, _currentNormal.x) * Mathf.Rad2Deg;
+
+        if (_currentNormal == Vector2.up)
+        {
+            if (angle is > 90 and < 180)
+            {
+                dashDir = -transform.right;
+            }
+            else if (angle is < -90 and > -180)
+            {
+                dashDir = transform.right;
+            }
+        }
+
+        if(_currentNormal == Vector2.down)
+        {
+            if (angle is > 90 and < 180)
+            {
+                dashDir = transform.right;
+            }
+            else if (angle is < -90 and > -180)
+            {
+                dashDir = -transform.right;
+            }
+        }
+
+        if(_currentNormal == Vector2.right)
+        {
+
+
+            if (angle is > 90 and < 180)
+            {
+                dashDir = transform.up;
+            }
+            else if (angle is < -90 and > -180)
+            {
+                dashDir = -transform.up;
+            }
+        }
+
+
+        if(_currentNormal == Vector2.left)
+        {
+            if (angle is > 90 and < 180)
+            {
+                dashDir = -transform.up;
+            }
+            else if (angle is < -90 and > -180)
+            {
+                dashDir = transform.up;
+            }
+        }
+
         float dashCD = _playerModel.DashCD;
 
         var context = PowerUpManager.Instance?.context;
@@ -468,6 +525,7 @@ public class Controller : MonoBehaviour
             }
 
             _currentSurface = collision.collider;
+            _currentNormal = collision.GetContact(0).normal.normalized;
 
             SetIsDashing(false);
             SetGrabbingAnimation();
@@ -697,9 +755,6 @@ public class Controller : MonoBehaviour
         RaycastHit2D colPoint = Physics2D.Raycast(transform.position, _wishedDirection, float.MaxValue, _scenarioLayer);
         Vector2 normal = colPoint.normal;
 
-        Debug.DrawRay(transform.position, _wishedDirection * float.MaxValue, Color.red, 1f);
-        Debug.DrawRay(colPoint.point, normal * 1f, Color.red, 1f);
-
         if (normal != null)
         {
             if (normal == Vector2.right || normal == Vector2.left)
@@ -715,18 +770,18 @@ public class Controller : MonoBehaviour
     }
     #endregion
 
-    private void OnDrawGizmos()
-    {
-        if (isSwiping && currentSwipe.magnitude >= minSwipeDistance)
-        {
-            Gizmos.color = Color.yellow;
-            Vector3 start = transform.position;
-            Vector3 end = start + (Vector3)(-currentSwipe.normalized * 2f);
-            Gizmos.DrawLine(start, end);
-            Gizmos.DrawSphere(end, 0.1f);
-        }
+    //private void OnDrawGizmos()
+    //{
+    //    if (isSwiping && currentSwipe.magnitude >= minSwipeDistance)
+    //    {
+    //        Gizmos.color = Color.yellow;
+    //        Vector3 start = transform.position;
+    //        Vector3 end = start + (Vector3)(-currentSwipe.normalized * 2f);
+    //        Gizmos.DrawLine(start, end);
+    //        Gizmos.DrawSphere(end, 0.1f);
+    //    }
 
-        Gizmos.color = Color.cyan;
-        Gizmos.DrawWireSphere(transform.position, 2f);
-    }
+    //    Gizmos.color = Color.cyan;
+    //    Gizmos.DrawWireSphere(transform.position, 2f);
+    //}
 }
