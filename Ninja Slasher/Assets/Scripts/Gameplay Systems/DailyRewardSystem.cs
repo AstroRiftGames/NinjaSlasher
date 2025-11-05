@@ -260,10 +260,6 @@ public class DailyRewardSystem : MonoBehaviourSingleton<DailyRewardSystem>
 
         SaveRewardData();
 
-#if UNITY_EDITOR
-        SaveManager.Instance.DebugPrintDailyRewardFields();
-#endif
-
         OnRewardClaimed?.Invoke(claimed);
         OnRewardAvailabilityChanged?.Invoke(false);
         return true;
