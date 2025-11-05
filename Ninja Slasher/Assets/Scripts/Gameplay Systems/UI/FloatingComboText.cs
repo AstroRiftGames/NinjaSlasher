@@ -44,14 +44,24 @@ public class FloatingComboText : MonoBehaviour
             return;
         }
 
-        Camera canvasCamera = canvas.worldCamera != null ? canvas.worldCamera : Camera.main;
+        Camera canvasCamera = canvas.worldCamera != null ?
+            canvas.worldCamera : Camera.main;
 
         if (canvasCamera == null)
         {
             return;
         }
 
-        Vector3 screenPosition = canvasCamera.WorldToScreenPoint(worldPosition);
+        Vector3 viewportPosition = canvasCamera.WorldToViewportPoint(worldPosition);
+
+        Rect cameraRect = canvasCamera.rect;
+        viewportPosition.x = (viewportPosition.x - cameraRect.x) / cameraRect.width;
+        viewportPosition.y = (viewportPosition.y - cameraRect.y) / cameraRect.height;
+
+        Vector2 screenPosition = new Vector2(
+            viewportPosition.x * Screen.width,
+            viewportPosition.y * Screen.height
+        );
 
         RectTransformUtility.ScreenPointToLocalPointInRectangle(
             canvas.transform as RectTransform,

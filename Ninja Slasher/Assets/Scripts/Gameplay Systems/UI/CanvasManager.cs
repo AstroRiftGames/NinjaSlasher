@@ -397,6 +397,7 @@ public class CanvasManager : MonoBehaviour
     public void SetGameplayCanvasEnabled(bool enabled) => _gameplayCanvas.enabled = enabled;
     public void SetPauseCanvasEnabled(bool enabled) => _pauseCanvas.enabled = enabled;
     public Canvas GetResultsCanvas() => _resultsCanvas;
+    public Canvas GetGameplayCanvas() => _gameplayCanvas;
 
     private void OnDisable()
     {

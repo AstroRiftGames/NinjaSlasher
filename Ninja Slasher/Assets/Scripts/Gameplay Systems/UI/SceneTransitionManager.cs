@@ -11,6 +11,8 @@ public class SceneTransitionManager : MonoBehaviour
     [Header("DAILY REWARDS")]
     [SerializeField] private DailyRewardUIManager _dailyRewardUI;
 
+    [SerializeField] private GameObject _hudObject;
+
     private CanvasManager _canvasManager;
 
     private void Awake()
@@ -26,6 +28,8 @@ public class SceneTransitionManager : MonoBehaviour
 
     private IEnumerator LoadLevelSceneCo(string sceneName)
     {
+        SetHUDActive(false);
+
         _transitionAnim.SetTrigger("Start");
         yield return new WaitForSeconds(_transitionTime);
         _canvasManager.SetLevelsCanvasEnabled(false);
@@ -33,6 +37,9 @@ public class SceneTransitionManager : MonoBehaviour
         _transitionAnim.SetTrigger("End");
         AudioManager.Instance.PlaySFX(SFXClip.UI_TransitionSlash);
         _canvasManager.SetGameplayCanvasEnabled(true);
+
+        yield return new WaitForEndOfFrame();
+        SetHUDActive(true);
     }
 
     public void RestartLevel()
@@ -53,6 +60,8 @@ public class SceneTransitionManager : MonoBehaviour
     private IEnumerator ShowLevelSelectorCo()
     {
         Time.timeScale = 1;
+
+        SetHUDActive(false);
 
         _canvasManager.CloseCanvas(_canvasManager.GetResultsCanvas());
 
@@ -112,5 +121,13 @@ public class SceneTransitionManager : MonoBehaviour
         SceneManager.LoadScene("TestScene");
         _transitionAnim.SetTrigger("End");
         _canvasManager.SetGameplayCanvasEnabled(true);
+    }
+
+    private void SetHUDActive(bool active)
+    {
+        if (_hudObject != null)
+        {
+            _hudObject.SetActive(active);
+        }
     }
 }
