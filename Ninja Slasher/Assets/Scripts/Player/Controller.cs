@@ -106,7 +106,7 @@ public class Controller : MonoBehaviour
     }
 
     private bool QDash() => IsDashing() || CanDashFromInput();
-    private bool QGrab() => _currentSurface != null && !IsDashing();
+    private bool QGrab() => !IsDashing();
     private bool QParry() => CanParryFromInput();
     private bool QKO() => _isDead;
 
@@ -518,12 +518,12 @@ if (Input.touchCount > 0)
             colTag == "Ceiling" ||
             collision.gameObject.GetComponent<PlatformBase>() != null)
         {
+            Debug.Log("Ninja landed in: " + colTag);
 
-            Debug.Log("Collided with platform");
+            SetIsDashing(false);
             _currentSurface = collision.collider;
             _currentNormal = collision.GetContact(0).normal.normalized;
 
-            SetIsDashing(false);
             SetGrabbingAnimation();
             RotateSprites(colTag == "Ceiling" ? Vector2.left : Vector2.right);
             AudioManager.Instance.PlaySFXAtPosition(SFXClip.P_Landing_General, transform.position);
