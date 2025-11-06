@@ -39,6 +39,11 @@ public class TutorialManager : MonoBehaviour
 
     private void Awake()
     {
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
         Instance = this;
     }
 
@@ -58,12 +63,25 @@ public class TutorialManager : MonoBehaviour
         tutorialActive = true;
         currentTextIndex = 0;
 
+        hasPerformedFirstDash = false;
+        hasKilledFirstEnemy = false;
+        hasPerformedCombo = false;
+        hasPerformedParry = false;
+        enemiesKilledCount = 0;
+        canCompleteParryTutorial = false;
+
+        waitingForDash = false;
+        waitingForEnemyKill = false;
+        waitingForCombo = false;
+        waitingForParry = false;
+
         if (playerController != null)
         {
             playerController.SetInputEnabled(false);
         }
 
         HideAllTexts();
+        HideAllAnimations();
         ShowCurrentText();
     }
 
@@ -206,14 +224,18 @@ public class TutorialManager : MonoBehaviour
                 break;
 
             case 1:
-                if (handAnimation != null)
+                if (playerController != null)
                 {
-                    handAnimation.SetActive(false);
+                    playerController.SetInputEnabled(true);
                 }
                 waitingForEnemyKill = true;
                 break;
 
             case 2:
+                if (playerController != null)
+                {
+                    playerController.SetInputEnabled(true);
+                }
                 StartCoroutine(HideTextAfterDelay(textDisplayTime, () => {
                     waitingForEnemyKill = true;
                 }));
@@ -288,7 +310,7 @@ public class TutorialManager : MonoBehaviour
         {
             waitingForDash = false;
 
-            if (currentTutorialTexts[currentTextIndex] != null)
+            if (currentTextIndex < currentTutorialTexts.Length && currentTutorialTexts[currentTextIndex] != null)
             {
                 currentTutorialTexts[currentTextIndex].SetActive(false);
             }
@@ -301,7 +323,7 @@ public class TutorialManager : MonoBehaviour
         {
             waitingForEnemyKill = false;
 
-            if (currentTutorialTexts[currentTextIndex] != null)
+            if (currentTextIndex < currentTutorialTexts.Length && currentTutorialTexts[currentTextIndex] != null)
             {
                 currentTutorialTexts[currentTextIndex].SetActive(false);
             }
@@ -323,6 +345,11 @@ public class TutorialManager : MonoBehaviour
         {
             waitingForParry = false;
 
+            if (handAnimationParry != null)
+            {
+                handAnimationParry.SetActive(false);
+            }
+
             HideAllLevel3Texts();
 
             CompleteTutorial();
@@ -336,8 +363,42 @@ public class TutorialManager : MonoBehaviour
         if (!hasPerformedFirstDash)
         {
             hasPerformedFirstDash = true;
-            CheckForActionCompletion();
+
+            StartCoroutine(DelayedAnimationHide());
         }
+    }
+
+    private IEnumerator DelayedAnimationHide()
+    {
+        yield return new WaitForSeconds(0.3f);
+
+        HandSwipeAnimation[] allHandAnimations = FindObjectsOfType<HandSwipeAnimation>(true);
+
+        foreach (var anim in allHandAnimations)
+        {
+            string path = GetGameObjectPath(anim.gameObject);
+            anim.StopAnimation();
+            anim.gameObject.SetActive(false);
+        }
+
+        if (handAnimation != null)
+        {
+            handAnimation.SetActive(false);
+        }
+
+        CheckForActionCompletion();
+    }
+
+    private string GetGameObjectPath(GameObject obj)
+    {
+        string path = obj.name;
+        Transform current = obj.transform.parent;
+        while (current != null)
+        {
+            path = current.name + "/" + path;
+            current = current.parent;
+        }
+        return path;
     }
 
     public void OnEnemyKilled()
@@ -381,16 +442,7 @@ public class TutorialManager : MonoBehaviour
         tutorialActive = false;
 
         HideAllTexts();
-
-        if (currentLevel == 1 && handAnimation != null)
-        {
-            handAnimation.SetActive(false);
-        }
-
-        if (currentLevel == 3 && handAnimationParry != null)
-        {
-            handAnimationParry.SetActive(false);
-        }
+        HideAllAnimations();
 
         if (playerController != null)
         {
@@ -417,16 +469,7 @@ public class TutorialManager : MonoBehaviour
         StopAllCoroutines();
 
         HideAllTexts();
-
-        if (currentLevel == 1 && handAnimation != null)
-        {
-            handAnimation.SetActive(false);
-        }
-
-        if (handAnimationParry != null)
-        {
-            handAnimationParry.SetActive(false);
-        }
+        HideAllAnimations();
 
         if (playerController != null)
         {
@@ -467,6 +510,19 @@ public class TutorialManager : MonoBehaviour
                     tutorialTextsLevel3[i].SetActive(false);
                 }
             }
+        }
+    }
+
+    private void HideAllAnimations()
+    {
+        if (handAnimation != null)
+        {
+            handAnimation.SetActive(false);
+        }
+
+        if (handAnimationParry != null)
+        {
+            handAnimationParry.SetActive(false);
         }
     }
 

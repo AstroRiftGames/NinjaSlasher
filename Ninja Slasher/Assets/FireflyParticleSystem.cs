@@ -1,4 +1,6 @@
+#if UNITY_EDITOR
 using UnityEditor;
+#endif
 using UnityEngine;
 
 [RequireComponent(typeof(ParticleSystem))]
@@ -140,11 +142,13 @@ public class FireflyParticleSystem : MonoBehaviour
             pulseCurve.AddKey(0.75f, 1f);
             pulseCurve.AddKey(1f, 0.3f);
 
+#if UNITY_EDITOR
             for (int i = 0; i < pulseCurve.keys.Length; i++)
             {
                 AnimationUtility.SetKeyLeftTangentMode(pulseCurve, i, AnimationUtility.TangentMode.ClampedAuto);
                 AnimationUtility.SetKeyRightTangentMode(pulseCurve, i, AnimationUtility.TangentMode.ClampedAuto);
             }
+#endif
         }
 
         sizeModule.size = new ParticleSystem.MinMaxCurve(1f, pulseCurve);

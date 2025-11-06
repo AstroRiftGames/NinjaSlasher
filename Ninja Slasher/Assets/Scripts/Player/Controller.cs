@@ -404,8 +404,6 @@ if (Input.touchCount > 0)
         _lastDash = Time.time;
 
         _dashInputDetected = true;
-
-        NotifyTutorialDashPerformed();
     }
 
     private void NotifyTutorialDashPerformed()
@@ -425,6 +423,7 @@ if (Input.touchCount > 0)
         }
         return false;
     }
+
     public void Dash()
     {
         _playerView.Animator.SetBool("IsWallGrabbed", false);
@@ -444,9 +443,10 @@ if (Input.touchCount > 0)
 
         SetIsMirrored(false);
         RotateSprites(_lastDashDirection);
+
+        NotifyTutorialDashPerformed();
     }
 
-    
     #endregion
 
     #region PARRYING
