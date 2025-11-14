@@ -39,8 +39,6 @@ private bool CheckLOS(Transform target)
         Vector2 dirToTarget = (target.position - transform.position).normalized;
         float disToTarget = Vector2.Distance(transform.position, target.position);
 
-        Debug.DrawRay(transform.position, dirToTarget * _detectionRange, Color.red, 1f);
-
         bool _noObstacles = !Physics2D.Raycast(transform.position, dirToTarget, _detectionRange, _obstaclesLayer);
         bool _player = Physics2D.Raycast(transform.position, dirToTarget, _detectionRange, _playerLayer);
 
