@@ -18,6 +18,7 @@ public class CanvasManager : MonoBehaviour
     [SerializeField] private Canvas _userIconsCanvas;
     [SerializeField] private Canvas _userNicknameEditCanvas;
     [SerializeField] private Canvas _lifeLostCanvas;
+    [SerializeField] private Canvas _dailyWheelCanvas;
 
     [Header("PANEL REFERENCES")]
     [SerializeField] private RectTransform _profilePanel;
@@ -27,6 +28,7 @@ public class CanvasManager : MonoBehaviour
     [SerializeField] private RectTransform _pausePanel;
     [SerializeField] private RectTransform _noLivesPanel;
     [SerializeField] private RectTransform _lifeLostPanel;
+    [SerializeField] private RectTransform _dailyWheelPanel;
 
     [Header("ANIMATION")]
     [SerializeField] private float _animationDuration = 0.1f;
@@ -168,6 +170,7 @@ public class CanvasManager : MonoBehaviour
         if (canvas == _pauseCanvas) return _pausePanel;
         if (canvas == _noLivesCanvas) return _noLivesPanel;
         if (canvas == _lifeLostCanvas) return _lifeLostPanel;
+        if (canvas == _dailyWheelCanvas) return _dailyWheelPanel;
 
         return null;
     }
@@ -389,6 +392,12 @@ public class CanvasManager : MonoBehaviour
     {
         bool isCanvasActive = !canvas.enabled;
         ShowHideCanvas(canvas, isCanvasActive);
+    }
+
+    public void ShowHideDailyWheelCanvas()
+    {
+        bool isCanvasActive = !_dailyWheelCanvas.enabled;
+        ShowHideCanvas(_dailyWheelCanvas, isCanvasActive);
     }
 
     public void ShowHideUserNicknameEditCanvas() => ToggleCanvas(_userNicknameEditCanvas);
