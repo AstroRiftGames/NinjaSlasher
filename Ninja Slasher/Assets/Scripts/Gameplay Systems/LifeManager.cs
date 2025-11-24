@@ -32,7 +32,7 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
     {
         base.Awake();
         InitializeFromSave();
-        //LoadAdsProgress();
+        LoadAdsProgress();
     }
 
     private void Start()
@@ -183,7 +183,7 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
                 );
             }
 
-            //CheckLifeLossAds();
+            CheckLifeLossAds();
 
             Persist("Vida perdida (confirmada)");
             EmitDisplayLivesChanged();
@@ -206,7 +206,7 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
                 );
             }
 
-            //CheckLifeLossAds();
+            CheckLifeLossAds();
 
             Persist("Vida perdida (directa)");
             EmitDisplayLivesChanged();
@@ -221,7 +221,7 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
             _hasVirtualDeduction = false;
             _levelInProgress = false;
 
-            //ResetLossCounter();
+            ResetLossCounter();
 
             EmitDisplayLivesChanged();
         }
@@ -309,75 +309,75 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
         OnLivesChanged?.Invoke(GetDisplayLives());
     }
 
-    //private void LoadAdsProgress()
-    //{
-    //    currentConsecutiveLosses = PlayerPrefs.GetInt("ConsecutiveLosses", 0);
-    //}
+    private void LoadAdsProgress()
+    {
+        currentConsecutiveLosses = PlayerPrefs.GetInt("ConsecutiveLosses", 0);
+    }
 
-    //private void SaveAdsProgress()
-    //{
-    //    PlayerPrefs.SetInt("ConsecutiveLosses", currentConsecutiveLosses);
-    //    PlayerPrefs.Save();
-    //}
+    private void SaveAdsProgress()
+    {
+        PlayerPrefs.SetInt("ConsecutiveLosses", currentConsecutiveLosses);
+        PlayerPrefs.Save();
+    }
 
-    //private void CheckLifeLossAds()
-    //{
-    //    if (enableNoLivesAds && CurrentLives == 0)
-    //    {
-    //        ShowNoLivesAd();
-    //        ResetLossCounter();
-    //    }
-    //    else if (enableConsecutiveLossAds)
-    //    {
-    //        currentConsecutiveLosses++;
+    private void CheckLifeLossAds()
+    {
+        if (enableNoLivesAds && CurrentLives == 0)
+        {
+            ShowNoLivesAd();
+            ResetLossCounter();
+        }
+        else if (enableConsecutiveLossAds)
+        {
+            currentConsecutiveLosses++;
 
-    //        if (currentConsecutiveLosses >= lossesRequiredForAd)
-    //        {
-    //            ShowConsecutiveLossAd();
-    //            ResetLossCounter();
-    //        }
-    //    }
+            if (currentConsecutiveLosses >= lossesRequiredForAd)
+            {
+                ShowConsecutiveLossAd();
+                ResetLossCounter();
+            }
+        }
 
-    //    SaveAdsProgress();
-    //}
+        SaveAdsProgress();
+    }
 
-    //private void ShowConsecutiveLossAd()
-    //{
-    //    if (AdsManager.Instance != null && AdsManager.Instance.IsInterstitialAdReady())
-    //    {
-    //        AdsManager.Instance.ShowInterstitialAd();
-    //    }
-    //    else
-    //    {
-    //        if (AdsManager.Instance != null)
-    //        {
-    //            AdsManager.Instance.ReloadAllAds();
-    //        }
-    //    }
-    //}
+    private void ShowConsecutiveLossAd()
+    {
+        if (AdsManager.Instance != null && AdsManager.Instance.IsInterstitialAdReady())
+        {
+            AdsManager.Instance.ShowInterstitialAd();
+        }
+        else
+        {
+            if (AdsManager.Instance != null)
+            {
+                AdsManager.Instance.ReloadAllAds();
+            }
+        }
+    }
 
-    //private void ShowNoLivesAd()
-    //{
-    //    if (AdsManager.Instance != null && AdsManager.Instance.IsInterstitialAdReady())
-    //    {
-    //        AdsManager.Instance.ShowInterstitialAd();
-    //    }
-    //    else
-    //    {
-    //        if (AdsManager.Instance != null)
-    //        {
-    //            AdsManager.Instance.ReloadAllAds();
-    //        }
-    //    }
-    //}
+    private void ShowNoLivesAd()
+    {
+        if (AdsManager.Instance != null && AdsManager.Instance.IsInterstitialAdReady())
+        {
+            AdsManager.Instance.ShowInterstitialAd();
+        }
+        else
+        {
+            if (AdsManager.Instance != null)
+            {
+                AdsManager.Instance.ReloadAllAds();
+            }
+        }
+    }
 
-    //private void ResetLossCounter()
-    //{
-    //    if (currentConsecutiveLosses > 0)
-    //    {
-    //        Debug.Log($"Contador de derrotas reseteado (era: {currentConsecutiveLosses})");
-    //    }
-    //    currentConsecutiveLosses = 0;
-    //    SaveAdsProgress();
-    //}
+    private void ResetLossCounter()
+    {
+        if (currentConsecutiveLosses > 0)
+        {
+            Debug.Log($"Contador de derrotas reseteado (era: {currentConsecutiveLosses})");
+        }
+        currentConsecutiveLosses = 0;
+        SaveAdsProgress();
+    }
 }
