@@ -13,18 +13,3 @@ public class WheelReward
     [Range(0f, 1f)]
     public float weight = 1f;
 }
-
-[Serializable]
-public class WheelData
-{
-    public string lastSpinDate;
-    public int totalSpins;
-    public int consecutiveSpins;
-
-    public WheelData()
-    {
-        lastSpinDate = string.Empty;
-        totalSpins = 0;
-        consecutiveSpins = 0;
-    }
-}
