@@ -11,6 +11,9 @@ public class SceneTransitionManager : MonoBehaviour
     [Header("DAILY REWARDS")]
     [SerializeField] private DailyRewardUIManager _dailyRewardUI;
 
+    [Header("DAILY WHEEL")]
+    [SerializeField] private DailyWheelUI _dailyWheelUI;
+
     [SerializeField] private GameObject _hudObject;
 
     private CanvasManager _canvasManager;
@@ -19,6 +22,23 @@ public class SceneTransitionManager : MonoBehaviour
     {
         _canvasManager = GetComponent<CanvasManager>();
         _dailyRewardUI = GetComponentInChildren<DailyRewardUIManager>();
+        _dailyWheelUI = GetComponentInChildren<DailyWheelUI>();
+    }
+
+    private void OnEnable()
+    {
+        if (_dailyWheelUI != null)
+        {
+            _dailyWheelUI.OnWheelProcessComplete += OnWheelCompleted;
+        }
+    }
+
+    private void OnDisable()
+    {
+        if (_dailyWheelUI != null)
+        {
+            _dailyWheelUI.OnWheelProcessComplete -= OnWheelCompleted;
+        }
     }
 
     public void LoadLevelScene(string sceneName)
@@ -46,7 +66,6 @@ public class SceneTransitionManager : MonoBehaviour
     {
         string sceneName = SceneManager.GetActiveScene().name;
         LoadLevelScene(sceneName);
-        //UIManager.Instance.ShowHidePauseCanvas();
     }
 
     public void ShowLevelSelector()
@@ -54,7 +73,7 @@ public class SceneTransitionManager : MonoBehaviour
         StartCoroutine(ShowLevelSelectorCo());
         GetComponent<GameplayUIManager>().UpdateLivesUI(LifeManager.Instance.CurrentLives);
         GetComponent<DebugUIManager>()?.ShowStarsDebug();
-        CheckAndShowDailyRewards();
+        CheckAndShowDailySequence();
     }
 
     private IEnumerator ShowLevelSelectorCo()
@@ -75,23 +94,73 @@ public class SceneTransitionManager : MonoBehaviour
         AudioManager.Instance.PlaySFX(SFXClip.UI_TransitionSlash);
     }
 
-    private void CheckAndShowDailyRewards()
+    private void CheckAndShowDailySequence()
     {
-        StartCoroutine(CheckAndShowDailyRewardsWhenReady());
+        StartCoroutine(CheckAndShowDailySequenceWhenReady());
     }
 
-    private IEnumerator CheckAndShowDailyRewardsWhenReady()
+    private IEnumerator CheckAndShowDailySequenceWhenReady()
     {
-        while (SaveManager.Instance == null || !SaveManager.Instance.IsDataLoaded || DailyRewardSystem.Instance == null)
+        while (SaveManager.Instance == null || !SaveManager.Instance.IsDataLoaded ||
+               DailyWheelSystem.Instance == null || DailyRewardSystem.Instance == null)
+        {
             yield return null;
+        }
 
         yield return null;
 
-        bool canClaim = DailyRewardSystem.Instance.CanClaimToday();
-        Debug.Log($"[SceneTransition] CanClaimToday (ready): {canClaim}");
+        bool canSpinWheel = DailyWheelSystem.Instance.CanSpinToday();
+        bool canClaimReward = DailyRewardSystem.Instance.CanClaimToday();
 
-        if (canClaim)
+        Debug.Log($"[SceneTransition] CanSpinWheel: {canSpinWheel}, CanClaimReward: {canClaimReward}");
+
+        if (canSpinWheel)
+        {
+            StartCoroutine(ShowDailyWheelAfterDelay(1f));
+        }
+        else if (canClaimReward)
+        {
             StartCoroutine(ShowDailyRewardsAfterDelay(1f));
+        }
+    }
+
+    private IEnumerator ShowDailyWheelAfterDelay(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+
+        if (_dailyWheelUI == null)
+        {
+            Debug.LogWarning("[SceneTransition] DailyWheelUI no encontrado");
+            CheckAndShowDailyRewardsAfterWheel();
+            yield break;
+        }
+
+        _canvasManager.ShowHideDailyWheelCanvas();
+    }
+
+    private void OnWheelCompleted()
+    {
+        _canvasManager.ShowHideDailyWheelCanvas();
+
+        CheckAndShowDailyRewardsAfterWheel();
+    }
+
+    private void CheckAndShowDailyRewardsAfterWheel()
+    {
+        StartCoroutine(CheckAndShowDailyRewardsAfterWheelCo());
+    }
+
+    private IEnumerator CheckAndShowDailyRewardsAfterWheelCo()
+    {
+        yield return new WaitForSeconds(0.5f);
+
+        bool canClaimReward = DailyRewardSystem.Instance.CanClaimToday();
+        Debug.Log($"[SceneTransition] CanClaimReward (after wheel): {canClaimReward}");
+
+        if (canClaimReward)
+        {
+            StartCoroutine(ShowDailyRewardsAfterDelay(0.5f));
+        }
     }
 
     private IEnumerator ShowDailyRewardsAfterDelay(float delay)
@@ -100,6 +169,7 @@ public class SceneTransitionManager : MonoBehaviour
 
         if (_dailyRewardUI == null)
         {
+            Debug.LogWarning("[SceneTransition] DailyRewardUI no encontrado");
             yield break;
         }
 

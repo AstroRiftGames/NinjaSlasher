@@ -174,9 +174,6 @@ public class DailyWheelUI : MonoBehaviour
         if (rewardQuantityText != null) rewardQuantityText.text = $"x{reward.quantity}";
         if (rewardIconImage != null) rewardIconImage.sprite = reward.icon;
 
-        if (rewardPopupBackground != null)
-            rewardPopupBackground.color = new Color(themeColor.r, themeColor.g, themeColor.b, 0.8f);
-
         rewardPopup.SetActive(true);
         rewardPopup.transform.localScale = Vector3.zero;
 
