@@ -33,12 +33,12 @@ public class IAPManager : MonoBehaviourSingleton<IAPManager>, IDetailedStoreList
             if (UnityServices.State == ServicesInitializationState.Uninitialized)
             {
                 await UnityServices.InitializeAsync();
-                Debug.Log("[IAPManager] Unity Services inicializados correctamente.");
+                Debug.Log("[IAPManager] Unity Services inicialized.");
             }
         }
         catch (Exception e)
         {
-            Debug.LogError($"[IAPManager] Error al inicializar Unity Services: {e.Message}");
+            Debug.LogError($"[IAPManager] Error initializing Unity Services: {e.Message}");
             OnIAPInitializationFailed?.Invoke(e.Message);
         }
     }
@@ -54,12 +54,12 @@ public class IAPManager : MonoBehaviourSingleton<IAPManager>, IDetailedStoreList
                 builder.AddProduct(product.ProductId, product.ProductType);
             }
 
-            Debug.Log("[IAPManager] Iniciando inicialización de IAP...");
+            Debug.Log("[IAPManager] Starting IAP initialization...");
             UnityPurchasing.Initialize(this, builder);
         }
         catch (Exception e)
         {
-            Debug.LogError($"[IAPManager] Error durante la inicialización de IAP: {e.Message}");
+            Debug.LogError($"[IAPManager] Error during IAP initialization: {e.Message}");
             OnIAPInitializationFailed?.Invoke(e.Message);
         }
     }
@@ -70,7 +70,7 @@ public class IAPManager : MonoBehaviourSingleton<IAPManager>, IDetailedStoreList
         _extensionProvider = extensions;
         _isInitialized = true;
 
-        Debug.Log("[IAPManager] IAP inicializado correctamente.");
+        Debug.Log("[IAPManager] IAP inicialized");
         OnIAPInitialized?.Invoke();
     }
 
@@ -82,7 +82,7 @@ public class IAPManager : MonoBehaviourSingleton<IAPManager>, IDetailedStoreList
     public void OnInitializeFailed(InitializationFailureReason error, string message)
     {
         var errorMessage = $"{error}" + (string.IsNullOrEmpty(message) ? "" : $": {message}");
-        Debug.LogError($"[IAPManager] Inicialización fallida: {errorMessage}");
+        Debug.LogError($"[IAPManager] Inicialization failed: {errorMessage}");
         OnIAPInitializationFailed?.Invoke(errorMessage);
     }
 
@@ -91,7 +91,7 @@ public class IAPManager : MonoBehaviourSingleton<IAPManager>, IDetailedStoreList
         var product = purchaseEvent.purchasedProduct;
         var productId = product.definition.id;
 
-        Debug.Log($"[IAPManager] Compra completada: {productId}");
+        Debug.Log($"[IAPManager] Purchase completed: {productId}");
         OnPurchaseCompleted?.Invoke(productId);
 
         return PurchaseProcessingResult.Complete;
@@ -100,7 +100,7 @@ public class IAPManager : MonoBehaviourSingleton<IAPManager>, IDetailedStoreList
     public void OnPurchaseFailed(Product product, PurchaseFailureReason failureReason)
     {
         var productId = product.definition.id;
-        Debug.LogError($"[IAPManager] Compra fallida: {productId}, Razón: {failureReason}");
+        Debug.LogError($"[IAPManager] Purchase failed: {productId}, reason: {failureReason}");
         OnPurchaseFailedEvent?.Invoke(productId, failureReason.ToString());
     }
 
@@ -113,7 +113,7 @@ public class IAPManager : MonoBehaviourSingleton<IAPManager>, IDetailedStoreList
     {
         if (!_isInitialized)
         {
-            Debug.LogError("[IAPManager] No se puede realizar la compra. IAP no está inicializado.");
+            Debug.LogError("[IAPManager] The purchase cannot be completed. IAP is not initialized");
             OnPurchaseFailedEvent?.Invoke(productId, "IAP not initialized");
             return;
         }
@@ -124,18 +124,18 @@ public class IAPManager : MonoBehaviourSingleton<IAPManager>, IDetailedStoreList
 
             if (product != null && product.availableToPurchase)
             {
-                Debug.Log($"[IAPManager] Iniciando compra para: {productId}");
+                Debug.Log($"[IAPManager] Starting purchase for: {productId}");
                 _storeController.InitiatePurchase(product);
             }
             else
             {
-                Debug.LogError($"[IAPManager] Producto no encontrado o no disponible: {productId}");
+                Debug.LogError($"[IAPManager] Product not found or unavailable: {productId}");
                 OnPurchaseFailedEvent?.Invoke(productId, "Product not available");
             }
         }
         catch (Exception e)
         {
-            Debug.LogError($"[IAPManager] Error al iniciar compra: {e.Message}");
+            Debug.LogError($"[IAPManager] Error when starting purchase: {e.Message}");
             OnPurchaseFailedEvent?.Invoke(productId, e.Message);
         }
     }
@@ -144,7 +144,7 @@ public class IAPManager : MonoBehaviourSingleton<IAPManager>, IDetailedStoreList
     {
         if (!_isInitialized)
         {
-            Debug.LogWarning("[IAPManager] IAP no está inicializado.");
+            Debug.LogWarning("[IAPManager] IAP is not initialized");
             return null;
         }
 
@@ -161,14 +161,14 @@ public class IAPManager : MonoBehaviourSingleton<IAPManager>, IDetailedStoreList
     {
         if (!_isInitialized)
         {
-            Debug.LogError("[IAPManager] No se puede restaurar. IAP no está inicializado.");
+            Debug.LogError("[IAPManager] Cannot be restored. IAP is not initialized.");
             callback?.Invoke(false, "IAP not initialized");
             return;
         }
 
         try
         {
-            Debug.Log("[IAPManager] Restaurando compras...");
+            Debug.Log("[IAPManager] Restoring purchases");
 
             // Para iOS
 #if UNITY_IOS
@@ -187,13 +187,13 @@ public class IAPManager : MonoBehaviourSingleton<IAPManager>, IDetailedStoreList
                 }
             });
 #else
-            Debug.Log("[IAPManager] Restore no es necesario en esta plataforma.");
+            Debug.Log("[IAPManager] Restore is not necessary on this platform.");
             callback?.Invoke(true, null);
 #endif
         }
         catch (Exception e)
         {
-            Debug.LogError($"[IAPManager] Error al restaurar compras: {e.Message}");
+            Debug.LogError($"[IAPManager] Error restoring purchases: {e.Message}");
             callback?.Invoke(false, e.Message);
         }
     }
