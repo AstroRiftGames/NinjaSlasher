@@ -145,6 +145,7 @@ public class Projectile : MonoBehaviour
 
     public virtual void ReflectBackwards(Transform newShooter, Vector2 newDir)
     {
+        _animator.SetTrigger("OnParried");
         SetOwner(newShooter);
         _rb.linearVelocity = Vector2.zero;
         SetDirection(newDir);
