@@ -57,10 +57,11 @@ public class Projectile : MonoBehaviour
         float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
         transform.rotation = Quaternion.Euler(0, 0, angle);
 
-        _rb.AddForce(direction* _speed);
+        _rb.linearVelocity = Vector2.zero;
+        _rb.AddForce(transform.right * _speed);
     }
 
-    public void OnCollisionEnter2D(Collision2D collision)
+    public virtual void OnCollisionEnter2D(Collision2D collision)
     {
         string colTag = collision.gameObject.tag;
         if (Shooter.tag != colTag && colTag is "Player" or "Boss" or "Scenario" or "Ceiling" or "Floor" or "Enemy" or "Obstacle")

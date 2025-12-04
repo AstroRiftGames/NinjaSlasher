@@ -90,7 +90,7 @@ public class RangeEnemy : Enemy
     protected void Shoot()
     {
         var projectile = _pool.Get();
-        projectile.transform.SetPositionAndRotation(_refPoint.position, Quaternion.identity);
+        projectile.transform.SetPositionAndRotation(_refPoint.position, _refPoint.rotation);
         projectile.Initialize(_dirToTarget.normalized, transform, _pool);
     }
 
