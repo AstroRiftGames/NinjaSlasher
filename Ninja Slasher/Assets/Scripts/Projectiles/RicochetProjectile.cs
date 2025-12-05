@@ -21,7 +21,7 @@ public class RicochetProjectile : Projectile
 
     private void TryRicochet()
     {
-        if(_currentBounces < _maxBounces)
+        if (_currentBounces < _maxBounces)
         {
             Ricochet();
         }
@@ -33,6 +33,6 @@ public class RicochetProjectile : Projectile
     private void Ricochet()
     {
         _currentBounces++;
-
+        AudioManager.Instance.PlaySFXAtPosition(SFXClip.Proj_Ricochet_Bounce, transform.position);
     }
 }

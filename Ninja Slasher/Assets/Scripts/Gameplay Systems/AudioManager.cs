@@ -73,7 +73,10 @@ public enum SFXClip
     P_KO_5,
     P_KO_6,
     P_KO_7,
-
+    E_Ricochet_Charge,
+    E_Ricochet_Shoot,
+    E_Ricochet_Death,
+    Proj_Ricochet_Bounce,
 
 }
 

@@ -37,6 +37,16 @@ public class RicochetBot : RangeEnemy
         _animator.SetTrigger("OnAttack");
     }
 
+    public void PlayShootSFX()
+    {
+        AudioManager.Instance.PlaySFXAtPosition(SFXClip.E_Ricochet_Shoot, transform.position);
+    }
+
+    public void PlayChargeSFX()
+    {
+        AudioManager.Instance.PlaySFXAtPosition(SFXClip.E_Ricochet_Charge, transform.position);
+    }
+
     private IEnumerator Aim()
     {
         float angle = Mathf.Atan2(_dirToTarget.y, _dirToTarget.x) * Mathf.Rad2Deg - 90f;
@@ -51,5 +61,11 @@ public class RicochetBot : RangeEnemy
             yield return null;
         }
         _isShooting = false;
+    }
+
+    public override void Die()
+    {
+        AudioManager.Instance.PlaySFXAtPosition(SFXClip.E_Ricochet_Death, transform.position);
+        base.Die();
     }
 }
