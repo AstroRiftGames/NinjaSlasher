@@ -50,7 +50,7 @@ public class FlyingEnemy : Enemy
         return !hit;
     }
 
-    private void UpdateTarget()
+    public virtual void UpdateTarget()
     {
         _animator.SetTrigger("OnDetection");
         _target = _player.position;
