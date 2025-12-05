@@ -18,7 +18,10 @@ public class FlyingEnemy : Enemy
     }
     public override void CustomUpdate()
     {
-        if(_player != null && CheckLOS(_player.position)) UpdateTarget();
+        if(_player != null && CheckLOS(_player.position))
+        {
+            UpdateTarget();
+        }
 
         if (CheckDistance())
         {
@@ -26,6 +29,7 @@ public class FlyingEnemy : Enemy
         }
         else
         {
+            _animator.SetTrigger("OnStop");
             _rb.linearVelocity = Vector2.zero;
         }
     }
@@ -48,6 +52,7 @@ public class FlyingEnemy : Enemy
 
     private void UpdateTarget()
     {
+        _animator.SetTrigger("OnDetection");
         _target = _player.position;
         _dirToTarget = _target - (Vector2)transform.localToWorldMatrix.GetPosition();
     }
