@@ -74,9 +74,6 @@ public class RangeEnemy : Enemy
         if (distance > _range) return false;
 
         bool hit = Physics2D.Raycast(transform.position, LOSvNormalized, distance, _obstaclesLayer).collider != null;
-#if UNITY_EDITOR
-        Debug.DrawRay(transform.position, LOSvNormalized * distance, Color.red, _cooldDown/2);
-#endif
         return !hit;
     }
 

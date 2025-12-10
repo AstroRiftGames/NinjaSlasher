@@ -70,12 +70,6 @@ public class Projectile : MonoBehaviour
         }
     }
 
-    public virtual void ManageCollision(Collider2D collision)
-    {
-        Debug.Log($"Collided with: {collision.name}");
-
-    }
-
     public virtual void Collide(Collider2D collision)
     {
         if(collision.CompareTag("Player"))
