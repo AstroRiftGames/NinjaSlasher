@@ -13,6 +13,7 @@ public class ButtonManager : MonoBehaviour
     [SerializeField] private Button _testLevelButton;
     [SerializeField] private Button _configDropdownButton;
     [SerializeField] private Button _calendarButton;
+    [SerializeField] private Button _storeButton;
 
     [Header("CALENDAR BUTTON ICONS")]
     [SerializeField] private Image _calendarButtonImage;
@@ -41,6 +42,9 @@ public class ButtonManager : MonoBehaviour
 
     [Header("DAILY REWARDS BUTTONS")]
     [SerializeField] private Button _closeCalendarButton;
+
+    [Header("STORE BUTTONS")]
+    [SerializeField] private Button _closeStoreButton;
 
     [Header("PREGAME BUTTONS")]
     [SerializeField] private Button _closePregameButton;
@@ -291,6 +295,8 @@ public class ButtonManager : MonoBehaviour
             });
         }
 
+        _storeButton.onClick.AddListener(UIManager.Instance.ShowHideStoreCanvas);
+        _closeStoreButton.onClick.AddListener(UIManager.Instance.ShowHideStoreCanvas);
         _calendarButton.onClick.AddListener(UIManager.Instance.ShowHideDailyRewardCanvas);
         _configDropdownButton.onClick.AddListener(_configPanelManager.OpenCloseConfigPanel);
         _testLevelButton.onClick.AddListener(() => GetComponent<SceneTransitionManager>().LoadDebugTestScene());

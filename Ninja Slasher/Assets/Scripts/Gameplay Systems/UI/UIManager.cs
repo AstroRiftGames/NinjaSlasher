@@ -135,4 +135,5 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
     //public void HideLifeLostPanel() => _gameplayUIManager.HideLifeLostPanel();
     public void UpdateLivesUI(int lives) => _gameplayUIManager.UpdateLivesUI(lives);
     public void ShowNoLivesPanel() => _gameplayUIManager.ShowNoLivesPanel();
+    public void ShowHideStoreCanvas() => _canvasManager.ShowHideStoreCanvas();
 }

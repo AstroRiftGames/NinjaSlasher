@@ -19,6 +19,7 @@ public class CanvasManager : MonoBehaviour
     [SerializeField] private Canvas _userNicknameEditCanvas;
     [SerializeField] private Canvas _lifeLostCanvas;
     [SerializeField] private Canvas _dailyWheelCanvas;
+    [SerializeField] private Canvas _storeCanvas;
 
     [Header("PANEL REFERENCES")]
     [SerializeField] private RectTransform _profilePanel;
@@ -29,6 +30,7 @@ public class CanvasManager : MonoBehaviour
     [SerializeField] private RectTransform _noLivesPanel;
     [SerializeField] private RectTransform _lifeLostPanel;
     [SerializeField] private RectTransform _dailyWheelPanel;
+    [SerializeField] private RectTransform _storePanel;
 
     [Header("ANIMATION")]
     [SerializeField] private float _animationDuration = 0.1f;
@@ -171,6 +173,7 @@ public class CanvasManager : MonoBehaviour
         if (canvas == _noLivesCanvas) return _noLivesPanel;
         if (canvas == _lifeLostCanvas) return _lifeLostPanel;
         if (canvas == _dailyWheelCanvas) return _dailyWheelPanel;
+        if (canvas == _storeCanvas) return _storePanel;
 
         return null;
     }
@@ -225,6 +228,21 @@ public class CanvasManager : MonoBehaviour
         GetComponent<ResultsUIManager>()?.ShowResultsPanel();
     }
 
+    public void ShowHideStoreCanvas()
+    {
+        bool isCanvasActive = !_storeCanvas.enabled;
+        var panelAnimation = _storePanel.GetComponent<Animator>();
+        if (isCanvasActive)
+        {
+            panelAnimation.SetTrigger("Open");
+            ShowCanvasAnimated(_storeCanvas);
+        }
+        else
+        {
+            panelAnimation.SetTrigger("Close");
+            HideCanvasAnimated(_storeCanvas);
+        }
+    }
     public void ShowHideDailyRewardCanvas()
     {
         bool isCanvasActive = !_dailyRewardCanvas.enabled;
