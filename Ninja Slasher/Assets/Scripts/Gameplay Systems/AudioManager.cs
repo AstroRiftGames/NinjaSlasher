@@ -77,7 +77,11 @@ public enum SFXClip
     E_Ricochet_Shoot,
     E_Ricochet_Death,
     Proj_Ricochet_Bounce,
-
+    Prop_Vase_1,
+    Prop_Vase_2,
+    Prop_Table,
+    Prop_Gong,
+    Prop_Chair,
 }
 
 [Serializable]
