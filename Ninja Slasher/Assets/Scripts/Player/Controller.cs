@@ -141,19 +141,24 @@ public class Controller : MonoBehaviour
         if(!_isDead)
         {
 
-        _root.Execute();
-        _fsm.OnUpdate();
+            Debug.DrawRay(transform.position, _wishedDirection * checkDistance, Color.red);
+            _root.Execute();
+            _fsm.OnUpdate();
 
-        CheckSwipe();
+            CheckSwipe();
 
-        HandleParryTimer();
+            HandleParryTimer();
         }
         UpdateAnimatorParameters();
     }
 
     private void FixedUpdate()
     {
-        // HandleFalling();
+
+        if (!_isDead &&_isDashing)
+        {
+            CheckCollision();
+        }
     }
 
     #endregion
@@ -509,42 +514,66 @@ if (Input.touchCount > 0)
     #endregion
 
     #region COLLISION DETECTION
-    private void OnCollisionEnter2D(Collision2D collision)
+
+    private void CheckCollision()
     {
-        string colTag = collision.gameObject.tag;
-        if (colTag == "Scenario" ||
-            colTag == "Obstacle" ||
-            colTag == "Floor" ||
-            colTag == "Ceiling" ||
-            collision.gameObject.GetComponent<PlatformBase>() != null)
+        RaycastHit2D hit = Physics2D.Raycast(transform.position, _wishedDirection, 1f, _scenarioLayer);
+        Debug.DrawRay(transform.position, _wishedDirection * 1f, Color.green);
+        if (!hit) return;
+        if(hit.distance >= checkDistance) return;
+
+        string colTag = hit.collider.gameObject.tag;
+
+        SetIsDashing(false);
+        _currentSurface = hit.collider;
+        _currentNormal = hit.normal.normalized;
+
+        SetGrabbingAnimation();
+        RotateSprites(colTag == "Ceiling" ? Vector2.left : Vector2.right);
+        AudioManager.Instance.PlaySFXAtPosition(SFXClip.P_Landing_General, transform.position);
+
+        hit.collider.TryGetComponent(out ElasticPlatform elasticComponent);
+        _lastSurfaceWasElastic = elasticComponent != null;
+
+        if (!_lastSurfaceWasElastic)
         {
-            Debug.Log("Ninja landed in: " + colTag);
-
-            SetIsDashing(false);
-            _currentSurface = collision.collider;
-            _currentNormal = collision.GetContact(0).normal.normalized;
-
-            SetGrabbingAnimation();
-            RotateSprites(colTag == "Ceiling" ? Vector2.left : Vector2.right);
-            AudioManager.Instance.PlaySFXAtPosition(SFXClip.P_Landing_General, transform.position);
-
-            ElasticPlatform elasticPlatform = collision.gameObject.GetComponent<ElasticPlatform>();
-            _lastSurfaceWasElastic = elasticPlatform != null;
-
-            if (!_lastSurfaceWasElastic)
+            if (!_isDashing)
             {
-                if (!_isDashing)
-                {
-                    _playerView.RB.linearVelocity = Vector2.zero;
-                }
+                _playerView.RB.linearVelocity = Vector2.zero;
             }
         }
-        else if (colTag == "Projectile")
-        {
-            collision.gameObject.TryGetComponent(out Projectile projectile);
-            projectile.ManageCollision(_playerView.Col);
-        }
     }
+
+    //private void OnCollisionEnter2D(Collision2D collision)
+    //{
+    //    string colTag = collision.gameObject.tag;
+    //    if (colTag == "Scenario" ||
+    //        colTag == "Obstacle" ||
+    //        colTag == "Floor" ||
+    //        colTag == "Ceiling" ||
+    //        collision.gameObject.GetComponent<PlatformBase>() != null)
+    //    {
+
+    //        SetIsDashing(false);
+    //        _currentSurface = collision.collider;
+    //        _currentNormal = collision.GetContact(0).normal.normalized;
+
+    //        SetGrabbingAnimation();
+    //        RotateSprites(colTag == "Ceiling" ? Vector2.left : Vector2.right);
+    //        AudioManager.Instance.PlaySFXAtPosition(SFXClip.P_Landing_General, transform.position);
+
+    //        ElasticPlatform elasticPlatform = collision.gameObject.GetComponent<ElasticPlatform>();
+    //        _lastSurfaceWasElastic = elasticPlatform != null;
+
+    //        if (!_lastSurfaceWasElastic)
+    //        {
+    //            if (!_isDashing)
+    //            {
+    //                _playerView.RB.linearVelocity = Vector2.zero;
+    //            }
+    //        }
+    //    }
+    //}
     private void OnCollisionExit2D(Collision2D collision)
     {
         if (collision.collider == _currentSurface)
@@ -766,18 +795,9 @@ if (Input.touchCount > 0)
     }
     #endregion
 
-    //private void OnDrawGizmos()
-    //{
-    //    if (isSwiping && currentSwipe.magnitude >= minSwipeDistance)
-    //    {
-    //        Gizmos.color = Color.yellow;
-    //        Vector3 start = transform.position;
-    //        Vector3 end = start + (Vector3)(-currentSwipe.normalized * 2f);
-    //        Gizmos.DrawLine(start, end);
-    //        Gizmos.DrawSphere(end, 0.1f);
-    //    }
-
-    //    Gizmos.color = Color.cyan;
-    //    Gizmos.DrawWireSphere(transform.position, 2f);
-    //}
+    private void OnDrawGizmos()
+    {
+        Gizmos.color = Color.red;
+        Gizmos.DrawWireSphere(transform.position, checkDistance);
+    }
 }
