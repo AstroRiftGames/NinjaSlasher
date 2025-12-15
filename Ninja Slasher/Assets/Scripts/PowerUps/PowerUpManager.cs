@@ -10,7 +10,8 @@ public enum PowerUpType
     ParryPerfect,
     ComboMaster,
     SecondChance,
-    HawkVision
+    HawkVision,
+    EnhancedParry
 }
 
 [Serializable]
@@ -35,6 +36,7 @@ public class PowerUpManager : MonoBehaviourSingleton<PowerUpManager>
     public PowerUpComboMaster powerUpComboMaster;
     public PowerUpSecondChance powerUpSecondChance;
     public PowerUpHawkVision powerUpTrajectoryGuide;
+    public PowerUpEnhancedParry powerUpEnhancedParry;
 
     private List<(PowerUpBase, float)> _timers = new List<(PowerUpBase, float)>();
 
@@ -137,6 +139,9 @@ public class PowerUpManager : MonoBehaviourSingleton<PowerUpManager>
             case PowerUpType.HawkVision:
                 context.TrajectoryGuideActive = isActive;
                 break;
+            case PowerUpType.EnhancedParry:
+                context.EnhancedParryActive = isActive;
+                break;
         }
     }
 
@@ -161,6 +166,9 @@ public class PowerUpManager : MonoBehaviourSingleton<PowerUpManager>
                 break;
             case PowerUpType.HawkVision:
                 context.TrajectoryGuideRemaining = timeLeft;
+                break;
+            case PowerUpType.EnhancedParry:
+                context.EnhancedParryRemaining = timeLeft;
                 break;
         }
     }
@@ -241,6 +249,7 @@ public class PowerUpManager : MonoBehaviourSingleton<PowerUpManager>
             case PowerUpType.ComboMaster: return powerUpComboMaster;
             case PowerUpType.SecondChance: return powerUpSecondChance;
             case PowerUpType.HawkVision: return powerUpTrajectoryGuide;
+            case PowerUpType.EnhancedParry: return powerUpEnhancedParry;
 
             default: return null;
         }
@@ -254,6 +263,7 @@ public class PowerUpManager : MonoBehaviourSingleton<PowerUpManager>
         if (powerUp == powerUpComboMaster) return PowerUpType.ComboMaster;
         if (powerUp == powerUpSecondChance) return PowerUpType.SecondChance;
         if (powerUp == powerUpTrajectoryGuide) return PowerUpType.HawkVision;
+        if (powerUp == powerUpEnhancedParry) return PowerUpType.EnhancedParry;
 
         return PowerUpType.ExtraTime;
     }
@@ -417,9 +427,14 @@ public class PowerUpManager : MonoBehaviourSingleton<PowerUpManager>
         AddParryPerfect();
         AddComboMaster();
         AddSecondChance();
-        AddTrajectoryGuide();
+        AddHawkVision();
+        AddRicochetParry();
+    }
 
-        Debug.Log("[PowerUpManager] Se agregaron 5 unidades de cada power-up al inventario");
+    [ContextMenu("Add 5x Enhanced Parry")]
+    private void AddRicochetParry()
+    {
+        AddPowerUpToInventory(PowerUpType.EnhancedParry, 5);
     }
 
     [ContextMenu("Add 5x Extra Time")]
@@ -452,8 +467,8 @@ public class PowerUpManager : MonoBehaviourSingleton<PowerUpManager>
         AddPowerUpToInventory(PowerUpType.SecondChance, 5);
     }
 
-    [ContextMenu("Add 5x Trajectory Guide")]
-    private void AddTrajectoryGuide()
+    [ContextMenu("Add 5x Hawk Vision")]
+    private void AddHawkVision()
     {
         AddPowerUpToInventory(PowerUpType.HawkVision, 5);
     }
