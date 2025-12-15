@@ -45,6 +45,9 @@ public class MultiattackDrone : BossEnemy
     [SerializeField] float _vulnerabilityTime;
     private bool _isVulnerable;
 
+    private bool _isActive = false;
+    [SerializeField] private float _waitTime;
+
     public override void Awake()
     {
         base.Awake();
@@ -53,17 +56,25 @@ public class MultiattackDrone : BossEnemy
         _burstPool = new GenericPool<Projectile>(_burstBullet, _burstAmount*2, transform);
     }
 
+    public override void Start()
+    {
+        base.Start();
+        StartCoroutine(Activate());
+    }
+
     public override void CustomUpdate()
     {
-        if(!_isVulnerable)
+        if(_isActive && !_isVulnerable)
         {
-            if(CheckDisToPlayer())
+            SetLookingDirection();
+
+            if (CheckDisToPlayer())
             {
                 if (_flyingAway) StopAllCoroutines();
                 FlyAway();
             }
 
-            if(!_flyingAway && CheckCooldown())
+            if (!_flyingAway && CheckCooldown())
             {
                 ChooseAttack();
                 Attack(_nextAttack);
@@ -71,10 +82,24 @@ public class MultiattackDrone : BossEnemy
         }
     }
 
+    private void SetLookingDirection()
+    {
+        bool playerIsOnRight = _player.transform.position.x > transform.position.x;
+        Vector3 localScale = transform.localScale;
+        localScale.x = playerIsOnRight ? -1 : 1;
+        transform.localScale = localScale;
+    }
+
     private bool CheckCooldown() => Time.time >= _lastAttack + _cooldown;
 
     #region VULNERABILITY MANAGEMENT
     private bool SetVulnerability(bool value) => _isVulnerable = value;
+
+    private IEnumerator Activate()
+    {
+        yield return new WaitForSeconds(_waitTime);
+        _isActive = true;
+    }
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
