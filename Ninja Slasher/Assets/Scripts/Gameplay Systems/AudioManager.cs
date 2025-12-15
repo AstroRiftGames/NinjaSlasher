@@ -82,6 +82,12 @@ public enum SFXClip
     Prop_Table,
     Prop_Gong,
     Prop_Chair,
+    E_Nano_Idle,
+    E_Nano_Chase,
+    E_Nano_Hit,
+    E_Nano_Death,
+    E_Mini_Chase,
+    E_Mini_Death,
 }
 
 [Serializable]
@@ -277,6 +283,10 @@ public class AudioManager : MonoBehaviourSingleton<AudioManager>
 
             src.Play();
         }
+        else
+        {
+            Debug.Log($"Clip de SFX '{clip}' no encontrado");
+        }
     }
 
     public void StopSFX(SFXClip clip)
@@ -286,9 +296,12 @@ public class AudioManager : MonoBehaviourSingleton<AudioManager>
         {
             Debug.Log( clip + " not found in array");
         }
-        srcDict.Remove(clip);
-        src.Stop();
-        Destroy(src.gameObject);
+        else
+        {
+            srcDict.Remove(clip);
+            src.Stop();
+            Destroy(src.gameObject);
+        }
     }
 
     public void PlaySFXWithRandomPitch(SFXClip clipType, float minPitch = 0.8f, float maxPitch = 1.2f, float volumeMultiplier = 1f)

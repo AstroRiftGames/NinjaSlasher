@@ -11,4 +11,9 @@ public class MiniSwarmBot : FlyingEnemy
         yield return new WaitForSeconds(_deploymentTime);
         _col.enabled = true;
     }
+    public override void Die()
+    {
+        AudioManager.Instance.PlaySFXAtPosition(SFXClip.E_Mini_Death, transform.position);
+        base.Die();
+    }
 }
