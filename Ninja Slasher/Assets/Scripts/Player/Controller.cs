@@ -30,6 +30,7 @@ public class Controller : MonoBehaviour
 
     [Space]
     [SerializeField] private GameObject swipeIndicator;
+    [SerializeField] private TrajectoryRenderer trajectoryRenderer;
     private Vector2 swipeStart;
     private bool _startedSwipe;
     private Vector2 endTouchPosition;
@@ -194,10 +195,22 @@ public class Controller : MonoBehaviour
                     Vector2 clampedDir = -currentSwipe.normalized;
 
                     swipeIndicator.transform.position = start;
-
                     float angle = Mathf.Atan2(clampedDir.y, clampedDir.x) * Mathf.Rad2Deg;
-
                     swipeIndicator.transform.rotation = Quaternion.Euler(0, 0, angle);
+                }
+
+                if (trajectoryRenderer != null)
+                {
+                    var context = PowerUpManager.Instance?.context;
+                    if (context != null && context.TrajectoryGuideActive)
+                    {
+                        Vector2 dashDir = -currentSwipe.normalized;
+                        trajectoryRenderer.ShowTrajectory(transform.position, dashDir);
+                    }
+                    else
+                    {
+                        trajectoryRenderer.HideTrajectory();
+                    }
                 }
             }
         }
@@ -210,8 +223,14 @@ public class Controller : MonoBehaviour
             {
                 swipeIndicator.SetActive(false);
             }
+
+            if (trajectoryRenderer != null)
+            {
+                trajectoryRenderer.HideTrajectory();
+            }
+
             endTouchPosition = Input.mousePosition;
-            Vector2 swipeDelta = endTouchPosition - swipeStart; // GetClampedSwipeDirection(endTouchPosition - swipeStart);
+            Vector2 swipeDelta = endTouchPosition - swipeStart;
             if (swipeDelta.magnitude >= minSwipeDistance)
             {
                 TryDashFromSwipe(swipeDelta);

@@ -22,13 +22,23 @@ public class PowerUpContext
     public bool SecondChanceActive;
     public float SecondChanceRemaining;
 
+    public bool TrajectoryGuideActive;
+    public float TrajectoryGuideRemaining;
+
+    public bool EnhancedParryActive;
+    public int EnhancedParryBounces = 3;
+    public float EnhancedParryVelocityRetention = 0.9f;
+    public float EnhancedParryRemaining;
+
     public bool AnyPowerUpActive()
     {
         return ExtraTimeActive ||
                DashTurboActive ||
                ParryPerfectActive ||
                ComboMasterActive ||
-               SecondChanceActive;
+               SecondChanceActive ||
+               TrajectoryGuideActive ||
+               EnhancedParryActive;
     }
 
     public float GetLowestRemainingTime()
@@ -40,6 +50,8 @@ public class PowerUpContext
         if (ParryPerfectActive) times.Add(ParryPerfectRemaining);
         if (ComboMasterActive) times.Add(ComboMasterRemaining);
         if (SecondChanceActive) times.Add(SecondChanceRemaining);
+        if (TrajectoryGuideActive) times.Add(TrajectoryGuideRemaining);
+        if (EnhancedParryActive) times.Add(EnhancedParryRemaining);
 
         return times.Count > 0 ? times.Min() : 0f;
     }
@@ -52,6 +64,8 @@ public class PowerUpContext
         if (ParryPerfectActive) count++;
         if (ComboMasterActive) count++;
         if (SecondChanceActive) count++;
+        if (TrajectoryGuideActive) count++;
+        if (EnhancedParryActive) count++;
         return count;
     }
 
@@ -64,6 +78,8 @@ public class PowerUpContext
         if (ParryPerfectActive) names.Add("Parry Perfect");
         if (ComboMasterActive) names.Add("Combo Master");
         if (SecondChanceActive) names.Add("Second Chance");
+        if (TrajectoryGuideActive) names.Add("Trajectory Guide");
+        if (EnhancedParryActive) names.Add("Enhanced Parry");
 
         return string.Join(", ", names);
     }
