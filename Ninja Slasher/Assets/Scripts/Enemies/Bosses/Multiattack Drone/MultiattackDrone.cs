@@ -8,7 +8,7 @@ public enum AttackType
 {
     Burst,
     Cone,
-    Ricochet,
+    Rebound,
 }
 
 public class MultiattackDrone : BossEnemy
@@ -33,7 +33,9 @@ public class MultiattackDrone : BossEnemy
     [Space]
     [SerializeField] int _burstAmount;
     [SerializeField] int _coneAmount;
+    [SerializeField] int _reboundAmount;
     [SerializeField] float _timeBetweenShots;
+    [SerializeField] float _timeBetweenReboundShots;
     private AttackType _nextAttack;
     private GenericPool<Projectile> _conePool;
     private GenericPool<Projectile> _ricochetPool;
@@ -47,7 +49,7 @@ public class MultiattackDrone : BossEnemy
     {
         base.Awake();
         _conePool = new GenericPool<Projectile>(_coneBullet, _coneAmount*2, transform);
-        _ricochetPool = new GenericPool<Projectile>(_riccochetBullet, 5, transform);
+        _ricochetPool = new GenericPool<Projectile>(_riccochetBullet, _reboundAmount*2, transform);
         _burstPool = new GenericPool<Projectile>(_burstBullet, _burstAmount*2, transform);
     }
 
@@ -110,7 +112,7 @@ public class MultiattackDrone : BossEnemy
         {
             0 => AttackType.Burst,
             1 => AttackType.Cone,
-            2 => AttackType.Ricochet,
+            2 => AttackType.Rebound,
             _ => AttackType.Burst,
         };
     }
@@ -127,9 +129,8 @@ public class MultiattackDrone : BossEnemy
             case AttackType.Cone:
                 StartCoroutine(ShootCone());
                 break;
-            case AttackType.Ricochet:
-                _animator.SetTrigger("OnReboundShot");
-                Shoot(AttackType.Ricochet);
+            case AttackType.Rebound:
+                StartCoroutine(ShootRebound());
                 break;
         };
         _lastAttack = Time.time;
@@ -157,13 +158,24 @@ public class MultiattackDrone : BossEnemy
         }
     }
 
+    private IEnumerator ShootRebound()
+    {
+        _animator.SetTrigger("OnReboundShot");
+        yield return new WaitForSeconds(.91f);
+        for (int n = 0; n < _reboundAmount; n++)
+        {
+            Shoot(AttackType.Rebound);
+            yield return new WaitForSeconds(_timeBetweenReboundShots);
+        }
+    }
+
     private void Shoot(AttackType type)
     {
         GameObject prefab = type switch
         {
             AttackType.Burst => _burstBullet,
             AttackType.Cone => _coneBullet,
-            AttackType.Ricochet => _riccochetBullet,
+            AttackType.Rebound => _riccochetBullet,
             _ => _burstBullet,
         };
 
@@ -183,7 +195,7 @@ public class MultiattackDrone : BossEnemy
         }
         else
         {
-            GenericPool<Projectile> pool = type == AttackType.Ricochet ? _ricochetPool: _burstPool;
+            GenericPool<Projectile> pool = type == AttackType.Rebound ? _ricochetPool: _burstPool;
             Projectile projectile = pool.Get();
             projectile.transform.SetPositionAndRotation(_shootingPoint.position, Quaternion.identity);
             projectile.Initialize(GetDirToPlayer(), transform, pool);
