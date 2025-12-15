@@ -79,7 +79,6 @@ public class MultiattackDrone : BossEnemy
         if(collision.gameObject.layer == 8)
         {
             collision.TryGetComponent(out Projectile projectile);
-            Debug.Log(projectile);
             if(projectile.Shooter.gameObject.CompareTag("Player"))
             {
                 StartCoroutine(GetVulnerable());
@@ -93,11 +92,11 @@ public class MultiattackDrone : BossEnemy
 
     private IEnumerator GetVulnerable()
     {
+        _animator.SetTrigger("OnHit");
         SetVulnerability(true);
-        Debug.Log("Is now vulnerable");
         yield return new WaitForSeconds(_vulnerabilityTime);
         SetVulnerability(false);
-        Debug.Log("Is no longer vulnerable");
+        _animator.SetTrigger("OnRecover");
     }
 
     #endregion
@@ -129,6 +128,7 @@ public class MultiattackDrone : BossEnemy
                 StartCoroutine(ShootCone());
                 break;
             case AttackType.Ricochet:
+                _animator.SetTrigger("OnReboundShot");
                 Shoot(AttackType.Ricochet);
                 break;
         };
@@ -137,6 +137,8 @@ public class MultiattackDrone : BossEnemy
 
     private IEnumerator ShootBurst()
     {
+        _animator.SetTrigger("OnLinearBurst");
+        yield return new WaitForSeconds(.91f);
         for (int n = 0; n < _burstAmount; n++)
         {
             Shoot(AttackType.Burst);
@@ -146,6 +148,8 @@ public class MultiattackDrone : BossEnemy
 
     private IEnumerator ShootCone()
     {
+        _animator.SetTrigger("OnConeShot");
+        yield return new WaitForSeconds(.91f);
         for (int n = 0; n < _coneAmount; n++)
         {
             Shoot(AttackType.Cone);
@@ -166,7 +170,11 @@ public class MultiattackDrone : BossEnemy
         if (type == AttackType.Cone)
         {
             Projectile cone = _conePool.Get();
-            cone.enabled = false;
+
+            Vector2 dir = GetDirToPlayer();
+            float angle = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg;
+            cone.transform.rotation = Quaternion.Euler(0, 0, angle -90);
+
             for (int n = 0; n < cone.transform.childCount; n++)
             {
                 cone.transform.GetChild(n).TryGetComponent(out Projectile newProjectile);
