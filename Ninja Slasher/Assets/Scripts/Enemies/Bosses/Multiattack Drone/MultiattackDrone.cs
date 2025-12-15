@@ -8,7 +8,7 @@ public enum AttackType
 {
     Burst,
     Cone,
-    Ricochet,
+    Rebound,
 }
 
 public class MultiattackDrone : BossEnemy
@@ -33,7 +33,9 @@ public class MultiattackDrone : BossEnemy
     [Space]
     [SerializeField] int _burstAmount;
     [SerializeField] int _coneAmount;
+    [SerializeField] int _reboundAmount;
     [SerializeField] float _timeBetweenShots;
+    [SerializeField] float _timeBetweenReboundShots;
     private AttackType _nextAttack;
     private GenericPool<Projectile> _conePool;
     private GenericPool<Projectile> _ricochetPool;
@@ -43,25 +45,36 @@ public class MultiattackDrone : BossEnemy
     [SerializeField] float _vulnerabilityTime;
     private bool _isVulnerable;
 
+    private bool _isActive = false;
+    [SerializeField] private float _waitTime;
+
     public override void Awake()
     {
         base.Awake();
         _conePool = new GenericPool<Projectile>(_coneBullet, _coneAmount*2, transform);
-        _ricochetPool = new GenericPool<Projectile>(_riccochetBullet, 5, transform);
+        _ricochetPool = new GenericPool<Projectile>(_riccochetBullet, _reboundAmount*2, transform);
         _burstPool = new GenericPool<Projectile>(_burstBullet, _burstAmount*2, transform);
+    }
+
+    public override void Start()
+    {
+        base.Start();
+        StartCoroutine(Activate());
     }
 
     public override void CustomUpdate()
     {
-        if(!_isVulnerable)
+        if(_isActive && !_isVulnerable)
         {
-            if(CheckDisToPlayer())
+            SetLookingDirection();
+
+            if (CheckDisToPlayer())
             {
                 if (_flyingAway) StopAllCoroutines();
                 FlyAway();
             }
 
-            if(!_flyingAway && CheckCooldown())
+            if (!_flyingAway && CheckCooldown())
             {
                 ChooseAttack();
                 Attack(_nextAttack);
@@ -69,17 +82,30 @@ public class MultiattackDrone : BossEnemy
         }
     }
 
+    private void SetLookingDirection()
+    {
+        bool playerIsOnRight = _player.transform.position.x > transform.position.x;
+        Vector3 localScale = transform.localScale;
+        localScale.x = playerIsOnRight ? -1 : 1;
+        transform.localScale = localScale;
+    }
+
     private bool CheckCooldown() => Time.time >= _lastAttack + _cooldown;
 
     #region VULNERABILITY MANAGEMENT
     private bool SetVulnerability(bool value) => _isVulnerable = value;
+
+    private IEnumerator Activate()
+    {
+        yield return new WaitForSeconds(_waitTime);
+        _isActive = true;
+    }
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
         if(collision.gameObject.layer == 8)
         {
             collision.TryGetComponent(out Projectile projectile);
-            Debug.Log(projectile);
             if(projectile.Shooter.gameObject.CompareTag("Player"))
             {
                 StartCoroutine(GetVulnerable());
@@ -93,11 +119,11 @@ public class MultiattackDrone : BossEnemy
 
     private IEnumerator GetVulnerable()
     {
+        _animator.SetTrigger("OnHit");
         SetVulnerability(true);
-        Debug.Log("Is now vulnerable");
         yield return new WaitForSeconds(_vulnerabilityTime);
         SetVulnerability(false);
-        Debug.Log("Is no longer vulnerable");
+        _animator.SetTrigger("OnRecover");
     }
 
     #endregion
@@ -111,7 +137,7 @@ public class MultiattackDrone : BossEnemy
         {
             0 => AttackType.Burst,
             1 => AttackType.Cone,
-            2 => AttackType.Ricochet,
+            2 => AttackType.Rebound,
             _ => AttackType.Burst,
         };
     }
@@ -128,8 +154,8 @@ public class MultiattackDrone : BossEnemy
             case AttackType.Cone:
                 StartCoroutine(ShootCone());
                 break;
-            case AttackType.Ricochet:
-                Shoot(AttackType.Ricochet);
+            case AttackType.Rebound:
+                StartCoroutine(ShootRebound());
                 break;
         };
         _lastAttack = Time.time;
@@ -137,6 +163,8 @@ public class MultiattackDrone : BossEnemy
 
     private IEnumerator ShootBurst()
     {
+        _animator.SetTrigger("OnLinearBurst");
+        yield return new WaitForSeconds(.91f);
         for (int n = 0; n < _burstAmount; n++)
         {
             Shoot(AttackType.Burst);
@@ -146,10 +174,23 @@ public class MultiattackDrone : BossEnemy
 
     private IEnumerator ShootCone()
     {
+        _animator.SetTrigger("OnConeShot");
+        yield return new WaitForSeconds(.91f);
         for (int n = 0; n < _coneAmount; n++)
         {
             Shoot(AttackType.Cone);
             yield return new WaitForSeconds(_timeBetweenShots);
+        }
+    }
+
+    private IEnumerator ShootRebound()
+    {
+        _animator.SetTrigger("OnReboundShot");
+        yield return new WaitForSeconds(.91f);
+        for (int n = 0; n < _reboundAmount; n++)
+        {
+            Shoot(AttackType.Rebound);
+            yield return new WaitForSeconds(_timeBetweenReboundShots);
         }
     }
 
@@ -159,14 +200,18 @@ public class MultiattackDrone : BossEnemy
         {
             AttackType.Burst => _burstBullet,
             AttackType.Cone => _coneBullet,
-            AttackType.Ricochet => _riccochetBullet,
+            AttackType.Rebound => _riccochetBullet,
             _ => _burstBullet,
         };
 
         if (type == AttackType.Cone)
         {
             Projectile cone = _conePool.Get();
-            cone.enabled = false;
+
+            Vector2 dir = GetDirToPlayer();
+            float angle = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg;
+            cone.transform.rotation = Quaternion.Euler(0, 0, angle -90);
+
             for (int n = 0; n < cone.transform.childCount; n++)
             {
                 cone.transform.GetChild(n).TryGetComponent(out Projectile newProjectile);
@@ -175,7 +220,7 @@ public class MultiattackDrone : BossEnemy
         }
         else
         {
-            GenericPool<Projectile> pool = type == AttackType.Ricochet ? _ricochetPool: _burstPool;
+            GenericPool<Projectile> pool = type == AttackType.Rebound ? _ricochetPool: _burstPool;
             Projectile projectile = pool.Get();
             projectile.transform.SetPositionAndRotation(_shootingPoint.position, Quaternion.identity);
             projectile.Initialize(GetDirToPlayer(), transform, pool);
