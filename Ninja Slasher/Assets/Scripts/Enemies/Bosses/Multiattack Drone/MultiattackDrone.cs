@@ -1,8 +1,5 @@
 using System.Collections;
-using System.Collections.Generic;
-using TMPro;
 using UnityEngine;
-using UnityEngine.EventSystems;
 
 public enum AttackType
 {
@@ -20,6 +17,7 @@ public class MultiattackDrone : BossEnemy
     private Transform _targetWaypoint;
     private Vector2 _playerPos;
     private bool _flyingAway;
+    [SerializeField] BoxCollider2D _boxCol;
 
     [Header("Bullet Prefabs")]
     [SerializeField] GameObject _coneBullet;
@@ -103,7 +101,7 @@ public class MultiattackDrone : BossEnemy
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
-        if(collision.gameObject.layer == 8)
+        if(collision.gameObject.layer == 8 && !_isVulnerable)
         {
             collision.TryGetComponent(out Projectile projectile);
             if(projectile.Shooter.gameObject.CompareTag("Player"))
@@ -121,9 +119,16 @@ public class MultiattackDrone : BossEnemy
     {
         _animator.SetTrigger("OnHit");
         SetVulnerability(true);
+        _rb.gravityScale = 1;
+        _boxCol.enabled = true;
         yield return new WaitForSeconds(_vulnerabilityTime);
-        SetVulnerability(false);
         _animator.SetTrigger("OnRecover");
+        _boxCol.enabled = false;
+        _rb.gravityScale = 0;
+        SetVulnerability(false);
+        yield return new WaitForSeconds(1.75f);
+
+        FlyAway();
     }
 
     #endregion
@@ -211,6 +216,7 @@ public class MultiattackDrone : BossEnemy
             Vector2 dir = GetDirToPlayer();
             float angle = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg;
             cone.transform.rotation = Quaternion.Euler(0, 0, angle -90);
+            cone.transform.parent = null;
 
             for (int n = 0; n < cone.transform.childCount; n++)
             {
@@ -224,6 +230,7 @@ public class MultiattackDrone : BossEnemy
             Projectile projectile = pool.Get();
             projectile.transform.SetPositionAndRotation(_shootingPoint.position, Quaternion.identity);
             projectile.Initialize(GetDirToPlayer(), transform, pool);
+            projectile.transform.parent = null;
         }
     }
 
