@@ -18,6 +18,7 @@ public class MultiattackDrone : BossEnemy
     private Vector2 _playerPos;
     private bool _flyingAway;
     [SerializeField] BoxCollider2D _boxCol;
+    [SerializeField] BoxCollider2D _boxTrigger;
 
     [Header("Bullet Prefabs")]
     [SerializeField] GameObject _coneBullet;
@@ -101,7 +102,7 @@ public class MultiattackDrone : BossEnemy
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
-        if (collision.gameObject.layer == 8 && !_isVulnerable)
+        if (collision.gameObject.CompareTag("Projectile") && !_isVulnerable)
         {
             collision.TryGetComponent(out Projectile projectile);
             if (projectile.Shooter.gameObject.CompareTag("Player"))
@@ -118,14 +119,16 @@ public class MultiattackDrone : BossEnemy
     }
 
     private IEnumerator GetVulnerable()
-    {  
+    {
         _animator.SetTrigger("OnHit");
         SetVulnerability(true);
         _rb.gravityScale = 1;
         _boxCol.enabled = true;
+        _boxTrigger.enabled = true;
         yield return new WaitForSeconds(_vulnerabilityTime);
         _animator.SetTrigger("OnRecover");
         _boxCol.enabled = false;
+        _boxTrigger.enabled = false;
         _rb.gravityScale = 0;
         yield return new WaitForSeconds(1.75f);
 
