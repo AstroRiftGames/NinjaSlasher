@@ -19,6 +19,7 @@ public class MultiattackDrone : BossEnemy
     private bool _flyingAway;
     [SerializeField] BoxCollider2D _boxCol;
     [SerializeField] BoxCollider2D _boxTrigger;
+    [SerializeField] CapsuleCollider2D _capsuleCol;
 
     [Header("Bullet Prefabs")]
     [SerializeField] GameObject _coneBullet;
@@ -148,6 +149,15 @@ public class MultiattackDrone : BossEnemy
 
         SetVulnerability(false);
         FlyAway();
+    }
+
+    public override void Die()
+    {
+        base.Die();
+        _boxCol.enabled = false;
+        _boxTrigger.enabled = false;
+        _capsuleCol.enabled = false;
+        _rb.bodyType = RigidbodyType2D.Static;
     }
 
     #endregion

@@ -15,4 +15,12 @@ public class BossEnemy : Enemy
         base.OnDisable();
         CustomUpdateManager.Instance.UnsubscribeFromUpdate(CustomUpdate);
     }
+
+
+
+    public override void Die()
+    {
+        _animator.SetTrigger("OnHit");
+        RegisterKill();
+    }
 }

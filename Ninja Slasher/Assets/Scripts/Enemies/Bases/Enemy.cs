@@ -74,16 +74,19 @@ public class Enemy : MonoBehaviour
 
     public virtual void Die()
     {
-        Debug.Log($"{_data.Type} killed");
-
         _animator.SetTrigger("OnHit");
 
+        RegisterKill();
+
+        Destroy(gameObject, _deathTime);
+    }
+
+    public void RegisterKill()
+    {
         tracker.OnEnemyKilled(this);
 
         var combo = ComboManager.Instance;
         if (combo != null)
             combo.RegisterKill(transform.position);
-
-        Destroy(gameObject, _deathTime);
     }
 }
