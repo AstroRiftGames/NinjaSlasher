@@ -88,6 +88,14 @@ public enum SFXClip
     E_Nano_Death,
     E_Mini_Chase,
     E_Mini_Death,
+    B_Drone_Idle,
+    B_Drone_FlyAway,
+    B_Drone_ConeAttack,
+    B_Drone_BurstAttack,
+    B_Drone_ReboundAttack,
+    B_Drone_ProjectileHit,
+    B_Drone_FloorHit,
+    B_Drone_PlayerHit,
 }
 
 [Serializable]

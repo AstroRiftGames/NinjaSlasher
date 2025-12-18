@@ -67,17 +67,20 @@ public class MultiattackDrone : BossEnemy
         {
             SetLookingDirection();
 
-            if (CheckDisToPlayer())
+            if(!_flyingAway)
             {
-                if (_flyingAway) StopAllCoroutines();
-                FlyAway();
+                if (CheckDisToPlayer())
+                {
+                    FlyAway();
+                }
+
+                if (CheckCooldown())
+                {
+                    ChooseAttack();
+                    Attack(_nextAttack);
+                }
             }
 
-            if (!_flyingAway && CheckCooldown())
-            {
-                ChooseAttack();
-                Attack(_nextAttack);
-            }
         }
     }
 
@@ -98,6 +101,7 @@ public class MultiattackDrone : BossEnemy
     {
         yield return new WaitForSeconds(_waitTime);
         _isActive = true;
+        AudioManager.Instance.PlayLoopedSFXAtPosition(SFXClip.B_Drone_Idle, transform.position);
     }
 
     private void OnTriggerEnter2D(Collider2D collision)
@@ -108,13 +112,23 @@ public class MultiattackDrone : BossEnemy
             if (projectile.Shooter.gameObject.CompareTag("Player"))
             {
                 StopAllCoroutines();
+                AudioManager.Instance.PlaySFXAtPosition(SFXClip.B_Drone_ProjectileHit, transform.position);
                 StartCoroutine(GetVulnerable());
             }
         }
         else if (collision.gameObject.CompareTag("Player") && _isVulnerable)
         {
             StopAllCoroutines();
+            AudioManager.Instance.PlaySFXAtPosition(SFXClip.B_Drone_PlayerHit, transform.position);
             Die();
+        }
+    }
+
+    private void OnCollisionEnter2D(Collision2D collision)
+    {
+        if(collision.gameObject.CompareTag("Scenario") && _isVulnerable)
+        {
+            AudioManager.Instance.PlaySFXAtPosition(SFXClip.B_Drone_FloorHit, transform.position);
         }
     }
 
@@ -215,9 +229,12 @@ public class MultiattackDrone : BossEnemy
             _ => _burstBullet,
         };
 
+        Transform t = null;
+
         if (type == AttackType.Cone)
         {
             Projectile cone = _conePool.Get();
+            t = cone.transform;
 
             Vector2 dir = GetDirToPlayer();
             float angle = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg;
@@ -234,10 +251,12 @@ public class MultiattackDrone : BossEnemy
         {
             GenericPool<Projectile> pool = type == AttackType.Rebound ? _ricochetPool : _burstPool;
             Projectile projectile = pool.Get();
+            t = projectile.transform;
             projectile.transform.SetPositionAndRotation(_shootingPoint.position, Quaternion.identity);
             projectile.Initialize(GetDirToPlayer(), transform, pool);
             projectile.transform.parent = null;
         }
+        AudioManager.Instance.PlaySFXAtPosition(type == AttackType.Burst ? SFXClip.B_Drone_BurstAttack: type == AttackType.Cone ? SFXClip.B_Drone_ConeAttack: SFXClip.B_Drone_ReboundAttack, t.position);
     }
 
     #endregion
@@ -278,6 +297,8 @@ public class MultiattackDrone : BossEnemy
 
     private IEnumerator FlyTowards(Vector2 targetPos)
     {
+        AudioManager.Instance.StopSFX(SFXClip.B_Drone_Idle);
+        AudioManager.Instance.PlayLoopedSFXAtPosition(SFXClip.B_Drone_FlyAway, transform.position);
         while (_flyingAway)
         {
             Vector2 dirToFly = (targetPos - (Vector2)transform.position).normalized;
@@ -291,6 +312,8 @@ public class MultiattackDrone : BossEnemy
             }
             yield return null;
         }
+        AudioManager.Instance.StopSFX(SFXClip.B_Drone_FlyAway);
+        AudioManager.Instance.PlayLoopedSFXAtPosition(SFXClip.B_Drone_Idle, transform.position);
     }
 
     #endregion
