@@ -18,6 +18,7 @@ public class MultiattackDrone : BossEnemy
     private Vector2 _playerPos;
     private bool _flyingAway;
     [SerializeField] BoxCollider2D _boxCol;
+    [SerializeField] BoxCollider2D _boxTrigger;
 
     [Header("Bullet Prefabs")]
     [SerializeField] GameObject _coneBullet;
@@ -49,9 +50,9 @@ public class MultiattackDrone : BossEnemy
     public override void Awake()
     {
         base.Awake();
-        _conePool = new GenericPool<Projectile>(_coneBullet, _coneAmount*2, transform);
-        _ricochetPool = new GenericPool<Projectile>(_riccochetBullet, _reboundAmount*2, transform);
-        _burstPool = new GenericPool<Projectile>(_burstBullet, _burstAmount*2, transform);
+        _conePool = new GenericPool<Projectile>(_coneBullet, _coneAmount * 2, transform);
+        _ricochetPool = new GenericPool<Projectile>(_riccochetBullet, _reboundAmount * 2, transform);
+        _burstPool = new GenericPool<Projectile>(_burstBullet, _burstAmount * 2, transform);
     }
 
     public override void Start()
@@ -62,7 +63,7 @@ public class MultiattackDrone : BossEnemy
 
     public override void CustomUpdate()
     {
-        if(_isActive && !_isVulnerable)
+        if (_isActive && !_isVulnerable)
         {
             SetLookingDirection();
 
@@ -101,16 +102,18 @@ public class MultiattackDrone : BossEnemy
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
-        if(collision.gameObject.layer == 8 && !_isVulnerable)
+        if (collision.gameObject.CompareTag("Projectile") && !_isVulnerable)
         {
             collision.TryGetComponent(out Projectile projectile);
-            if(projectile.Shooter.gameObject.CompareTag("Player"))
+            if (projectile.Shooter.gameObject.CompareTag("Player"))
             {
+                StopAllCoroutines();
                 StartCoroutine(GetVulnerable());
             }
         }
-        else if(collision.gameObject.CompareTag("Player") && _isVulnerable)
+        else if (collision.gameObject.CompareTag("Player") && _isVulnerable)
         {
+            StopAllCoroutines();
             Die();
         }
     }
@@ -121,13 +124,15 @@ public class MultiattackDrone : BossEnemy
         SetVulnerability(true);
         _rb.gravityScale = 1;
         _boxCol.enabled = true;
+        _boxTrigger.enabled = true;
         yield return new WaitForSeconds(_vulnerabilityTime);
         _animator.SetTrigger("OnRecover");
         _boxCol.enabled = false;
+        _boxTrigger.enabled = false;
         _rb.gravityScale = 0;
-        SetVulnerability(false);
         yield return new WaitForSeconds(1.75f);
 
+        SetVulnerability(false);
         FlyAway();
     }
 
@@ -151,7 +156,7 @@ public class MultiattackDrone : BossEnemy
 
     private void Attack(AttackType type)
     {
-        switch(type)
+        switch (type)
         {
             case AttackType.Burst:
                 StartCoroutine(ShootBurst());
@@ -162,7 +167,8 @@ public class MultiattackDrone : BossEnemy
             case AttackType.Rebound:
                 StartCoroutine(ShootRebound());
                 break;
-        };
+        }
+        ;
         _lastAttack = Time.time;
     }
 
@@ -215,7 +221,7 @@ public class MultiattackDrone : BossEnemy
 
             Vector2 dir = GetDirToPlayer();
             float angle = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg;
-            cone.transform.rotation = Quaternion.Euler(0, 0, angle -90);
+            cone.transform.rotation = Quaternion.Euler(0, 0, angle - 90);
             cone.transform.parent = null;
 
             for (int n = 0; n < cone.transform.childCount; n++)
@@ -226,7 +232,7 @@ public class MultiattackDrone : BossEnemy
         }
         else
         {
-            GenericPool<Projectile> pool = type == AttackType.Rebound ? _ricochetPool: _burstPool;
+            GenericPool<Projectile> pool = type == AttackType.Rebound ? _ricochetPool : _burstPool;
             Projectile projectile = pool.Get();
             projectile.transform.SetPositionAndRotation(_shootingPoint.position, Quaternion.identity);
             projectile.Initialize(GetDirToPlayer(), transform, pool);
@@ -257,17 +263,17 @@ public class MultiattackDrone : BossEnemy
         float disToActual = 0;
         float disToFurthest = 0;
         Transform furthestWP = Waypoints[0];
-        foreach(Transform t in Waypoints)
+        foreach (Transform t in Waypoints)
         {
             disToActual = Vector2.Distance(t.position, _playerPos);
 
-            if(disToFurthest == 0 || disToActual > disToFurthest)
+            if (disToFurthest == 0 || disToActual > disToFurthest)
             {
                 disToFurthest = disToActual;
                 furthestWP = t;
             }
         }
-        if(furthestWP != null) _targetWaypoint = furthestWP;
+        if (furthestWP != null) _targetWaypoint = furthestWP;
     }
 
     private IEnumerator FlyTowards(Vector2 targetPos)
