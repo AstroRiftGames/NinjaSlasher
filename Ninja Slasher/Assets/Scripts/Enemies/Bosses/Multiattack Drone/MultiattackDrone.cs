@@ -1,8 +1,5 @@
 using System.Collections;
-using System.Collections.Generic;
-using TMPro;
 using UnityEngine;
-using UnityEngine.EventSystems;
 
 public enum AttackType
 {
@@ -20,6 +17,9 @@ public class MultiattackDrone : BossEnemy
     private Transform _targetWaypoint;
     private Vector2 _playerPos;
     private bool _flyingAway;
+    [SerializeField] BoxCollider2D _boxCol;
+    [SerializeField] BoxCollider2D _boxTrigger;
+    [SerializeField] CapsuleCollider2D _capsuleCol;
 
     [Header("Bullet Prefabs")]
     [SerializeField] GameObject _coneBullet;
@@ -51,9 +51,9 @@ public class MultiattackDrone : BossEnemy
     public override void Awake()
     {
         base.Awake();
-        _conePool = new GenericPool<Projectile>(_coneBullet, _coneAmount*2, transform);
-        _ricochetPool = new GenericPool<Projectile>(_riccochetBullet, _reboundAmount*2, transform);
-        _burstPool = new GenericPool<Projectile>(_burstBullet, _burstAmount*2, transform);
+        _conePool = new GenericPool<Projectile>(_coneBullet, _coneAmount * 2, transform);
+        _ricochetPool = new GenericPool<Projectile>(_riccochetBullet, _reboundAmount * 2, transform);
+        _burstPool = new GenericPool<Projectile>(_burstBullet, _burstAmount * 2, transform);
     }
 
     public override void Start()
@@ -64,21 +64,24 @@ public class MultiattackDrone : BossEnemy
 
     public override void CustomUpdate()
     {
-        if(_isActive && !_isVulnerable)
+        if (_isActive && !_isVulnerable)
         {
             SetLookingDirection();
 
-            if (CheckDisToPlayer())
+            if(!_flyingAway)
             {
-                if (_flyingAway) StopAllCoroutines();
-                FlyAway();
+                if (CheckDisToPlayer())
+                {
+                    FlyAway();
+                }
+
+                if (CheckCooldown())
+                {
+                    ChooseAttack();
+                    Attack(_nextAttack);
+                }
             }
 
-            if (!_flyingAway && CheckCooldown())
-            {
-                ChooseAttack();
-                Attack(_nextAttack);
-            }
         }
     }
 
@@ -99,21 +102,34 @@ public class MultiattackDrone : BossEnemy
     {
         yield return new WaitForSeconds(_waitTime);
         _isActive = true;
+        AudioManager.Instance.PlayLoopedSFXAtPosition(SFXClip.B_Drone_Idle, transform.position);
     }
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
-        if(collision.gameObject.layer == 8)
+        if (collision.gameObject.CompareTag("Projectile") && !_isVulnerable)
         {
             collision.TryGetComponent(out Projectile projectile);
-            if(projectile.Shooter.gameObject.CompareTag("Player"))
+            if (projectile.Shooter.gameObject.CompareTag("Player"))
             {
+                StopAllCoroutines();
+                AudioManager.Instance.PlaySFXAtPosition(SFXClip.B_Drone_ProjectileHit, transform.position);
                 StartCoroutine(GetVulnerable());
             }
         }
-        else if(collision.gameObject.CompareTag("Player") && _isVulnerable)
+        else if (collision.gameObject.CompareTag("Player") && _isVulnerable)
         {
+            StopAllCoroutines();
+            AudioManager.Instance.PlaySFXAtPosition(SFXClip.B_Drone_PlayerHit, transform.position);
             Die();
+        }
+    }
+
+    private void OnCollisionEnter2D(Collision2D collision)
+    {
+        if(collision.gameObject.CompareTag("Scenario") && _isVulnerable)
+        {
+            AudioManager.Instance.PlaySFXAtPosition(SFXClip.B_Drone_FloorHit, transform.position);
         }
     }
 
@@ -121,9 +137,27 @@ public class MultiattackDrone : BossEnemy
     {
         _animator.SetTrigger("OnHit");
         SetVulnerability(true);
+        _rb.gravityScale = 1;
+        _boxCol.enabled = true;
+        _boxTrigger.enabled = true;
         yield return new WaitForSeconds(_vulnerabilityTime);
-        SetVulnerability(false);
         _animator.SetTrigger("OnRecover");
+        _boxCol.enabled = false;
+        _boxTrigger.enabled = false;
+        _rb.gravityScale = 0;
+        yield return new WaitForSeconds(1.75f);
+
+        SetVulnerability(false);
+        FlyAway();
+    }
+
+    public override void Die()
+    {
+        base.Die();
+        _boxCol.enabled = false;
+        _boxTrigger.enabled = false;
+        _capsuleCol.enabled = false;
+        _rb.bodyType = RigidbodyType2D.Static;
     }
 
     #endregion
@@ -146,7 +180,7 @@ public class MultiattackDrone : BossEnemy
 
     private void Attack(AttackType type)
     {
-        switch(type)
+        switch (type)
         {
             case AttackType.Burst:
                 StartCoroutine(ShootBurst());
@@ -157,7 +191,8 @@ public class MultiattackDrone : BossEnemy
             case AttackType.Rebound:
                 StartCoroutine(ShootRebound());
                 break;
-        };
+        }
+        ;
         _lastAttack = Time.time;
     }
 
@@ -204,13 +239,17 @@ public class MultiattackDrone : BossEnemy
             _ => _burstBullet,
         };
 
+        Transform t = null;
+
         if (type == AttackType.Cone)
         {
             Projectile cone = _conePool.Get();
+            t = cone.transform;
 
             Vector2 dir = GetDirToPlayer();
             float angle = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg;
-            cone.transform.rotation = Quaternion.Euler(0, 0, angle -90);
+            cone.transform.rotation = Quaternion.Euler(0, 0, angle - 90);
+            cone.transform.parent = null;
 
             for (int n = 0; n < cone.transform.childCount; n++)
             {
@@ -220,11 +259,14 @@ public class MultiattackDrone : BossEnemy
         }
         else
         {
-            GenericPool<Projectile> pool = type == AttackType.Rebound ? _ricochetPool: _burstPool;
+            GenericPool<Projectile> pool = type == AttackType.Rebound ? _ricochetPool : _burstPool;
             Projectile projectile = pool.Get();
+            t = projectile.transform;
             projectile.transform.SetPositionAndRotation(_shootingPoint.position, Quaternion.identity);
             projectile.Initialize(GetDirToPlayer(), transform, pool);
+            projectile.transform.parent = null;
         }
+        AudioManager.Instance.PlaySFXAtPosition(type == AttackType.Burst ? SFXClip.B_Drone_BurstAttack: type == AttackType.Cone ? SFXClip.B_Drone_ConeAttack: SFXClip.B_Drone_ReboundAttack, t.position);
     }
 
     #endregion
@@ -250,21 +292,23 @@ public class MultiattackDrone : BossEnemy
         float disToActual = 0;
         float disToFurthest = 0;
         Transform furthestWP = Waypoints[0];
-        foreach(Transform t in Waypoints)
+        foreach (Transform t in Waypoints)
         {
             disToActual = Vector2.Distance(t.position, _playerPos);
 
-            if(disToFurthest == 0 || disToActual > disToFurthest)
+            if (disToFurthest == 0 || disToActual > disToFurthest)
             {
                 disToFurthest = disToActual;
                 furthestWP = t;
             }
         }
-        if(furthestWP != null) _targetWaypoint = furthestWP;
+        if (furthestWP != null) _targetWaypoint = furthestWP;
     }
 
     private IEnumerator FlyTowards(Vector2 targetPos)
     {
+        AudioManager.Instance.StopSFX(SFXClip.B_Drone_Idle);
+        AudioManager.Instance.PlayLoopedSFXAtPosition(SFXClip.B_Drone_FlyAway, transform.position);
         while (_flyingAway)
         {
             Vector2 dirToFly = (targetPos - (Vector2)transform.position).normalized;
@@ -278,6 +322,8 @@ public class MultiattackDrone : BossEnemy
             }
             yield return null;
         }
+        AudioManager.Instance.StopSFX(SFXClip.B_Drone_FlyAway);
+        AudioManager.Instance.PlayLoopedSFXAtPosition(SFXClip.B_Drone_Idle, transform.position);
     }
 
     #endregion
