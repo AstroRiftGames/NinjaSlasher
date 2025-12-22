@@ -402,14 +402,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 0, b: 0, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: -2413806693520163455, guid: a86470a33a6bf42c4b3595704624658b, type: 3}
+  m_Sprite: {fileID: -7405439644975086451, guid: a69454df521ce2641bbed2abdbae5718, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -706,6 +706,11 @@ MonoBehaviour:
   crankRotations: 3
   ballMoveDuration: 0.5
   crankEase: 28
+  _ballImage: {fileID: 2646995847110099549}
+  _ballClosedSprite: {fileID: -7405439644975086451, guid: a69454df521ce2641bbed2abdbae5718, type: 3}
+  _ballOpenSprite: {fileID: 2533280711566288848, guid: daafbc46ded1b2b4da247329bdba946f, type: 3}
+  _delayBeforeOpening: 0.5
+  _delayAfterOpening: 0.2
 --- !u!1 &3959306495811407219
 GameObject:
   m_ObjectHideFlags: 0
@@ -867,6 +872,7 @@ GameObject:
   - component: {fileID: 5122114777729242543}
   - component: {fileID: 729142620616358328}
   - component: {fileID: 4635421304610643797}
+  - component: {fileID: 9087948889774282669}
   m_Layer: 0
   m_Name: Palanca
   m_TagString: Untagged
@@ -931,6 +937,18 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!114 &9087948889774282669
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5754071339586601202}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 69333bc3840a62949a1e01c45428622d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &6106023931146416472
 GameObject:
   m_ObjectHideFlags: 0
