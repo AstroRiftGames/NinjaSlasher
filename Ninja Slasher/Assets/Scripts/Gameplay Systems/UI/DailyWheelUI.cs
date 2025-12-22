@@ -14,8 +14,7 @@ public class DailyWheelUI : MonoBehaviour
     [SerializeField] private Transform ballRevealPoint;
 
     [Header("UI CONTROLS")]
-    [SerializeField] private Button spinButton;
-    [SerializeField] private TextMeshProUGUI spinButtonText;
+    [SerializeField] private WheelLever _wheelLever;
     [SerializeField] private TextMeshProUGUI timerText;
 
     [Header("REWARD POPUP")]
@@ -68,10 +67,31 @@ public class DailyWheelUI : MonoBehaviour
         if (rewardPopup != null)
             rewardPopup.SetActive(false);
 
-        spinButton.onClick.AddListener(OnSpinClicked);
-
+        if (_wheelLever != null)
+        {
+            _wheelLever.OnLeverActivated += OnLeverPulled;
+        }
+        
         UpdateUIState(DailyWheelSystem.Instance.CanSpinToday());
         StartTimerUpdate();
+    }
+
+    private void OnDestroy()
+    {
+        if (_wheelLever != null)
+        {
+            _wheelLever.OnLeverActivated -= OnLeverPulled;
+        }
+    }
+
+    private void OnLeverPulled()
+    {
+        if (_isSpinning) return;
+
+        if (DailyWheelSystem.Instance.SpinWheel(out WheelReward reward))
+        {
+            StartCoroutine(GaraponSequence(reward));
+        }
     }
 
     private void StartTimerUpdate()
@@ -114,25 +134,15 @@ public class DailyWheelUI : MonoBehaviour
     {
         if (_isSpinning) return;
 
-        spinButton.interactable = canSpin;
-        if (spinButtonText != null)
-            spinButtonText.text = canSpin ? "SPIN" : "CLAIMED";
-    }
-
-    private void OnSpinClicked()
-    {
-        if (_isSpinning) return;
-
-        if (DailyWheelSystem.Instance.SpinWheel(out WheelReward reward))
+        if (_wheelLever != null)
         {
-            StartCoroutine(GaraponSequence(reward));
+            _wheelLever.SetInteractable(canSpin);
         }
     }
 
     private IEnumerator GaraponSequence(WheelReward reward)
     {
         _isSpinning = true;
-        spinButton.interactable = false;
         AudioManager.Instance?.PlaySFX(SFXClip.UI_Claim);
 
         if (wheelBody != null)
