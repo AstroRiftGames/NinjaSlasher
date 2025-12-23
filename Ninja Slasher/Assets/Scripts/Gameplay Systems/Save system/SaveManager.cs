@@ -839,5 +839,25 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
         }
     }
 
+    [ContextMenu("DEBUG: Delete All Data")]
+    public void DebugDeleteAllData()
+    {
+        Debug.LogWarning("[SaveManager] BORRANDO TODOS LOS DATOS");
+
+        ResetAllLocalSaves(notify: true);
+
+        PlayerPrefs.DeleteAll();
+        PlayerPrefs.Save();
+
+        Debug.Log("[SaveManager] Todos los datos locales y PlayerPrefs han sido eliminados.");
+
+        if (Application.isPlaying)
+        {
+            UnityEngine.SceneManagement.SceneManager.LoadScene(
+                UnityEngine.SceneManagement.SceneManager.GetActiveScene().name
+            );
+        }
+    }
+
     #endregion
 }
