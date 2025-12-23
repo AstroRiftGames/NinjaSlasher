@@ -1,102 +1,61 @@
 using UnityEngine;
 
-[RequireComponent(typeof(LineRenderer))]
 public class TrajectoryRenderer : MonoBehaviour
 {
-    private LineRenderer _lineRenderer;
-    private PowerUpHawkVision _trajectorySettings;
-
+    [SerializeField] private SpriteRenderer _arrowRenderer;
     [SerializeField] private LayerMask _collisionLayers;
-
-    [SerializeField] private Material _lineMaterial;
-    [SerializeField] private Color _defaultLineColor = new Color(0f, 1f, 1f, 0.7f);
-    [SerializeField] private float _defaultLineWidth = 0.1f;
     [SerializeField] private float _defaultMaxDistance = 50f;
+
+    [SerializeField] private PowerUpHawkVision _hawkVisionSettings;
+
+    private float _fixedWidth;
 
     void Awake()
     {
-        _lineRenderer = GetComponent<LineRenderer>();
-        ConfigureLineRenderer();
-    }
-
-    void ConfigureLineRenderer()
-    {
-        if (_lineRenderer == null) return;
-
-        _lineRenderer.startWidth = _defaultLineWidth;
-        _lineRenderer.endWidth = _defaultLineWidth;
-        _lineRenderer.positionCount = 0;
-        _lineRenderer.useWorldSpace = true;
-        _lineRenderer.enabled = false;
-
-        if (_lineMaterial != null)
+        if (_arrowRenderer != null)
         {
-            _lineRenderer.material = _lineMaterial;
-        }
-
-        _lineRenderer.startColor = _defaultLineColor;
-        _lineRenderer.endColor = _defaultLineColor;
-
-        _lineRenderer.sortingLayerName = "Player";
-        _lineRenderer.sortingOrder = 10;
-    }
-
-    public void SetTrajectorySettings(PowerUpHawkVision settings)
-    {
-        _trajectorySettings = settings;
-
-        if (_lineRenderer != null && settings != null)
-        {
-            _lineRenderer.startWidth = settings.lineWidth;
-            _lineRenderer.endWidth = settings.lineWidth;
-            _lineRenderer.startColor = settings.lineColor;
-            _lineRenderer.endColor = settings.lineColor;
+            _fixedWidth = _arrowRenderer.size.x;
+            _arrowRenderer.enabled = false;
         }
     }
 
     public void ShowTrajectory(Vector3 startPosition, Vector2 direction)
     {
-        if (_lineRenderer == null) return;
+        if (_arrowRenderer == null || direction == Vector2.zero) return;
 
-        float maxDistance = _trajectorySettings != null ? _trajectorySettings.maxDistance : _defaultMaxDistance;
+        float maxDist = _hawkVisionSettings != null ? _hawkVisionSettings.maxDistance : _defaultMaxDistance;
 
-        CalculateTrajectory(startPosition, direction, maxDistance);
+        float distance = CalculateDistance(startPosition, direction, maxDist);
+        UpdateArrowTransform(startPosition, direction, distance);
+
+        _arrowRenderer.enabled = true;
     }
 
-    void CalculateTrajectory(Vector3 startPos, Vector2 direction, float maxDistance)
+    private float CalculateDistance(Vector3 startPos, Vector2 direction, float maxDist)
     {
-        Vector2 normalizedDir = direction.normalized;
-
-        RaycastHit2D hit = Physics2D.Raycast(startPos, normalizedDir, maxDistance, _collisionLayers);
-
-        _lineRenderer.positionCount = 2;
+        RaycastHit2D hit = Physics2D.Raycast(startPos, direction.normalized, maxDist, _collisionLayers);
 
         if (hit.collider != null)
         {
-            _lineRenderer.SetPosition(0, startPos);
-            _lineRenderer.SetPosition(1, hit.point);
-        }
-        else
-        {
-            Vector2 endPoint = (Vector2)startPos + normalizedDir * maxDistance;
-            _lineRenderer.SetPosition(0, startPos);
-            _lineRenderer.SetPosition(1, endPoint);
+            return hit.distance;
         }
 
-        _lineRenderer.enabled = true;
+        return maxDist;
+    }
+
+    private void UpdateArrowTransform(Vector3 startPos, Vector2 direction, float distance)
+    {
+        _arrowRenderer.transform.position = startPos;
+
+        float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
+
+        _arrowRenderer.transform.rotation = Quaternion.Euler(0, 0, angle - 90f);
+
+        _arrowRenderer.size = new Vector2(_fixedWidth, distance);
     }
 
     public void HideTrajectory()
     {
-        if (_lineRenderer != null)
-        {
-            _lineRenderer.enabled = false;
-            _lineRenderer.positionCount = 0;
-        }
-    }
-
-    void OnDisable()
-    {
-        HideTrajectory();
+        if (_arrowRenderer != null) _arrowRenderer.enabled = false;
     }
 }

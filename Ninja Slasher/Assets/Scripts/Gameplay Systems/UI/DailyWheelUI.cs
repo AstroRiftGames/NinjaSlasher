@@ -14,8 +14,7 @@ public class DailyWheelUI : MonoBehaviour
     [SerializeField] private Transform ballRevealPoint;
 
     [Header("UI CONTROLS")]
-    [SerializeField] private Button spinButton;
-    [SerializeField] private TextMeshProUGUI spinButtonText;
+    [SerializeField] private WheelLever _wheelLever;
     [SerializeField] private TextMeshProUGUI timerText;
 
     [Header("REWARD POPUP")]
@@ -30,6 +29,13 @@ public class DailyWheelUI : MonoBehaviour
     [SerializeField] private int crankRotations = 3;
     [SerializeField] private float ballMoveDuration = 0.5f;
     [SerializeField] private Ease crankEase = Ease.InOutBack;
+
+    [Header("BALL ANIMATION SETTINGS")]
+    [SerializeField] private Image _ballImage;
+    [SerializeField] private Sprite _ballClosedSprite;
+    [SerializeField] private Sprite _ballOpenSprite;
+    [SerializeField] private float _delayBeforeOpening = 0.5f;
+    [SerializeField] private float _delayAfterOpening = 0.2f;
 
     private bool _isSpinning = false;
     private Coroutine _timerCoroutine;
@@ -61,10 +67,31 @@ public class DailyWheelUI : MonoBehaviour
         if (rewardPopup != null)
             rewardPopup.SetActive(false);
 
-        spinButton.onClick.AddListener(OnSpinClicked);
-
+        if (_wheelLever != null)
+        {
+            _wheelLever.OnLeverActivated += OnLeverPulled;
+        }
+        
         UpdateUIState(DailyWheelSystem.Instance.CanSpinToday());
         StartTimerUpdate();
+    }
+
+    private void OnDestroy()
+    {
+        if (_wheelLever != null)
+        {
+            _wheelLever.OnLeverActivated -= OnLeverPulled;
+        }
+    }
+
+    private void OnLeverPulled()
+    {
+        if (_isSpinning) return;
+
+        if (DailyWheelSystem.Instance.SpinWheel(out WheelReward reward))
+        {
+            StartCoroutine(GaraponSequence(reward));
+        }
     }
 
     private void StartTimerUpdate()
@@ -107,25 +134,15 @@ public class DailyWheelUI : MonoBehaviour
     {
         if (_isSpinning) return;
 
-        spinButton.interactable = canSpin;
-        if (spinButtonText != null)
-            spinButtonText.text = canSpin ? "SPIN" : "CLAIMED";
-    }
-
-    private void OnSpinClicked()
-    {
-        if (_isSpinning) return;
-
-        if (DailyWheelSystem.Instance.SpinWheel(out WheelReward reward))
+        if (_wheelLever != null)
         {
-            StartCoroutine(GaraponSequence(reward));
+            _wheelLever.SetInteractable(canSpin);
         }
     }
 
     private IEnumerator GaraponSequence(WheelReward reward)
     {
         _isSpinning = true;
-        spinButton.interactable = false;
         AudioManager.Instance?.PlaySFX(SFXClip.UI_Claim);
 
         if (wheelBody != null)
@@ -138,6 +155,8 @@ public class DailyWheelUI : MonoBehaviour
 
         Color ballColor = GetBallColorForReward(reward);
 
+        Vector3 popupSpawnPosition = Vector3.zero;
+
         if (ballDisplayImage != null)
         {
             ballDisplayImage.gameObject.SetActive(true);
@@ -145,8 +164,9 @@ public class DailyWheelUI : MonoBehaviour
             ballDisplayImage.transform.position = ballExitPoint.position;
             ballDisplayImage.transform.localScale = Vector3.zero;
 
-            Sequence ballSeq = DOTween.Sequence();
+            if (_ballClosedSprite != null) ballDisplayImage.sprite = _ballClosedSprite;
 
+            Sequence ballSeq = DOTween.Sequence();
             ballSeq.Append(ballDisplayImage.transform.DOScale(1f, 0.2f).SetEase(Ease.OutBack));
 
             if (ballRevealPoint != null)
@@ -158,26 +178,53 @@ public class DailyWheelUI : MonoBehaviour
 
             yield return ballSeq.WaitForCompletion();
 
+            yield return new WaitForSeconds(0.2f);
+
+            if (_ballOpenSprite != null)
+            {
+                ballDisplayImage.sprite = _ballOpenSprite;
+            }
+
+            yield return new WaitForSeconds(0.2f);
+
+            popupSpawnPosition = ballDisplayImage.transform.position;
+
             ballDisplayImage.gameObject.SetActive(false);
         }
 
-        ShowRewardPopup(reward, ballColor);
+        ShowRewardPopup(reward, ballColor, popupSpawnPosition);
 
         _isSpinning = false;
-
         UpdateUIState(DailyWheelSystem.Instance.CanSpinToday());
     }
 
-    private void ShowRewardPopup(WheelReward reward, Color themeColor)
+    private void ShowRewardPopup(WheelReward reward, Color themeColor, Vector3 startPosition = default)
     {
         if (rewardNameText != null) rewardNameText.text = reward.displayName;
         if (rewardQuantityText != null) rewardQuantityText.text = $"x{reward.quantity}";
         if (rewardIconImage != null) rewardIconImage.sprite = reward.icon;
 
         rewardPopup.SetActive(true);
+
         rewardPopup.transform.localScale = Vector3.zero;
 
-        rewardPopup.transform.DOScale(1f, 0.4f).SetEase(Ease.OutBack);
+        if (startPosition != Vector3.zero)
+        {
+            rewardPopup.transform.position = startPosition;
+        }
+        else
+        {
+            rewardPopup.transform.localPosition = Vector3.zero;
+        }
+
+        Sequence popupSeq = DOTween.Sequence();
+
+        popupSeq.Append(rewardPopup.transform.DOScale(1f, 0.4f).SetEase(Ease.OutBack));
+
+        if (startPosition != Vector3.zero)
+        {
+            popupSeq.Join(rewardPopup.transform.DOLocalMove(Vector3.zero, 0.4f).SetEase(Ease.OutBack));
+        }
     }
 
     public void CloseRewardPopup()
@@ -208,5 +255,31 @@ public class DailyWheelUI : MonoBehaviour
             return _ballColors[index];
 
         return _ballColors[index % _ballColors.Length];
+    }
+
+    public void PlayBallRevealSequence(Action onSequenceComplete)
+    {
+        StartCoroutine(AnimateBallSequence(onSequenceComplete));
+    }
+
+    private IEnumerator AnimateBallSequence(Action onComplete)
+    {
+        if (_ballImage != null && _ballClosedSprite != null)
+        {
+            _ballImage.sprite = _ballClosedSprite;
+        }
+
+        yield return new WaitForSeconds(_delayBeforeOpening);
+
+        if (_ballImage != null && _ballOpenSprite != null)
+        {
+            _ballImage.sprite = _ballOpenSprite;
+
+            // SFX
+        }
+
+        yield return new WaitForSeconds(_delayAfterOpening);
+
+        onComplete?.Invoke();
     }
 }
