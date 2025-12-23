@@ -402,22 +402,16 @@ public class LoginManager : MonoBehaviourSingleton<LoginManager>
 
     #endregion
 
-    // Reemplaza la sección #region Device Debug Methods con esta versión corregida:
-
     #region Device Debug Methods
 
-    // Método para mostrar info en pantalla (útil en dispositivo)
     public void LogToScreen(string message)
     {
         string timestampedMessage = $"[{System.DateTime.Now:HH:mm:ss}] {message}";
 
-        // Log normal
         Debug.Log($"[DEVICE DEBUG] {timestampedMessage}");
 
-        // Agregar a texto acumulado
         debugLog.AppendLine(timestampedMessage);
 
-        // Mantener solo las últimas 20 líneas
         var lines = debugLog.ToString().Split('\n');
         if (lines.Length > 20)
         {
@@ -429,7 +423,6 @@ public class LoginManager : MonoBehaviourSingleton<LoginManager>
             }
         }
 
-        // Actualizar UI si está asignado
         UpdateDebugText();
     }
 
@@ -439,7 +432,6 @@ public class LoginManager : MonoBehaviourSingleton<LoginManager>
         {
             debugOutputText.text = debugLog.ToString();
 
-            // Auto-scroll to bottom (optional)
             if (debugOutputText.transform.parent.GetComponent<ScrollRect>() != null)
             {
                 var scrollRect = debugOutputText.transform.parent.GetComponent<ScrollRect>();
@@ -456,18 +448,15 @@ public class LoginManager : MonoBehaviourSingleton<LoginManager>
         UpdateDebugText();
     }
 
-    // Método para testing completo en dispositivo
     [ContextMenu("Device: Full Auth Test")]
     public async void DeviceFullAuthTest()
     {
         LogToScreen("=== DEVICE AUTH TEST START ===");
 
-        // 1. Verificar configuración
         LogToScreen($"Package: {Application.identifier}");
         LogToScreen($"GameInfo AppID: {GooglePlayGames.GameInfo.ApplicationId}");
         LogToScreen($"GameInfo WebClient: {GooglePlayGames.GameInfo.WebClientId}");
 
-        // 2. Test initialization
         if (!isInitialized)
         {
             LogToScreen("Initializing services...");
@@ -477,7 +466,6 @@ public class LoginManager : MonoBehaviourSingleton<LoginManager>
         LogToScreen($"Initialized: {isInitialized}");
         LogToScreen($"Unity Services: {UnityServices.State}");
 
-        // 3. Test Google Play Games
         LogToScreen("Testing Google Play Games...");
         bool gpgResult = await SignInWithGooglePlayGames();
         LogToScreen($"GPG Result: {gpgResult}");
@@ -494,7 +482,6 @@ public class LoginManager : MonoBehaviourSingleton<LoginManager>
             LogToScreen($"Anonymous Result: {anonResult}");
         }
 
-        // 4. Test save integration
         if (SaveManager.Instance != null)
         {
             LogToScreen("Testing save integration...");
@@ -506,7 +493,6 @@ public class LoginManager : MonoBehaviourSingleton<LoginManager>
         LogToScreen("=== DEVICE AUTH TEST END ===");
     }
 
-    // Método para testing de Google Play Games específico
     [ContextMenu("Device: GPG Only Test")]
     public async void DeviceGPGOnlyTest()
     {
@@ -514,7 +500,6 @@ public class LoginManager : MonoBehaviourSingleton<LoginManager>
 
         try
         {
-            // Verificar si Google Play Games está disponible
             LogToScreen($"GPG Platform Active: {PlayGamesPlatform.Instance != null}");
             LogToScreen($"GPG Already Auth: {PlayGamesPlatform.Instance.IsAuthenticated()}");
 
@@ -537,7 +522,6 @@ public class LoginManager : MonoBehaviourSingleton<LoginManager>
                     LogToScreen($"Success! User: {Social.localUser.userName}");
                     LogToScreen($"User ID: {Social.localUser.id}");
 
-                    // Obtener auth code
                     PlayGamesPlatform.Instance.RequestServerSideAccess(true, (code) =>
                     {
                         if (!string.IsNullOrEmpty(code))
@@ -569,7 +553,6 @@ public class LoginManager : MonoBehaviourSingleton<LoginManager>
         LogToScreen("=== GPG TEST END ===");
     }
 
-    // Método simplificado para verificar Play Services (sin acceder a clases internas)
     [ContextMenu("Device: Check Play Services")]
     public void DeviceCheckPlayServices()
     {
@@ -577,11 +560,9 @@ public class LoginManager : MonoBehaviourSingleton<LoginManager>
 
         try
         {
-            // Verificaciones básicas que sí podemos hacer
             LogToScreen($"Application.platform: {Application.platform}");
             LogToScreen($"SystemInfo.operatingSystem: {SystemInfo.operatingSystem}");
 
-            // Verificar si Google Play Games Platform está inicializado
             LogToScreen($"PlayGamesPlatform exists: {PlayGamesPlatform.Instance != null}");
 
             if (PlayGamesPlatform.Instance != null)
@@ -589,7 +570,6 @@ public class LoginManager : MonoBehaviourSingleton<LoginManager>
                 LogToScreen($"Platform authenticated: {PlayGamesPlatform.Instance.IsAuthenticated()}");
             }
 
-            // Verificar Unity Services
             LogToScreen($"Unity Services state: {UnityServices.State}");
             LogToScreen($"Auth Service available: {AuthenticationService.Instance != null}");
 

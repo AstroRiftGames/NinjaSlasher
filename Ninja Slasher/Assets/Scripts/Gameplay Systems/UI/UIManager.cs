@@ -97,6 +97,11 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
         if (_isInitialized)
         {
             _gameplayUIManager.UpdateUI();
+
+            if (Input.GetKeyDown(KeyCode.T))
+            {
+                Cursor.visible = !Cursor.visible;
+            }
         }
     }
 
@@ -123,10 +128,12 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
     public void ShowHideUserIconsCanvas() => _canvasManager.ShowHideUserIconsCanvas();
     public void ShowHideUserNicknameEditCanvas() => _canvasManager.ShowHideUserNicknameEditCanvas();
     public void ShowHideResultsCanvas() => _canvasManager.ShowHideResultsCanvas();
+    public void ShowHideLifeLostCanvas() => _canvasManager.ShowHideLifeLostCanvas();
     public void ShowHideDailyRewardCanvas() => _canvasManager.ShowHideDailyRewardCanvas();
     public void ShowHideNoLivesCanvas() => _canvasManager.ShowHideNoLivesCanvas();
-    public void ShowLifeLostPanel() => _gameplayUIManager.ShowLifeLostPanel();
-    public void HideLifeLostPanel() => _gameplayUIManager.HideLifeLostPanel();
+    //public void ShowLifeLostPanel() => _gameplayUIManager.ShowLifeLostPanel();
+    //public void HideLifeLostPanel() => _gameplayUIManager.HideLifeLostPanel();
     public void UpdateLivesUI(int lives) => _gameplayUIManager.UpdateLivesUI(lives);
     public void ShowNoLivesPanel() => _gameplayUIManager.ShowNoLivesPanel();
+    public void ShowHideStoreCanvas() => _canvasManager.ShowHideStoreCanvas();
 }

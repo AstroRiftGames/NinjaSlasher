@@ -30,7 +30,7 @@ public class AnalyticsManager : MonoBehaviourSingleton<AnalyticsManager>
         {
             await UnityServices.InitializeAsync();
 
-            Debug.Log("Unity Services inicializado correctamente");
+            //Debug.Log("Unity Services inicializado correctamente");
 
             if (AnalyticsService.Instance != null)
             {
@@ -39,7 +39,7 @@ public class AnalyticsManager : MonoBehaviourSingleton<AnalyticsManager>
                 isInitialized = true;
                 isDataCollectionActive = true;
 
-                Debug.Log("Unity Analytics inicializado y recolección de datos iniciada");
+                //Debug.Log("Unity Analytics inicializado y recolección de datos iniciada");
 
                 RecordGameStart();
             }
@@ -69,7 +69,7 @@ public class AnalyticsManager : MonoBehaviourSingleton<AnalyticsManager>
             };
 
             AnalyticsService.Instance.RecordEvent(gameStartEvent);
-            Debug.Log("Evento 'gameStart' enviado correctamente");
+            //Debug.Log("Evento 'gameStart' enviado correctamente");
         }
         catch (Exception e)
         {
@@ -91,7 +91,7 @@ public class AnalyticsManager : MonoBehaviourSingleton<AnalyticsManager>
             };
 
             AnalyticsService.Instance.RecordEvent(gameEndEvent);
-            Debug.Log($"Evento 'gameEnd' enviado - Duración: {sessionDuration} segundos");
+            //Debug.Log($"Evento 'gameEnd' enviado - Duración: {sessionDuration} segundos");
         }
         catch (Exception e)
         {
@@ -114,7 +114,7 @@ public class AnalyticsManager : MonoBehaviourSingleton<AnalyticsManager>
             };
 
             AnalyticsService.Instance.RecordEvent(levelCompletedEvent);
-            Debug.Log($"Evento 'levelCompleted' enviado - Nivel: {levelId}, Estrellas: {starsEarned}, Tiempo: {completionTime}s");
+            //Debug.Log($"Evento 'levelCompleted' enviado - Nivel: {levelId}, Estrellas: {starsEarned}, Tiempo: {completionTime}s");
         }
         catch (Exception e)
         {
@@ -138,7 +138,7 @@ public class AnalyticsManager : MonoBehaviourSingleton<AnalyticsManager>
             };
 
             AnalyticsService.Instance.RecordEvent(levelFailedEvent);
-            Debug.Log($"Evento 'levelFailed' enviado - Nivel: {levelId}, Razón: {failReason}");
+            //Debug.Log($"Evento 'levelFailed' enviado - Nivel: {levelId}, Razón: {failReason}");
         }
         catch (Exception e)
         {
@@ -161,7 +161,7 @@ public class AnalyticsManager : MonoBehaviourSingleton<AnalyticsManager>
             };
 
             AnalyticsService.Instance.RecordEvent(lifeLostEvent);
-            Debug.Log($"Evento 'lifeLost' enviado - Vidas restantes: {currentLives}, Razón: {lossReason}");
+            //Debug.Log($"Evento 'lifeLost' enviado - Vidas restantes: {currentLives}, Razón: {lossReason}");
         }
         catch (Exception e)
         {
@@ -183,7 +183,7 @@ public class AnalyticsManager : MonoBehaviourSingleton<AnalyticsManager>
             };
 
             AnalyticsService.Instance.RecordEvent(lifeRestoredEvent);
-            Debug.Log($"Evento 'lifeRestored' enviado - Nuevas vidas: {newLifeCount}, Método: {restoreMethod}");
+            //Debug.Log($"Evento 'lifeRestored' enviado - Nuevas vidas: {newLifeCount}, Método: {restoreMethod}");
         }
         catch (Exception e)
         {
@@ -206,7 +206,7 @@ public class AnalyticsManager : MonoBehaviourSingleton<AnalyticsManager>
             };
 
             AnalyticsService.Instance.RecordEvent(playerActionEvent);
-            Debug.Log($"Evento 'playerAction' enviado - Acción: {actionType}, Detalles: {actionDetails}");
+            //Debug.Log($"Evento 'playerAction' enviado - Acción: {actionType}, Detalles: {actionDetails}");
         }
         catch (Exception e)
         {
@@ -228,7 +228,7 @@ public class AnalyticsManager : MonoBehaviourSingleton<AnalyticsManager>
             };
 
             AnalyticsService.Instance.RecordEvent(screenTransitionEvent);
-            Debug.Log($"Evento 'screenTransition' enviado - De: {fromScreen} a: {toScreen}");
+            //Debug.Log($"Evento 'screenTransition' enviado - De: {fromScreen} a: {toScreen}");
         }
         catch (Exception e)
         {
@@ -259,7 +259,7 @@ public class AnalyticsManager : MonoBehaviourSingleton<AnalyticsManager>
         {
             AnalyticsService.Instance.StopDataCollection();
             isDataCollectionActive = false;
-            Debug.Log("Recolección de datos detenida");
+            //Debug.Log("Recolección de datos detenida");
         }
     }
 
@@ -269,7 +269,7 @@ public class AnalyticsManager : MonoBehaviourSingleton<AnalyticsManager>
         {
             AnalyticsService.Instance.StartDataCollection();
             isDataCollectionActive = true;
-            Debug.Log("Recolección de datos reiniciada");
+            //Debug.Log("Recolección de datos reiniciada");
         }
     }
 

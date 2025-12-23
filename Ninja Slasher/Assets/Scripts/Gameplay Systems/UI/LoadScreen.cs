@@ -10,6 +10,7 @@ public class LoadManager : MonoBehaviour
     [SerializeField] private Slider _loadbar;
     [SerializeField] private TextMeshProUGUI _text;
     [SerializeField] private Animator _textAnim;
+    [SerializeField] private RectMask2D _rectMask2D;
 
     [SerializeField] private float _loadingDuration = 3f;
     [SerializeField] private Ease _loadingEase = Ease.OutQuart;
@@ -36,6 +37,9 @@ public class LoadManager : MonoBehaviour
 
         while (!asyncOperation.isDone)
         {
+            _rectMask2D.padding = new Vector4(_loadbar.value*1400f, 0, 0, 0);
+            
+
             if (_loadbar.value >= 1)
             {
                 _text.text = "TAP TO CONTINUE";

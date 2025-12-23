@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.Collections.Generic;
 using System.Collections;
+using UnityEngine.Tilemaps;
 
 public class BreakablePlatform : PlatformBase
 {
@@ -10,11 +11,13 @@ public class BreakablePlatform : PlatformBase
 
     private Rigidbody2D playerRb;
     private int remainingUses;
+    [SerializeField] int _columns = 3;
+    [SerializeField] int _rows = 2;
 
 
 
-    [SerializeField] GameObject _wholePlatform;
-    SpriteRenderer _renderer;
+    [SerializeField] GameObject _tilemap;
+    TilemapCollider2D _tilemapCol;
     List<List<int>> pieces = new List<List<int>>();
     Vector3[] _coords;
     [Header("BREAKING")]
@@ -23,8 +26,8 @@ public class BreakablePlatform : PlatformBase
 
     private void Awake()
     {
-        _wholePlatform.TryGetComponent(out SpriteRenderer renderer);
-        _renderer = renderer;
+        _tilemap.TryGetComponent(out TilemapCollider2D renderer);
+        _tilemapCol = renderer;
     }
 
 
@@ -70,7 +73,7 @@ public class BreakablePlatform : PlatformBase
 
     private void DeactivateWhole()
     {
-        _wholePlatform.SetActive(false);
+        _tilemap.SetActive(false);
     }
 
     private void GeneratePieces()
@@ -82,13 +85,11 @@ public class BreakablePlatform : PlatformBase
 
     private void CreateMatrix()
     {
-        int columns = Mathf.RoundToInt(_renderer.size.x + 1);
-        int rows = Mathf.RoundToInt(_renderer.size.y + 1);
-        _coords = new Vector3[columns*rows];
-        for (int c = 0; c < columns; c++)
+        _coords = new Vector3[_columns*_rows];
+        for (int c = 0; c < _columns; c++)
         {
             pieces.Add(new List<int>());
-            for (int r = 0; r < rows; r++)
+            for (int r = 0; r < _rows; r++)
             {
                 pieces[c].Add(r);
             }
@@ -97,7 +98,7 @@ public class BreakablePlatform : PlatformBase
     private void SetPositions()
     {
         Vector3 pos = Vector2.zero;
-        Vector3 offset = _renderer.size / 2;
+        Vector3 offset = Vector2.zero;
         int index = 0;
         for (int c = 0; c < pieces.Count; c++)
         {
@@ -105,6 +106,8 @@ public class BreakablePlatform : PlatformBase
             {
                 pos.x = c;
                 pos.y = r;
+                offset.x = c / 2;
+                offset.y = r / 2;
                 _coords[index] = transform.position + pos - offset;
                 index++;
             }

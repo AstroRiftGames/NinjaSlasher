@@ -5,11 +5,13 @@ public class ComboManager : MonoBehaviourSingleton<ComboManager>
 {
     public event Action<int> OnComboUpdated;
     public event Action OnComboEnded;
+    public event Action<int, Vector3> OnComboUpdatedWithPosition;
 
     private int killCount = 0;
     private float comboTimer = 0f;
     private bool comboActive = false;
     private LevelController levelController;
+    private Vector3 lastEnemyPosition;
 
     public override void Awake()
     {
@@ -36,8 +38,9 @@ public class ComboManager : MonoBehaviourSingleton<ComboManager>
         levelController = FindObjectOfType<LevelController>();
     }
 
-    public void RegisterKill()
+    public void RegisterKill(Vector3 enemyPosition)
     {
+        lastEnemyPosition = enemyPosition;
         killCount++;
         int level = Mathf.Clamp(killCount, 1, 5);
 
@@ -59,9 +62,15 @@ public class ComboManager : MonoBehaviourSingleton<ComboManager>
             {
                 TutorialManager.Instance.OnComboPerformed();
             }
-        }
 
-        OnComboUpdated?.Invoke(level);
+            OnComboUpdated?.Invoke(level);
+            OnComboUpdatedWithPosition?.Invoke(level, lastEnemyPosition);
+        }
+    }
+
+    public void RegisterKill()
+    {
+        RegisterKill(Vector3.zero);
     }
 
     private void GiveBonus(int level)
@@ -98,5 +107,10 @@ public class ComboManager : MonoBehaviourSingleton<ComboManager>
         killCount = 0;
         comboActive = false;
         OnComboEnded?.Invoke();
+    }
+
+    public Vector3 GetLastEnemyPosition()
+    {
+        return lastEnemyPosition;
     }
 }

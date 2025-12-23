@@ -13,15 +13,15 @@ public class DailyRewardUIManager : MonoBehaviourSingleton<DailyRewardUIManager>
     [SerializeField] private Button claimButton;
     public TextMeshProUGUI claimButtonText;
 
-    //[Header("Double Reward Button")]
-    //[SerializeField] private Button _doubleDailyRewardButton;
-    //[SerializeField] private TextMeshProUGUI _doubleRewardButtonText;
+    [Header("Double Reward Button")]
+    [SerializeField] private Button _doubleDailyRewardButton;
+    [SerializeField] private TextMeshProUGUI _doubleRewardButtonText;
 
-    [Header("BACKGROUND COLORS")]
-    public Color availableColor = Color.white;
-    public Color claimedColor = Color.green;
-    public Color lockedColor = Color.gray;
-    public Color todayColor = Color.yellow;
+    [Header("DAY LABEL COLORS")]
+    public Color availableColor;
+    public Color claimedColor;
+    public Color lockedColor;
+    public Color todayColor;
 
     private DailyRewardSystem dailyRewardSystem;
     private bool isInitialized = false;
@@ -72,18 +72,18 @@ public class DailyRewardUIManager : MonoBehaviourSingleton<DailyRewardUIManager>
             closeButton.onClick.AddListener(OnClosePressed);
         }
 
-        //if (_doubleDailyRewardButton != null)
-        //{
-        //    _doubleDailyRewardButton.onClick.RemoveAllListeners();
-        //    _doubleDailyRewardButton.onClick.AddListener(OnDoubleRewardPressed);
-        //}
+        if (_doubleDailyRewardButton != null)
+        {
+            _doubleDailyRewardButton.onClick.RemoveAllListeners();
+            _doubleDailyRewardButton.onClick.AddListener(OnDoubleRewardPressed);
+        }
     }
 
     void SubscribeToEvents()
     {
         DailyRewardSystem.OnRewardClaimed += OnRewardClaimed;
         DailyRewardSystem.OnRewardAvailabilityChanged += OnRewardAvailabilityChanged;
-        //DailyRewardSystem.OnRewardDoubled += OnRewardDoubled;
+        DailyRewardSystem.OnRewardDoubled += OnRewardDoubled;
     }
 
     void UnsubscribeFromEvents()
@@ -118,7 +118,7 @@ public class DailyRewardUIManager : MonoBehaviourSingleton<DailyRewardUIManager>
 
         UpdateWeeklyProgress();
         UpdateClaimButton();
-        //UpdateDoubleRewardButton();
+        UpdateDoubleRewardButton();
     }
 
     void UpdateWeeklyProgress()
@@ -134,7 +134,8 @@ public class DailyRewardUIManager : MonoBehaviourSingleton<DailyRewardUIManager>
             if (weeklyRewardDays[i] != null)
             {
                 DayState state = GetDayState(i, currentDay, claimedDays[i], canClaimToday);
-                weeklyRewardDays[i].UpdateDayState(state);
+                Color labelColor = GetColorForState(state);
+                weeklyRewardDays[i].UpdateDayState(state, labelColor);
             }
         }
     }
@@ -149,6 +150,23 @@ public class DailyRewardUIManager : MonoBehaviourSingleton<DailyRewardUIManager>
             return DayState.Missed;
         else
             return DayState.Locked;
+    }
+
+    Color GetColorForState(DayState state)
+    {
+        switch (state)
+        {
+            case DayState.Available:
+                return todayColor;
+            case DayState.Claimed:
+                return claimedColor;
+            case DayState.Locked:
+                return lockedColor;
+            case DayState.Missed:
+                return Color.red;
+            default:
+                return Color.white;
+        }
     }
 
     void UpdateClaimButton()
@@ -228,65 +246,63 @@ public class DailyRewardUIManager : MonoBehaviourSingleton<DailyRewardUIManager>
         if (claimButton) claimButton.interactable = canClaim;
     }
 
-    //private void OnRewardDoubled()
-    //{
-    //    UpdateDoubleRewardButton();
-    //}
+    private void OnRewardDoubled()
+    {
+        UpdateDoubleRewardButton();
+    }
 
-    //void UpdateDoubleRewardButton()
-    //{
-        //if (_doubleDailyRewardButton == null || dailyRewardSystem == null) return;
+    void UpdateDoubleRewardButton()
+    {
+        if (_doubleDailyRewardButton == null || dailyRewardSystem == null) return;
 
-        //bool canDouble = dailyRewardSystem.CanDoubleToday() &&
-        //                AdsManager.Instance != null &&
-        //                AdsManager.Instance.IsRewardedAdReady();
+        bool canDouble = dailyRewardSystem.CanDoubleToday() &&
+                        AdsManager.Instance != null &&
+                        AdsManager.Instance.IsRewardedAdReady();
 
-        //bool canDouble = dailyRewardSystem.CanDoubleToday();
+        bool hasDoubledToday = dailyRewardSystem.HasDoubledToday();
 
-        //bool hasDoubledToday = dailyRewardSystem.HasDoubledToday();
+        _doubleDailyRewardButton.interactable = canDouble;
 
-        //_doubleDailyRewardButton.interactable = canDouble;
-
-        //if (_doubleRewardButtonText != null)
-        //{
-        //    if (hasDoubledToday)
-        //    {
-        //        _doubleRewardButtonText.text = "DOUBLED!";
-        //    }
-        //    else if (canDouble)
-        //    {
-        //        _doubleRewardButtonText.text = "WATCH AD x2";
-        //    }
-        //    else if (AdsManager.Instance != null && !AdsManager.Instance.IsRewardedAdReady())
-        //    {
-        //        _doubleRewardButtonText.text = "LOADING...";
-        //    }
-        //    else
-        //    {
-        //        _doubleRewardButtonText.text = "UNAVAILABLE";
-        //    }
-        //}
-    //}
+        if (_doubleRewardButtonText != null)
+        {
+            if (hasDoubledToday)
+            {
+                _doubleRewardButtonText.text = "DOUBLED!";
+            }
+            else if (canDouble)
+            {
+                _doubleRewardButtonText.text = "WATCH AD x2";
+            }
+            else if (AdsManager.Instance != null && !AdsManager.Instance.IsRewardedAdReady())
+            {
+                _doubleRewardButtonText.text = "LOADING...";
+            }
+            else
+            {
+                _doubleRewardButtonText.text = "UNAVAILABLE";
+            }
+        }
+    }
 
 
-    //private void OnDoubleRewardPressed()
-    //{
-    //    if (dailyRewardSystem == null || AdsManager.Instance == null) return;
+    private void OnDoubleRewardPressed()
+    {
+        if (dailyRewardSystem == null || AdsManager.Instance == null) return;
 
-    //    if (!dailyRewardSystem.CanDoubleToday())
-    //    {
-    //        Debug.Log("No se puede duplicar la recompensa hoy");
-    //        return;
-    //    }
+        if (!dailyRewardSystem.CanDoubleToday())
+        {
+            Debug.Log("No se puede duplicar la recompensa hoy");
+            return;
+        }
 
-    //    if (!AdsManager.Instance.IsRewardedAdReady())
-    //    {
-    //        Debug.Log("Anuncio no está listo");
-    //        return;
-    //    }
+        if (!AdsManager.Instance.IsRewardedAdReady())
+        {
+            Debug.Log("Anuncio no está listo");
+            return;
+        }
 
-    //    AdsManager.Instance.ShowRewardedAdForDoubleDailyReward();
-    //}
+        AdsManager.Instance.ShowRewardedAdForDoubleDailyReward();
+    }
 }
 
 public enum DayState
@@ -332,8 +348,13 @@ public class DailyRewardDayUI
             rewardNameText.text = reward.displayName;
     }
 
-    public void UpdateDayState(DayState state)
+    public void UpdateDayState(DayState state, Color labelColor)
     {
+        if (dayLabel != null)
+        {
+            dayLabel.color = labelColor;
+        }
+
         switch (state)
         {
             case DayState.Available:
@@ -354,39 +375,58 @@ public class DailyRewardDayUI
     void SetAvailableState()
     {
         SetElementsActive(true);
-        if (backgroundImage != null) backgroundImage.color = Color.yellow;
     }
 
     void SetClaimedState()
     {
         SetElementsActive(true);
-        if (backgroundImage != null) backgroundImage.color = Color.green;
     }
 
     void SetLockedState()
     {
         SetElementsActive(true);
-        if (backgroundImage != null) backgroundImage.color = Color.gray;
+        SetElementsAlpha(0.5f);
     }
 
     void SetMissedState()
     {
         SetElementsActive(true);
-        if (backgroundImage != null) backgroundImage.color = Color.red;
+        SetElementsAlpha(0.5f);
     }
 
     void SetElementsActive(bool active)
     {
-        Color textColor = active ? Color.black : Color.gray;
+        Color textColor = active ? Color.white : Color.gray;
 
         if (rewardIcon != null) rewardIcon.color = active ? Color.white : Color.gray;
-        if (quantityText != null) quantityText.color = Color.white;
+        if (quantityText != null) quantityText.color = textColor;
         if (rewardNameText != null) rewardNameText.color = textColor;
+    }
+
+    void SetElementsAlpha(float alpha)
+    {
+        if (rewardIcon != null)
+        {
+            Color iconColor = rewardIcon.color;
+            rewardIcon.color = new Color(iconColor.r, iconColor.g, iconColor.b, alpha);
+        }
+
+        if (quantityText != null)
+        {
+            Color quantityColor = quantityText.color;
+            quantityText.color = new Color(quantityColor.r, quantityColor.g, quantityColor.b, alpha);
+        }
+
+        if (rewardNameText != null)
+        {
+            Color nameColor = rewardNameText.color;
+            rewardNameText.color = new Color(nameColor.r, nameColor.g, nameColor.b, alpha);
+        }
     }
 
     string GetDayName(int dayIndex)
     {
-        string[] dayNames = { "TODAY", "DAY 2", "DAY 3", "DAY 4", "DAY 5", "DAY 6", "DAY 7" };
+        string[] dayNames = { "DAY 1", "DAY 2", "DAY 3", "DAY 4", "DAY 5", "DAY 6", "DAY 7" };
         return dayIndex < dayNames.Length ? dayNames[dayIndex] : $"DAY {dayIndex + 1}";
     }
 }

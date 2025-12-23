@@ -74,9 +74,6 @@ public class RangeEnemy : Enemy
         if (distance > _range) return false;
 
         bool hit = Physics2D.Raycast(transform.position, LOSvNormalized, distance, _obstaclesLayer).collider != null;
-#if UNITY_EDITOR
-        Debug.DrawRay(transform.position, LOSvNormalized * distance, Color.red, _cooldDown/2);
-#endif
         return !hit;
     }
 
@@ -90,7 +87,7 @@ public class RangeEnemy : Enemy
     protected void Shoot()
     {
         var projectile = _pool.Get();
-        projectile.transform.SetPositionAndRotation(_refPoint.position, Quaternion.identity);
+        projectile.transform.SetPositionAndRotation(_refPoint.position, _refPoint.rotation);
         projectile.Initialize(_dirToTarget.normalized, transform, _pool);
     }
 

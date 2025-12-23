@@ -1,0 +1,78 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &7971642500818872784
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 7506617994655081253}
+  - component: {fileID: 3604492421216664827}
+  m_Layer: 0
+  m_Name: DailyWheelSystem
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &7506617994655081253
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7971642500818872784}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &3604492421216664827
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7971642500818872784}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 14bb62992f74b924daa9ba5b23e817bf, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  debugInfiniteSpins: 1
+  wheelRewards:
+  - powerUpType: 0
+    quantity: 1
+    icon: {fileID: 21300000, guid: c2858ee549cf2f8449021ec6dbe188ac, type: 3}
+    displayName: Extra Time
+    backgroundColor: {r: 0.19607843, g: 0.8039216, b: 0.19607843, a: 1}
+    weight: 0.3
+  - powerUpType: 1
+    quantity: 1
+    icon: {fileID: 21300000, guid: 5dcbf53f2311b364fae3bba3ea52897e, type: 3}
+    displayName: Turbo Dash
+    backgroundColor: {r: 1, g: 0.84313726, b: 0, a: 0}
+    weight: 0.3
+  - powerUpType: 2
+    quantity: 1
+    icon: {fileID: 21300000, guid: 95ca456c6e9d0c040bebf4955d325fba, type: 3}
+    displayName: Parry Perfect
+    backgroundColor: {r: 0, g: 0.7490196, b: 1, a: 0}
+    weight: 0.2
+  - powerUpType: 3
+    quantity: 1
+    icon: {fileID: 21300000, guid: a5fe9851a25b1854ab2cb9705b2f0b7b, type: 3}
+    displayName: Combo Master
+    backgroundColor: {r: 1, g: 0.3882353, b: 0.2784314, a: 0}
+    weight: 0.15
+  - powerUpType: 4
+    quantity: 1
+    icon: {fileID: 21300000, guid: 6228ae70c06570245878b30eb3aeed74, type: 3}
+    displayName: Second Chance
+    backgroundColor: {r: 0.5764706, g: 0.4392157, b: 0.85882354, a: 0}
+    weight: 0.05

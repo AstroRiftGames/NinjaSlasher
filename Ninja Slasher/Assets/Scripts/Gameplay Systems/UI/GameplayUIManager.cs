@@ -1,6 +1,7 @@
-using System.Collections;
+﻿using System.Collections;
 using TMPro;
 using UnityEngine;
+using DG.Tweening;
 
 public class GameplayUIManager : MonoBehaviour
 {
@@ -9,10 +10,8 @@ public class GameplayUIManager : MonoBehaviour
     [SerializeField] private TextMeshProUGUI _livesTimerText;
     [SerializeField] private GameObject _livesTimerObj;
     [SerializeField] private TextMeshProUGUI _noLivesTimerText;
-    [SerializeField] private TextMeshProUGUI _comboCountText;
     [SerializeField] private TextMeshProUGUI _levelTimerText;
     [SerializeField] private TextMeshProUGUI _bonusTimeText;
-    [SerializeField] private GameObject _lifeLostPanel;
     [SerializeField] private TextMeshProUGUI _puRemainingTime;
 
     private bool _noLivesActive = false;
@@ -25,9 +24,17 @@ public class GameplayUIManager : MonoBehaviour
             LifeManager.Instance.OnLivesChanged += OnLivesChanged;
 
         UpdateLivesUI(LifeManager.Instance?.GetDisplayLives() ?? 0);
-        _comboCountText.gameObject.SetActive(false);
-        _bonusTimeText.gameObject.SetActive(false);
-        _lifeLostPanel.SetActive(false);
+
+        if (_bonusTimeText != null)
+            _bonusTimeText.gameObject.SetActive(false);
+
+        if (_puRemainingTime != null)
+        {
+            _puRemainingTime.text = "";
+            _puRemainingTime.gameObject.SetActive(true);
+        }
+
+        UpdatePowerUpsUI();
     }
 
     public void OnSceneLoaded()
@@ -48,9 +55,10 @@ public class GameplayUIManager : MonoBehaviour
         _comboManager = ComboManager.Instance;
         if (_comboManager != null)
         {
-            _comboManager.OnComboUpdated += OnComboUpdated;
-            _comboManager.OnComboEnded += OnComboEnded;
+            _comboManager.OnComboUpdatedWithPosition += OnComboUpdated;
         }
+
+        PowerUpManager.OnPowerUpRemainingTextChanged += OnPowerUpRemainingTextChanged;
     }
 
     private void UnsubscribeFromEvents()
@@ -63,15 +71,16 @@ public class GameplayUIManager : MonoBehaviour
 
         if (_comboManager != null)
         {
-            _comboManager.OnComboUpdated -= OnComboUpdated;
-            _comboManager.OnComboEnded -= OnComboEnded;
+            _comboManager.OnComboUpdatedWithPosition -= OnComboUpdated;
         }
+
+        PowerUpManager.OnPowerUpRemainingTextChanged -= OnPowerUpRemainingTextChanged;
     }
 
     public void UpdateUI()
     {
         UpdateNoLivesTimer();
-        UpdatePowerUpsUI();
+        //UpdatePowerUpsUI();
     }
 
     private void UpdateNoLivesTimer()
@@ -91,72 +100,89 @@ public class GameplayUIManager : MonoBehaviour
         }
     }
 
-    public void UpdatePowerUpsUI()
+    private void UpdatePowerUpsUI()
     {
-        var context = PowerUpManager.Instance?.context;
-        if (context == null)
+        if (_puRemainingTime == null || PowerUpManager.Instance == null)
+        {
+            if (_puRemainingTime != null)
+                _puRemainingTime.text = "";
             return;
+        }
 
-        var time = PowerUpManager.Instance.puTimeLeft;
-        var hours = (int)(time / 3600);
-        var minutes = (int)((time % 3600) / 60);
-        var seconds = (int)(time % 60);
-        _puRemainingTime.text = $"{hours:D2}:{minutes:D2}:{seconds:D2}";
-        if (time <= 0) _puRemainingTime.enabled = false;
-        else _puRemainingTime.enabled = true;
+        /*
+        var context = PowerUpManager.Instance.context;
+        if (context == null)
+        {
+            _puRemainingTime.text = "";
+            return;
+        }
+
+        bool isPowerUpActive = context.AnyPowerUpActive();
+
+        if (isPowerUpActive)
+        {
+            var remaining = context.GetLowestRemainingTime();
+            int seconds = Mathf.CeilToInt(remaining);
+            if (seconds > 0)
+            {
+                _puRemainingTime.text = $"{seconds}s";
+            }
+            else
+            {
+                _puRemainingTime.text = "";
+            }
+        }
+        else
+        {
+            _puRemainingTime.text = "";
+        }
+        */
     }
 
-    public void ShowLifeLostPanel() => _lifeLostPanel.SetActive(true);
-
-    public void HideLifeLostPanel()
+    private void OnPowerUpRemainingTextChanged(string text)
     {
-        _lifeLostPanel.SetActive(false);
-
-        var canvasManager = UIManager.Instance.GetComponent<CanvasManager>();
-        if (canvasManager != null)
-        {
-            canvasManager.SetGameplayCanvasEnabled(true);
-        }
+        if (_puRemainingTime == null) return;
+        _puRemainingTime.text = text;
     }
 
     public void ShowNoLivesPanel()
     {
-        UIManager.Instance.ShowHideNoLivesCanvas();
         _noLivesActive = true;
-
-        var canvasManager = UIManager.Instance.GetComponent<CanvasManager>();
-        if (canvasManager != null)
-        {
-            canvasManager.SetGameplayCanvasEnabled(false);
-        }
+        UIManager.Instance.ShowHideNoLivesCanvas();
     }
 
     public void UpdateLivesUI(int lives)
     {
         if (_livesAmount != null)
-            _livesAmount.text = $"{lives}";
+        {
+            _livesAmount.text = lives.ToString();
+        }
     }
 
     public void OnRetryPressed()
     {
-        HideLifeLostPanel();
-
-        if (LifeManager.Instance != null && LifeManager.Instance.HasPendingDeduction())
-        {
-            LifeManager.Instance.OnLevelExit();
-        }
-
-        LevelManager.Instance.RestartLevel();
+        AudioManager.Instance.PlaySFX(SFXClip.UI_Select);
+        UIManager.Instance.RestartLevel();
+        UIManager.Instance.ShowHideLifeLostCanvas();
+        //HideLifeLostPanel();
     }
 
     public void OnBackToSelectionPressed()
     {
-        HideLifeLostPanel();
-        LevelManager.Instance.GoToLevelSelection(confirmPendingDeduction: true);
+        UIManager.Instance.ShowHideLifeLostCanvas();
+        AudioManager.Instance.PlaySFX(SFXClip.UI_Select);
+        var canvasManager = UIManager.Instance.GetComponent<CanvasManager>();
+        if (canvasManager != null)
+        {
+            canvasManager.CloseCanvas(canvasManager.GetResultsCanvas());
+        }
+
+        LevelManager.Instance.GoToLevelSelection(confirmPendingDeduction: false);
     }
 
     public void ContinueToLevelSelector()
     {
+        AudioManager.Instance.PlaySFX(SFXClip.UI_Select);
         var canvasManager = UIManager.Instance.GetComponent<CanvasManager>();
         if (canvasManager != null)
         {
@@ -177,32 +203,59 @@ public class GameplayUIManager : MonoBehaviour
         }
     }
 
-    private void OnComboUpdated(int comboLevel)
+    private void OnComboUpdated(int comboLevel, Vector3 position)
     {
-        _comboCountText.text = $"Combo: {comboLevel}";
-        _comboCountText.gameObject.SetActive(true);
+        if (comboLevel < 2) return;
 
-        if (comboLevel >= 2)
+        float bonus = comboLevel switch
         {
-            float bonus = comboLevel switch
-            {
-                2 => 3f,
-                3 => 4f,
-                4 => 6f,
-                _ => 3f
-            };
-            _bonusTimeText.text = $"+{bonus:F0}s";
-            _bonusTimeText.gameObject.SetActive(true);
-            StartCoroutine(HideBonusCoroutine());
-        }
+            2 => 3f,
+            3 => 4f,
+            4 => 6f,
+            _ => 3f
+        };
+
+        ShowBonusTimeText(bonus);
     }
 
-    private void OnComboEnded() => _comboCountText.gameObject.SetActive(false);
-
-    private IEnumerator HideBonusCoroutine()
+    private void ShowBonusTimeText(float bonus)
     {
-        yield return new WaitForSeconds(2f);
-        _bonusTimeText.gameObject.SetActive(false);
+        if (_bonusTimeText == null) return;
+
+        StopAllCoroutines();
+
+        _bonusTimeText.text = $"+{bonus:F0}s";
+        _bonusTimeText.gameObject.SetActive(true);
+
+        StartCoroutine(AnimateBonusText());
+    }
+
+    private IEnumerator AnimateBonusText()
+    {
+        if (_bonusTimeText == null) yield break;
+
+        var rectTransform = _bonusTimeText.GetComponent<RectTransform>();
+        var canvasGroup = _bonusTimeText.GetComponent<CanvasGroup>();
+
+        if (canvasGroup == null)
+        {
+            canvasGroup = _bonusTimeText.gameObject.AddComponent<CanvasGroup>();
+        }
+
+        Vector3 originalScale = rectTransform.localScale;
+        canvasGroup.alpha = 1f;
+
+        rectTransform.localScale = originalScale * 0.5f;
+        rectTransform.DOScale(originalScale * 1.3f, 0.2f).SetEase(DG.Tweening.Ease.OutBack);
+
+        yield return new WaitForSeconds(0.2f);
+
+        rectTransform.DOScale(originalScale, 0.15f).SetEase(DG.Tweening.Ease.InOutQuad);
+
+        yield return new WaitForSeconds(1.2f);
+
+        canvasGroup.DOFade(0f, 0.3f).SetEase(DG.Tweening.Ease.InQuad)
+            .OnComplete(() => _bonusTimeText.gameObject.SetActive(false));
     }
 
     private void OnLevelTimeChanged(float time)

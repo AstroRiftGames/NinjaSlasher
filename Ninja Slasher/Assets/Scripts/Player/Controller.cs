@@ -19,6 +19,7 @@ public class Controller : MonoBehaviour
     [SerializeField] private float slashEffectDuration;
     private float _lastDash;
     private Collider2D _currentSurface;
+    private Vector2 _currentNormal;
     private bool _lastSurfaceWasElastic = false;
     private Vector2 _lastDashDirection;
     private Vector2 _wishedDirection;
@@ -28,7 +29,8 @@ public class Controller : MonoBehaviour
 
 
     [Space]
-    [SerializeField] private LineRenderer swipeIndicator;
+    [SerializeField] private GameObject swipeIndicator;
+    [SerializeField] private TrajectoryRenderer trajectoryRenderer;
     private Vector2 swipeStart;
     private bool _startedSwipe;
     private Vector2 endTouchPosition;
@@ -105,7 +107,7 @@ public class Controller : MonoBehaviour
     }
 
     private bool QDash() => IsDashing() || CanDashFromInput();
-    private bool QGrab() => _currentSurface != null && !IsDashing();
+    private bool QGrab() => !IsDashing();
     private bool QParry() => CanParryFromInput();
     private bool QKO() => _isDead;
 
@@ -121,8 +123,7 @@ public class Controller : MonoBehaviour
 
     private void Start()
     {
-        if (swipeIndicator != null)
-            swipeIndicator.enabled = false;
+        if (swipeIndicator != null) swipeIndicator.SetActive(false);
     }
 
     void OnEnable()
@@ -138,18 +139,27 @@ public class Controller : MonoBehaviour
 
     private void CustomUpdate()
     {
-        _root.Execute();
-        _fsm.OnUpdate();
+        if(!_isDead)
+        {
 
-        CheckSwipe();
+            Debug.DrawRay(transform.position, _wishedDirection * checkDistance, Color.red);
+            _root.Execute();
+            _fsm.OnUpdate();
 
-        HandleParryTimer();
+            CheckSwipe();
+
+            HandleParryTimer();
+        }
         UpdateAnimatorParameters();
     }
 
     private void FixedUpdate()
     {
-        // HandleFalling();
+
+        if (!_isDead &&_isDashing)
+        {
+            CheckCollision();
+        }
     }
 
     #endregion
@@ -171,22 +181,36 @@ public class Controller : MonoBehaviour
         {
             currentSwipe = (Vector2)Input.mousePosition - swipeStart;
 
-            Vector3 start = transform.position;
-
             if (_startedSwipe && currentSwipe.magnitude >= minSwipeDistance)
             {
-                if (swipeIndicator != null && !swipeIndicator.enabled)
+                if (swipeIndicator != null && !swipeIndicator.activeSelf)
                 {
-                    swipeIndicator.enabled = true;
+                    swipeIndicator.SetActive(true);
                 }
                 isSwiping = true;
 
-                Vector2 clampedDir = -currentSwipe.normalized; //GetClampedSwipeDirection(currentSwipe.normalized);
-                Vector3 end = start + (Vector3)(clampedDir * 2f);
                 if (swipeIndicator != null)
                 {
-                    swipeIndicator.SetPosition(0, start);
-                    swipeIndicator.SetPosition(1, end);
+                    Vector3 start = transform.position;
+                    Vector2 clampedDir = -currentSwipe.normalized;
+
+                    swipeIndicator.transform.position = start;
+                    float angle = Mathf.Atan2(clampedDir.y, clampedDir.x) * Mathf.Rad2Deg;
+                    swipeIndicator.transform.rotation = Quaternion.Euler(0, 0, angle);
+                }
+
+                if (trajectoryRenderer != null)
+                {
+                    var context = PowerUpManager.Instance?.context;
+                    if (context != null && context.TrajectoryGuideActive)
+                    {
+                        Vector2 dashDir = -currentSwipe.normalized;
+                        trajectoryRenderer.ShowTrajectory(transform.position, dashDir);
+                    }
+                    else
+                    {
+                        trajectoryRenderer.HideTrajectory();
+                    }
                 }
             }
         }
@@ -197,23 +221,29 @@ public class Controller : MonoBehaviour
             _startedSwipe = false;
             if (swipeIndicator != null)
             {
-                swipeIndicator.enabled = false;
+                swipeIndicator.SetActive(false);
             }
+
+            if (trajectoryRenderer != null)
+            {
+                trajectoryRenderer.HideTrajectory();
+            }
+
             endTouchPosition = Input.mousePosition;
-            Vector2 swipeDelta = endTouchPosition - swipeStart; // GetClampedSwipeDirection(endTouchPosition - swipeStart);
+            Vector2 swipeDelta = endTouchPosition - swipeStart;
             if (swipeDelta.magnitude >= minSwipeDistance)
             {
                 TryDashFromSwipe(swipeDelta);
             }
         }
 #else
-        if (Input.touchCount > 0)
+if (Input.touchCount > 0)
         {
-            TryStartParryLogic();
             Touch touch = Input.GetTouch(0);
             switch (touch.phase)
             {
                 case TouchPhase.Began:
+                    TryStartParryLogic();
                     swipeStart = touch.position;
                     _startedSwipe = true;
                     break;
@@ -222,24 +252,24 @@ public class Controller : MonoBehaviour
                 case TouchPhase.Stationary:
                     currentSwipe = touch.position - swipeStart;
 
-                    Vector3 start = transform.position;
-
                     if (_startedSwipe &&  currentSwipe.magnitude >= minSwipeDistance)
                     {
-                        if (swipeIndicator != null && !swipeIndicator.enabled)
+                        if (swipeIndicator != null && !swipeIndicator.activeSelf)
                         {
-                            swipeIndicator.enabled = true;
+                            swipeIndicator.SetActive(true);
                         }
                         isSwiping = true;
 
-                        Vector2 clampedDir = -currentSwipe.normalized; //GetClampedSwipeDirection(currentSwipe.normalized);
-
-                        Vector3 end = start + (Vector3)(clampedDir * 2f);
-
                         if (swipeIndicator != null)
                         {
-                            swipeIndicator.SetPosition(0, start);
-                            swipeIndicator.SetPosition(1, end);
+                            Vector3 start = transform.position;
+                            Vector2 clampedDir = -currentSwipe.normalized;
+
+                            swipeIndicator.transform.position = start;
+
+                            float angle = Mathf.Atan2(clampedDir.y, clampedDir.x) * Mathf.Rad2Deg;
+                            
+                            swipeIndicator.transform.rotation = Quaternion.Euler(0, 0, angle);
                         }
                     }
                 break;
@@ -251,7 +281,7 @@ public class Controller : MonoBehaviour
                         isSwiping = false;
                         if (swipeIndicator != null)
                         {
-                            swipeIndicator.enabled = false;
+                            swipeIndicator.SetActive(false);
                         }
                         endTouchPosition = touch.position;
                         Vector2 swipeDelta = endTouchPosition - swipeStart;
@@ -269,7 +299,7 @@ public class Controller : MonoBehaviour
             {
                 isSwiping = false;
                 if (swipeIndicator != null)
-                    swipeIndicator.enabled = false;
+                    swipeIndicator.SetActive(false);
             }
         }
 #endif
@@ -323,6 +353,57 @@ public class Controller : MonoBehaviour
         }
 
         Vector2 dashDir = -swipeDelta.normalized;
+        
+        float angle = Mathf.Atan2(dashDir.y, dashDir.x) * Mathf.Rad2Deg - Mathf.Atan2(_currentNormal.y, _currentNormal.x) * Mathf.Rad2Deg;
+
+        if (_currentNormal == Vector2.up)
+        {
+            if (angle is > 90 and < 180)
+            {
+                dashDir = -transform.right;
+            }
+            else if (angle is < -90 and > -180)
+            {
+                dashDir = transform.right;
+            }
+        }
+
+        if(_currentNormal == Vector2.down)
+        {
+            if (angle is > 90 and < 180)
+            {
+                dashDir = transform.right;
+            }
+            else if (angle is < -90 and > -180)
+            {
+                dashDir = -transform.right;
+            }
+        }
+
+        if(_currentNormal == Vector2.right)
+        {
+            if (angle is > 90 and < 180)
+            {
+                dashDir = transform.up;
+            }
+            else if (angle is < -90 and > -180)
+            {
+                dashDir = -transform.up;
+            }
+        }
+
+
+        if(_currentNormal == Vector2.left)
+        {
+            if (angle is > 90 and < 180)
+            {
+                dashDir = -transform.up;
+            }
+            else if (angle is < -90 and > -180)
+            {
+                dashDir = transform.up;
+            }
+        }
 
         float dashCD = _playerModel.DashCD;
 
@@ -347,8 +428,6 @@ public class Controller : MonoBehaviour
         _lastDash = Time.time;
 
         _dashInputDetected = true;
-
-        NotifyTutorialDashPerformed();
     }
 
     private void NotifyTutorialDashPerformed()
@@ -368,6 +447,7 @@ public class Controller : MonoBehaviour
         }
         return false;
     }
+
     public void Dash()
     {
         _playerView.Animator.SetBool("IsWallGrabbed", false);
@@ -387,9 +467,10 @@ public class Controller : MonoBehaviour
 
         SetIsMirrored(false);
         RotateSprites(_lastDashDirection);
+
+        NotifyTutorialDashPerformed();
     }
 
-    
     #endregion
 
     #region PARRYING
@@ -452,44 +533,66 @@ public class Controller : MonoBehaviour
     #endregion
 
     #region COLLISION DETECTION
-    private void OnCollisionEnter2D(Collision2D collision)
+
+    private void CheckCollision()
     {
-        string colTag = collision.gameObject.tag;
-        if (colTag == "Scenario" ||
-            colTag == "Obstacle" ||
-            colTag == "Floor" ||
-            colTag == "Ceiling" ||
-            collision.gameObject.GetComponent<PlatformBase>() != null)
+        RaycastHit2D hit = Physics2D.Raycast(transform.position, _wishedDirection, 1f, _scenarioLayer);
+        Debug.DrawRay(transform.position, _wishedDirection * 1f, Color.green);
+        if (!hit) return;
+        if(hit.distance >= checkDistance) return;
+
+        string colTag = hit.collider.gameObject.tag;
+
+        SetIsDashing(false);
+        _currentSurface = hit.collider;
+        _currentNormal = hit.normal.normalized;
+
+        SetGrabbingAnimation();
+        RotateSprites(colTag == "Ceiling" ? Vector2.left : Vector2.right);
+        AudioManager.Instance.PlaySFXAtPosition(SFXClip.P_Landing_General, transform.position);
+
+        hit.collider.TryGetComponent(out ElasticPlatform elasticComponent);
+        _lastSurfaceWasElastic = elasticComponent != null;
+
+        if (!_lastSurfaceWasElastic)
         {
-            if (_currentSurface != null && collision.collider == _currentSurface)
+            if (!_isDashing)
             {
-                return;
+                _playerView.RB.linearVelocity = Vector2.zero;
             }
-
-            _currentSurface = collision.collider;
-
-            SetIsDashing(false);
-            SetGrabbingAnimation();
-            RotateSprites(colTag == "Ceiling" ? Vector2.left : Vector2.right);
-            AudioManager.Instance.PlaySFXAtPosition(SFXClip.P_Landing_General, transform.position);
-
-            ElasticPlatform elasticPlatform = collision.gameObject.GetComponent<ElasticPlatform>();
-            _lastSurfaceWasElastic = elasticPlatform != null;
-
-            if (!_lastSurfaceWasElastic)
-            {
-                if (!_isDashing)
-                {
-                    _playerView.RB.linearVelocity = Vector2.zero;
-                }
-            }
-        }
-        else if (colTag == "Projectile")
-        {
-            collision.gameObject.TryGetComponent(out Projectile projectile);
-            projectile.ManageCollision(_playerView.Col);
         }
     }
+
+    //private void OnCollisionEnter2D(Collision2D collision)
+    //{
+    //    string colTag = collision.gameObject.tag;
+    //    if (colTag == "Scenario" ||
+    //        colTag == "Obstacle" ||
+    //        colTag == "Floor" ||
+    //        colTag == "Ceiling" ||
+    //        collision.gameObject.GetComponent<PlatformBase>() != null)
+    //    {
+
+    //        SetIsDashing(false);
+    //        _currentSurface = collision.collider;
+    //        _currentNormal = collision.GetContact(0).normal.normalized;
+
+    //        SetGrabbingAnimation();
+    //        RotateSprites(colTag == "Ceiling" ? Vector2.left : Vector2.right);
+    //        AudioManager.Instance.PlaySFXAtPosition(SFXClip.P_Landing_General, transform.position);
+
+    //        ElasticPlatform elasticPlatform = collision.gameObject.GetComponent<ElasticPlatform>();
+    //        _lastSurfaceWasElastic = elasticPlatform != null;
+
+    //        if (!_lastSurfaceWasElastic)
+    //        {
+    //            if (!_isDashing)
+    //            {
+    //                _playerView.RB.linearVelocity = Vector2.zero;
+    //            }
+    //        }
+    //    }
+    //}
     private void OnCollisionExit2D(Collision2D collision)
     {
         if (collision.collider == _currentSurface)
@@ -597,7 +700,16 @@ public class Controller : MonoBehaviour
         {
             if (_isDead) return;
             _isDead = true;
-            
+
+            _playerView.RB.bodyType= RigidbodyType2D.Dynamic;
+            _playerView.RB.gravityScale = 1f;
+            _playerView.Col.excludeLayers = LayerMask.GetMask("Projectiles", "Enemy");
+
+            if (CameraShake.Instance != null)
+            {
+                CameraShake.Instance.TriggerShake(0.4f, 0.5f);
+            }
+
             var levelController = FindObjectOfType<LevelController>();
             if (levelController != null)
             {
@@ -687,9 +799,6 @@ public class Controller : MonoBehaviour
         RaycastHit2D colPoint = Physics2D.Raycast(transform.position, _wishedDirection, float.MaxValue, _scenarioLayer);
         Vector2 normal = colPoint.normal;
 
-        Debug.DrawRay(transform.position, _wishedDirection * float.MaxValue, Color.red, 1f);
-        Debug.DrawRay(colPoint.point, normal * 1f, Color.red, 1f);
-
         if (normal != null)
         {
             if (normal == Vector2.right || normal == Vector2.left)
@@ -707,16 +816,7 @@ public class Controller : MonoBehaviour
 
     private void OnDrawGizmos()
     {
-        if (isSwiping && currentSwipe.magnitude >= minSwipeDistance)
-        {
-            Gizmos.color = Color.yellow;
-            Vector3 start = transform.position;
-            Vector3 end = start + (Vector3)(-currentSwipe.normalized * 2f);
-            Gizmos.DrawLine(start, end);
-            Gizmos.DrawSphere(end, 0.1f);
-        }
-
-        Gizmos.color = Color.cyan;
-        Gizmos.DrawWireSphere(transform.position, 2f);
+        Gizmos.color = Color.red;
+        Gizmos.DrawWireSphere(transform.position, checkDistance);
     }
 }

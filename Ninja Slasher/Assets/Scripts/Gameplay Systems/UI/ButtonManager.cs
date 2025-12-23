@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 public class ButtonManager : MonoBehaviour
 {
@@ -12,25 +13,38 @@ public class ButtonManager : MonoBehaviour
     [SerializeField] private Button _testLevelButton;
     [SerializeField] private Button _configDropdownButton;
     [SerializeField] private Button _calendarButton;
+    [SerializeField] private Button _storeButton;
+
+    [Header("CALENDAR BUTTON ICONS")]
+    [SerializeField] private Image _calendarButtonImage;
+    [SerializeField] private Sprite _calendarAvailableIcon;
+    [SerializeField] private Sprite _calendarClaimedIcon;
 
     [Header("CONFIG DROPDOWN BUTTONS")]
     [SerializeField] private Button _musicButton;
     [SerializeField] private Button _sfxButton;
     [SerializeField] private Button _profileButton;
+    [SerializeField] private Image _profileButtonImage;
     [SerializeField] private Button _hapticButton;
 
     [Header("PROFILE BUTTONS")]
     [SerializeField] private Button _userIconButton;
     [SerializeField] private Button _userNicknameButton;
-    [SerializeField] private string _userNicknameText;
+    [SerializeField] private TextMeshProUGUI _userNicknameButtonText;
+    [SerializeField] private TMP_InputField _userNicknameText;
+    [SerializeField] private Button _confirmUserNicknameButton;
+    [SerializeField] private Button _closeUserNicknameEditButton;
     [SerializeField] private Button _closeProfileButton;
     [SerializeField] private Button _creditsButton;
     [SerializeField] private Button _closeCreditsButton;
-    [SerializeField] private Image _userIconImage;
+    [SerializeField] private Image _userIconImagePanel;
     [SerializeField] private Button[] _userIconButtonGroup;
 
     [Header("DAILY REWARDS BUTTONS")]
     [SerializeField] private Button _closeCalendarButton;
+
+    [Header("STORE BUTTONS")]
+    [SerializeField] private Button _closeStoreButton;
 
     [Header("PREGAME BUTTONS")]
     [SerializeField] private Button _closePregameButton;
@@ -50,6 +64,7 @@ public class ButtonManager : MonoBehaviour
     [Header("NO LIVES PANEL BUTTONS")]
     [SerializeField] private Button _closeNoLivesPanelButton;
     [SerializeField] private Button _adForMoreLifeButton;
+    [SerializeField] private Button _claimButton;
 
     [Header("PROGRESSION UI")]
     [SerializeField] private Image[] levelButtonImages;
@@ -72,7 +87,7 @@ public class ButtonManager : MonoBehaviour
     [SerializeField] private Button deleteSaveButton;
 #endif
 
-    private AudioToggle _audioToggle;
+    private ConfigToggles _configToggles;
     private ConfigDropdown _configPanelManager;
 
     private List<Sequence> activeButtonSequences = new List<Sequence>();
@@ -82,10 +97,20 @@ public class ButtonManager : MonoBehaviour
 
     private void Awake()
     {
-        _audioToggle = GetComponent<AudioToggle>();
+        _configToggles = GetComponent<ConfigToggles>();
         _configPanelManager = GetComponent<ConfigDropdown>();
 
+        if (_calendarButtonImage == null && _calendarButton != null)
+        {
+            _calendarButtonImage = _calendarButton.GetComponent<Image>();
+        }
+
         SaveButtonPositions();
+    }
+
+    private void Start()
+    {
+        StartCoroutine(InitializeCalendarIcon());
     }
 
     private void OnEnable()
@@ -99,6 +124,9 @@ public class ButtonManager : MonoBehaviour
             StartCoroutine(DelayedSubscription());
         }
 
+        DailyRewardSystem.OnRewardClaimed += OnRewardClaimed;
+        DailyRewardSystem.OnRewardAvailabilityChanged += UpdateCalendarButtonIcon;
+
         SaveManager.OnDataLoaded += OnSaveDataLoaded;
     }
 
@@ -108,6 +136,9 @@ public class ButtonManager : MonoBehaviour
         {
             LevelProgressionManager.Instance.OnProgressionUpdated -= RefreshLevelProgression;
         }
+
+        DailyRewardSystem.OnRewardClaimed -= OnRewardClaimed;
+        DailyRewardSystem.OnRewardAvailabilityChanged -= UpdateCalendarButtonIcon;
 
         SaveManager.OnDataLoaded -= OnSaveDataLoaded;
     }
@@ -149,12 +180,39 @@ public class ButtonManager : MonoBehaviour
 
         _quitButton.onClick.AddListener(() => LevelManager.Instance.GoToLevelSelection(confirmPendingDeduction: true));
 
-        _musicPausePanelButton.onClick.AddListener(_audioToggle.MusicButtonClicked);
-        _sfxPausePanelButton.onClick.AddListener(_audioToggle.SFXButtonClicked);
+        _musicPausePanelButton.onClick.AddListener(_configToggles.MusicButtonPushed);
+        _sfxPausePanelButton.onClick.AddListener(_configToggles.SFXButtonPushed);
 
         _retryButton.onClick.AddListener(GetComponent<GameplayUIManager>().OnRetryPressed);
         _backToSelectionButton.onClick.AddListener(GetComponent<GameplayUIManager>().OnBackToSelectionPressed);
         _continueButton.onClick.AddListener(GetComponent<GameplayUIManager>().ContinueToLevelSelector);
+    }
+
+    private IEnumerator InitializeCalendarIcon()
+    {
+        while (DailyRewardSystem.Instance == null || SaveManager.Instance == null || !SaveManager.Instance.IsDataLoaded)
+        {
+            yield return null;
+        }
+
+        yield return new WaitForSeconds(0.1f);
+
+        UpdateCalendarButtonIcon(DailyRewardSystem.Instance.CanClaimToday());
+    }
+
+    private void OnRewardClaimed(DailyReward reward)
+    {
+        UpdateCalendarButtonIcon(false);
+    }
+
+    public void UpdateCalendarButtonIcon(bool isAvailable)
+    {
+        if (_calendarButtonImage == null || _calendarAvailableIcon == null || _calendarClaimedIcon == null)
+        {
+            return;
+        }
+
+        _calendarButtonImage.sprite = isAvailable ? _calendarAvailableIcon : _calendarClaimedIcon;
     }
 
     private void SetupLevelProgression()
@@ -193,13 +251,13 @@ public class ButtonManager : MonoBehaviour
 
     private void SetupLevelSelectorButtons()
     {
-        _musicButton.onClick.AddListener(_audioToggle.MusicButtonClicked);
-        _sfxButton.onClick.AddListener(_audioToggle.SFXButtonClicked);
+        _musicButton.onClick.AddListener(_configToggles.MusicButtonPushed);
+        _sfxButton.onClick.AddListener(_configToggles.SFXButtonPushed);
         _profileButton.onClick.AddListener(UIManager.Instance.ShowHideProfileCanvas);
 
         if (_hapticButton != null)
         {
-            _hapticButton.onClick.AddListener(UIManager.Instance.SwitchHapticFeedback);
+            _hapticButton.onClick.AddListener(_configToggles.HapticFeedbackPushed);
         }
 
         _closeNoLivesPanelButton.onClick.AddListener(UIManager.Instance.ShowHideNoLivesCanvas);
@@ -208,9 +266,18 @@ public class ButtonManager : MonoBehaviour
 
         _userIconButton.onClick.AddListener(UIManager.Instance.ShowHideUserIconsCanvas);
 
-        _userNicknameText = LoginManager.Instance != null ? LoginManager.Instance.PlayerName : "Player";
+        //_userNicknameButtonText = LoginManager.Instance.PlayerName;
+        //_userNicknameButtonText = LoginManager.Instance.PlayerId;
+        _claimButton.onClick.AddListener(OnClaimLifeButtonPressed);
 
         _userNicknameButton.onClick.AddListener(UIManager.Instance.ShowHideUserNicknameEditCanvas);
+        _closeUserNicknameEditButton.onClick.AddListener(UIManager.Instance.ShowHideUserNicknameEditCanvas);
+        _confirmUserNicknameButton.onClick.AddListener(() =>
+        {
+            _userNicknameButtonText.text = _userNicknameText.text;
+            UIManager.Instance.ShowHideUserNicknameEditCanvas();        
+        });
+
         _creditsButton.onClick.AddListener(UIManager.Instance.ShowHideCreditsCanvas);
         _closeProfileButton.onClick.AddListener(UIManager.Instance.ShowHideProfileCanvas);
         _closeCreditsButton.onClick.AddListener(UIManager.Instance.ShowHideCreditsCanvas);
@@ -220,12 +287,16 @@ public class ButtonManager : MonoBehaviour
             img.onClick.AddListener(() =>
             {
                 Image icon = img.transform.GetChild(0).GetComponent<Image>();
-                _userIconImage.sprite = icon.sprite;
-                _userIconImage.color = icon.color;
+                _userIconImagePanel.sprite = icon.sprite;
+                _userIconImagePanel.color = icon.color;
+                _profileButtonImage.sprite = icon.sprite;
+                _profileButtonImage.color = icon.color;
                 UIManager.Instance.ShowHideUserIconsCanvas();
             });
         }
 
+        _storeButton.onClick.AddListener(UIManager.Instance.ShowHideStoreCanvas);
+        _closeStoreButton.onClick.AddListener(UIManager.Instance.ShowHideStoreCanvas);
         _calendarButton.onClick.AddListener(UIManager.Instance.ShowHideDailyRewardCanvas);
         _configDropdownButton.onClick.AddListener(_configPanelManager.OpenCloseConfigPanel);
         _testLevelButton.onClick.AddListener(() => GetComponent<SceneTransitionManager>().LoadDebugTestScene());
@@ -246,6 +317,20 @@ public class ButtonManager : MonoBehaviour
                     ShowLevelLockedMessage(levelId);
                 }
             });
+        }
+    }
+
+    public void OnClaimLifeButtonPressed()
+    {
+        if (LifeManager.Instance != null)
+        {
+            LifeManager.Instance.AddLife();
+            Debug.Log("Vida reclamada exitosamente");
+
+            if (UIManager.Instance != null)
+            {
+                UIManager.Instance.ShowHideNoLivesCanvas();
+            }
         }
     }
 

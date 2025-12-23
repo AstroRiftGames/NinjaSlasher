@@ -6,35 +6,22 @@ public class RicochetProjectile : Projectile
     [SerializeField] private int _maxBounces;
     private int _currentBounces;
 
-    private void OnCollisionEnter2D(Collision2D collision)
+    public override void OnCollisionEnter2D(Collision2D collision)
     {
-        if (collision.gameObject.CompareTag("Scenario"))
+        string colTag = collision.gameObject.tag;
+        if (colTag is "Scenario" or "Ceiling" or "Floor" or "Obstacle")
         {
             TryRicochet();
         }
         else
         {
-            //if (!_hasBeenReflected)
-            //{
-            //    if (IsParryable && _playerInZone != null && _playerInZone.IsParrying())
-            //    {
-            //        ReflectProjectile();
-            //        ResetTime();
-            //        _currentBounces = 0;
-            //    }
-            //if (!collision.gameObject.CompareTag("Enemy")) Collide(collision.collider);
-            //}
-            //else if (!collision.gameObject.CompareTag("Player"))
-            //{
-            //    Collide(collision.collider);
-            //}
             Collide(collision.collider);
         }
     }
 
     private void TryRicochet()
     {
-        if(_currentBounces < _maxBounces)
+        if (_currentBounces < _maxBounces)
         {
             Ricochet();
         }
@@ -46,6 +33,6 @@ public class RicochetProjectile : Projectile
     private void Ricochet()
     {
         _currentBounces++;
-
+        AudioManager.Instance.PlaySFXAtPosition(SFXClip.Proj_Ricochet_Bounce, transform.position);
     }
 }

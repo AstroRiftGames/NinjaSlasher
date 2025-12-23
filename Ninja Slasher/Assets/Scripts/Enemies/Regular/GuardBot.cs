@@ -95,7 +95,7 @@ public class GuardBot : Enemy
         _animator.SetTrigger("OnDetection");
         AudioManager.Instance.PlaySFXAtPosition(SFXClip.E_Guard_Detection, transform.position);
         _currentSpeed = 0;
-        yield return new WaitForSeconds(3f);
+        yield return new WaitForSeconds(1f);
         _animator.SetTrigger("OnPushStart");
         AudioManager.Instance.PlaySFXAtPosition(SFXClip.E_Guard_Charge, transform.position);
         _currentSpeed = _speed * _speedMultiplier;
@@ -126,7 +126,12 @@ public class GuardBot : Enemy
 
     public override void Die()
     {
+        _currentSpeed = 0;
         AudioManager.Instance.PlaySFXAtPosition(SFXClip.E_Guard_Death, transform.position);
+        FrontCol.SetActive(false);
+        RearCol.SetActive(false);
+        UpperCol.SetActive(false);  
+        LowerCol.SetActive(false);
         base.Die();
     }
 
@@ -134,7 +139,8 @@ public class GuardBot : Enemy
     {
         Gizmos.color = Color.red;
         Gizmos.DrawLine(_refPoint.position, _refPoint.position + transform.right * _data.Range * _direction);
-        Gizmos.DrawRay(transform.position + transform.right * -_direction, Vector2.down *.5f);
+        Gizmos.color = Color.yellow;
+        Gizmos.DrawRay(transform.position + transform.right * -_direction + transform.up*.5f, Vector2.down *.5f);
         Gizmos.color = Color.blue;
         Gizmos.DrawLine(_refPoint.position, _target);
         Gizmos.color = Color.green;

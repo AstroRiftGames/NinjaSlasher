@@ -189,7 +189,7 @@ public class LevelManager : MonoBehaviourSingleton<LevelManager>
         }
         else if (LifeManager.Instance.CanPlay())
         {
-            UIManager.Instance.ShowLifeLostPanel();
+            UIManager.Instance.ShowHideLifeLostCanvas();
         }
         else
         {

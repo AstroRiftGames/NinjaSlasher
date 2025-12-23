@@ -10,12 +10,4 @@ public class BreakablePlatformCol : MonoBehaviour
             _platform.OnPlayerEnter(collision.gameObject);
         }
     }
-
-    protected virtual void OnCollisionExit2D(Collision2D collision)
-    {
-        if (collision.gameObject.CompareTag("Player"))
-        {
-            _platform.OnPlayerExit(collision.gameObject);
-        }
-    }
 }

@@ -4,10 +4,10 @@ using UnityEngine;
 public class Enemy : MonoBehaviour
 {
     [SerializeField] protected EnemyData _data;
-    [SerializeField] GameObject UpperCol;
-    [SerializeField] GameObject LowerCol;
-    [SerializeField] GameObject RearCol;
-    [SerializeField] GameObject FrontCol;
+    [SerializeField] protected GameObject UpperCol;
+    [SerializeField] protected GameObject LowerCol;
+    [SerializeField] protected GameObject RearCol;
+    [SerializeField] protected GameObject FrontCol;
     [SerializeField] float _deathTime;
 
     [SerializeField] protected LayerMask _obstaclesLayer;
@@ -40,7 +40,7 @@ public class Enemy : MonoBehaviour
         _rb = rb;
         TryGetComponent(out Collider2D col);
         _col = col;
-        if(_animator == null)
+        if (_animator == null)
         {
             TryGetComponent(out Animator anim);
             _animator = anim;
@@ -56,6 +56,7 @@ public class Enemy : MonoBehaviour
     }
 
     public virtual void CustomUpdate() { }
+
     protected void DetectCollision(Direction dir)
     {
 #if UNITY_EDITOR
@@ -73,16 +74,19 @@ public class Enemy : MonoBehaviour
 
     public virtual void Die()
     {
-        Debug.Log($"{_data.Type} killed");
-
         _animator.SetTrigger("OnHit");
 
+        RegisterKill();
+
+        Destroy(gameObject, _deathTime);
+    }
+
+    public void RegisterKill()
+    {
         tracker.OnEnemyKilled(this);
 
         var combo = ComboManager.Instance;
         if (combo != null)
-            combo.RegisterKill();
-
-        Destroy(gameObject, _deathTime);
+            combo.RegisterKill(transform.position);
     }
 }

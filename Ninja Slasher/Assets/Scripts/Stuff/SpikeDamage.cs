@@ -1,3 +1,4 @@
+using System.Linq;
 using UnityEngine;
 
 public class SpikeDamage : MonoBehaviour
@@ -10,6 +11,14 @@ public class SpikeDamage : MonoBehaviour
             if (controller != null)
             {
                 controller.Die();
+            }
+        }
+        else if(collision.gameObject.CompareTag("Enemy"))
+        {
+            var enemy = collision.gameObject.GetComponent<Enemy>();
+            if (enemy != null)
+            {
+                enemy.Die();
             }
         }
     }
