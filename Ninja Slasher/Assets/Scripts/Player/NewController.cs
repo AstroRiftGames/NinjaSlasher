@@ -22,6 +22,7 @@ public class NewController : MonoBehaviour
 
     private bool _isKO = false;
     private bool _isDashing = false;
+    private bool _isParrying = false;
     private string[] colMatrix = { "Obstacle", "Scenario", "Platform", };
     private string[] deadlyMatrix = { "Enemy", "Projectile", "Spikes", "EnemyShield", };
 
@@ -74,6 +75,7 @@ public class NewController : MonoBehaviour
         //InitializeFSM();
         //InitializeTree(); 
         SwipeDetection.instance.OnSwipe += context => { TryDash(context); };
+        SwipeDetection.instance.OnTap += TryParry;
     }
     void OnEnable()
     {
@@ -100,9 +102,6 @@ public class NewController : MonoBehaviour
     }
     #endregion
 
-    #region INPUT HANDLING
-    #endregion
-
     #region MECHANICS
     private void TryDash(Vector2 direction)
     {
@@ -116,6 +115,20 @@ public class NewController : MonoBehaviour
         Debug.DrawRay(transform.position, direction, Color.red, 2f);
         _view.RB.AddForce(direction * _model.DashForce);
         _isDashing = true;
+    }
+
+    private void TryParry()
+    {
+        if(!_isKO && !_isParrying && !_isDashing)
+        {
+            Parry();
+        }
+        
+    }
+
+    private void Parry()
+    {
+        Debug.Log("Parry");
     }
 
     private void Grab()
