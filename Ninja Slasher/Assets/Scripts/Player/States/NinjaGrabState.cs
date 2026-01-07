@@ -4,9 +4,8 @@ public class NinjaGrabState<NinjaStates> : State<NinjaStates>
 {
     private Controller _controller;
 
-    public NinjaGrabState(Controller controller)
+    public NinjaGrabState()
     {
-        _controller = controller;
     }
 
     public override void Enter()

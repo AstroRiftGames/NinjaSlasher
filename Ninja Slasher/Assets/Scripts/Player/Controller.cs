@@ -64,11 +64,11 @@ public class Controller : MonoBehaviour
 
     private void InitializeFSM()
     {
-        var idle = new NinjaIdleState<NinjaStates>(this);
-        var dash = new NinjaDashState<NinjaStates>(this);
-        var grab = new NinjaGrabState<NinjaStates>(this);
-        var parry = new NinjaParryState<NinjaStates>(this);
-        var ko = new NinjaKOState<NinjaStates>(this);
+        var idle = new NinjaIdleState<NinjaStates>();
+        var dash = new NinjaDashState<NinjaStates>();
+        var grab = new NinjaGrabState<NinjaStates>();
+        var parry = new NinjaParryState<NinjaStates>();
+        var ko = new NinjaKOState<NinjaStates>();
 
         idle.AddTransition(NinjaStates.Dash, dash);
         idle.AddTransition(NinjaStates.Parry, parry);

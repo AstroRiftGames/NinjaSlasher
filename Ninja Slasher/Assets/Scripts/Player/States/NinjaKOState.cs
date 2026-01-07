@@ -2,16 +2,15 @@ using UnityEngine;
 
 public class NinjaKOState<NinjaStates> : State<NinjaStates>
 {
-    private Controller _controller;
+    private NewController _controller;
 
-    public NinjaKOState(Controller controller)
+    public NinjaKOState()
     {
-        _controller = controller;
     }
 
     public override void Enter()
     {
-        _controller.Die();
+        //_controller.Die();
         _controller.View.Animator.SetTrigger("OnKO");
         PlayKOSFX();
     }

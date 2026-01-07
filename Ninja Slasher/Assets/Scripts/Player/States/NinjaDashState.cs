@@ -8,11 +8,8 @@ public class NinjaDashState<NinjaStates> : State<NinjaStates> where NinjaStates 
     private TrailRenderer _trailRenderer;
     private ParticleSystem _takeoffParticles;
 
-    public NinjaDashState(Controller controller)
+    public NinjaDashState()
     {
-        _controller = controller;
-        _trailRenderer = _controller.View.TrailRendererComponent;
-        _takeoffParticles = _controller.View.LandingParticles;
     }
 
     public override void Enter()

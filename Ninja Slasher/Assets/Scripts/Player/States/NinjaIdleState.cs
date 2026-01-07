@@ -2,11 +2,10 @@ using UnityEngine;
 
 public class NinjaIdleState<NinjaStates> : State<NinjaStates>
 {
-    Controller _controller;
+    NewController _controller;
 
-    public NinjaIdleState(Controller controller)
+    public NinjaIdleState()
     {
-        _controller = controller;
     }
 
     public override void Enter()
