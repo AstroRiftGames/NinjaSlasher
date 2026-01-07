@@ -22,7 +22,8 @@ public class NewController : MonoBehaviour
 
     private bool _isKO = false;
     private bool _isDashing = false;
-    private string[] colMatrix = { "Obstacle", "Scenario", "Platform"};
+    private string[] colMatrix = { "Obstacle", "Scenario", "Platform", };
+    private string[] deadlyMatrix = { "Enemy", "Projectile", "Spikes", };
 
 
     #region FSM and Behavior Tree Setup
@@ -164,24 +165,29 @@ public class NewController : MonoBehaviour
         string colTag = collision.gameObject.tag;
         
         Debug.Log($"Collided with: {colTag} ({collision.name})");
-        switch (colTag)
+        if(deadlyMatrix.Contains(colTag))
         {
-            case "Enemy":
-                if (_isDashing) //TODO: Eliminar enemigo
-                {
-                    return;
-                }
-                else
-                {
+            switch (colTag)
+            {
+                case "Enemy":
+                    if (_isDashing) 
+                    {
+                        collision.TryGetComponent(out Enemy enemy);
+                        enemy.Die();
+                        HapticFeedback.MediumFeedback();
+                    }
+                    else
+                    {
+                        Die();
+                    }
+                    break;
+                case "Spikes": //TODO: Diferenciar según power up
                     Die();
-                }
-                break;
-            case "Projectile": //TODO: Diferenciar entre dueño de proyectile
-                Die();
-                break;
-            case "Spikes": //TODO: Diferenciar según power up
-                Die();
-                break;
+                    break;
+                default:
+                    Die();
+                    break;
+            }
         }
 
     }
