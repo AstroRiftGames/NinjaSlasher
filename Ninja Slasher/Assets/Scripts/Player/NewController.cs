@@ -23,7 +23,7 @@ public class NewController : MonoBehaviour
     private bool _isKO = false;
     private bool _isDashing = false;
     private string[] colMatrix = { "Obstacle", "Scenario", "Platform", };
-    private string[] deadlyMatrix = { "Enemy", "Projectile", "Spikes", };
+    private string[] deadlyMatrix = { "Enemy", "Projectile", "Spikes", "EnemyShield", };
 
 
     #region FSM and Behavior Tree Setup
@@ -124,15 +124,16 @@ public class NewController : MonoBehaviour
         _view.RB.linearVelocity = Vector2.zero;
     }
 
-    private void Die()
+    public void Die()
     {
         Debug.Log("Player Died");
         if(_isKO) return;
         _isKO = true;
 
+        _view.TriggerCol.enabled = false;
+
         _view.RB.bodyType = RigidbodyType2D.Dynamic;
         _view.RB.gravityScale = 1f;
-        _view.Col.excludeLayers = LayerMask.GetMask("Proyectiles", "Enemies");
 
         if (CameraShake.Instance != null)
         {
@@ -181,7 +182,11 @@ public class NewController : MonoBehaviour
                         Die();
                     }
                     break;
-                case "Spikes": //TODO: Diferenciar según power up
+                case "EnemyShield":
+                    _view.RB.linearVelocity = Vector2.zero;
+                    Die();
+                    break;
+                case "Spikes": //TODO: Evitar Die si tiene power up
                     Die();
                     break;
                 default:

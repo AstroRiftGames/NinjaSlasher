@@ -14,8 +14,8 @@ GameObject:
   - component: {fileID: 6905579431728325560}
   - component: {fileID: 5760230160173246306}
   - component: {fileID: 8146807997240465576}
-  - component: {fileID: 1034947280318806221}
   - component: {fileID: 340358578149418589}
+  - component: {fileID: 1034947280318806221}
   - component: {fileID: 6549881993182166334}
   - component: {fileID: 2435951141245640258}
   m_Layer: 10
@@ -35,7 +35,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 0.45, y: 0.45, z: 0.45}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 7430708555111219105}
@@ -84,6 +84,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _rb: {fileID: 2870901090016681095}
   _col: {fileID: 8146807997240465576}
+  _triggerCol: {fileID: 2435951141245640258}
   _anim: {fileID: 4934869676011792912}
   _spriteContainer: {fileID: 3737365468586709411}
   _slashTrailRenderer: {fileID: 6294109103735827813}
@@ -99,7 +100,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 967886d4fb1b5534ab1cf4391b9d9087, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _dashForce: 30
+  _dashForce: 500
   _dashCD: 0.25
   _dashDuration: 0.5
   _parryWindow: 2
@@ -223,10 +224,10 @@ BoxCollider2D:
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 192
   m_ExcludeLayers:
     serializedVersion: 2
-    m_Bits: 192
+    m_Bits: 0
   m_LayerOverridePriority: 0
   m_ForceSendLayers:
     serializedVersion: 2
@@ -256,20 +257,6 @@ BoxCollider2D:
   m_AutoTiling: 0
   m_Size: {x: 1.2, y: 1.89}
   m_EdgeRadius: 0
---- !u!114 &1034947280318806221
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1104090747853785710}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 44c27bb3875202e4889c979954db8515, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _view: {fileID: 4198015471619335935}
-  _model: {fileID: 6905579431728325560}
 --- !u!114 &340358578149418589
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -333,6 +320,20 @@ MonoBehaviour:
       m_Flags: 0
     m_Flags: 0
   swipeResistance: 1
+--- !u!114 &1034947280318806221
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1104090747853785710}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 44c27bb3875202e4889c979954db8515, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _view: {fileID: 4198015471619335935}
+  _model: {fileID: 6905579431728325560}
 --- !u!96 &6549881993182166334
 TrailRenderer:
   serializedVersion: 3
@@ -462,7 +463,7 @@ BoxCollider2D:
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 768
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -479,11 +480,11 @@ BoxCollider2D:
   m_CallbackLayers:
     serializedVersion: 2
     m_Bits: 4294967295
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: 11.642605, y: 10.886139}
+  m_Offset: {x: -0.07533276, y: 0.15880716}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0, y: 0}
@@ -493,7 +494,7 @@ BoxCollider2D:
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 2.222222, y: 2.222222}
+  m_Size: {x: 0.96259, y: 2.0049603}
   m_EdgeRadius: 0
 --- !u!1 &1619261642739219413
 GameObject:

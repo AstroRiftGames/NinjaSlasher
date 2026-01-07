@@ -46,7 +46,7 @@ public class Enemy : MonoBehaviour
             _animator = anim;
         }
 
-        _player = FindAnyObjectByType<Controller>().transform;
+        _player = FindAnyObjectByType<NewController>().transform;
         tracker = FindAnyObjectByType<EnemyTracker>();
     }
 

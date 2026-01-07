@@ -29,7 +29,7 @@ public class RangeEnemy : Enemy
     public override void OnEnable()
     {
         base.OnEnable();
-        _target = FindAnyObjectByType<Controller>().transform;
+        _target = FindAnyObjectByType<NewController>().transform;
     }
 
 
