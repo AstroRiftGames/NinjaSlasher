@@ -1,5 +1,7 @@
 using Managers;
+using System;
 using System.Linq;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public enum NinjaStates
@@ -68,7 +70,8 @@ public class NewController : MonoBehaviour
     private void Awake()
     {
         //InitializeFSM();
-        //InitializeTree();
+        //InitializeTree(); 
+        SwipeDetection.instance.OnSwipe += context => { TryDash(context); };
     }
     void OnEnable()
     {
@@ -89,40 +92,26 @@ public class NewController : MonoBehaviour
         else
         {
             Debug.Log("Player is active");
-            CheckInput();
         }
     }
     #endregion
 
     #region INPUT HANDLING
-    private void CheckInput()
-    {
-        if (Input.GetMouseButtonDown(0))
-        {
-            TryDash();
-        }
-    }
     #endregion
 
     #region MECHANICS
-    private void TryDash()
+    private void TryDash(Vector2 direction)
     {
-        if(!_isDashing)
-        Dash();
+        if(!_isKO && !_isDashing)
+        {
+            Dash(direction);
+        }
     }
-    private void Dash()
+    private void Dash(Vector2 direction)
     {
-        Debug.Log("Player Dashes");
-        _view.RB.AddForce(GetDirection() * _model.DashForce);
+        Debug.DrawRay(transform.position, direction, Color.red, 2f);
+        _view.RB.AddForce(direction * _model.DashForce);
         _isDashing = true;
-    }
-
-    private Vector2 GetDirection()
-    {
-        Vector2 v = Vector2.zero;
-        v = Camera.main.ScreenToWorldPoint(Input.mousePosition) - transform.position;
-        Debug.Log(v.normalized);
-        return v.normalized;
     }
 
     private void Grab()
