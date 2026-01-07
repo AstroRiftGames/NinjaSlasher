@@ -1,8 +1,9 @@
 using Managers;
 using System;
+using UnityEngine;
+using CandyCoded.HapticFeedback;
 using System.Linq;
 using Unity.VisualScripting;
-using UnityEngine;
 
 public enum NinjaStates
 {
@@ -85,6 +86,8 @@ public class NewController : MonoBehaviour
 
     private void CustomUpdate()
     {
+
+        if (Input.GetKeyDown(KeyCode.F)) Die();
         if(_isKO)
         {
             Debug.Log("Player is KO'd");
@@ -119,6 +122,31 @@ public class NewController : MonoBehaviour
         _isDashing = false;
         _view.RB.linearVelocity = Vector2.zero;
     }
+
+    private void Die()
+    {
+        Debug.Log("Player Died");
+        if(_isKO) return;
+        _isKO = true;
+
+        _view.RB.bodyType = RigidbodyType2D.Dynamic;
+        _view.RB.gravityScale = 1f;
+        _view.Col.excludeLayers = LayerMask.GetMask("Proyectiles", "Enemies");
+
+        if (CameraShake.Instance != null)
+        {
+            CameraShake.Instance.TriggerShake(0.4f, 0.5f);
+        }
+
+        var levelController = FindObjectOfType<LevelController>();
+        if (levelController != null)
+        {
+            levelController.MarkLevelAsFailed();
+        }
+
+        LevelManager.Instance.OnPlayerLose();
+        if (UIManager.Instance.IsHapticFeedbackActive) HapticFeedback.HeavyFeedback();
+    }
     #endregion
 
     #region COLLISION DETECTION
@@ -129,6 +157,33 @@ public class NewController : MonoBehaviour
         {
             Grab();
         }
+    }
+
+    private void OnTriggerEnter2D(Collider2D collision)
+    {
+        string colTag = collision.gameObject.tag;
+        
+        Debug.Log($"Collided with: {colTag} ({collision.name})");
+        switch (colTag)
+        {
+            case "Enemy":
+                if (_isDashing) //TODO: Eliminar enemigo
+                {
+                    return;
+                }
+                else
+                {
+                    Die();
+                }
+                break;
+            case "Projectile": //TODO: Diferenciar entre dueño de proyectile
+                Die();
+                break;
+            case "Spikes": //TODO: Diferenciar según power up
+                Die();
+                break;
+        }
+
     }
     #endregion
 }
