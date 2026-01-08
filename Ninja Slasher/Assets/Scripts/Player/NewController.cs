@@ -24,8 +24,34 @@ public class NewController : MonoBehaviour
     private bool _isDashing = false;
     private float _lastParry;
     [SerializeField] private LayerMask _proyectilesLayer;
+
     private string[] colMatrix = { "Obstacle", "Scenario", };
     private string[] deadlyMatrix = { "Enemy", "Projectile", "Spikes", "EnemyShield", };
+
+    private void SetFlipped(float angle)
+    {
+        bool isFlipped = (angle > -180 && angle <= -90) || angle <= 180 && angle > 90;
+
+        Vector2 newScale = _view.SpriteContainer.transform.localScale;
+        newScale.y = isFlipped ? -Mathf.Abs(newScale.y) : Mathf.Abs(newScale.y);
+
+        _view.SpriteContainer.transform.localScale = newScale;
+    }
+    private void SetFlipped(bool newValue)
+    {
+        Vector2 newScale = _view.SpriteContainer.transform.localScale;
+        newScale.y = newValue ? -Mathf.Abs(newScale.y) : Mathf.Abs(newScale.y);
+
+        _view.SpriteContainer.transform.localScale = newScale;
+    }
+
+    private void SetMirrored(bool newValue)
+    {
+        Vector2 newScale = _view.SpriteContainer.transform.localScale;
+        newScale.x = newValue ? -Mathf.Abs(newScale.x) : Mathf.Abs(newScale.x);
+
+        _view.SpriteContainer.transform.localScale = newScale;
+    }
 
 
     #region FSM and Behavior Tree Setup
@@ -90,7 +116,6 @@ public class NewController : MonoBehaviour
     }
     private void Dash(Vector2 direction)
     {
-        Debug.DrawRay(transform.position, direction, Color.red, 2f);
         _view.RB.AddForce(direction * _model.DashForce);
         _isDashing = true;
         _view.Animator.SetBool("IsGrounded", false);
@@ -101,13 +126,7 @@ public class NewController : MonoBehaviour
     {
         float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
         _view.SpriteContainer.transform.rotation = Quaternion.Euler(0, 0, angle);
-
-        bool isFliped = (angle > -180 && angle <= -90) || angle <= 180 && angle > 90;
-
-        Vector2 newScale = _view.SpriteContainer.transform.localScale;
-        newScale.y = isFliped ? -Mathf.Abs(newScale.y) : Mathf.Abs(newScale.y);
-
-        _view.SpriteContainer.transform.localScale = newScale;
+        SetFlipped(angle);
     }
 
 
@@ -152,15 +171,26 @@ public class NewController : MonoBehaviour
         }
     }
 
-    private void Grab()
+    private void Grab(Vector2 normal)
     {
         _isDashing = false;
         _view.Animator.SetBool("IsGrounded", true);
         RotateSprites(Vector2.zero);
-
-        //TODO: Diferenciar animaciones (WallGrab[Mirrored and not mirrored], CeilingGrab, Crouch)
-
         _view.RB.linearVelocity = Vector2.zero;
+        _view.Animator.SetBool("IsWallGrabbed", false);
+        _view.Animator.SetBool("IsCeilingGrabbed", false);
+
+        if (normal == Vector2.right || normal == Vector2.left)
+        {
+            _view.Animator.SetBool("IsWallGrabbed", true);
+            RotateSprites(Vector2.zero);
+            SetMirrored(normal == Vector2.left);
+        }
+        else if(normal == Vector2.down)
+        {
+            _view.Animator.SetBool("IsCeilingGrabbed", true);
+            RotateSprites(Vector2.left);
+        }
     }
 
     public void Die()
@@ -196,7 +226,7 @@ public class NewController : MonoBehaviour
         string colTag = collision.gameObject.tag;
         if (colMatrix.Contains(colTag))
         {
-            Grab();
+            Grab(collision.GetContact(0).normal);
         }
     }
 
