@@ -103,7 +103,8 @@ MonoBehaviour:
   _dashForce: 500
   _dashCD: 0.25
   _dashDuration: 0.5
-  _parryWindow: 2
+  _parryRange: 0.75
+  _parryCD: 1
 --- !u!120 &5760230160173246306
 LineRenderer:
   serializedVersion: 2
@@ -335,6 +336,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _view: {fileID: 4198015471619335935}
   _model: {fileID: 6905579431728325560}
+  _proyectilesLayer:
+    serializedVersion: 2
+    m_Bits: 256
 --- !u!96 &6549881993182166334
 TrailRenderer:
   serializedVersion: 3

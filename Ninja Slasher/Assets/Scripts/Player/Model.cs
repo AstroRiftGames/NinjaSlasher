@@ -9,7 +9,10 @@ public class Model : MonoBehaviour
     public float DashDuration => _dashDuration;
     [SerializeField] float _dashDuration = 1f;
 
-    [SerializeField] private float _parryWindow = 0.5f;
-    public float ParryWindow => _parryWindow;
+    [SerializeField] private float _parryRange = 0.5f;
+    public float ParryRange => _parryRange;
+
+    [SerializeField] private float _parryCD = 1f;
+    public float ParryCD => _parryCD;
 
 }

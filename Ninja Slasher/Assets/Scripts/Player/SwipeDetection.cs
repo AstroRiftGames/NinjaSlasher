@@ -7,7 +7,7 @@ public class SwipeDetection : MonoBehaviour
     public delegate void Swipe(Vector2 direction);
     public event Swipe OnSwipe;
 
-    public delegate void Tap();
+    public delegate void Tap(Vector2 position);
     public event Tap OnTap;
 
     [SerializeField] private InputAction position, press;
@@ -47,7 +47,7 @@ public class SwipeDetection : MonoBehaviour
             float deltaTime = currentTime - pressTime;
             if (deltaTime <= timeThreshold)
             {
-                OnTap();
+                OnTap(initialPos);
             }
         }
     }

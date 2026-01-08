@@ -506,7 +506,7 @@ if (Input.touchCount > 0)
     public void StartParry(Collider2D[] hits)
     {
         isParrying = true;
-        float parryWindow = _playerModel.ParryWindow;
+        float parryWindow = _playerModel.ParryRange;
 
         var context = PowerUpManager.Instance?.context;
         if (context != null && context.ParryPerfectActive)
@@ -736,7 +736,7 @@ if (Input.touchCount > 0)
     #region RESOURCES
     public bool IsParrying() => isParrying;
     public void SetIsParrying(bool value) => isParrying = value;
-    public float GetParryWindow() => _playerModel.ParryWindow;
+    public float GetParryWindow() => _playerModel.ParryRange;
 
     public bool IsDashing() => _isDashing;
     public void SetIsDashing(bool value) => _isDashing = value;

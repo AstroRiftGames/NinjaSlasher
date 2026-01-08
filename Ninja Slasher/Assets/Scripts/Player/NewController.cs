@@ -22,7 +22,8 @@ public class NewController : MonoBehaviour
 
     private bool _isKO = false;
     private bool _isDashing = false;
-    private bool _isParrying = false;
+    private float _lastParry;
+    [SerializeField] private LayerMask _proyectilesLayer;
     private string[] colMatrix = { "Obstacle", "Scenario", "Platform", };
     private string[] deadlyMatrix = { "Enemy", "Projectile", "Spikes", "EnemyShield", };
 
@@ -75,7 +76,7 @@ public class NewController : MonoBehaviour
         //InitializeFSM();
         //InitializeTree(); 
         SwipeDetection.instance.OnSwipe += context => { TryDash(context); };
-        SwipeDetection.instance.OnTap += TryParry;
+        SwipeDetection.instance.OnTap += context => { TryParry(context); } ;
     }
     void OnEnable()
     {
@@ -117,18 +118,45 @@ public class NewController : MonoBehaviour
         _isDashing = true;
     }
 
-    private void TryParry()
+    private void TryParry(Vector2 tapPos)
     {
-        if(!_isKO && !_isParrying && !_isDashing)
+        if(!_isKO && !_isDashing && CanParry())
         {
-            Parry();
+            Vector2 dir = CalculateDirection(tapPos);
+            Parry(dir);
         }
         
     }
 
-    private void Parry()
+    private Vector2 CalculateDirection(Vector2 tapPos)
     {
-        Debug.Log("Parry");
+        Vector2 worldTapPos = Camera.main.ScreenToWorldPoint(tapPos);
+        Vector2 direction = (worldTapPos - (Vector2)transform.position).normalized;
+        return direction;
+    }
+
+    private bool CanParry() => Time.time >= _lastParry + _model.ParryCD;
+
+    private void Parry(Vector2 dirToParry)
+    {
+        if (_isDashing || _isKO)
+        {
+            return;
+        }
+        _lastParry = Time.time;
+        Collider2D[] hitColliders = Physics2D.OverlapCircleAll(transform.position, _model.ParryRange, _proyectilesLayer);
+
+        foreach (var col in hitColliders)
+        {
+            if (col.TryGetComponent(out Projectile projectile)
+                && projectile.Shooter != transform
+                && projectile.IsParryable)
+            {
+                projectile.ReflectBackwards(transform, dirToParry);
+                HapticFeedback.LightFeedback();
+                return;
+            }
+        }
     }
 
     private void Grab()
@@ -210,4 +238,11 @@ public class NewController : MonoBehaviour
 
     }
     #endregion
+
+
+    private void OnDrawGizmos()
+    {
+        Gizmos.color = Color.yellow;
+        Gizmos.DrawWireSphere(transform.position, _model.ParryRange);
+    }
 }
