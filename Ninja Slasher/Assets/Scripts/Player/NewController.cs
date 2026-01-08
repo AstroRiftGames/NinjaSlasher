@@ -127,6 +127,7 @@ public class NewController : MonoBehaviour
         float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
         _view.SpriteContainer.transform.rotation = Quaternion.Euler(0, 0, angle);
         SetFlipped(angle);
+        SetMirrored(false);
     }
 
 
@@ -165,7 +166,10 @@ public class NewController : MonoBehaviour
                 && projectile.IsParryable)
             {
                 projectile.ReflectBackwards(transform, dirToParry);
+
+                _view.Animator.SetTrigger("OnParry");
                 HapticFeedback.LightFeedback();
+
                 return;
             }
         }
@@ -203,6 +207,8 @@ public class NewController : MonoBehaviour
 
         _view.RB.bodyType = RigidbodyType2D.Dynamic;
         _view.RB.gravityScale = 1f;
+
+        _view.Animator.SetTrigger("OnKO");
 
         if (CameraShake.Instance != null)
         {
@@ -267,10 +273,11 @@ public class NewController : MonoBehaviour
     }
     #endregion
 
-
+#if UNIT_EDITOR
     private void OnDrawGizmos()
     {
         Gizmos.color = Color.yellow;
         Gizmos.DrawWireSphere(transform.position, _model.ParryRange);
     }
+#endif
 }
