@@ -117,6 +117,7 @@ public class NewController : MonoBehaviour
     private void Dash(Vector2 direction)
     {
         _view.RB.AddForce(direction * _model.DashForce);
+        AudioManager.Instance.PlaySFXAtPosition(SFXClip.P_Movement, transform.position);
         _isDashing = true;
         _view.Animator.SetBool("IsGrounded", false);
         RotateSprites(direction);
@@ -159,6 +160,9 @@ public class NewController : MonoBehaviour
         _lastParry = Time.time;
         Collider2D[] hitColliders = Physics2D.OverlapCircleAll(transform.position, _model.ParryRange, _proyectilesLayer);
 
+        _view.Animator.SetTrigger("OnParry");
+        AudioManager.Instance.PlaySFXAtPosition(SFXClip.P_ParrySwing, transform.position);
+
         foreach (var col in hitColliders)
         {
             if (col.TryGetComponent(out Projectile projectile)
@@ -166,9 +170,8 @@ public class NewController : MonoBehaviour
                 && projectile.IsParryable)
             {
                 projectile.ReflectBackwards(transform, dirToParry);
-
-                _view.Animator.SetTrigger("OnParry");
                 HapticFeedback.LightFeedback();
+                AudioManager.Instance.PlaySFXAtPosition(SFXClip.P_ProjectileParried, transform.position);
 
                 return;
             }
@@ -183,6 +186,7 @@ public class NewController : MonoBehaviour
         _view.RB.linearVelocity = Vector2.zero;
         _view.Animator.SetBool("IsWallGrabbed", false);
         _view.Animator.SetBool("IsCeilingGrabbed", false);
+        AudioManager.Instance.PlaySFXAtPosition(SFXClip.P_Landing_General, transform.position);
 
         if (normal == Vector2.right || normal == Vector2.left)
         {
@@ -251,6 +255,7 @@ public class NewController : MonoBehaviour
                         collision.TryGetComponent(out Enemy enemy);
                         enemy.Die();
                         HapticFeedback.MediumFeedback();
+                        AudioManager.Instance.PlaySFXAtPosition(SFXClip.P_Attack, transform.position);
                     }
                     else
                     {
