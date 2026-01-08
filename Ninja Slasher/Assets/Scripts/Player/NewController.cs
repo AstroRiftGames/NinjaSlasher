@@ -24,7 +24,7 @@ public class NewController : MonoBehaviour
     private bool _isDashing = false;
     private float _lastParry;
     [SerializeField] private LayerMask _proyectilesLayer;
-    private string[] colMatrix = { "Obstacle", "Scenario", "Platform", };
+    private string[] colMatrix = { "Obstacle", "Scenario", };
     private string[] deadlyMatrix = { "Enemy", "Projectile", "Spikes", "EnemyShield", };
 
 
@@ -78,29 +78,6 @@ public class NewController : MonoBehaviour
         SwipeDetection.instance.OnSwipe += context => { TryDash(context); };
         SwipeDetection.instance.OnTap += context => { TryParry(context); } ;
     }
-    void OnEnable()
-    {
-        CustomUpdateManager.Instance.SubscribeToUpdate(CustomUpdate);
-    }
-
-    private void OnDisable()
-    {
-        CustomUpdateManager.Instance.UnsubscribeFromUpdate(CustomUpdate);
-    }
-
-    private void CustomUpdate()
-    {
-
-        if (Input.GetKeyDown(KeyCode.F)) Die();
-        if(_isKO)
-        {
-            Debug.Log("Player is KO'd");
-        }
-        else
-        {
-            Debug.Log("Player is active");
-        }
-    }
     #endregion
 
     #region MECHANICS
@@ -116,7 +93,23 @@ public class NewController : MonoBehaviour
         Debug.DrawRay(transform.position, direction, Color.red, 2f);
         _view.RB.AddForce(direction * _model.DashForce);
         _isDashing = true;
+        _view.Animator.SetBool("IsGrounded", false);
+        RotateSprites(direction);
     }
+
+    private void RotateSprites(Vector2 direction)
+    {
+        float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
+        _view.SpriteContainer.transform.rotation = Quaternion.Euler(0, 0, angle);
+
+        bool isFliped = (angle > -180 && angle <= -90) || angle <= 180 && angle > 90;
+
+        Vector2 newScale = _view.SpriteContainer.transform.localScale;
+        newScale.y = isFliped ? -Mathf.Abs(newScale.y) : Mathf.Abs(newScale.y);
+
+        _view.SpriteContainer.transform.localScale = newScale;
+    }
+
 
     private void TryParry(Vector2 tapPos)
     {
@@ -162,6 +155,11 @@ public class NewController : MonoBehaviour
     private void Grab()
     {
         _isDashing = false;
+        _view.Animator.SetBool("IsGrounded", true);
+        RotateSprites(Vector2.zero);
+
+        //TODO: Diferenciar animaciones (WallGrab[Mirrored and not mirrored], CeilingGrab, Crouch)
+
         _view.RB.linearVelocity = Vector2.zero;
     }
 
