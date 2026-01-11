@@ -49,6 +49,8 @@ public class LevelManager : MonoBehaviourSingleton<LevelManager>
 
     private void OnDisable()
     {
+        GameEvents.OnAllEnemiesDefeated -= OnLevelCompleted;
+
         SceneManager.sceneLoaded -= OnSceneLoaded;
     }
 
@@ -66,8 +68,11 @@ public class LevelManager : MonoBehaviourSingleton<LevelManager>
 
     private void HookEnemyEvents()
     {
-        EnemyTracker.OnAllEnemiesDefeated -= OnLevelCompleted;
-        EnemyTracker.OnAllEnemiesDefeated += OnLevelCompleted;
+        GameEvents.OnAllEnemiesDefeated += OnLevelCompleted;
+
+        // DEPRECATED
+        //EnemyTracker.OnAllEnemiesDefeated -= OnLevelCompleted;
+        //EnemyTracker.OnAllEnemiesDefeated += OnLevelCompleted;
     }
 
     private void StartLevel()
@@ -116,6 +121,8 @@ public class LevelManager : MonoBehaviourSingleton<LevelManager>
         }
 
         _levelEnded = true;
+
+        GameEvents.RaiseLevelCompleted(stats);
 
         StartCoroutine(HandleVictoryWithDelay());
     }
@@ -300,7 +307,7 @@ public class LevelManager : MonoBehaviourSingleton<LevelManager>
 
     private void OnDestroy()
     {
-        EnemyTracker.OnAllEnemiesDefeated -= OnLevelCompleted;
+        //EnemyTracker.OnAllEnemiesDefeated -= OnLevelCompleted;
 
         if (LifeManager.Instance != null)
             LifeManager.Instance.OnLivesChanged -= OnLivesChanged;

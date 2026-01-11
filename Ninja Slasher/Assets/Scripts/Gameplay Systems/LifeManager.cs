@@ -306,7 +306,12 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
 
     private void EmitDisplayLivesChanged()
     {
-        OnLivesChanged?.Invoke(GetDisplayLives());
+        int displayLives = GetDisplayLives();
+
+        GameEvents.RaiseLivesChanged(displayLives);
+
+        // DEPRECATED
+        //OnLivesChanged?.Invoke(displayLives);
     }
 
     private void LoadAdsProgress()

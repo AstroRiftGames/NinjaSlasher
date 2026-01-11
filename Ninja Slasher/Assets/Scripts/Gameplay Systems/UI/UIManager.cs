@@ -36,6 +36,9 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
         SceneManager.sceneLoaded += OnSceneLoaded;
 
         StartCoroutine(SafeSubscribeToCustomUpdate());
+
+        // TO DO: FUTURO: Migrar a UIEvents
+        // SubscribeToUIEvents();
     }
 
     private IEnumerator SafeSubscribeToCustomUpdate()
@@ -58,6 +61,9 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
         {
             CustomUpdateManager.Instance.UnsubscribeFromUpdate(CustomUpdate);
         }
+
+        // TO DO: FUTURO: Migrar a UIEvents
+        // UnsubscribeFromUIEvents();
     }
 
     private void Start()
@@ -81,6 +87,8 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
         _gameplayUIManager.Initialize();
 
         _isInitialized = true;
+
+        Debug.Log("[UIManager] Inicializacion completa");
     }
 
     private void InitializeManagers()
@@ -90,6 +98,13 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
         _gameplayUIManager = GetComponent<GameplayUIManager>();
         _preGameUIManager = GetComponent<PreGameUIManager>();
         _sceneTransitionManager = GetComponent<SceneTransitionManager>();
+
+        if (_canvasManager == null)
+            Debug.LogError("[UIManager] CanvasManager no encontrado");
+        if (_buttonManager == null)
+            Debug.LogError("[UIManager] ButtonManager no encontrado");
+        if (_gameplayUIManager == null)
+            Debug.LogError("[UIManager] GameplayUIManager no encontrado");
     }
 
     private void CustomUpdate()
@@ -109,12 +124,46 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
     {
         if (_gameplayUIManager != null)
             _gameplayUIManager.OnSceneLoaded();
+
+        Debug.Log($"[UIManager] Escena cargada: {scene.name}");
     }
 
     public void OpenURL(string url)
     {
         Application.OpenURL(url);
     }
+
+    // FUTURO: Metodos para migrar a UIEvents
+    /*
+    private void SubscribeToUIEvents()
+    {
+        UIEvents.OnPanelOpenRequested += HandlePanelOpenRequest;
+        UIEvents.OnPanelCloseRequested += HandlePanelCloseRequest;
+        UIEvents.OnSceneTransitionRequested += HandleSceneTransition;
+    }
+
+    private void UnsubscribeFromUIEvents()
+    {
+        UIEvents.OnPanelOpenRequested -= HandlePanelOpenRequest;
+        UIEvents.OnPanelCloseRequested -= HandlePanelCloseRequest;
+        UIEvents.OnSceneTransitionRequested -= HandleSceneTransition;
+    }
+
+    private void HandlePanelOpenRequest(string panelName)
+    {
+        // Logica para abrir paneles por nombre
+    }
+
+    private void HandlePanelCloseRequest(string panelName)
+    {
+        // Logica para cerrar paneles por nombre
+    }
+
+    private void HandleSceneTransition(string sceneName)
+    {
+        _sceneTransitionManager.LoadLevelScene(sceneName);
+    }
+    */
 
     public void ShowLevelSelector() => _sceneTransitionManager.ShowLevelSelector();
     public void LoadLevelScene(string sceneName) => _sceneTransitionManager.LoadLevelScene(sceneName);

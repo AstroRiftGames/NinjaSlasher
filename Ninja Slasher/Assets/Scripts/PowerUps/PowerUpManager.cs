@@ -43,10 +43,16 @@ public class PowerUpManager : MonoBehaviourSingleton<PowerUpManager>
     [Header("DEBUG")]
     [SerializeField] private List<PowerUpDebugInfo> availablePowerUps = new List<PowerUpDebugInfo>();
 
+    [Obsolete]
     public static event Action<PowerUpType> OnPowerUpActivated;
+
+    [Obsolete]
     public static event Action<PowerUpType> OnPowerUpDeactivated;
+
+    [Obsolete]
     public static event Action<PowerUpType, float> OnPowerUpTimeUpdated;
 
+    [Obsolete]
     public static event Action<string> OnPowerUpRemainingTextChanged;
 
     void Start()
@@ -84,7 +90,10 @@ public class PowerUpManager : MonoBehaviourSingleton<PowerUpManager>
             {
                 UpdateContextRemainingTime(type, 0f);
 
-                OnPowerUpRemainingTextChanged?.Invoke("");
+                GameEvents.RaisePowerUpRemainingTextChanged("");
+
+                // DEPRECATED
+                //OnPowerUpRemainingTextChanged?.Invoke("");
 
                 DeactivatePowerUpInternal(pu);
                 _timers.RemoveAt(i);
@@ -92,15 +101,22 @@ public class PowerUpManager : MonoBehaviourSingleton<PowerUpManager>
             else
             {
                 _timers[i] = (pu, timeLeft);
-
                 UpdateContextRemainingTime(type, timeLeft);
 
                 if (Mathf.FloorToInt(timeLeft) != Mathf.FloorToInt(timeLeft + Time.deltaTime))
                 {
-                    OnPowerUpTimeUpdated?.Invoke(type, timeLeft);
+                    GameEvents.RaisePowerUpTimeUpdated(type, timeLeft);
+
+                    // DEPRECATED
+                    //OnPowerUpTimeUpdated?.Invoke(type, timeLeft);
                 }
 
-                OnPowerUpRemainingTextChanged?.Invoke(FormatRemainingTime(timeLeft));
+                string formattedTime = FormatRemainingTime(timeLeft);
+
+                GameEvents.RaisePowerUpRemainingTextChanged(formattedTime);
+
+                // DEPRECATED
+                //OnPowerUpRemainingTextChanged?.Invoke(formattedTime);
             }
         }
     }
@@ -110,7 +126,6 @@ public class PowerUpManager : MonoBehaviourSingleton<PowerUpManager>
         if (time <= 0f) return "";
 
         int totalSeconds = Mathf.CeilToInt(time);
-
         int minutes = Mathf.FloorToInt(totalSeconds / 60f);
         int seconds = Mathf.FloorToInt(totalSeconds % 60f);
 
@@ -177,12 +192,18 @@ public class PowerUpManager : MonoBehaviourSingleton<PowerUpManager>
     {
         if (!activePowerUps.Contains(powerUp))
             activePowerUps.Add(powerUp);
+
         powerUp.Activate(context);
         _timers.Add((powerUp, powerUp.duration));
         _puIconActive.enabled = true;
         _puIconActive.sprite = powerUp.icon;
 
-        OnPowerUpRemainingTextChanged?.Invoke(FormatRemainingTime(powerUp.duration));
+        string formattedTime = FormatRemainingTime(powerUp.duration);
+
+        GameEvents.RaisePowerUpRemainingTextChanged(formattedTime);
+
+        // DEPRECATED
+        //OnPowerUpRemainingTextChanged?.Invoke(formattedTime);
     }
 
     public bool ActivatePowerUpFromInventory(PowerUpType powerUpType, float duration = 1800f)
@@ -192,6 +213,7 @@ public class PowerUpManager : MonoBehaviourSingleton<PowerUpManager>
 
         if (inventoryItem == null || inventoryItem.quantity <= 0)
         {
+            Debug.LogWarning($"[PowerUpManager] No se puede activar {powerUpType}, cantidad insuficiente en inventario");
             return false;
         }
 
@@ -210,6 +232,7 @@ public class PowerUpManager : MonoBehaviourSingleton<PowerUpManager>
             ActivatePowerUpInternal(powerUpToActivate, duration);
         }
 
+        Debug.Log($"[PowerUpManager] Power-up {powerUpType} activado desde inventario por {duration}s");
         return true;
     }
 
@@ -229,6 +252,7 @@ public class PowerUpManager : MonoBehaviourSingleton<PowerUpManager>
                 if (powerUpRef != null)
                 {
                     ActivatePowerUpInternal(powerUpRef, (float)timeRemaining);
+                    Debug.Log($"[PowerUpManager] Power-up {powerUpData.type} cargado con {timeRemaining:F0}s restantes");
                 }
             }
         }
@@ -250,7 +274,6 @@ public class PowerUpManager : MonoBehaviourSingleton<PowerUpManager>
             case PowerUpType.SecondChance: return powerUpSecondChance;
             case PowerUpType.HawkVision: return powerUpTrajectoryGuide;
             case PowerUpType.EnhancedParry: return powerUpEnhancedParry;
-
             default: return null;
         }
     }
@@ -284,7 +307,6 @@ public class PowerUpManager : MonoBehaviourSingleton<PowerUpManager>
         activePowerUps.Remove(powerUp);
 
         PowerUpType type = GetPowerUpType(powerUp);
-
         UpdateContextActiveState(type, false);
 
         if (AutoSaveManager.Instance != null)
@@ -296,9 +318,13 @@ public class PowerUpManager : MonoBehaviourSingleton<PowerUpManager>
             SaveManager.Instance.DeactivatePowerUp(type);
         }
 
-        OnPowerUpDeactivated?.Invoke(type);
+        Debug.Log($"[PowerUpManager] Power-up {type} desactivado");
 
-        OnPowerUpRemainingTextChanged?.Invoke("");
+        GameEvents.RaisePowerUpExpired(type);
+
+        // DEPRECATED
+        //OnPowerUpDeactivated?.Invoke(type);
+        //OnPowerUpRemainingTextChanged?.Invoke("");
 
         if (activePowerUps.Count == 0 && _puIconActive != null)
         {
@@ -332,8 +358,13 @@ public class PowerUpManager : MonoBehaviourSingleton<PowerUpManager>
 
         UpdateContextActiveState(type, true);
         UpdateContextRemainingTime(type, totalDuration);
-        Debug.Log($"ActivatePowerUpInternal: Type={type}, Duration={totalDuration}, ContextActive={context.ExtraTimeActive}, ContextRemaining={context.ExtraTimeRemaining}");
-        OnPowerUpActivated?.Invoke(type);
+
+        Debug.Log($"[PowerUpManager] Power-up {type} activado - Duración: {totalDuration:F0}s");
+
+        GameEvents.RaisePowerUpActivated(type, totalDuration);
+
+        // DEPRECATED
+        //OnPowerUpActivated?.Invoke(type);
 
         if (_puIconActive != null)
         {
@@ -341,13 +372,17 @@ public class PowerUpManager : MonoBehaviourSingleton<PowerUpManager>
             _puIconActive.sprite = powerUp.icon;
         }
 
-        OnPowerUpRemainingTextChanged?.Invoke(FormatRemainingTime(totalDuration));
+        string formattedTime = FormatRemainingTime(totalDuration);
+
+        GameEvents.RaisePowerUpRemainingTextChanged(formattedTime);
+
+        // DEPRECATED
+        //OnPowerUpRemainingTextChanged?.Invoke(formattedTime);
     }
 
     void ActivatePowerUpDirect(PowerUpType powerUpType, float duration)
     {
         SaveManager.Instance.RemovePowerUpFromInventory(powerUpType, 1);
-
         SaveManager.Instance.ActivatePowerUp(powerUpType, duration);
     }
 

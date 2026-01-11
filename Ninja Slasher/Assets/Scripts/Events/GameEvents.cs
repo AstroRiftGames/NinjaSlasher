@@ -65,6 +65,7 @@ public static class GameEvents
 
     public static event Action<int, Vector3> OnComboUpdated;
     public static event Action OnComboReset;
+    public static event Action<float> OnLevelTimeBonus;
 
     public static void RaiseComboUpdated(int comboLevel, Vector3 position)
     {
@@ -76,12 +77,18 @@ public static class GameEvents
         OnComboReset?.Invoke();
     }
 
+    public static void RaiseLevelTimeBonus(float bonusSeconds)
+    {
+        OnLevelTimeBonus?.Invoke(bonusSeconds);
+    }
+
     #endregion
 
     #region POWER-UP EVENTS
 
     public static event Action<PowerUpType, float> OnPowerUpActivated;
     public static event Action<PowerUpType> OnPowerUpExpired;
+    public static event Action<PowerUpType, float> OnPowerUpTimeUpdated;
     public static event Action<string> OnPowerUpRemainingTextChanged;
 
     public static void RaisePowerUpActivated(PowerUpType type, float duration)
@@ -92,6 +99,11 @@ public static class GameEvents
     public static void RaisePowerUpExpired(PowerUpType type)
     {
         OnPowerUpExpired?.Invoke(type);
+    }
+
+    public static void RaisePowerUpTimeUpdated(PowerUpType type, float timeRemaining)
+    {
+        OnPowerUpTimeUpdated?.Invoke(type, timeRemaining);
     }
 
     public static void RaisePowerUpRemainingTextChanged(string text)
@@ -191,12 +203,14 @@ public static class GameEvents
     {
         OnComboUpdated = null;
         OnComboReset = null;
+        OnLevelTimeBonus = null;
     }
 
     public static void ClearAllPowerUpEvents()
     {
         OnPowerUpActivated = null;
         OnPowerUpExpired = null;
+        OnPowerUpTimeUpdated = null;
         OnPowerUpRemainingTextChanged = null;
     }
 
