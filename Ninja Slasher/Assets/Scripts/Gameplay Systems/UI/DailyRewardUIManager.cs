@@ -9,7 +9,6 @@ public class DailyRewardUIManager : MonoBehaviourSingleton<DailyRewardUIManager>
     public DailyRewardDayUI[] weeklyRewardDays = new DailyRewardDayUI[7];
 
     [SerializeField] private Button closeButton;
-
     [SerializeField] private Button claimButton;
     public TextMeshProUGUI claimButtonText;
 
@@ -36,11 +35,14 @@ public class DailyRewardUIManager : MonoBehaviourSingleton<DailyRewardUIManager>
 
     void OnEnable()
     {
-        if (dailyRewardSystem == null) dailyRewardSystem = DailyRewardSystem.Instance;
+        if (dailyRewardSystem == null)
+            dailyRewardSystem = DailyRewardSystem.Instance;
 
         HookButtons();
         SubscribeToEvents();
-        if (!isInitialized) InitializeUI();
+
+        if (!isInitialized)
+            InitializeUI();
     }
 
     void OnDisable()
@@ -81,15 +83,21 @@ public class DailyRewardUIManager : MonoBehaviourSingleton<DailyRewardUIManager>
 
     void SubscribeToEvents()
     {
-        DailyRewardSystem.OnRewardClaimed += OnRewardClaimed;
-        DailyRewardSystem.OnRewardAvailabilityChanged += OnRewardAvailabilityChanged;
+        GameEvents.OnRewardClaimed += OnRewardClaimed;
+        GameEvents.OnRewardAvailabilityChanged += OnRewardAvailabilityChanged;
+
+        // TO DO: OnRewardDoubled agregar a GameEvents
         DailyRewardSystem.OnRewardDoubled += OnRewardDoubled;
+
+        Debug.Log("[DailyRewardUIManager] Suscrito a GameEvents");
     }
 
     void UnsubscribeFromEvents()
     {
-        DailyRewardSystem.OnRewardClaimed -= OnRewardClaimed;
-        DailyRewardSystem.OnRewardAvailabilityChanged -= OnRewardAvailabilityChanged;
+        GameEvents.OnRewardClaimed -= OnRewardClaimed;
+        GameEvents.OnRewardAvailabilityChanged -= OnRewardAvailabilityChanged;
+
+        DailyRewardSystem.OnRewardDoubled -= OnRewardDoubled;
     }
 
     void InitializeUI()
@@ -99,6 +107,8 @@ public class DailyRewardUIManager : MonoBehaviourSingleton<DailyRewardUIManager>
         SetupWeeklyRewards();
         ShowDailyReward();
         isInitialized = true;
+
+        Debug.Log("[DailyRewardUIManager] UI inicializada");
     }
 
     void SetupWeeklyRewards()
@@ -194,12 +204,15 @@ public class DailyRewardUIManager : MonoBehaviourSingleton<DailyRewardUIManager>
 
     void OnRewardClaimed(DailyReward reward)
     {
+        Debug.Log($"[DailyRewardUIManager] Recompensa reclamada: {reward.displayName}");
+
         ShowDailyReward();
         StartCoroutine(ShowRewardClaimedFeedback(reward));
     }
 
     void OnRewardAvailabilityChanged(bool isAvailable)
     {
+        Debug.Log($"[DailyRewardUIManager] Disponibilidad cambiada: {isAvailable}");
         UpdateClaimButton();
     }
 
@@ -228,7 +241,12 @@ public class DailyRewardUIManager : MonoBehaviourSingleton<DailyRewardUIManager>
 
         if (dailyRewardSystem.ClaimReward())
         {
+            Debug.Log("[DailyRewardUIManager] Recompensa reclamada exitosamente");
+
             ShowDailyReward();
+
+            // TO DO: Usar evento GameEvents.OnRewardClaimed en lugar de FindObjectOfType
+
             var preGame = FindObjectOfType<PreGameUIManager>();
             if (preGame != null && preGame.isActiveAndEnabled)
                 preGame.ShowPreGamePowerUps();
@@ -237,17 +255,25 @@ public class DailyRewardUIManager : MonoBehaviourSingleton<DailyRewardUIManager>
 
     private void OnClosePressed()
     {
+        // TO DO: Usar UIEvents.RequestClosePanel("DailyReward")
         var canvasManager = GetComponentInParent<CanvasManager>();
-        if (canvasManager != null) canvasManager.ShowHideDailyRewardCanvas();
+        if (canvasManager != null)
+        {
+            canvasManager.ShowHideDailyRewardCanvas();
+        }
     }
 
     private void OnAvailabilityChanged(bool canClaim)
     {
-        if (claimButton) claimButton.interactable = canClaim;
+        if (claimButton)
+        {
+            claimButton.interactable = canClaim;
+        }
     }
 
     private void OnRewardDoubled()
     {
+        Debug.Log("[DailyRewardUIManager] Recompensa duplicada");
         UpdateDoubleRewardButton();
     }
 
@@ -284,20 +310,19 @@ public class DailyRewardUIManager : MonoBehaviourSingleton<DailyRewardUIManager>
         }
     }
 
-
     private void OnDoubleRewardPressed()
     {
         if (dailyRewardSystem == null || AdsManager.Instance == null) return;
 
         if (!dailyRewardSystem.CanDoubleToday())
         {
-            Debug.Log("No se puede duplicar la recompensa hoy");
+            Debug.LogWarning("[DailyRewardUIManager] No se puede duplicar la recompensa hoy");
             return;
         }
 
         if (!AdsManager.Instance.IsRewardedAdReady())
         {
-            Debug.Log("Anuncio no está listo");
+            Debug.LogWarning("[DailyRewardUIManager] Anuncio no está listo");
             return;
         }
 

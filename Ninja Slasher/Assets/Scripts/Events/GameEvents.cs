@@ -181,6 +181,23 @@ public static class GameEvents
 
     #endregion
 
+    #region DAILY WHEEL EVENTS
+
+    public static event Action<bool> OnWheelAvailabilityChanged;
+    public static event Action<WheelReward> OnWheelSpun;
+
+    public static void RaiseWheelAvailabilityChanged(bool isAvailable)
+    {
+        OnWheelAvailabilityChanged?.Invoke(isAvailable);
+    }
+
+    public static void RaiseWheelSpun(WheelReward reward)
+    {
+        OnWheelSpun?.Invoke(reward);
+    }
+
+    #endregion
+
     #region CLEANING SUPPLIES
 
     public static void ClearAllLifeEvents()

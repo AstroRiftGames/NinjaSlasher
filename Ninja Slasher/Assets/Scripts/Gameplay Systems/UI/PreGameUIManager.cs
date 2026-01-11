@@ -247,12 +247,18 @@ public class PreGameUIManager : MonoBehaviour
 
     private void OnEnable()
     {
-        DailyRewardSystem.OnRewardClaimed += OnDailyRewardClaimedRefresh;
+        GameEvents.OnRewardClaimed += OnDailyRewardClaimedRefresh;
+
+        // DEPRECATED
+        //DailyRewardSystem.OnRewardClaimed += OnDailyRewardClaimedRefresh;
     }
 
     private void OnDisable()
     {
-        DailyRewardSystem.OnRewardClaimed -= OnDailyRewardClaimedRefresh;
+        GameEvents.OnRewardClaimed -= OnDailyRewardClaimedRefresh;
+
+        // DEPRECATED
+        //DailyRewardSystem.OnRewardClaimed -= OnDailyRewardClaimedRefresh;
         StopAllAnimations();
     }
 

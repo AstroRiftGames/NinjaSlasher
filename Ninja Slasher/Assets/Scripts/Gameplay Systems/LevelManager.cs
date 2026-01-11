@@ -28,8 +28,7 @@ public class LevelManager : MonoBehaviourSingleton<LevelManager>
 
     private void Start()
     {
-        if (LifeManager.Instance != null)
-            LifeManager.Instance.OnLivesChanged += OnLivesChanged;
+        GameEvents.OnLivesChanged += OnLivesChanged;
 
         _playerHasDied = false;
         _levelStarted = false;
@@ -50,6 +49,7 @@ public class LevelManager : MonoBehaviourSingleton<LevelManager>
     private void OnDisable()
     {
         GameEvents.OnAllEnemiesDefeated -= OnLevelCompleted;
+        GameEvents.OnLivesChanged -= OnLivesChanged;
 
         SceneManager.sceneLoaded -= OnSceneLoaded;
     }
@@ -64,15 +64,16 @@ public class LevelManager : MonoBehaviourSingleton<LevelManager>
             if (!_levelStarted && LifeManager.Instance.CanPlay())
                 StartLevel();
         }
+
+        Debug.Log($"[LevelManager] Escena cargada: {scene.name}");
     }
 
     private void HookEnemyEvents()
     {
+        GameEvents.OnAllEnemiesDefeated -= OnLevelCompleted;
         GameEvents.OnAllEnemiesDefeated += OnLevelCompleted;
 
-        // DEPRECATED
-        //EnemyTracker.OnAllEnemiesDefeated -= OnLevelCompleted;
-        //EnemyTracker.OnAllEnemiesDefeated += OnLevelCompleted;
+        Debug.Log("[LevelManager] Suscrito a GameEvents.OnAllEnemiesDefeated");
     }
 
     private void StartLevel()
@@ -86,6 +87,8 @@ public class LevelManager : MonoBehaviourSingleton<LevelManager>
 
         _levelStarted = true;
         LifeManager.Instance.OnLevelStart();
+
+        Debug.Log("[LevelManager] Nivel iniciado");
     }
 
     public void OnLevelCompleted(LevelStats stats)
@@ -94,6 +97,7 @@ public class LevelManager : MonoBehaviourSingleton<LevelManager>
 
         if (_levelEnded)
         {
+            Debug.LogWarning("[LevelManager] Nivel ya terminado, ignorando");
             return;
         }
 
@@ -124,6 +128,8 @@ public class LevelManager : MonoBehaviourSingleton<LevelManager>
 
         GameEvents.RaiseLevelCompleted(stats);
 
+        Debug.Log($"[LevelManager] Nivel {currentLevelId} completado con {starsEarned} estrellas");
+
         StartCoroutine(HandleVictoryWithDelay());
     }
 
@@ -147,6 +153,7 @@ public class LevelManager : MonoBehaviourSingleton<LevelManager>
     {
         if (_levelEnded)
         {
+            Debug.LogWarning("[LevelManager] Nivel ya terminado, ignorando derrota");
             return;
         }
 
@@ -176,6 +183,10 @@ public class LevelManager : MonoBehaviourSingleton<LevelManager>
             _levelStarted = false;
         }
 
+        GameEvents.RaiseLevelFailed(reason);
+
+        Debug.Log($"[LevelManager] Nivel fallado - Razón: {reason}");
+
         StartCoroutine(HandleDefeatUIWithDelay());
     }
 
@@ -192,14 +203,17 @@ public class LevelManager : MonoBehaviourSingleton<LevelManager>
 
         if (LifeManager.Instance.GetRealLives() <= 0)
         {
+            Debug.Log("[LevelManager] Sin vidas - volviendo a selección");
             GoToLevelSelection();
         }
         else if (LifeManager.Instance.CanPlay())
         {
+            Debug.Log("[LevelManager] Mostrando panel de vida perdida");
             UIManager.Instance.ShowHideLifeLostCanvas();
         }
         else
         {
+            Debug.Log("[LevelManager] Mostrando panel sin vidas");
             UIManager.Instance.ShowNoLivesPanel();
         }
     }
@@ -222,18 +236,9 @@ public class LevelManager : MonoBehaviourSingleton<LevelManager>
 
     private void OnLivesChanged(int newLives)
     {
-        if (UIManager.Instance != null)
-        {
-            UIManager.Instance.UpdateLivesUI(newLives);
-        }
-
         if (newLives > 0)
         {
-            var gameplayUI = FindObjectOfType<GameplayUIManager>();
-            if (gameplayUI != null)
-            {
-                Debug.Log("[GAMEMANAGER] Vidas recuperadas");
-            }
+            Debug.Log($"[LevelManager] Vidas actualizadas: {newLives}");
         }
     }
 
@@ -255,6 +260,8 @@ public class LevelManager : MonoBehaviourSingleton<LevelManager>
         SceneManager.sceneLoaded += HandleScreenflowLoaded;
         SceneManager.LoadScene("SplashScreen");
         AudioManager.Instance.PlayMusic(MusicClip.MainMenu, true);
+
+        Debug.Log("[LevelManager] Volviendo a selección de nivel");
     }
 
     private void HandleScreenflowLoaded(Scene scene, LoadSceneMode mode)
@@ -287,6 +294,8 @@ public class LevelManager : MonoBehaviourSingleton<LevelManager>
         _levelStarted = true;
 
         SceneManager.LoadScene(currentScene);
+
+        Debug.Log("[LevelManager] Reiniciando nivel");
     }
 
     private int GetCurrentLevelId()
@@ -307,10 +316,8 @@ public class LevelManager : MonoBehaviourSingleton<LevelManager>
 
     private void OnDestroy()
     {
-        //EnemyTracker.OnAllEnemiesDefeated -= OnLevelCompleted;
-
-        if (LifeManager.Instance != null)
-            LifeManager.Instance.OnLivesChanged -= OnLivesChanged;
+        GameEvents.OnAllEnemiesDefeated -= OnLevelCompleted;
+        GameEvents.OnLivesChanged -= OnLivesChanged;
     }
 
     private bool IsTestingScene()
@@ -328,7 +335,7 @@ public class LevelManager : MonoBehaviourSingleton<LevelManager>
 
     private void OnApplicationPause(bool pauseStatus)
     {
-
+        // Hook para futuro
     }
 
     private void OnApplicationFocus(bool hasFocus)
@@ -337,6 +344,8 @@ public class LevelManager : MonoBehaviourSingleton<LevelManager>
         {
             LifeManager.Instance.OnLevelExit();
             _levelStarted = false;
+
+            Debug.Log("[LevelManager] App perdió focus - vida deducida");
         }
     }
 }
