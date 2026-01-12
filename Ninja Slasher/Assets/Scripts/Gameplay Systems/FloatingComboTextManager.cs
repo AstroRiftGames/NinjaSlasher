@@ -19,7 +19,7 @@ public class FloatingComboTextManager : MonoBehaviourSingleton<FloatingComboText
         new ComboTextData { message = "COMBO x5!!!!", color = new Color(1f, 0f, 0f) }
     };
 
-    private Queue<FloatingComboText> _textPool = new Queue<FloatingComboText>();
+    private GenericPool<FloatingComboText> _textPool;
     private List<FloatingComboText> _activeTexts = new List<FloatingComboText>();
 
     public override void Awake()
@@ -40,21 +40,18 @@ public class FloatingComboTextManager : MonoBehaviourSingleton<FloatingComboText
     private void OnEnable()
     {
         UnityEngine.SceneManagement.SceneManager.sceneLoaded += OnSceneLoaded;
-
         SubscribeToGameEvents();
     }
 
     private void OnDisable()
     {
         UnityEngine.SceneManagement.SceneManager.sceneLoaded -= OnSceneLoaded;
-
         UnsubscribeFromGameEvents();
     }
 
     private void OnSceneLoaded(UnityEngine.SceneManagement.Scene scene, UnityEngine.SceneManagement.LoadSceneMode mode)
     {
         ReinitializePoolForNewScene();
-
         UnsubscribeFromGameEvents();
         SubscribeToGameEvents();
 
@@ -125,33 +122,32 @@ public class FloatingComboTextManager : MonoBehaviourSingleton<FloatingComboText
             }
         }
 
-        for (int i = 0; i < _poolSize; i++)
-        {
-            CreateNewText();
-        }
+        _textPool = new GenericPool<FloatingComboText>(
+            _floatingTextPrefab.gameObject,
+            _poolSize,
+            _targetCanvas.transform,
+            "FloatingComboTextPool"
+        );
 
-        Debug.Log($"[FloatingComboTextManager] Pool inicializado con {_poolSize} textos");
+        _textPool.OnObjectRetrieved += (text) => {
+            _activeTexts.Add(text);
+        };
+
+        _textPool.OnObjectReturned += (text) => {
+            _activeTexts.Remove(text);
+        };
+
+        Debug.Log($"[FloatingComboTextManager] GenericPool inicializado con {_poolSize} textos");
     }
 
     private void ReinitializePoolForNewScene()
     {
-        foreach (var text in _activeTexts.ToArray())
+        if (_textPool != null)
         {
-            if (text != null)
-            {
-                Destroy(text.gameObject);
-            }
+            _textPool.Clear();
         }
-        _activeTexts.Clear();
 
-        while (_textPool.Count > 0)
-        {
-            var text = _textPool.Dequeue();
-            if (text != null)
-            {
-                Destroy(text.gameObject);
-            }
-        }
+        _activeTexts.Clear();
 
         if (_targetCanvas == null)
         {
@@ -164,35 +160,20 @@ public class FloatingComboTextManager : MonoBehaviourSingleton<FloatingComboText
         }
     }
 
-    private FloatingComboText CreateNewText()
-    {
-        FloatingComboText newText = Instantiate(_floatingTextPrefab, _targetCanvas.transform);
-        newText.gameObject.SetActive(false);
-        _textPool.Enqueue(newText);
-        return newText;
-    }
-
     private FloatingComboText GetFromPool()
     {
-        if (_textPool.Count == 0)
+        if (_textPool == null)
         {
-            Debug.LogWarning("[FloatingComboTextManager] Pool vacío, creando nuevo texto");
-            return CreateNewText();
+            Debug.LogError("[FloatingComboTextManager] Pool no inicializado");
+            return null;
         }
-
-        FloatingComboText text = _textPool.Dequeue();
-        text.gameObject.SetActive(true);
-        _activeTexts.Add(text);
-        return text;
+        return _textPool.Get();
     }
 
     public void ReturnToPool(FloatingComboText text)
     {
-        if (text == null) return;
-
-        text.gameObject.SetActive(false);
-        _activeTexts.Remove(text);
-        _textPool.Enqueue(text);
+        if (text == null || _textPool == null) return;
+        _textPool.Return(text);
     }
 
     private void HandleComboUpdated(int level, Vector3 enemyPosition)
@@ -231,12 +212,6 @@ public class FloatingComboTextManager : MonoBehaviourSingleton<FloatingComboText
         }
 
         text.Show(message, worldPosition, color);
-    }
-
-    [ContextMenu("Debug Pool State")]
-    private void DebugPoolState()
-    {
-        Debug.Log($"[FloatingComboTextManager] Pool disponibles: {_textPool.Count}, Activos: {_activeTexts.Count}");
     }
 }
 
