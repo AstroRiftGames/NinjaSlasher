@@ -23,10 +23,15 @@ public class NewController : MonoBehaviour
 
     [SerializeField] SwipeDetection _swipeDetection;
 
-    private bool _isKO = false;
+    public bool IsDashing => _isDashing;
     private bool _isDashing = false;
+    private bool _isKO = false;
+
     private float _lastParry;
+    public Vector2 LastDashDirection => _lastDashDirection;
+    private Vector2 _lastDashDirection;
     private float _lastDash;
+
     [SerializeField] private LayerMask _proyectilesLayer;
 
     private string[] colMatrix = { "Obstacle", "Scenario", };
@@ -113,6 +118,7 @@ public class NewController : MonoBehaviour
     }
     private void Dash(Vector2 direction)
     {
+        _lastDashDirection = direction;
         _view.RB.AddForce(direction * _model.DashForce);
         AudioManager.Instance.PlaySFXAtPosition(SFXClip.P_Movement, transform.position);
         _isDashing = true;
@@ -264,10 +270,6 @@ public class NewController : MonoBehaviour
             if (!elasticComponent)
             {
                 Grab(collision.GetContact(0).normal);
-            }
-            else
-            {
-                //TODO: Bounce on elastic platform
             }
         }
     }

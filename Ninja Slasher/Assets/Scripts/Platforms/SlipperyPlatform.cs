@@ -6,13 +6,13 @@ public class SlipperyPlatform : PlatformBase
     [SerializeField] private float falloffVelocity;
 
     private Rigidbody2D playerRb;
-    private Controller playerController;
+    private NewController playerController;
     private Vector2 slideDirection;
     private bool isSliding = false;
 
     public override void OnPlayerEnter(GameObject player)
     {
-        playerController = player.GetComponent<Controller>();
+        playerController = player.GetComponent<NewController>();
         if (playerController == null) return;
 
         View view = player.GetComponent<View>();
@@ -21,7 +21,7 @@ public class SlipperyPlatform : PlatformBase
         playerRb = view.RB;
         if (playerRb == null) return;
 
-        Vector2 lastDir = playerController.GetLastDashDirection();
+        Vector2 lastDir = playerController.LastDashDirection;
         slideDirection = new Vector2(Mathf.Sign(lastDir.x), 0f);
 
         playerRb.linearVelocity = Vector2.zero;
@@ -43,12 +43,13 @@ public class SlipperyPlatform : PlatformBase
     {
         if (!isSliding || playerRb == null || playerController == null) return;
 
-        if (playerController.IsDashing())
+        if (playerController.IsDashing)
         {
             isSliding = false;
             return;
         }
 
+        Debug.Log(slideDirection * slideSpeed);
         playerRb.linearVelocity = slideDirection * slideSpeed;
     }
 }
