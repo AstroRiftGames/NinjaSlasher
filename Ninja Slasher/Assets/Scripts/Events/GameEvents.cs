@@ -168,6 +168,8 @@ public static class GameEvents
 
     public static event Action<DailyReward> OnRewardClaimed;
     public static event Action<bool> OnRewardAvailabilityChanged;
+    public static event Action<int> OnConsecutiveDaysUpdated;
+    public static event Action OnRewardDoubled;
 
     public static void RaiseRewardClaimed(DailyReward reward)
     {
@@ -177,6 +179,16 @@ public static class GameEvents
     public static void RaiseRewardAvailabilityChanged(bool isAvailable)
     {
         OnRewardAvailabilityChanged?.Invoke(isAvailable);
+    }
+
+    public static void RaiseConsecutiveDaysUpdated(int days)
+    {
+        OnConsecutiveDaysUpdated?.Invoke(days);
+    }
+
+    public static void RaiseRewardDoubled()
+    {
+        OnRewardDoubled?.Invoke();
     }
 
     #endregion

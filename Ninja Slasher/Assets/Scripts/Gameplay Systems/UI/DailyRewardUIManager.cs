@@ -86,8 +86,7 @@ public class DailyRewardUIManager : MonoBehaviourSingleton<DailyRewardUIManager>
         GameEvents.OnRewardClaimed += OnRewardClaimed;
         GameEvents.OnRewardAvailabilityChanged += OnRewardAvailabilityChanged;
 
-        // TO DO: OnRewardDoubled agregar a GameEvents
-        DailyRewardSystem.OnRewardDoubled += OnRewardDoubled;
+        GameEvents.OnRewardDoubled += OnRewardDoubled;
 
         Debug.Log("[DailyRewardUIManager] Suscrito a GameEvents");
     }
@@ -97,7 +96,7 @@ public class DailyRewardUIManager : MonoBehaviourSingleton<DailyRewardUIManager>
         GameEvents.OnRewardClaimed -= OnRewardClaimed;
         GameEvents.OnRewardAvailabilityChanged -= OnRewardAvailabilityChanged;
 
-        DailyRewardSystem.OnRewardDoubled -= OnRewardDoubled;
+        GameEvents.OnRewardDoubled -= OnRewardDoubled;
     }
 
     void InitializeUI()
