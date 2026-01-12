@@ -75,11 +75,12 @@ public class Enemy : MonoBehaviour
     public virtual void Die()
     {
         _animator.SetTrigger("OnHit");
+        _col.includeLayers -= LayerMask.GetMask("Player");
 
         RegisterKill();
 
         Destroy(gameObject, _deathTime);
-    }
+}
 
     public void RegisterKill()
     {

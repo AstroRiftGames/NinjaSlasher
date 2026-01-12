@@ -31,6 +31,7 @@ public class NewController : MonoBehaviour
     public Vector2 LastDashDirection => _lastDashDirection;
     private Vector2 _lastDashDirection;
     private float _lastDash;
+    private Vector2 _lastNormal;
 
     [SerializeField] private LayerMask _proyectilesLayer;
 
@@ -118,8 +119,58 @@ public class NewController : MonoBehaviour
     }
     private void Dash(Vector2 direction)
     {
-        _lastDashDirection = direction;
-        _view.RB.AddForce(direction * _model.DashForce);
+        Vector2 dashDir = direction;
+
+        float angle = Mathf.Atan2(dashDir.y, dashDir.x) * Mathf.Rad2Deg - Mathf.Atan2(_lastNormal.y, _lastNormal.x) * Mathf.Rad2Deg;
+
+        switch (_lastNormal)
+        {
+            case Vector2 up when up == Vector2.up:
+                if (angle is > 90 and < 180)
+                {
+                    dashDir = -transform.right;
+                    
+                }
+                else if (angle is > -180 and < -90)
+                {
+                    dashDir = transform.right;
+                }
+                break;
+            case Vector2 down when down == Vector2.down:
+                if (angle is > 90 and < 180)
+                {
+                    dashDir = transform.right;
+                }
+                else if (angle is > -180 and < -90)
+                {
+                    dashDir = transform.right;
+                }
+                break;
+            case Vector2 right when right == Vector2.right:
+                if (angle is > 90 and < 180)
+                {
+                    dashDir = transform.up;
+                }
+                else if (angle is > -180 and < -90)
+                {
+                    dashDir = -transform.up;
+                }
+                break;
+            case Vector2 left when left == Vector2.left:
+                if (angle is > 90 and < 180)
+                {
+                    dashDir = -transform.up;
+                }
+                else if (angle is > -180 and < -90)
+                {
+                    dashDir = transform.up;
+                }
+                break;
+        }
+
+        _lastDashDirection = dashDir;
+
+        _view.RB.AddForce(dashDir * _model.DashForce);
         AudioManager.Instance.PlaySFXAtPosition(SFXClip.P_Movement, transform.position);
         _isDashing = true;
         _lastDash = Time.time;
@@ -209,6 +260,7 @@ public class NewController : MonoBehaviour
     private void Grab(Vector2 normal)
     {
         _isDashing = false;
+        _lastNormal = normal;
         _view.Animator.SetBool("IsGrounded", true);
         RotateSprites(Vector2.zero);
         _view.RB.linearVelocity = Vector2.zero;
