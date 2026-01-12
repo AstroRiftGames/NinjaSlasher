@@ -53,13 +53,6 @@ public class BreakablePlatform : PlatformBase
         }
     }
 
-    private void ThrowPlayer()
-    {
-        playerRb.linearVelocity = new Vector2(playerRb.linearVelocity.x, -falloffVelocity);
-        playerRb.TryGetComponent(out Controller controller);
-        controller.ForceExitSurface();
-    }
-
     public override void OnPlatformUpdate() { }
 
     private void Break()
@@ -127,7 +120,7 @@ public class BreakablePlatform : PlatformBase
     private IEnumerator DestroyNextFrame()
     {
         yield return null;
-        ThrowPlayer();
+        playerRb.linearVelocity = new Vector2(playerRb.linearVelocity.x, -falloffVelocity);
         Destroy(gameObject);
     }
 }
