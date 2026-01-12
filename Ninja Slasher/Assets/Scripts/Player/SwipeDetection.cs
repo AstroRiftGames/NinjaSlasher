@@ -3,7 +3,6 @@ using UnityEngine.InputSystem;
     
 public class SwipeDetection : MonoBehaviour
 {
-    public static SwipeDetection instance;
     public delegate void Swipe(Vector2 direction);
     public event Swipe OnSwipe;
 
@@ -26,7 +25,6 @@ public class SwipeDetection : MonoBehaviour
         press.Enable();
         press.performed += _ => { initialPos = currentPos; pressTime = currentTime; };
         press.canceled += _ => DetectInput();
-        instance = this;
     }
 
     private void DetectInput()

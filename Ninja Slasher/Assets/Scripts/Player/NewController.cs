@@ -20,6 +20,8 @@ public class NewController : MonoBehaviour
     public Model Model => _model;
     [SerializeField] Model _model;
 
+    [SerializeField] SwipeDetection _swipeDetection;
+
     private bool _isKO = false;
     private bool _isDashing = false;
     private float _lastParry;
@@ -34,13 +36,6 @@ public class NewController : MonoBehaviour
 
         Vector2 newScale = _view.SpriteContainer.transform.localScale;
         newScale.y = isFlipped ? -Mathf.Abs(newScale.y) : Mathf.Abs(newScale.y);
-
-        _view.SpriteContainer.transform.localScale = newScale;
-    }
-    private void SetFlipped(bool newValue)
-    {
-        Vector2 newScale = _view.SpriteContainer.transform.localScale;
-        newScale.y = newValue ? -Mathf.Abs(newScale.y) : Mathf.Abs(newScale.y);
 
         _view.SpriteContainer.transform.localScale = newScale;
     }
@@ -101,8 +96,8 @@ public class NewController : MonoBehaviour
     {
         //InitializeFSM();
         //InitializeTree(); 
-        SwipeDetection.instance.OnSwipe += context => { TryDash(context); };
-        SwipeDetection.instance.OnTap += context => { TryParry(context); } ;
+        _swipeDetection.OnSwipe += context => { TryDash(context); };
+        _swipeDetection.OnTap += context => { TryParry(context); } ;
     }
     #endregion
 
