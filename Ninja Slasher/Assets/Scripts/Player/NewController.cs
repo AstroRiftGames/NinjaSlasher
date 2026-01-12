@@ -4,6 +4,7 @@ using UnityEngine;
 using CandyCoded.HapticFeedback;
 using System.Linq;
 using Unity.VisualScripting;
+using System.Collections;
 
 public enum NinjaStates
 {
@@ -25,6 +26,7 @@ public class NewController : MonoBehaviour
     private bool _isKO = false;
     private bool _isDashing = false;
     private float _lastParry;
+    private float _lastDash;
     [SerializeField] private LayerMask _proyectilesLayer;
 
     private string[] colMatrix = { "Obstacle", "Scenario", };
@@ -104,7 +106,7 @@ public class NewController : MonoBehaviour
     #region MECHANICS
     private void TryDash(Vector2 direction)
     {
-        if(!_isKO && !_isDashing)
+        if(!_isKO && !_isDashing && CheckDashCD())
         {
             Dash(direction);
         }
@@ -114,8 +116,22 @@ public class NewController : MonoBehaviour
         _view.RB.AddForce(direction * _model.DashForce);
         AudioManager.Instance.PlaySFXAtPosition(SFXClip.P_Movement, transform.position);
         _isDashing = true;
+        _lastDash = Time.time;
         _view.Animator.SetBool("IsGrounded", false);
         RotateSprites(direction);
+
+        MoveTracker.RegisterMove();
+        NotifyTutorialDashPerformed();
+        NotifyTutorialParryPerformed();
+    }
+
+    private bool CheckDashCD()
+    {
+        var context = PowerUpManager.Instance?.context;
+        if (context != null && context.DashTurboActive)
+            _model.SetDashCD(_model.DashCD * context.DashCooldownMultiplier);
+
+        return Time.time >= _lastDash + _model.DashCD;
     }
 
     private void RotateSprites(Vector2 direction)
@@ -152,8 +168,11 @@ public class NewController : MonoBehaviour
         {
             return;
         }
+
+        float _parryRange = SetParryRange();
+
         _lastParry = Time.time;
-        Collider2D[] hitColliders = Physics2D.OverlapCircleAll(transform.position, _model.ParryRange, _proyectilesLayer);
+        Collider2D[] hitColliders = Physics2D.OverlapCircleAll(transform.position, _parryRange, _proyectilesLayer);
 
         _view.Animator.SetTrigger("OnParry");
         AudioManager.Instance.PlaySFXAtPosition(SFXClip.P_ParrySwing, transform.position);
@@ -171,6 +190,14 @@ public class NewController : MonoBehaviour
                 return;
             }
         }
+    }
+
+    private float SetParryRange()
+    {
+        var context = PowerUpManager.Instance?.context;
+        if (context != null && context.ParryPerfectActive)
+            return _model.ParryRange + context.ParryBonusWindow;
+        else return _model.ParryRange;
     }
 
     private void Grab(Vector2 normal)
@@ -231,7 +258,17 @@ public class NewController : MonoBehaviour
         string colTag = collision.gameObject.tag;
         if (colMatrix.Contains(colTag))
         {
-            Grab(collision.GetContact(0).normal);
+
+            collision.collider.TryGetComponent(out ElasticPlatform elasticComponent);
+
+            if (!elasticComponent)
+            {
+                Grab(collision.GetContact(0).normal);
+            }
+            else
+            {
+                //TODO: Bounce on elastic platform
+            }
         }
     }
 
@@ -251,6 +288,7 @@ public class NewController : MonoBehaviour
                         enemy.Die();
                         HapticFeedback.MediumFeedback();
                         AudioManager.Instance.PlaySFXAtPosition(SFXClip.P_Attack, transform.position);
+                        StartCoroutine(SlashEffectCoroutine());
                     }
                     else
                     {
@@ -273,6 +311,40 @@ public class NewController : MonoBehaviour
     }
     #endregion
 
+
+    #region FOREIGN SYSTEM INTERACTIONS
+
+    private void NotifyTutorialDashPerformed()
+    {
+        if (TutorialManager.Instance != null)
+        {
+            TutorialManager.Instance.OnDashPerformed();
+        }
+    }
+
+    private void NotifyTutorialParryPerformed()
+    {
+        if (TutorialManager.Instance != null)
+        {
+            TutorialManager.Instance.OnParryPerformed();
+        }
+    }
+    private IEnumerator SlashEffectCoroutine()
+    {
+        TrailRenderer slashTrail = _view.SlashTrail;
+
+        if (slashTrail != null)
+        {
+            slashTrail.Clear();
+            slashTrail.emitting = true;
+
+            yield return new WaitForSeconds(_model.SlashEffectDuration);
+
+            slashTrail.emitting = false;
+        }
+    }
+
+    #endregion
 #if UNIT_EDITOR
     private void OnDrawGizmos()
     {
