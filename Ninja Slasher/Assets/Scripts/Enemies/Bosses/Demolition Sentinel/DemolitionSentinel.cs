@@ -175,6 +175,7 @@ public class DemolitionSentinel : BossEnemy
     public void AimArm( Transform arm)
     {
         float angle = (Mathf.Atan2(_targetDir.y, _targetDir.x) * Mathf.Rad2Deg);
+        Debug.Log($"Aiming {arm.name} at {angle}°");
         arm.transform.rotation = Quaternion.Euler(0, 0, angle);
     }
 
@@ -218,7 +219,7 @@ public class DemolitionSentinel : BossEnemy
     public void ChooseAttack()
     {
         float r = UnityEngine.Random.Range(0f, 1f);
-        switch(r)
+        switch (r)
         {
             case >= .67f:
                 if(_balls.Length >= 2)

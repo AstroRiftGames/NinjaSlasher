@@ -19,6 +19,7 @@ public class SentinelHeavyAttackState<SentinelStates> : State<SentinelStates>
 
     private IEnumerator HeavyAttack()
     {
+        Debug.Log("Heavy Attack");
         _sentinel.Animator.SetTrigger("onHeavy");
 
         _sentinel.SetTargetDirection();

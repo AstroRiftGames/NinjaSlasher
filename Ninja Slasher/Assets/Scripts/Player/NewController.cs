@@ -316,7 +316,6 @@ public class NewController : MonoBehaviour
         string colTag = collision.gameObject.tag;
         if (colMatrix.Contains(colTag))
         {
-
             collision.collider.TryGetComponent(out ElasticPlatform elasticComponent);
 
             if (!elasticComponent)
@@ -331,7 +330,7 @@ public class NewController : MonoBehaviour
         string colTag = collision.gameObject.tag;
         
         Debug.Log($"Collided with: {colTag} ({collision.name})");
-        if(deadlyMatrix.Contains(colTag))
+        if (deadlyMatrix.Contains(colTag))
         {
             switch (colTag)
             {
@@ -359,6 +358,13 @@ public class NewController : MonoBehaviour
                 default:
                     Die();
                     break;
+            }
+        }
+        else
+        {
+            if (colTag == "Chain")
+            {
+                collision.GetComponentInParent<Chain>().DetectCollision();
             }
         }
 
