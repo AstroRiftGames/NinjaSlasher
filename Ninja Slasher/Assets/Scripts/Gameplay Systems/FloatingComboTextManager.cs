@@ -7,7 +7,10 @@ public class FloatingComboTextManager : MonoBehaviourSingleton<FloatingComboText
     [Header("REFERENCES")]
     [SerializeField] private FloatingComboText _floatingTextPrefab;
     [SerializeField] private Canvas _targetCanvas;
-    [SerializeField] private int _poolSize = 10;
+
+    //DEPRECATED
+    //[SerializeField] private int _poolSize = 10;
+    private int PoolSize => GameConfigManager.Config.floatingTextPoolSize;
 
     [Header("SETTINGS")]
     [SerializeField]
@@ -124,7 +127,7 @@ public class FloatingComboTextManager : MonoBehaviourSingleton<FloatingComboText
 
         _textPool = new GenericPool<FloatingComboText>(
             _floatingTextPrefab.gameObject,
-            _poolSize,
+            PoolSize,
             _targetCanvas.transform,
             "FloatingComboTextPool"
         );
@@ -137,7 +140,7 @@ public class FloatingComboTextManager : MonoBehaviourSingleton<FloatingComboText
             _activeTexts.Remove(text);
         };
 
-        Debug.Log($"[FloatingComboTextManager] GenericPool inicializado con {_poolSize} textos");
+        Debug.Log($"[FloatingComboTextManager] GenericPool inicializado con {PoolSize} textos");
     }
 
     private void ReinitializePoolForNewScene()

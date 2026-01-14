@@ -12,6 +12,9 @@ public class ComboManager : MonoBehaviourSingleton<ComboManager>
     [Obsolete]
     public event Action<int, Vector3> OnComboUpdatedWithPosition;
 
+    private float ComboTimeWindow => GameConfigManager.Config.comboTimeWindow;
+    private int MaxComboLevel => GameConfigManager.Config.maxComboLevel;
+
     private int killCount = 0;
     private float comboTimer = 0f;
     private bool comboActive = false;
@@ -42,11 +45,11 @@ public class ComboManager : MonoBehaviourSingleton<ComboManager>
 
         comboTimer = level switch
         {
-            1 => 2f,
-            2 => 1.6f,
-            3 => 1.4f,
-            4 => 1.2f,
-            _ => 1f
+            1 => ComboTimeWindow * 0.67f,  // ~2s si base es 3s
+            2 => ComboTimeWindow * 0.53f,  // ~1.6s
+            3 => ComboTimeWindow * 0.47f,  // ~1.4s
+            4 => ComboTimeWindow * 0.40f,  // ~1.2s
+            _ => ComboTimeWindow * 0.33f   // ~1s
         };
 
         comboActive = true;
@@ -121,7 +124,7 @@ public class ComboManager : MonoBehaviourSingleton<ComboManager>
         return lastEnemyPosition;
     }
 
-    public int GetCurrentComboLevel() => Mathf.Clamp(killCount, 1, 5);
+    public int GetCurrentComboLevel() => Mathf.Clamp(killCount, 1, MaxComboLevel);
     public float GetRemainingTime() => comboActive ? comboTimer : 0f;
     public bool IsComboActive() => comboActive;
 }

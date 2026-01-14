@@ -33,6 +33,7 @@ public class DailyRewardSystem : MonoBehaviourSingleton<DailyRewardSystem>
 {
     [Header("SETTINGS")]
     public DailyReward[] weeklyRewards = new DailyReward[7];
+    private int WeekLength => GameConfigManager.Config.dailyRewardWeekLength;
 
     private DailyRewardSaveData rewardData;
 
@@ -234,12 +235,12 @@ public class DailyRewardSystem : MonoBehaviourSingleton<DailyRewardSystem>
 
     void AdvanceDay()
     {
-        rewardData.currentWeekDay = (rewardData.currentWeekDay + 1) % 7;
+        rewardData.currentWeekDay = (rewardData.currentWeekDay + 1) % WeekLength;
         rewardData.consecutiveDays++;
 
         if (rewardData.currentWeekDay == 0)
         {
-            rewardData.claimedDays = new bool[7];
+            rewardData.claimedDays = new bool[WeekLength];
         }
 
         //DEPRECATED
@@ -253,7 +254,7 @@ public class DailyRewardSystem : MonoBehaviourSingleton<DailyRewardSystem>
         int previousDays = rewardData.consecutiveDays;
         rewardData.currentWeekDay = 0;
         rewardData.consecutiveDays = 0;
-        rewardData.claimedDays = new bool[7];
+        rewardData.claimedDays = new bool[WeekLength];
 
         // DEPRECATED
         //OnConsecutiveDaysUpdated?.Invoke(rewardData.consecutiveDays);
@@ -389,4 +390,11 @@ public class DailyRewardSystem : MonoBehaviourSingleton<DailyRewardSystem>
             DateTimeStyles.RoundtripKind, out date);
     }
 
+    private void ValidateWeeklyRewardsArray()
+    {
+        if (weeklyRewards.Length != WeekLength)
+        {
+            Debug.LogWarning($"weeklyRewards debe tener {WeekLength} elementos");
+        }
+    }
 }
