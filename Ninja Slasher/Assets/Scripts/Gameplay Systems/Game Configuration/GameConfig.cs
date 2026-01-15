@@ -20,6 +20,22 @@ public class GameConfig : ScriptableObject
     [Tooltip("Estrellas requeridas para desbloquear cada boss (índice 0 = boss área 1)")]
     public int[] starsRequiredPerBoss = { 5, 15, 30, 50, 75 };
 
+    [Header("POWER-UPS SYSTEM")]
+    [Tooltip("Usos por defecto para Extra Time")]
+    public int extraTimeDefaultUses = 3;
+    [Tooltip("Usos por defecto para Dash Turbo")]
+    public int dashTurboDefaultUses = 5;
+    [Tooltip("Usos por defecto para Parry Perfect")]
+    public int parryPerfectDefaultUses = 3;
+    [Tooltip("Usos por defecto para Combo Master")]
+    public int comboMasterDefaultUses = 4;
+    [Tooltip("Usos por defecto para Second Chance")]
+    public int secondChanceDefaultUses = 1;
+    [Tooltip("Usos por defecto para Hawk Vision")]
+    public int hawkVisionDefaultUses = 3;
+    [Tooltip("Usos por defecto para Enhanced Parry")]
+    public int enhancedParryDefaultUses = 3;
+
     [Header("MONETIZATION - ADS")]
     [Tooltip("Pérdidas consecutivas necesarias para mostrar ad de vida extra")]
     public int lossesRequiredForAd = 2;
@@ -103,6 +119,21 @@ public class GameConfig : ScriptableObject
         if (completionTime <= twoStarTimeThreshold)
             return 2;
         return 1;
+    }
+
+    public int GetDefaultUsesForPowerUp(PowerUpType type)
+    {
+        switch (type)
+        {
+            case PowerUpType.ExtraTime: return extraTimeDefaultUses;
+            case PowerUpType.DashTurbo: return dashTurboDefaultUses;
+            case PowerUpType.ParryPerfect: return parryPerfectDefaultUses;
+            case PowerUpType.ComboMaster: return comboMasterDefaultUses;
+            case PowerUpType.SecondChance: return secondChanceDefaultUses;
+            case PowerUpType.HawkVision: return hawkVisionDefaultUses;
+            case PowerUpType.EnhancedParry: return enhancedParryDefaultUses;
+            default: return 3;
+        }
     }
 
     public bool ValidateConfiguration()

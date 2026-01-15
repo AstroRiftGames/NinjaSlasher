@@ -16,4 +16,14 @@ public class PowerUpExtraTime : PowerUpBase
         context.ExtraTimeActive = false;
         context.ExtraTimePercent = 0f;
     }
+
+    public override void OnUseConsumed(PowerUpContext context)
+    {
+        Debug.Log($"[ExtraTime] Uso consumido. Restantes: {context.DashTurboUsesRemaining}");
+
+        if (context.ExtraTimeUsesRemaining == 1)
+        {
+            Debug.LogWarning("[ExtraTime] Ultimo uso disponible");
+        }
+    }
 }

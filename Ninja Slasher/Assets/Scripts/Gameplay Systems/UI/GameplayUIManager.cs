@@ -52,7 +52,6 @@ public class GameplayUIManager : MonoBehaviour
         GameEvents.OnLevelTimeChanged += OnLevelTimeChanged;
         GameEvents.OnLevelTimeExpired += OnLevelTimeExpired;
         GameEvents.OnComboUpdated += OnComboUpdated;
-        GameEvents.OnPowerUpRemainingTextChanged += OnPowerUpRemainingTextChanged;
 
         // DEPRECATED
         //_levelController = FindFirstObjectByType<LevelController>();
@@ -147,12 +146,6 @@ public class GameplayUIManager : MonoBehaviour
             _puRemainingTime.text = "";
         }
         */
-    }
-
-    private void OnPowerUpRemainingTextChanged(string text)
-    {
-        if (_puRemainingTime == null) return;
-        _puRemainingTime.text = text;
     }
 
     public void ShowNoLivesPanel()

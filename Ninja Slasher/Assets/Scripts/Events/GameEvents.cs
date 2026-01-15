@@ -86,14 +86,21 @@ public static class GameEvents
 
     #region POWER-UP EVENTS
 
-    public static event Action<PowerUpType, float> OnPowerUpActivated;
-    public static event Action<PowerUpType> OnPowerUpExpired;
-    public static event Action<PowerUpType, float> OnPowerUpTimeUpdated;
-    public static event Action<string> OnPowerUpRemainingTextChanged;
+    public static event Action<PowerUpType, int> OnPowerUpActivated;
 
-    public static void RaisePowerUpActivated(PowerUpType type, float duration)
+    public static event Action<PowerUpType> OnPowerUpExpired;
+
+    public static event Action<PowerUpType, int> OnPowerUpUsesUpdated;
+
+    public static event Action<PowerUpType, int> OnPowerUpUseConsumed;
+
+    public static event Action<string> OnPowerUpUsesTextChanged;
+
+    public static event Action OnLevelEndedConsumePowerUps;
+
+    public static void RaisePowerUpActivated(PowerUpType type, int uses)
     {
-        OnPowerUpActivated?.Invoke(type, duration);
+        OnPowerUpActivated?.Invoke(type, uses);
     }
 
     public static void RaisePowerUpExpired(PowerUpType type)
@@ -101,14 +108,22 @@ public static class GameEvents
         OnPowerUpExpired?.Invoke(type);
     }
 
-    public static void RaisePowerUpTimeUpdated(PowerUpType type, float timeRemaining)
+    public static void RaisePowerUpUsesUpdated(PowerUpType type, int usesRemaining)
     {
-        OnPowerUpTimeUpdated?.Invoke(type, timeRemaining);
+        OnPowerUpUsesUpdated?.Invoke(type, usesRemaining);
+
+        string usesText = $"{usesRemaining} uses";
+        OnPowerUpUsesTextChanged?.Invoke(usesText);
     }
 
-    public static void RaisePowerUpRemainingTextChanged(string text)
+    public static void RaisePowerUpUseConsumed(PowerUpType type, int usesRemaining)
     {
-        OnPowerUpRemainingTextChanged?.Invoke(text);
+        OnPowerUpUseConsumed?.Invoke(type, usesRemaining);
+    }
+
+    public static void RaiseLevelEndedConsumePowerUps()
+    {
+        OnLevelEndedConsumePowerUps?.Invoke();
     }
 
     #endregion
@@ -239,8 +254,6 @@ public static class GameEvents
     {
         OnPowerUpActivated = null;
         OnPowerUpExpired = null;
-        OnPowerUpTimeUpdated = null;
-        OnPowerUpRemainingTextChanged = null;
     }
 
     public static void ClearAllEnemyEvents()

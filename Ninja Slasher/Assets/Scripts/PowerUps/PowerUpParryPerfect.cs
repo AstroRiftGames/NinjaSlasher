@@ -16,4 +16,14 @@ public class PowerUpParryPerfect : PowerUpBase
         context.ParryPerfectActive = false;
         context.ParryBonusWindow -= extraParryWindow;
     }
+
+    public override void OnUseConsumed(PowerUpContext context)
+    {
+        Debug.Log($"[ParryPerfect] Uso consumido. Restantes: {context.DashTurboUsesRemaining}");
+
+        if (context.ParryPerfectUsesRemaining == 1)
+        {
+            Debug.LogWarning("[ParryPerfect] Ultimo uso disponible");
+        }
+    }
 }

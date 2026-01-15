@@ -95,6 +95,8 @@ public class LevelManager : MonoBehaviourSingleton<LevelManager>
     {
         if (IsTestingScene()) return;
 
+        GameEvents.RaiseLevelEndedConsumePowerUps();
+
         if (_levelEnded)
         {
             Debug.LogWarning("[LevelManager] Nivel ya terminado, ignorando");
@@ -226,6 +228,7 @@ public class LevelManager : MonoBehaviourSingleton<LevelManager>
     public void OnLevelFailed()
     {
         HandleLevelDefeat("timeExpired");
+        GameEvents.RaiseLevelEndedConsumePowerUps();
     }
 
     public void OnPlayerLose()
