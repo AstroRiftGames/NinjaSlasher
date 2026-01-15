@@ -20,21 +20,61 @@ public class GameConfig : ScriptableObject
     [Tooltip("Estrellas requeridas para desbloquear cada boss (índice 0 = boss área 1)")]
     public int[] starsRequiredPerBoss = { 5, 15, 30, 50, 75 };
 
-    [Header("POWER-UPS SYSTEM")]
-    [Tooltip("Usos por defecto para Extra Time")]
-    public int extraTimeDefaultUses = 3;
-    [Tooltip("Usos por defecto para Dash Turbo")]
-    public int dashTurboDefaultUses = 5;
-    [Tooltip("Usos por defecto para Parry Perfect")]
-    public int parryPerfectDefaultUses = 3;
-    [Tooltip("Usos por defecto para Combo Master")]
-    public int comboMasterDefaultUses = 4;
-    [Tooltip("Usos por defecto para Second Chance")]
-    public int secondChanceDefaultUses = 1;
-    [Tooltip("Usos por defecto para Hawk Vision")]
-    public int hawkVisionDefaultUses = 3;
-    [Tooltip("Usos por defecto para Enhanced Parry")]
-    public int enhancedParryDefaultUses = 3;
+    [Header("POWER-UPS - USOS")]
+    [Tooltip("Usos = Cantidad de niveles que dura el power-up activo")]
+
+    [Range(1, 10)]
+    public int extraTimeUses = 3;
+
+    [Range(1, 10)]
+    [Tooltip("Usos que dura Dash Turbo")]
+    public int dashTurboUses = 5;
+
+    [Range(1, 10)]
+    [Tooltip("Usos que dura Parry Perfect")]
+    public int parryPerfectUses = 3;
+
+    [Range(1, 10)]
+    [Tooltip("Usos que dura Combo Master")]
+    public int comboMasterUses = 4;
+
+    [Range(1, 5)]
+    [Tooltip("Usos que dura Second Chance (normalmente 1)")]
+    public int secondChanceUses = 1;
+
+    [Range(1, 10)]
+    [Tooltip("Usos que dura Hawk Vision")]
+    public int hawkVisionUses = 3;
+
+    [Range(1, 10)]
+    [Tooltip("Niveles que dura Enhanced Parry")]
+    public int enhancedParryUses = 3;
+
+    [Header("POWER-UPS - EFECTIVIDAD")]
+
+    [Range(0.1f, 2f)]
+    [Tooltip("Extra Time: Porcentaje de tiempo bonus (0.5 = 50% más tiempo)")]
+    public float extraTimeBonus = 0.5f;
+
+    [Range(0.1f, 1f)]
+    [Tooltip("Dash Turbo: Multiplicador de cooldown (0.5 = mitad del cooldown)")]
+    public float dashTurboCooldownMultiplier = 0.5f;
+
+    [Range(0f, 0.5f)]
+    [Tooltip("Parry Perfect: Tiempo extra para ventana de parry (segundos)")]
+    public float parryPerfectBonusWindow = 0.2f;
+
+    [Range(0.1f, 2f)]
+    [Tooltip("Combo Master: Porcentaje bonus de puntos (0.5 = 50% más puntos)")]
+    public float comboMasterBonusPercent = 0.5f;
+
+    [Range(2, 10)]
+    [Tooltip("Enhanced Parry: Cantidad de rebotes")]
+    public int enhancedParryBounces = 3;
+
+    [Range(0.5f, 1f)]
+    [Tooltip("Enhanced Parry: Retención de velocidad por rebote")]
+    public float enhancedParryVelocityRetention = 0.9f;
 
     [Header("MONETIZATION - ADS")]
     [Tooltip("Pérdidas consecutivas necesarias para mostrar ad de vida extra")]
@@ -102,11 +142,11 @@ public class GameConfig : ScriptableObject
     [Tooltip("Tiempo de visualización de cada texto de tutorial (segundos)")]
     public float tutorialTextDisplayTime = 5f;
 
+
     public int GetStarsRequiredForBoss(int bossIndex)
     {
         if (bossIndex < 0 || bossIndex >= starsRequiredPerBoss.Length)
         {
-            Debug.LogWarning($"[GameConfig] Boss index {bossIndex} fuera de rango");
             return 999;
         }
         return starsRequiredPerBoss[bossIndex];
@@ -121,19 +161,49 @@ public class GameConfig : ScriptableObject
         return 1;
     }
 
-    public int GetDefaultUsesForPowerUp(PowerUpType type)
+    public int GetPowerUpUses(PowerUpType type)
     {
         switch (type)
         {
-            case PowerUpType.ExtraTime: return extraTimeDefaultUses;
-            case PowerUpType.DashTurbo: return dashTurboDefaultUses;
-            case PowerUpType.ParryPerfect: return parryPerfectDefaultUses;
-            case PowerUpType.ComboMaster: return comboMasterDefaultUses;
-            case PowerUpType.SecondChance: return secondChanceDefaultUses;
-            case PowerUpType.HawkVision: return hawkVisionDefaultUses;
-            case PowerUpType.EnhancedParry: return enhancedParryDefaultUses;
+            case PowerUpType.ExtraTime: return extraTimeUses;
+            case PowerUpType.DashTurbo: return dashTurboUses;
+            case PowerUpType.ParryPerfect: return parryPerfectUses;
+            case PowerUpType.ComboMaster: return comboMasterUses;
+            case PowerUpType.SecondChance: return secondChanceUses;
+            case PowerUpType.HawkVision: return hawkVisionUses;
+            case PowerUpType.EnhancedParry: return enhancedParryUses;
             default: return 3;
         }
+    }
+
+    public float GetExtraTimeBonus()
+    {
+        return extraTimeBonus;
+    }
+
+    public float GetDashTurboCooldownMultiplier()
+    {
+        return dashTurboCooldownMultiplier;
+    }
+
+    public float GetParryPerfectBonusWindow()
+    {
+        return parryPerfectBonusWindow;
+    }
+
+    public float GetComboMasterBonusPercent()
+    {
+        return comboMasterBonusPercent;
+    }
+
+    public int GetEnhancedParryBounces()
+    {
+        return enhancedParryBounces;
+    }
+
+    public float GetEnhancedParryVelocityRetention()
+    {
+        return enhancedParryVelocityRetention;
     }
 
     public bool ValidateConfiguration()
