@@ -1,7 +1,7 @@
 using UnityEngine;
 using System;
 
-public class Chain : MonoBehaviour
+public class Chain : RezisableObject
 {
     [SerializeField] Transform _anchor;
     
@@ -10,17 +10,27 @@ public class Chain : MonoBehaviour
     [SerializeField] Transform _ballT;
     [SerializeField] DemolitionSentinel _sentinel;
     [SerializeField] GameObject _chain;
+    [SerializeField] private float _multiplier = 1.9f;
 
     public bool IsActive => _isActive;
     private bool _isActive = true;
     private bool _isMoving;
-
-    SpriteRenderer _renderer;
-    BoxCollider2D _collider;
-    Animator _animator;
     public void SetIsMoving(bool value) => _isMoving = value;
 
-    private void Awake()
+
+    public override void Awake()
+    {
+        GetComponents();
+        UpdatePositions();
+    }
+
+    private void UpdatePositions()
+    {
+        SetTarget(_ballT.localToWorldMatrix.GetPosition());
+        SetAnchor(_anchor.localToWorldMatrix.GetPosition());
+    }
+
+    public override void GetComponents()
     {
         _chain.TryGetComponent(out SpriteRenderer r);
         _renderer = r;
@@ -31,6 +41,7 @@ public class Chain : MonoBehaviour
         _ballT.TryGetComponent(out DemolitionBall ball);
         _ball = ball;
     }
+
     private void Start()
     {
         _chain.transform.position = _anchor.position;
@@ -39,33 +50,13 @@ public class Chain : MonoBehaviour
     {
         if(_isActive)
         {
+            UpdatePositions();
             AdjustRotation();
             AdjustPosition();
-            AdjustSize();
             _collider.enabled = _ball.IsOut;
+            AdjustSize(_multiplier);
         }
         _animator.SetBool("IsMoving", _isMoving);
-    }
-
-
-    private Vector2 GetSize(bool _isRenderer)
-    {
-        float scale = _renderer.flipY ? -1 : 1;
-        return  new Vector2(0.47f, CalculateLength() * (_isRenderer ? scale : 1));
-    }
-
-    private void AdjustSize()
-    {
-        _renderer.size = GetSize(true);
-
-        _collider.size = GetSize(false);
-        _collider.offset = new Vector2(0, -_collider.size.y / 2);
-        
-    }
-
-    private void AdjustPosition()
-    {
-        transform.position = _anchor.position;
     }
 
     private void AdjustRotation()
@@ -73,12 +64,6 @@ public class Chain : MonoBehaviour
         Vector2 dir = _ballT.position - _anchor.position;
         float angle = (Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg);
         _chain.transform.rotation = Quaternion.Euler(0, 0, angle+90);
-    }
-
-
-    float CalculateLength()
-    {
-        return Vector2.Distance(_ballT.localToWorldMatrix.GetPosition(), _anchor.localToWorldMatrix.GetPosition())*1.9f;
     }
 
     public void DetectCollision()

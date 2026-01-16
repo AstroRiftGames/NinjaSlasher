@@ -43,7 +43,7 @@ public class ElasticPlatform : PlatformBase
         }
         else
         {
-            Vector2 surfaceNormal = Vector2.up;
+            Vector2 surfaceNormal = transform.up;
             bounceDir = dashDir - 2 * Vector2.Dot(dashDir, surfaceNormal) * surfaceNormal;
 
             if (bounceDir.y < 0)
