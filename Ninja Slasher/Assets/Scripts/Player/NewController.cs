@@ -22,6 +22,7 @@ public class NewController : MonoBehaviour
     [SerializeField] Model _model;
 
     [SerializeField] SwipeDetection _swipeDetection;
+    [SerializeField] TrajectoryRenderer _trajectoryRenderer;
 
     public bool IsDashing => _isDashing;
     private bool _isDashing = false;
@@ -106,6 +107,18 @@ public class NewController : MonoBehaviour
         //InitializeTree(); 
         _swipeDetection.OnSwipe += context => { TryDash(context); };
         _swipeDetection.OnTap += context => { TryParry(context); } ;
+    }
+
+    private void Update()
+    {
+        if (_swipeDetection.IsPressing)
+        {
+            _trajectoryRenderer.ShowTrajectory(transform.position, _swipeDetection.Direction);
+        }
+        else
+        {
+            _trajectoryRenderer.HideTrajectory();
+        }
     }
     #endregion
 

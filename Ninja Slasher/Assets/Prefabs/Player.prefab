@@ -271,6 +271,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 08b2357ef1fafc14bbaa8902d7fa0880, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  Direction: {x: 0, y: 0}
   position:
     m_Name: Position
     m_Type: 0
@@ -338,6 +339,7 @@ MonoBehaviour:
   _view: {fileID: 4198015471619335935}
   _model: {fileID: 6905579431728325560}
   _swipeDetection: {fileID: 340358578149418589}
+  _trajectoryRenderer: {fileID: 3827957799280484405}
   _proyectilesLayer:
     serializedVersion: 2
     m_Bits: 256
@@ -6520,11 +6522,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 69a539bcface6e544a50c5aafc631c39, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _arrowRenderer: {fileID: 4756240323688480652}
+  _indicator: {fileID: 4756240323688480652}
   _collisionLayers:
     serializedVersion: 2
     m_Bits: 192
-  _defaultMaxDistance: 50
+  _defaultMaxDistance: 5
   _hawkVisionSettings: {fileID: 0}
 --- !u!1 &5673186291678007950
 GameObject:
