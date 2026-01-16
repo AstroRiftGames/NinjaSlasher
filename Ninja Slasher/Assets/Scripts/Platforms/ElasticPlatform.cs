@@ -66,23 +66,4 @@ public class ElasticPlatform : PlatformBase
     public override void OnPlayerExit(GameObject player) { }
 
     public override void OnPlatformUpdate() { }
-
-    private void OnDrawGizmos()
-    {
-        Gizmos.color = isVerticalWall ? Color.red : Color.blue;
-        Vector3 size = GetComponent<Collider2D>()?.bounds.size ?? Vector3.one;
-        Gizmos.DrawWireCube(transform.position, size);
-
-        if (isVerticalWall)
-        {
-            Gizmos.color = Color.red;
-            Gizmos.DrawRay(transform.position, Vector3.left * 1f);
-            Gizmos.DrawRay(transform.position, Vector3.right * 1f);
-        }
-        else
-        {
-            Gizmos.color = Color.blue;
-            Gizmos.DrawRay(transform.position, Vector3.up * 1f);
-        }
-    }
 }
