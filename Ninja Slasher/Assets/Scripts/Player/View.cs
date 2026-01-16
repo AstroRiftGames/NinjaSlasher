@@ -7,6 +7,8 @@ public class View : MonoBehaviour
 
     public Collider2D Col => _col;
     [SerializeField] Collider2D _col;
+    public Collider2D TriggerCol => _triggerCol;
+    [SerializeField] Collider2D _triggerCol;
 
     public Animator Animator => _anim;
     [SerializeField] Animator _anim;

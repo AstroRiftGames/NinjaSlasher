@@ -7,7 +7,7 @@ public class SpikeDamage : MonoBehaviour
     {
         if (collision.gameObject.CompareTag("Player"))
         {
-            var controller = collision.gameObject.GetComponent<Controller>();
+            var controller = collision.gameObject.GetComponent<NewController>();
             if (controller != null)
             {
                 controller.Die();

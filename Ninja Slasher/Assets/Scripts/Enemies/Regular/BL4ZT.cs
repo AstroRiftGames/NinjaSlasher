@@ -111,7 +111,7 @@ public class BL4ZT : RangeEnemy
         {
             if (col.CompareTag("Player"))
             {
-                col.TryGetComponent(out Controller player);
+                col.TryGetComponent(out NewController player);
                 player.Die();
             }
             else if (_arachnomadre != null && col.CompareTag("Boss"))

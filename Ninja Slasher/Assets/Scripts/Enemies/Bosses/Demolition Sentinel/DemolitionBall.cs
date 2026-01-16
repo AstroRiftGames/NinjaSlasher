@@ -63,6 +63,7 @@ public class DemolitionBall : MonoBehaviour
 
     public IEnumerator Return(float lapse = 1)
     {
+        yield return new WaitForSeconds(lapse/2);
         SetReturn(true);
         _chain.SetIsMoving(true);
         Vector3 initPos = transform.localPosition;
@@ -107,13 +108,13 @@ public class DemolitionBall : MonoBehaviour
 
     private void CreateDamageArea(Vector2 position)
     {
-        Collider2D[] cols = Physics2D.OverlapCircleAll(position, _heavyAttackRadius);
+        Collider2D[] cols = Physics2D.OverlapCircleAll(position, _heavyAttackRadius, LayerMask.GetMask("Player"));
 
         foreach(var col in cols)
         {
             if(col.gameObject.CompareTag("Player"))
             {
-                col.TryGetComponent(out Controller player);
+                col.TryGetComponent(out NewController player);
                 player.Die();
             }
         }
@@ -123,13 +124,6 @@ public class DemolitionBall : MonoBehaviour
     {
         _animator.SetTrigger("OnImpact");
         AudioManager.Instance.PlaySFXAtPosition(SFXClip.B_Sentinel_Impact, transform.position);
-        if (collision.gameObject.CompareTag("Player"))
-        {
-            collision.gameObject.TryGetComponent(out Controller player);
-            player.Die();
-            Stop();
-            if (!_isReturning) _sentinel.ReturnOneBall(this);
-        }
         if(_heavyAttack)
         {
             _heavyAttack = false;

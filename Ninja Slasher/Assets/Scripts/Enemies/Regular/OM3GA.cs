@@ -102,7 +102,7 @@ public class OM3GA : RangeEnemy
                     endPoint = hit.point;
                     if (hit.collider.CompareTag("Player"))
                     {
-                        Controller playerController = hit.collider.GetComponent<Controller>();
+                        NewController playerController = hit.collider.GetComponent<NewController>();
                         if (playerController != null)
                         {
                             playerController.Die();

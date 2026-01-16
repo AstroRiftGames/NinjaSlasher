@@ -54,7 +54,7 @@ public class TurretTrap : MonoBehaviour
                 {
                     if (hit.collider.CompareTag("Player"))
                     {
-                        Controller playerController = hit.collider.GetComponent<Controller>();
+                        NewController playerController = hit.collider.GetComponent<NewController>();
                         if (playerController != null)
                         {
                             playerController.Die();

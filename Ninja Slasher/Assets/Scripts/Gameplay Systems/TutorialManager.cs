@@ -79,9 +79,9 @@ public class TutorialManager : MonoBehaviour
         waitingForCombo = false;
         waitingForParry = false;
 
-        if (playerController != null)
-        {
-            playerController.SetInputEnabled(false);
+        if (playerController != null)           //TODO: REVISAR
+        { 
+            //playerController.SetInputEnabled(false);
         }
 
         HideAllTexts();
@@ -220,9 +220,9 @@ public class TutorialManager : MonoBehaviour
                 {
                     handAnimation.SetActive(true);
                 }
-                if (playerController != null)
+                if (playerController != null)           //TODO REVISAR
                 {
-                    playerController.SetInputEnabled(true);
+                    //playerController.SetInputEnabled(true);
                 }
                 waitingForDash = true;
                 break;
@@ -230,7 +230,7 @@ public class TutorialManager : MonoBehaviour
             case 1:
                 if (playerController != null)
                 {
-                    playerController.SetInputEnabled(true);
+                    //playerController.SetInputEnabled(true);
                 }
                 waitingForEnemyKill = true;
                 break;
@@ -238,7 +238,7 @@ public class TutorialManager : MonoBehaviour
             case 2:
                 if (playerController != null)
                 {
-                    playerController.SetInputEnabled(true);
+                    //playerController.SetInputEnabled(true);
                 }
                 StartCoroutine(HideTextAfterDelay(TextDisplayTime, () => {
                     waitingForEnemyKill = true;
@@ -258,9 +258,9 @@ public class TutorialManager : MonoBehaviour
         switch (textIndex)
         {
             case 0:
-                if (playerController != null)
+                if (playerController != null)       //TODO REVISAR
                 {
-                    playerController.SetInputEnabled(true);
+                    //playerController.SetInputEnabled(true);
                 }
                 waitingForCombo = true;
                 break;
@@ -272,9 +272,9 @@ public class TutorialManager : MonoBehaviour
         switch (textIndex)
         {
             case 0:
-                if (playerController != null)
+                if (playerController != null)       
                 {
-                    playerController.SetInputEnabled(true);
+                    //playerController.SetInputEnabled(true);
                 }
                 waitingForParry = true;
                 StartCoroutine(EnableParryTutorialCompletion());
@@ -448,9 +448,9 @@ public class TutorialManager : MonoBehaviour
         HideAllTexts();
         HideAllAnimations();
 
-        if (playerController != null)
+        if (playerController != null)       //TODO REVISAR
         {
-            playerController.SetInputEnabled(true);
+            //playerController.SetInputEnabled(true);
         }
     }
 
@@ -475,9 +475,9 @@ public class TutorialManager : MonoBehaviour
         HideAllTexts();
         HideAllAnimations();
 
-        if (playerController != null)
+        if (playerController != null) //TODO REVISAR
         {
-            playerController.SetInputEnabled(true);
+            //playerController.SetInputEnabled(true);
         }
     }
 

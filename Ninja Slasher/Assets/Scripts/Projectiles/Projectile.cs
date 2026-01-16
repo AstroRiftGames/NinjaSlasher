@@ -222,7 +222,7 @@ public class Projectile : MonoBehaviour
 
     protected void DamagePlayer(GameObject player)
     {
-        player.TryGetComponent(out Controller controller);
+        player.TryGetComponent(out NewController controller);
         controller.Die();
     }
 

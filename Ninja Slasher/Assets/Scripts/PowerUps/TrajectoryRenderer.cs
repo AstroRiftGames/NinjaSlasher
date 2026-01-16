@@ -2,7 +2,8 @@ using UnityEngine;
 
 public class TrajectoryRenderer : MonoBehaviour
 {
-    [SerializeField] private SpriteRenderer _arrowRenderer;
+    [SerializeField] private SpriteRenderer _indicator;
+    public SpriteRenderer Indicator => _indicator;
     [SerializeField] private LayerMask _collisionLayers;
     [SerializeField] private float _defaultMaxDistance = 50f;
 
@@ -12,23 +13,23 @@ public class TrajectoryRenderer : MonoBehaviour
 
     void Awake()
     {
-        if (_arrowRenderer != null)
+        if (_indicator != null)
         {
-            _fixedWidth = _arrowRenderer.size.x;
-            _arrowRenderer.enabled = false;
+            _fixedWidth = _indicator.size.x;
+            _indicator.enabled = false;
         }
     }
 
     public void ShowTrajectory(Vector3 startPosition, Vector2 direction)
     {
-        if (_arrowRenderer == null || direction == Vector2.zero) return;
+        if (_indicator == null || direction == Vector2.zero) return;
 
         float maxDist = _hawkVisionSettings != null ? _hawkVisionSettings.maxDistance : _defaultMaxDistance;
 
         float distance = CalculateDistance(startPosition, direction, maxDist);
         UpdateArrowTransform(startPosition, direction, distance);
 
-        _arrowRenderer.enabled = true;
+        _indicator.enabled = true;
     }
 
     private float CalculateDistance(Vector3 startPos, Vector2 direction, float maxDist)
@@ -45,17 +46,17 @@ public class TrajectoryRenderer : MonoBehaviour
 
     private void UpdateArrowTransform(Vector3 startPos, Vector2 direction, float distance)
     {
-        _arrowRenderer.transform.position = startPos;
+        _indicator.transform.position = startPos;
 
         float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
 
-        _arrowRenderer.transform.rotation = Quaternion.Euler(0, 0, angle - 90f);
+        _indicator.transform.rotation = Quaternion.Euler(0, 0, angle - 90f);
 
-        _arrowRenderer.size = new Vector2(_fixedWidth, distance);
+        _indicator.size = new Vector2(_fixedWidth, distance);
     }
 
     public void HideTrajectory()
     {
-        if (_arrowRenderer != null) _arrowRenderer.enabled = false;
+        if (_indicator != null) _indicator.enabled = false;
     }
 }

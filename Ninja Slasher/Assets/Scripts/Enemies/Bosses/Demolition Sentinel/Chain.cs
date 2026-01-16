@@ -24,7 +24,7 @@ public class Chain : MonoBehaviour
     {
         _chain.TryGetComponent(out SpriteRenderer r);
         _renderer = r;
-        TryGetComponent(out BoxCollider2D col);
+        _chain.TryGetComponent(out BoxCollider2D col);
         _collider = col;
         TryGetComponent(out Animator anim);
         _animator = anim;
@@ -78,18 +78,15 @@ public class Chain : MonoBehaviour
 
     float CalculateLength()
     {
-        return Vector2.Distance(_ballT.localToWorldMatrix.GetPosition(), _anchor.localToWorldMatrix.GetPosition());
+        return Vector2.Distance(_ballT.localToWorldMatrix.GetPosition(), _anchor.localToWorldMatrix.GetPosition())*1.9f;
     }
 
-    private void OnTriggerEnter2D(Collider2D collision)
+    public void DetectCollision()
     {
-        if(collision.gameObject.CompareTag("Player"))
-        {
             BreakChain();
             ReleaseBall();
             AudioManager.Instance.PlaySFXAtPosition(SFXClip.B_Sentinel_Damaged, _sentinel.transform.position);
             _sentinel.StopAttack();
-        }
     }
 
     public void BreakChain()
@@ -98,6 +95,7 @@ public class Chain : MonoBehaviour
         _collider.enabled = false;
         _isActive = false;
         _sentinel.Animator.SetTrigger("onHit");
+        _ball.PivotPoint.rotation = Quaternion.Euler(0, 0, -90);
     }
 
     public void RepairChain()

@@ -10,12 +10,14 @@ GameObject:
   m_Component:
   - component: {fileID: 8639206987761951752}
   - component: {fileID: 2870901090016681095}
-  - component: {fileID: 8786162500117970065}
   - component: {fileID: 4198015471619335935}
   - component: {fileID: 6905579431728325560}
   - component: {fileID: 5760230160173246306}
   - component: {fileID: 8146807997240465576}
+  - component: {fileID: 340358578149418589}
+  - component: {fileID: 1034947280318806221}
   - component: {fileID: 6549881993182166334}
+  - component: {fileID: 2435951141245640258}
   m_Layer: 10
   m_Name: Player
   m_TagString: Player
@@ -33,7 +35,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 0.45, y: 0.45, z: 0.45}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 7430708555111219105}
@@ -68,32 +70,6 @@ Rigidbody2D:
   m_SleepingMode: 0
   m_CollisionDetection: 1
   m_Constraints: 4
---- !u!114 &8786162500117970065
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1104090747853785710}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ea7da1c08b6b19349ac7ea636ab0d384, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _playerView: {fileID: 4198015471619335935}
-  _playerModel: {fileID: 6905579431728325560}
-  _maxAngle: 70
-  slashEffectDuration: 0.25
-  swipeIndicator: {fileID: 5194054015415151244}
-  trajectoryRenderer: {fileID: 3827957799280484405}
-  minSwipeDistance: 50
-  checkDistance: 0.75
-  _scenarioLayer:
-    serializedVersion: 2
-    m_Bits: 192
-  _enemyLayer:
-    serializedVersion: 2
-    m_Bits: 512
 --- !u!114 &4198015471619335935
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -108,6 +84,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _rb: {fileID: 2870901090016681095}
   _col: {fileID: 8146807997240465576}
+  _triggerCol: {fileID: 2435951141245640258}
   _anim: {fileID: 4934869676011792912}
   _spriteContainer: {fileID: 3737365468586709411}
   _slashTrailRenderer: {fileID: 6294109103735827813}
@@ -123,10 +100,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 967886d4fb1b5534ab1cf4391b9d9087, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _dashForce: 30
+  _dashForce: 500
   _dashCD: 0.25
   _dashDuration: 0.5
-  _parryWindow: 2
+  _parryRange: 0.75
+  _parryCD: 1
+  slashEffectDuration: 20
 --- !u!120 &5760230160173246306
 LineRenderer:
   serializedVersion: 2
@@ -247,10 +226,10 @@ BoxCollider2D:
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 192
   m_ExcludeLayers:
     serializedVersion: 2
-    m_Bits: 192
+    m_Bits: 0
   m_LayerOverridePriority: 0
   m_ForceSendLayers:
     serializedVersion: 2
@@ -280,6 +259,90 @@ BoxCollider2D:
   m_AutoTiling: 0
   m_Size: {x: 1.2, y: 1.89}
   m_EdgeRadius: 0
+--- !u!114 &340358578149418589
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1104090747853785710}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 08b2357ef1fafc14bbaa8902d7fa0880, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Direction: {x: 0, y: 0}
+  position:
+    m_Name: Position
+    m_Type: 0
+    m_ExpectedControlType: Vector2
+    m_Id: c2c47782-9b12-4562-bc8c-fb2b95364eb3
+    m_Processors: 
+    m_Interactions: 
+    m_SingletonActionBindings:
+    - m_Name: 
+      m_Id: 399e086a-a088-42af-9446-d072cbd672c5
+      m_Path: <Touchscreen>/touch0/position
+      m_Interactions: 
+      m_Processors: 
+      m_Groups: 
+      m_Action: Position
+      m_Flags: 0
+    - m_Name: 
+      m_Id: ad6cd838-9832-4ff3-b95b-a3c7d91793ee
+      m_Path: <Mouse>/position
+      m_Interactions: 
+      m_Processors: 
+      m_Groups: 
+      m_Action: Position
+      m_Flags: 0
+    m_Flags: 0
+  press:
+    m_Name: Press
+    m_Type: 1
+    m_ExpectedControlType: Button
+    m_Id: 2f219c69-323e-48f1-90d8-652a39d6e2c5
+    m_Processors: 
+    m_Interactions: Press
+    m_SingletonActionBindings:
+    - m_Name: 
+      m_Id: 303dc8ff-d48f-4ad0-be0e-88ad07f1da07
+      m_Path: <Touchscreen>/Press
+      m_Interactions: 
+      m_Processors: 
+      m_Groups: 
+      m_Action: Press
+      m_Flags: 0
+    - m_Name: 
+      m_Id: da8cdf24-22e6-4a78-b470-d37dcddb5fe2
+      m_Path: <Mouse>/leftButton
+      m_Interactions: 
+      m_Processors: 
+      m_Groups: 
+      m_Action: Press
+      m_Flags: 0
+    m_Flags: 0
+  swipeResistance: 100
+  timeThreshold: 0.2
+--- !u!114 &1034947280318806221
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1104090747853785710}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 44c27bb3875202e4889c979954db8515, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _view: {fileID: 4198015471619335935}
+  _model: {fileID: 6905579431728325560}
+  _swipeDetection: {fileID: 340358578149418589}
+  _trajectoryRenderer: {fileID: 3827957799280484405}
+  _proyectilesLayer:
+    serializedVersion: 2
+    m_Bits: 256
 --- !u!96 &6549881993182166334
 TrailRenderer:
   serializedVersion: 3
@@ -396,6 +459,52 @@ TrailRenderer:
   m_Autodestruct: 0
   m_Emitting: 1
   m_ApplyActiveColorSpace: 1
+--- !u!61 &2435951141245640258
+BoxCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1104090747853785710}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 768
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_ForceSendLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ForceReceiveLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ContactCaptureLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_CallbackLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_IsTrigger: 1
+  m_UsedByEffector: 0
+  m_CompositeOperation: 0
+  m_CompositeOrder: 0
+  m_Offset: {x: -0.07533276, y: 0.15880716}
+  m_SpriteTilingProperty:
+    border: {x: 0, y: 0, z: 0, w: 0}
+    pivot: {x: 0, y: 0}
+    oldSize: {x: 0, y: 0}
+    newSize: {x: 0, y: 0}
+    adaptiveTilingThreshold: 0
+    drawMode: 0
+    adaptiveTiling: 0
+  m_AutoTiling: 0
+  m_Size: {x: 0.96259, y: 2.0049603}
+  m_EdgeRadius: 0
 --- !u!1 &1619261642739219413
 GameObject:
   m_ObjectHideFlags: 0
@@ -6413,11 +6522,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 69a539bcface6e544a50c5aafc631c39, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _arrowRenderer: {fileID: 4756240323688480652}
+  _indicator: {fileID: 4756240323688480652}
   _collisionLayers:
     serializedVersion: 2
     m_Bits: 192
-  _defaultMaxDistance: 50
+  _defaultMaxDistance: 5
+  _hawkVisionSettings: {fileID: 0}
 --- !u!1 &5673186291678007950
 GameObject:
   m_ObjectHideFlags: 0
@@ -7216,11 +7326,6 @@ PrefabInstance:
 --- !u!212 &4756240323688480652 stripped
 SpriteRenderer:
   m_CorrespondingSourceObject: {fileID: 4893792237150473073, guid: b4e7e25e0e538784b86eecd88d74cf7c, type: 3}
-  m_PrefabInstance: {fileID: 138399117372830973}
-  m_PrefabAsset: {fileID: 0}
---- !u!1 &5194054015415151244 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 5332066073959128689, guid: b4e7e25e0e538784b86eecd88d74cf7c, type: 3}
   m_PrefabInstance: {fileID: 138399117372830973}
   m_PrefabAsset: {fileID: 0}
 --- !u!4 &7087091918708509996 stripped

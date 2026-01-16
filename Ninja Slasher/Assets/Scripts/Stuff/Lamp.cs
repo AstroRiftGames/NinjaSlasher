@@ -29,7 +29,7 @@ public class Lamp : MonoBehaviour
     {
         if (collision.CompareTag("Player"))
         {
-            collision.TryGetComponent(out Controller controller);
+            collision.TryGetComponent(out NewController controller);
             controller.Die();
         }
 
