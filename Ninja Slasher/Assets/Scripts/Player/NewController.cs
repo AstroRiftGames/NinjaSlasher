@@ -190,6 +190,7 @@ public class NewController : MonoBehaviour
         _isDashing = true;
         _lastDash = Time.time;
         _view.Animator.SetBool("IsGrounded", false);
+        _view.TrailRendererComponent.emitting = true;
         RotateSprites(direction);
 
         MoveTracker.RegisterMove();
@@ -333,6 +334,7 @@ public class NewController : MonoBehaviour
         string colTag = collision.gameObject.tag;
         if (colMatrix.Contains(colTag))
         {
+            _view.TrailRendererComponent.emitting = false;
             collision.collider.TryGetComponent(out ElasticPlatform elasticComponent);
 
             if (!elasticComponent)
