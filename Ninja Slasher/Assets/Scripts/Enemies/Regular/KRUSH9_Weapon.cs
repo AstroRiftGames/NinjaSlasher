@@ -6,7 +6,7 @@ public class KRUSH9_Weapon : MonoBehaviour
     {
         if (collision.CompareTag("Player"))
         {
-            collision.TryGetComponent(out Controller player);
+            collision.TryGetComponent(out NewController player);
             player.Die();
         }
     }

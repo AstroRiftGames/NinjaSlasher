@@ -240,7 +240,7 @@ public class ProtoSlasher : BossEnemy
             case "Player":
                 if(!_isVulnerable)
                 {
-                    collision.gameObject.TryGetComponent(out Controller player);
+                    collision.gameObject.TryGetComponent(out NewController player);
                     player.Die();
                 }
                 else

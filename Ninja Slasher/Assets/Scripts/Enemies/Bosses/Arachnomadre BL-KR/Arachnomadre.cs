@@ -230,7 +230,7 @@ public class Arachnomadre : BossEnemy
             }
             else
             {
-                collision.gameObject.TryGetComponent(out Controller player);
+                collision.gameObject.TryGetComponent(out NewController player);
                 player.Die();
             }
         }

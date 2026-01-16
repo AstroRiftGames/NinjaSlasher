@@ -2,7 +2,7 @@ using UnityEngine;
 
 public class NinjaGrabState<NinjaStates> : State<NinjaStates>
 {
-    private Controller _controller;
+    private NewController _controller;
 
     public NinjaGrabState()
     {
@@ -23,7 +23,7 @@ public class NinjaGrabState<NinjaStates> : State<NinjaStates>
 
     public override void Sleep()
     {
-        _controller.ForceExitSurface();
+        //_controller.ForceExitSurface(); //TODO REVISAR
         _controller.View.Animator.SetInteger("GrabType", 0);
     }
 }

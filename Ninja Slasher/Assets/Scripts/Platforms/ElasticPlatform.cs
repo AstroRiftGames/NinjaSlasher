@@ -8,13 +8,13 @@ public class ElasticPlatform : PlatformBase
 
     public override void OnPlayerEnter(GameObject player)
     {
-        Controller controller = player.GetComponent<Controller>();
+        NewController controller = player.GetComponent<NewController>();
         if (controller == null)
         {
             return;
         }
 
-        Vector2 lastDashDir = controller.GetLastDashDirection();
+        Vector2 lastDashDir = controller.LastDashDirection;
 
         if (lastDashDir == Vector2.zero)
             return;
@@ -31,7 +31,7 @@ public class ElasticPlatform : PlatformBase
         StartCoroutine(ApplyBounceAfterCollision(rb, lastDashDir.normalized, controller));
     }
 
-    private IEnumerator ApplyBounceAfterCollision(Rigidbody2D rb, Vector2 dashDir, Controller controller)
+    private IEnumerator ApplyBounceAfterCollision(Rigidbody2D rb, Vector2 dashDir, NewController controller)
     {
         yield return new WaitForFixedUpdate();
 
@@ -57,7 +57,7 @@ public class ElasticPlatform : PlatformBase
         rb.linearVelocity = Vector2.zero;
         rb.AddForce(bounceDir * bounceForce, ForceMode2D.Impulse);
 
-        controller.ForceExitSurface();
+        //controller.ForceExitSurface();
 
         Debug.DrawRay(rb.position, dashDir * 2f, Color.red, 2f);
         Debug.DrawRay(rb.position, bounceDir * 2f, Color.green, 2f);

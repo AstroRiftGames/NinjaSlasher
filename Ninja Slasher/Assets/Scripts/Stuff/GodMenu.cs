@@ -68,7 +68,7 @@ public class GodMenu : MonoBehaviour
     private void OnEnable()
     {
         _openCloseBTN.onClick.AddListener(OpenClose);
-        _invincibleTGL.onValueChanged.AddListener(_player.SetInvincibility);
+        //_invincibleTGL.onValueChanged.AddListener(_player.SetInvincibility); //TODO REVISAR
         _restartBTN.onClick.AddListener(RestartPositions);
         _enemiesDPD.onValueChanged.AddListener(SelectEnemy);
         _spawnEnemyBTN.onClick.AddListener(SpawnEnemy);
@@ -83,7 +83,7 @@ public class GodMenu : MonoBehaviour
     private void OnDisable()
     {
         _openCloseBTN.onClick.RemoveListener(OpenClose);
-        _invincibleTGL.onValueChanged.RemoveListener(_player.SetInvincibility);
+        //_invincibleTGL.onValueChanged.RemoveListener(_player.SetInvincibility); //TODO REVISAR
         _restartBTN.onClick.RemoveListener(RestartPositions);
         _enemiesDPD.onValueChanged.RemoveListener(SelectEnemy);
         _enemiesDPD.onValueChanged.RemoveListener(SelectEnemy);

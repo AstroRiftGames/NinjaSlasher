@@ -26,6 +26,8 @@ public class NewController : MonoBehaviour
 
     public bool IsDashing => _isDashing;
     private bool _isDashing = false;
+    public bool IsParrying => _isParrying;
+    private bool _isParrying = false;
     private bool _isKO = false;
 
     private float _lastParry;
@@ -125,7 +127,7 @@ public class NewController : MonoBehaviour
     #region MECHANICS
     private void TryDash(Vector2 direction)
     {
-        if(!_isKO && !_isDashing && CheckDashCD())
+        if(!_isKO && !_isDashing && !_isParrying && CheckDashCD())
         {
             Dash(direction);
         }
@@ -215,7 +217,7 @@ public class NewController : MonoBehaviour
 
     private void TryParry(Vector2 tapPos)
     {
-        if(!_isKO && !_isDashing && CanParry())
+        if(!_isKO && !_isDashing && !_isParrying && CheckParryCD())
         {
             Vector2 dir = CalculateDirection(tapPos);
             Parry(dir);
@@ -230,7 +232,7 @@ public class NewController : MonoBehaviour
         return direction;
     }
 
-    private bool CanParry() => Time.time >= _lastParry + _model.ParryCD;
+    private bool CheckParryCD() => Time.time >= _lastParry + _model.ParryCD;
 
     private void Parry(Vector2 dirToParry)
     {
@@ -240,6 +242,7 @@ public class NewController : MonoBehaviour
         }
 
         float _parryRange = SetParryRange();
+        _isParrying = true;
 
         _lastParry = Time.time;
         Collider2D[] hitColliders = Physics2D.OverlapCircleAll(transform.position, _parryRange, _proyectilesLayer);
@@ -260,6 +263,7 @@ public class NewController : MonoBehaviour
                 return;
             }
         }
+        _isParrying = false;
     }
 
     private float SetParryRange()

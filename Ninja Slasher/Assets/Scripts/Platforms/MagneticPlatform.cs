@@ -19,8 +19,8 @@ public class MagneticPlatform : PlatformBase
 
         foreach (var hit in hits)
         {
-            Controller playerController = hit.GetComponent<Controller>();
-            if (playerController == null || !playerController.IsDashing() || playerController.IsParrying())
+            NewController playerController = hit.GetComponent<NewController>();
+            if (playerController == null || !playerController.IsDashing || playerController.IsParrying)
                 continue;
 
             View playerView = hit.GetComponent<View>();
