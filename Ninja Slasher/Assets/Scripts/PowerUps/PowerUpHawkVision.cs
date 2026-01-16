@@ -14,4 +14,14 @@ public class PowerUpHawkVision : PowerUpBase
     {
         context.TrajectoryGuideActive = false;
     }
+
+    public override void OnUseConsumed(PowerUpContext context)
+    {
+        Debug.Log($"[HawkVision] Uso consumido. Restantes: {context.DashTurboUsesRemaining}");
+
+        if (context.HawkVisionUsesRemaining == 1)
+        {
+            Debug.LogWarning("[HawkVision] Ultimo uso disponible");
+        }
+    }
 }

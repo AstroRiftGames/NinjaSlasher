@@ -15,13 +15,16 @@ public class GameplayUIManager : MonoBehaviour
     [SerializeField] private TextMeshProUGUI _puRemainingTime;
 
     private bool _noLivesActive = false;
-    private LevelController _levelController;
-    private ComboManager _comboManager;
+    //private LevelController _levelController;
+    //private ComboManager _comboManager;
 
     public void Initialize()
     {
-        if (LifeManager.Instance != null)
-            LifeManager.Instance.OnLivesChanged += OnLivesChanged;
+        GameEvents.OnLivesChanged += OnLivesChanged;
+
+        // DEPRECATED
+        //if (LifeManager.Instance != null)
+        //    LifeManager.Instance.OnLivesChanged += OnLivesChanged;
 
         UpdateLivesUI(LifeManager.Instance?.GetDisplayLives() ?? 0);
 
@@ -39,43 +42,49 @@ public class GameplayUIManager : MonoBehaviour
 
     public void OnSceneLoaded()
     {
-        UnsubscribeFromEvents();
+        //UnsubscribeFromEvents();
         SubscribeToEvents();
     }
 
     private void SubscribeToEvents()
     {
-        _levelController = FindFirstObjectByType<LevelController>();
-        if (_levelController != null)
-        {
-            _levelController.OnTimeChanged += OnLevelTimeChanged;
-            _levelController.OnTimeExpired += OnLevelTimeExpired;
-        }
+        GameEvents.OnLivesChanged += OnLivesChanged;
+        GameEvents.OnLevelTimeChanged += OnLevelTimeChanged;
+        GameEvents.OnLevelTimeExpired += OnLevelTimeExpired;
+        GameEvents.OnComboUpdated += OnComboUpdated;
 
-        _comboManager = ComboManager.Instance;
-        if (_comboManager != null)
-        {
-            _comboManager.OnComboUpdatedWithPosition += OnComboUpdated;
-        }
+        // DEPRECATED
+        //_levelController = FindFirstObjectByType<LevelController>();
+        //if (_levelController != null)
+        //{
+        //    _levelController.OnTimeChanged += OnLevelTimeChanged;
+        //    _levelController.OnTimeExpired += OnLevelTimeExpired;
+        //}
 
-        PowerUpManager.OnPowerUpRemainingTextChanged += OnPowerUpRemainingTextChanged;
+        //_comboManager = ComboManager.Instance;
+        //if (_comboManager != null)
+        //{
+        //    _comboManager.OnComboUpdatedWithPosition += OnComboUpdated;
+        //}
+
+        //PowerUpManager.OnPowerUpRemainingTextChanged += OnPowerUpRemainingTextChanged;
     }
 
-    private void UnsubscribeFromEvents()
-    {
-        if (_levelController != null)
-        {
-            _levelController.OnTimeChanged -= OnLevelTimeChanged;
-            _levelController.OnTimeExpired -= OnLevelTimeExpired;
-        }
+    //private void UnsubscribeFromEvents()
+    //{
+    //    if (_levelController != null)
+    //    {
+    //        _levelController.OnTimeChanged -= OnLevelTimeChanged;
+    //        _levelController.OnTimeExpired -= OnLevelTimeExpired;
+    //    }
 
-        if (_comboManager != null)
-        {
-            _comboManager.OnComboUpdatedWithPosition -= OnComboUpdated;
-        }
+    //    if (_comboManager != null)
+    //    {
+    //        _comboManager.OnComboUpdatedWithPosition -= OnComboUpdated;
+    //    }
 
-        PowerUpManager.OnPowerUpRemainingTextChanged -= OnPowerUpRemainingTextChanged;
-    }
+    //    PowerUpManager.OnPowerUpRemainingTextChanged -= OnPowerUpRemainingTextChanged;
+    //}
 
     public void UpdateUI()
     {
@@ -137,12 +146,6 @@ public class GameplayUIManager : MonoBehaviour
             _puRemainingTime.text = "";
         }
         */
-    }
-
-    private void OnPowerUpRemainingTextChanged(string text)
-    {
-        if (_puRemainingTime == null) return;
-        _puRemainingTime.text = text;
     }
 
     public void ShowNoLivesPanel()
@@ -278,8 +281,11 @@ public class GameplayUIManager : MonoBehaviour
 
     private void OnDisable()
     {
-        UnsubscribeFromEvents();
-        if (LifeManager.Instance != null)
-            LifeManager.Instance.OnLivesChanged -= OnLivesChanged;
+        GameEvents.OnLivesChanged -= OnLivesChanged;
+
+        // DEPRECATED
+        //UnsubscribeFromEvents();
+        //if (LifeManager.Instance != null)
+        //    LifeManager.Instance.OnLivesChanged -= OnLivesChanged;
     }
 }

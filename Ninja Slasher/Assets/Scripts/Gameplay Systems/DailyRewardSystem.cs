@@ -33,13 +33,15 @@ public class DailyRewardSystem : MonoBehaviourSingleton<DailyRewardSystem>
 {
     [Header("SETTINGS")]
     public DailyReward[] weeklyRewards = new DailyReward[7];
+    private int WeekLength => GameConfigManager.Config.dailyRewardWeekLength;
 
     private DailyRewardSaveData rewardData;
 
-    public static event Action<DailyReward> OnRewardClaimed;
-    public static event Action<int> OnConsecutiveDaysUpdated;
-    public static event Action<bool> OnRewardAvailabilityChanged;
-    public static event Action OnRewardDoubled;
+    // DEPRECATED
+    //public static event Action<DailyReward> OnRewardClaimed;
+    //public static event Action<int> OnConsecutiveDaysUpdated;
+    //public static event Action<bool> OnRewardAvailabilityChanged;
+    //public static event Action OnRewardDoubled;
 
     private bool _hasDoubledToday = false;
 
@@ -75,7 +77,10 @@ public class DailyRewardSystem : MonoBehaviourSingleton<DailyRewardSystem>
         LoadRewardData();
         CheckDailyReward();
         CheckDoubleRewardStatus();
-        OnRewardAvailabilityChanged?.Invoke(CanClaimToday());
+
+        GameEvents.RaiseRewardAvailabilityChanged(CanClaimToday());
+        // DEPRECTATED
+        //OnRewardAvailabilityChanged?.Invoke(CanClaimToday());
     }
 
     void LoadRewardData()
@@ -150,8 +155,13 @@ public class DailyRewardSystem : MonoBehaviourSingleton<DailyRewardSystem>
         }
 
         bool isAvailableNow = CanClaimToday();
+
+        // DEPRECATED
+        //if (wasAvailable != isAvailableNow)
+        //    OnRewardAvailabilityChanged?.Invoke(isAvailableNow);
+
         if (wasAvailable != isAvailableNow)
-            OnRewardAvailabilityChanged?.Invoke(isAvailableNow);
+            GameEvents.RaiseRewardAvailabilityChanged(isAvailableNow);
     }
 
     private void CheckDoubleRewardStatus()
@@ -201,9 +211,14 @@ public class DailyRewardSystem : MonoBehaviourSingleton<DailyRewardSystem>
 
         //Debug.Log($"Recompensa diaria duplicada: {doubledReward.powerUpType} x{doubledReward.quantity}");
 
-        OnRewardClaimed?.Invoke(doubledReward);
-        OnRewardAvailabilityChanged?.Invoke(false);
-        OnRewardDoubled?.Invoke();
+        //DEPRECATED
+        //OnRewardClaimed?.Invoke(doubledReward);
+        //OnRewardAvailabilityChanged?.Invoke(false);
+        //OnRewardDoubled?.Invoke();
+
+        GameEvents.RaiseRewardClaimed(doubledReward);
+        GameEvents.RaiseRewardAvailabilityChanged(false);
+        GameEvents.RaiseRewardDoubled();
     }
 
     public bool CanDoubleToday()
@@ -220,15 +235,18 @@ public class DailyRewardSystem : MonoBehaviourSingleton<DailyRewardSystem>
 
     void AdvanceDay()
     {
-        rewardData.currentWeekDay = (rewardData.currentWeekDay + 1) % 7;
+        rewardData.currentWeekDay = (rewardData.currentWeekDay + 1) % WeekLength;
         rewardData.consecutiveDays++;
 
         if (rewardData.currentWeekDay == 0)
         {
-            rewardData.claimedDays = new bool[7];
+            rewardData.claimedDays = new bool[WeekLength];
         }
 
-        OnConsecutiveDaysUpdated?.Invoke(rewardData.consecutiveDays);
+        //DEPRECATED
+        //OnConsecutiveDaysUpdated?.Invoke(rewardData.consecutiveDays);
+
+        GameEvents.RaiseConsecutiveDaysUpdated(rewardData.consecutiveDays);
     }
 
     void ResetWeeklyProgress()
@@ -236,9 +254,12 @@ public class DailyRewardSystem : MonoBehaviourSingleton<DailyRewardSystem>
         int previousDays = rewardData.consecutiveDays;
         rewardData.currentWeekDay = 0;
         rewardData.consecutiveDays = 0;
-        rewardData.claimedDays = new bool[7];
+        rewardData.claimedDays = new bool[WeekLength];
 
-        OnConsecutiveDaysUpdated?.Invoke(rewardData.consecutiveDays);
+        // DEPRECATED
+        //OnConsecutiveDaysUpdated?.Invoke(rewardData.consecutiveDays);
+
+        GameEvents.RaiseConsecutiveDaysUpdated(rewardData.consecutiveDays);
     }
 
     public bool ClaimReward()
@@ -260,8 +281,13 @@ public class DailyRewardSystem : MonoBehaviourSingleton<DailyRewardSystem>
 
         SaveRewardData();
 
-        OnRewardClaimed?.Invoke(claimed);
-        OnRewardAvailabilityChanged?.Invoke(false);
+        // DEPRECATED
+        //OnRewardClaimed?.Invoke(claimed);
+        //OnRewardAvailabilityChanged?.Invoke(false);
+
+        GameEvents.RaiseRewardClaimed(claimed);
+        GameEvents.RaiseRewardAvailabilityChanged(false);
+
         return true;
     }
 
@@ -364,4 +390,11 @@ public class DailyRewardSystem : MonoBehaviourSingleton<DailyRewardSystem>
             DateTimeStyles.RoundtripKind, out date);
     }
 
+    private void ValidateWeeklyRewardsArray()
+    {
+        if (weeklyRewards.Length != WeekLength)
+        {
+            Debug.LogWarning($"weeklyRewards debe tener {WeekLength} elementos");
+        }
+    }
 }

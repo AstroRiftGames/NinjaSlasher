@@ -3,14 +3,21 @@ using System;
 
 public class ComboManager : MonoBehaviourSingleton<ComboManager>
 {
+    [Obsolete]
     public event Action<int> OnComboUpdated;
+
+    [Obsolete]
     public event Action OnComboEnded;
+
+    [Obsolete]
     public event Action<int, Vector3> OnComboUpdatedWithPosition;
+
+    private float ComboTimeWindow => GameConfigManager.Config.comboTimeWindow;
+    private int MaxComboLevel => GameConfigManager.Config.maxComboLevel;
 
     private int killCount = 0;
     private float comboTimer = 0f;
     private bool comboActive = false;
-    private LevelController levelController;
     private Vector3 lastEnemyPosition;
 
     public override void Awake()
@@ -18,24 +25,16 @@ public class ComboManager : MonoBehaviourSingleton<ComboManager>
         base.Awake();
     }
 
-    void Start()
-    {
-        FindLevelController();
-    }
-
     void Update()
     {
         if (!comboActive) return;
+
         comboTimer -= Time.deltaTime;
+
         if (comboTimer <= 0f)
         {
             ResetCombo();
         }
-    }
-
-    private void FindLevelController()
-    {
-        levelController = FindObjectOfType<LevelController>();
     }
 
     public void RegisterKill(Vector3 enemyPosition)
@@ -46,12 +45,13 @@ public class ComboManager : MonoBehaviourSingleton<ComboManager>
 
         comboTimer = level switch
         {
-            1 => 2f,
-            2 => 1.6f,
-            3 => 1.4f,
-            4 => 1.2f,
-            _ => 1f
+            1 => ComboTimeWindow * 0.67f,  // ~2s si base es 3s
+            2 => ComboTimeWindow * 0.53f,  // ~1.6s
+            3 => ComboTimeWindow * 0.47f,  // ~1.4s
+            4 => ComboTimeWindow * 0.40f,  // ~1.2s
+            _ => ComboTimeWindow * 0.33f   // ~1s
         };
+
         comboActive = true;
 
         if (level >= 2)
@@ -63,8 +63,13 @@ public class ComboManager : MonoBehaviourSingleton<ComboManager>
                 TutorialManager.Instance.OnComboPerformed();
             }
 
-            OnComboUpdated?.Invoke(level);
-            OnComboUpdatedWithPosition?.Invoke(level, lastEnemyPosition);
+            Debug.Log($"[ComboManager] Combo x{level} activado en posición {lastEnemyPosition}");
+
+            GameEvents.RaiseComboUpdated(level, lastEnemyPosition);
+
+            // DEPRECATED
+            //OnComboUpdated?.Invoke(level);
+            //OnComboUpdatedWithPosition?.Invoke(level, lastEnemyPosition);
         }
     }
 
@@ -89,28 +94,37 @@ public class ComboManager : MonoBehaviourSingleton<ComboManager>
             float percent = context.ComboBonusPercent;
             float bonusExtra = bonus * percent;
             bonus += bonusExtra;
+
+            Debug.Log($"[ComboManager] Bonus aumentado por ComboMaster: {bonus:F1}s (base + {bonusExtra:F1}s)");
         }
 
-        if (levelController == null)
-        {
-            FindLevelController();
-        }
+        GameEvents.RaiseLevelTimeBonus(bonus);
 
-        if (levelController != null)
-        {
-            levelController.AddTime(bonus);
-        }
+        Debug.Log($"[ComboManager] Bonus de tiempo otorgado: +{bonus:F1}s");
     }
 
     private void ResetCombo()
     {
+        if (killCount > 1)
+        {
+            Debug.Log($"[ComboManager] Combo x{killCount} terminado");
+        }
+
         killCount = 0;
         comboActive = false;
-        OnComboEnded?.Invoke();
+
+        GameEvents.RaiseComboReset();
+
+        // DEPRECATED
+        //OnComboEnded?.Invoke();
     }
 
     public Vector3 GetLastEnemyPosition()
     {
         return lastEnemyPosition;
     }
+
+    public int GetCurrentComboLevel() => Mathf.Clamp(killCount, 1, MaxComboLevel);
+    public float GetRemainingTime() => comboActive ? comboTimer : 0f;
+    public bool IsComboActive() => comboActive;
 }

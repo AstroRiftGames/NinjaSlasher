@@ -1,6 +1,5 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
-using System.Linq;
 using System;
 
 public class FloatingComboTextManager : MonoBehaviourSingleton<FloatingComboTextManager>
@@ -8,19 +7,22 @@ public class FloatingComboTextManager : MonoBehaviourSingleton<FloatingComboText
     [Header("REFERENCES")]
     [SerializeField] private FloatingComboText _floatingTextPrefab;
     [SerializeField] private Canvas _targetCanvas;
-    [SerializeField] private int _poolSize = 10;
+
+    //DEPRECATED
+    //[SerializeField] private int _poolSize = 10;
+    private int PoolSize => GameConfigManager.Config.floatingTextPoolSize;
 
     [Header("SETTINGS")]
     [SerializeField]
     private ComboTextData[] _comboLevels = new ComboTextData[]
     {
-        new ComboTextData { message = "COMBO x2!", color = new Color(255, 255, 0) },
-        new ComboTextData { message = "COMBO x3!!", color = new Color(255, 128, 0) },
-        new ComboTextData { message = "COMBO x4!!!", color = new Color(255, 77, 0) },
-        new ComboTextData { message = "COMBO x5!!!!", color = new Color(255, 0, 0) }
+        new ComboTextData { message = "COMBO x2!", color = new Color(1f, 1f, 0f) },
+        new ComboTextData { message = "COMBO x3!!", color = new Color(1f, 0.5f, 0f) },
+        new ComboTextData { message = "COMBO x4!!!", color = new Color(1f, 0.3f, 0f) },
+        new ComboTextData { message = "COMBO x5!!!!", color = new Color(1f, 0f, 0f) }
     };
 
-    private Queue<FloatingComboText> _textPool = new Queue<FloatingComboText>();
+    private GenericPool<FloatingComboText> _textPool;
     private List<FloatingComboText> _activeTexts = new List<FloatingComboText>();
 
     public override void Awake()
@@ -41,23 +43,45 @@ public class FloatingComboTextManager : MonoBehaviourSingleton<FloatingComboText
     private void OnEnable()
     {
         UnityEngine.SceneManagement.SceneManager.sceneLoaded += OnSceneLoaded;
-        SubscribeToComboManager();
+        SubscribeToGameEvents();
     }
 
     private void OnDisable()
     {
         UnityEngine.SceneManagement.SceneManager.sceneLoaded -= OnSceneLoaded;
-
-        if (ComboManager.Instance != null)
-        {
-            ComboManager.Instance.OnComboUpdatedWithPosition -= HandleComboUpdated;
-        }
+        UnsubscribeFromGameEvents();
     }
 
     private void OnSceneLoaded(UnityEngine.SceneManagement.Scene scene, UnityEngine.SceneManagement.LoadSceneMode mode)
     {
         ReinitializePoolForNewScene();
-        SubscribeToComboManager();
+        UnsubscribeFromGameEvents();
+        SubscribeToGameEvents();
+
+        Debug.Log($"[FloatingComboTextManager] Pool reinicializado para escena: {scene.name}");
+    }
+
+    private void Start()
+    {
+        if (_targetCanvas == null)
+        {
+            _targetCanvas = FindGameplayCanvas();
+        }
+
+        SubscribeToGameEvents();
+    }
+
+    private void SubscribeToGameEvents()
+    {
+        GameEvents.OnComboUpdated -= HandleComboUpdated;
+        GameEvents.OnComboUpdated += HandleComboUpdated;
+
+        Debug.Log("[FloatingComboTextManager] Suscrito a GameEvents.OnComboUpdated");
+    }
+
+    private void UnsubscribeFromGameEvents()
+    {
+        GameEvents.OnComboUpdated -= HandleComboUpdated;
     }
 
     private Canvas FindGameplayCanvas()
@@ -68,49 +92,25 @@ public class FloatingComboTextManager : MonoBehaviourSingleton<FloatingComboText
         {
             if (canvas.name.Contains("Gameplay") || canvas.name.Contains("gameplay"))
             {
+                Debug.Log($"[FloatingComboTextManager] Canvas de gameplay encontrado: {canvas.name}");
                 return canvas;
             }
         }
-        return FindObjectOfType<Canvas>();
-    }
 
-    private void Start()
-    {
-        if (_targetCanvas == null)
+        Canvas fallbackCanvas = FindObjectOfType<Canvas>();
+        if (fallbackCanvas != null)
         {
-            _targetCanvas = FindGameplayCanvas();
+            Debug.LogWarning($"[FloatingComboTextManager] Usando canvas por defecto: {fallbackCanvas.name}");
         }
 
-        SubscribeToComboManager();
-    }
-
-    private void SubscribeToComboManager()
-    {
-        if (ComboManager.Instance != null)
-        {
-            ComboManager.Instance.OnComboUpdatedWithPosition -= HandleComboUpdated;
-            ComboManager.Instance.OnComboUpdatedWithPosition += HandleComboUpdated;
-        }
-        else
-        {
-            StartCoroutine(RetrySubscription());
-        }
-    }
-
-    private System.Collections.IEnumerator RetrySubscription()
-    {
-        yield return new WaitForSeconds(0.5f);
-
-        if (ComboManager.Instance != null)
-        {
-            SubscribeToComboManager();
-        }
+        return fallbackCanvas;
     }
 
     private void InitializePool()
     {
         if (_floatingTextPrefab == null)
         {
+            Debug.LogError("[FloatingComboTextManager] FloatingTextPrefab no asignado!");
             return;
         }
 
@@ -120,35 +120,37 @@ public class FloatingComboTextManager : MonoBehaviourSingleton<FloatingComboText
 
             if (_targetCanvas == null)
             {
+                Debug.LogError("[FloatingComboTextManager] No se encontró canvas para el pool!");
                 return;
             }
         }
 
-        for (int i = 0; i < _poolSize; i++)
-        {
-            CreateNewText();
-        }
+        _textPool = new GenericPool<FloatingComboText>(
+            _floatingTextPrefab.gameObject,
+            PoolSize,
+            _targetCanvas.transform,
+            "FloatingComboTextPool"
+        );
+
+        _textPool.OnObjectRetrieved += (text) => {
+            _activeTexts.Add(text);
+        };
+
+        _textPool.OnObjectReturned += (text) => {
+            _activeTexts.Remove(text);
+        };
+
+        Debug.Log($"[FloatingComboTextManager] GenericPool inicializado con {PoolSize} textos");
     }
 
     private void ReinitializePoolForNewScene()
     {
-        foreach (var text in _activeTexts.ToArray())
+        if (_textPool != null)
         {
-            if (text != null)
-            {
-                Destroy(text.gameObject);
-            }
+            _textPool.Clear();
         }
-        _activeTexts.Clear();
 
-        while (_textPool.Count > 0)
-        {
-            var text = _textPool.Dequeue();
-            if (text != null)
-            {
-                Destroy(text.gameObject);
-            }
-        }
+        _activeTexts.Clear();
 
         if (_targetCanvas == null)
         {
@@ -161,34 +163,20 @@ public class FloatingComboTextManager : MonoBehaviourSingleton<FloatingComboText
         }
     }
 
-    private FloatingComboText CreateNewText()
-    {
-        FloatingComboText newText = Instantiate(_floatingTextPrefab, _targetCanvas.transform);
-        newText.gameObject.SetActive(false);
-        _textPool.Enqueue(newText);
-        return newText;
-    }
-
     private FloatingComboText GetFromPool()
     {
-        if (_textPool.Count == 0)
+        if (_textPool == null)
         {
-            return CreateNewText();
+            Debug.LogError("[FloatingComboTextManager] Pool no inicializado");
+            return null;
         }
-
-        FloatingComboText text = _textPool.Dequeue();
-        text.gameObject.SetActive(true);
-        _activeTexts.Add(text);
-        return text;
+        return _textPool.Get();
     }
 
     public void ReturnToPool(FloatingComboText text)
     {
-        if (text == null) return;
-
-        text.gameObject.SetActive(false);
-        _activeTexts.Remove(text);
-        _textPool.Enqueue(text);
+        if (text == null || _textPool == null) return;
+        _textPool.Return(text);
     }
 
     private void HandleComboUpdated(int level, Vector3 enemyPosition)
@@ -201,9 +189,13 @@ public class FloatingComboTextManager : MonoBehaviourSingleton<FloatingComboText
         ComboTextData data = GetComboData(level);
         if (data == null)
         {
+            Debug.LogWarning($"[FloatingComboTextManager] No hay datos para combo nivel {level}");
             return;
         }
+
         ShowFloatingText(data.message, enemyPosition, data.color);
+
+        Debug.Log($"[FloatingComboTextManager] Mostrando '{data.message}' en {enemyPosition}");
     }
 
     private ComboTextData GetComboData(int level)
@@ -217,9 +209,11 @@ public class FloatingComboTextManager : MonoBehaviourSingleton<FloatingComboText
         FloatingComboText text = GetFromPool();
 
         if (text == null)
-        {            
+        {
+            Debug.LogError("[FloatingComboTextManager] No se pudo obtener texto del pool");
             return;
         }
+
         text.Show(message, worldPosition, color);
     }
 }

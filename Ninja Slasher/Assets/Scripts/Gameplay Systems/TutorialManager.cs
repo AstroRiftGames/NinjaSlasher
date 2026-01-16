@@ -18,9 +18,13 @@ public class TutorialManager : MonoBehaviour
     [SerializeField] private Controller playerController;
 
     [Header("SETTINGS")]
-    [SerializeField] private bool skipTutorial = false;
-    [SerializeField] private float textDisplayTime = 5f;
+    // DEPRECATED
+    //[SerializeField] private bool skipTutorial = false;
+    //[SerializeField] private float textDisplayTime = 5f;
     [SerializeField] private int currentLevel = 1;
+
+    private bool SkipTutorial => !GameConfigManager.Config.enableTutorial;
+    private float TextDisplayTime => GameConfigManager.Config.tutorialTextDisplayTime;
 
     private bool tutorialActive = false;
     private int currentTextIndex = 0;
@@ -49,7 +53,7 @@ public class TutorialManager : MonoBehaviour
 
     private void Start()
     {
-        if (skipTutorial)
+        if (SkipTutorial)
         {
             DisableTutorial();
             return;
@@ -236,7 +240,7 @@ public class TutorialManager : MonoBehaviour
                 {
                     playerController.SetInputEnabled(true);
                 }
-                StartCoroutine(HideTextAfterDelay(textDisplayTime, () => {
+                StartCoroutine(HideTextAfterDelay(TextDisplayTime, () => {
                     waitingForEnemyKill = true;
                 }));
                 break;

@@ -114,12 +114,20 @@ public class AutoSaveManager : MonoBehaviourSingleton<AutoSaveManager>
         saveManager.AddPowerUpToInventory(powerUpType, quantity);
     }
 
-    public void OnPowerUpActivated(PowerUpType powerUpType, float duration = 1800f)
+    public void OnPowerUpActivated(PowerUpType powerUpType, int uses)
     {
         if (!CheckSaveManager()) return;
 
         ShowSaveIndicator("SAVING...");
-        saveManager.ActivatePowerUp(powerUpType, duration);
+        saveManager.ActivatePowerUp(powerUpType, uses);
+    }
+
+    public void OnPowerUpUsesUpdated(PowerUpType powerUpType, int usesRemaining)
+    {
+        if (!CheckSaveManager()) return;
+
+        ShowSaveIndicator("SAVING...", 0.5f);
+        saveManager.UpdatePowerUpUses(powerUpType, usesRemaining);
     }
 
     public void OnDailyRewardClaimed(string rewardData)
@@ -179,14 +187,6 @@ public class AutoSaveManager : MonoBehaviourSingleton<AutoSaveManager>
     public void TestSaveIndicator()
     {
         ShowSaveIndicator("Prueba desde AutoSaveManager");
-    }
-
-    void Update()
-    {
-        if (Time.frameCount % 300 == 0)
-        {
-            saveManager?.UpdateActivePowerUps();
-        }
     }
 
     public void SuspendAutoSave()

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using static UnityEngine.UIElements.UxmlAttributeDescription;
 
 [Serializable]
 public class GameData
@@ -114,29 +115,29 @@ public class PowerUpData
 {
     public PowerUpType type;
     public DateTime activationTime;
-    public float duration;
+    public int usesRemaining;
 
     public PowerUpData() { }
 
-    public PowerUpData(PowerUpType powerUpType, DateTime activation, float dur)
+    public PowerUpData(PowerUpType type, int uses)
     {
-        type = powerUpType;
-        activationTime = activation;
-        duration = dur;
+        this.type = type;
+        this.usesRemaining = uses;
+        this.activationTime = DateTime.Now;
     }
 
-    // para verificar si el power up aun esta activo
-    public bool IsActive()
-    {
-        return (DateTime.Now - activationTime).TotalSeconds < duration;
-    }
+    //// para verificar si el power up aun esta activo
+    //public bool IsActive()
+    //{
+    //    return (DateTime.Now - activationTime).TotalSeconds < duration;
+    //}
 
-    // para obtener tiempo restante en segundos
-    public float GetRemainingTime()
-    {
-        float elapsed = (float)(DateTime.Now - activationTime).TotalSeconds;
-        return Mathf.Max(0f, duration - elapsed);
-    }
+    //// para obtener tiempo restante en segundos
+    //public float GetRemainingTime()
+    //{
+    //    float elapsed = (float)(DateTime.Now - activationTime).TotalSeconds;
+    //    return Mathf.Max(0f, duration - elapsed);
+    //}
 }
 
 [Serializable]

@@ -124,8 +124,8 @@ public class ButtonManager : MonoBehaviour
             StartCoroutine(DelayedSubscription());
         }
 
-        DailyRewardSystem.OnRewardClaimed += OnRewardClaimed;
-        DailyRewardSystem.OnRewardAvailabilityChanged += UpdateCalendarButtonIcon;
+        GameEvents.OnRewardClaimed += OnRewardClaimed;
+        GameEvents.OnRewardAvailabilityChanged += UpdateCalendarButtonIcon;
 
         SaveManager.OnDataLoaded += OnSaveDataLoaded;
     }
@@ -137,8 +137,8 @@ public class ButtonManager : MonoBehaviour
             LevelProgressionManager.Instance.OnProgressionUpdated -= RefreshLevelProgression;
         }
 
-        DailyRewardSystem.OnRewardClaimed -= OnRewardClaimed;
-        DailyRewardSystem.OnRewardAvailabilityChanged -= UpdateCalendarButtonIcon;
+        GameEvents.OnRewardClaimed -= OnRewardClaimed;
+        GameEvents.OnRewardAvailabilityChanged -= UpdateCalendarButtonIcon;
 
         SaveManager.OnDataLoaded -= OnSaveDataLoaded;
     }

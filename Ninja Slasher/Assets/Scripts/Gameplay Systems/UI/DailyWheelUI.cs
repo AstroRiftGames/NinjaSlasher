@@ -49,14 +49,22 @@ public class DailyWheelUI : MonoBehaviour
 
     private void OnEnable()
     {
-        DailyWheelSystem.OnWheelAvailabilityChanged += HandleAvailabilityChanged;
-        DailyWheelSystem.OnRewardSpun += HandleRewardSpun;
+        GameEvents.OnWheelAvailabilityChanged += HandleAvailabilityChanged;
+        GameEvents.OnWheelSpun += HandleRewardSpun;
+
+        // DEPRECATED
+        //DailyWheelSystem.OnWheelAvailabilityChanged += HandleAvailabilityChanged;
+        //DailyWheelSystem.OnRewardSpun += HandleRewardSpun;
     }
 
     private void OnDisable()
     {
-        DailyWheelSystem.OnWheelAvailabilityChanged -= HandleAvailabilityChanged;
-        DailyWheelSystem.OnRewardSpun -= HandleRewardSpun;
+        GameEvents.OnWheelAvailabilityChanged -= HandleAvailabilityChanged;
+        GameEvents.OnWheelSpun -= HandleRewardSpun;
+
+        // DEPRECATED
+        //DailyWheelSystem.OnWheelAvailabilityChanged -= HandleAvailabilityChanged;
+        //DailyWheelSystem.OnRewardSpun -= HandleRewardSpun;
     }
 
     private void Start()

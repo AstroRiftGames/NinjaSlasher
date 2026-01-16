@@ -16,4 +16,14 @@ public class PowerUpComboMaster : PowerUpBase
         context.ComboMasterActive = false;
         context.ComboBonusPercent = 0f;
     }
+
+    public override void OnUseConsumed(PowerUpContext context)
+    {
+        Debug.Log($"[DashTurbo] Uso consumido. Restantes: {context.DashTurboUsesRemaining}");
+
+        if (context.ComboMasterUsesRemaining == 1)
+        {
+            Debug.LogWarning("[DashTurbo] Ultimo uso disponible");
+        }
+    }
 }

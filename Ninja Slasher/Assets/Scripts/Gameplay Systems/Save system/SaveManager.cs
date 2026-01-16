@@ -607,7 +607,7 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
         SaveData();
     }
 
-    public void ActivatePowerUp(PowerUpType powerUpType, float duration)
+    public void ActivatePowerUp(PowerUpType powerUpType, int uses)
     {
         RemovePowerUpFromInventory(powerUpType, 1);
 
@@ -615,15 +615,12 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
         var existingActivePowerUp = data.activePowerUps.Find(p => p.type == powerUpType);
         if (existingActivePowerUp != null)
         {
-            data.activePowerUps.Remove(existingActivePowerUp);
+            existingActivePowerUp.usesRemaining += uses;
         }
-
-        data.activePowerUps.Add(new PowerUpData
+        else
         {
-            type = powerUpType,
-            activationTime = DateTime.Now,
-            duration = duration
-        });
+            data.activePowerUps.Add(new PowerUpData(powerUpType, uses));
+        }
         SaveData();
     }
 
@@ -638,29 +635,24 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
         }
     }
 
-    public void UpdateActivePowerUps()
+    public void UpdatePowerUpUses(PowerUpType powerUpType, int usesRemaining)
     {
         var data = GetGameData();
-        bool hasChanges = false;
-        var currentTime = DateTime.Now;
+        var powerUpData = data.activePowerUps.Find(p => p.type == powerUpType);
 
-        for (int i = data.activePowerUps.Count - 1; i >= 0; i--)
+        if (powerUpData != null)
         {
-            var powerUp = data.activePowerUps[i];
-            var timeElapsed = (currentTime - powerUp.activationTime).TotalSeconds;
+            powerUpData.usesRemaining = usesRemaining;
 
-            if (timeElapsed >= powerUp.duration)
+            if (usesRemaining <= 0)
             {
-                data.activePowerUps.RemoveAt(i);
-                hasChanges = true;
+                data.activePowerUps.Remove(powerUpData);
             }
-        }
 
-        if (hasChanges)
-        {
             SaveData();
         }
     }
+
 
     public void UpdateGameStats(int enemiesKilled = 0, int combo = 0, float playTime = 0f, bool gameCompleted = false)
     {

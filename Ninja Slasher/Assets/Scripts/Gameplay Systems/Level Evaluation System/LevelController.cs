@@ -56,15 +56,13 @@ public class ObjectiveEvaluationResult
 {
     public int starsEarned = 0;
     public bool primaryCompleted = false;
-    public List<ObjectiveData> completedObjectives =
-        new List<ObjectiveData>();
+    public List<ObjectiveData> completedObjectives = new List<ObjectiveData>();
 }
 
 [Serializable]
 public class ObjectiveProgressData
 {
-    public List<SingleObjectiveProgress> objectiveProgresses =
-        new List<SingleObjectiveProgress>();
+    public List<SingleObjectiveProgress> objectiveProgresses = new List<SingleObjectiveProgress>();
 }
 
 [Serializable]
@@ -90,8 +88,11 @@ public class LevelController : MonoBehaviour
     private bool levelCompleted = false;
     private bool levelFailed = false;
 
-    public Action<float> OnTimeChanged;
-    public Action OnTimeExpired;
+    // DEPRECATED
+    // public Action<float> OnTimeChanged;
+
+    // DEPRECATED
+    // public Action OnTimeExpired;
 
     private bool isTimerPaused = false;
     public float TimeTaken => levelConfiguration.levelDuration - currentTime;
@@ -99,6 +100,16 @@ public class LevelController : MonoBehaviour
     private void Start()
     {
         InitializeLevel();
+    }
+
+    private void OnEnable()
+    {
+        GameEvents.OnLevelTimeBonus += OnComboTimeBonus;
+    }
+
+    private void OnDisable()
+    {
+        GameEvents.OnLevelTimeBonus -= OnComboTimeBonus;
     }
 
     private void InitializeLevel()
@@ -110,6 +121,7 @@ public class LevelController : MonoBehaviour
 
         if (levelConfiguration == null)
         {
+            Debug.LogError("[LevelController] No se pudo cargar configuración del nivel");
             return;
         }
 
@@ -120,6 +132,8 @@ public class LevelController : MonoBehaviour
 
         currentTime = modifiedDuration;
         initialDuration = baseDuration;
+
+        Debug.Log($"[LevelController] Nivel iniciado - Tiempo: {currentTime:F1}s (base: {baseDuration:F1}s)");
 
         StartCoroutine(TimerCoroutine());
 
@@ -133,11 +147,12 @@ public class LevelController : MonoBehaviour
             if (!isTimerPaused)
             {
                 currentTime -= Time.deltaTime;
-                OnTimeChanged?.Invoke(currentTime);
+
+                GameEvents.RaiseLevelTimeChanged(currentTime);
 
                 if (currentTime <= 0)
                 {
-                    OnTimeExpired?.Invoke();
+                    GameEvents.RaiseLevelTimeExpired();
                     break;
                 }
             }
@@ -150,17 +165,21 @@ public class LevelController : MonoBehaviour
     {
         levelCompleted = true;
         levelFailed = failed;
+
+        Debug.Log($"[LevelController] Timer detenido - Failed: {failed}");
     }
 
     public int Evaluate(LevelStats stats)
     {
         if (evaluator == null || levelConfiguration == null)
         {
+            Debug.LogWarning("[LevelController] No se puede evaluar - falta configuración");
             return 0;
         }
 
         if (levelFailed)
         {
+            Debug.Log("[LevelController] Nivel fallido - 0 estrellas");
             return 0;
         }
 
@@ -171,7 +190,7 @@ public class LevelController : MonoBehaviour
 
         foreach (var completed in result.completedObjectives)
         {
-            Debug.Log($"Objetivo completado: {completed.objectiveName}");
+            Debug.Log($"[LevelController] Objetivo completado: {completed.objectiveName}");
         }
 
         if (AnalyticsManager.Instance != null)
@@ -183,6 +202,7 @@ public class LevelController : MonoBehaviour
             );
         }
 
+        Debug.Log($"[LevelController] Evaluación completa - {result.starsEarned} estrellas");
         return result.starsEarned;
     }
 
@@ -223,11 +243,18 @@ public class LevelController : MonoBehaviour
 
     public void AddTime(float seconds)
     {
-        currentTime += seconds;
+        if (currentTime > 0)
+        {
+            currentTime += seconds;
 
-        OnTimeChanged?.Invoke(currentTime);
+            GameEvents.RaiseLevelTimeChanged(currentTime);
 
-        Debug.Log($"[LevelController] +{seconds}s agregados. Tiempo actual: {currentTime:F1}s");
+            Debug.Log($"[LevelController] +{seconds:F1}s agregados. Tiempo actual: {currentTime:F1}s");
+        }
+        else
+        {
+            Debug.LogWarning($"[LevelController] No se puede agregar tiempo - nivel ya terminado");
+        }
     }
 
     private float ApplyTimePowerUps(float baseDuration)
@@ -240,6 +267,8 @@ public class LevelController : MonoBehaviour
             float extraPercent = powerUpContext.ExtraTimePercent;
             float bonusTime = baseDuration * extraPercent;
             modifiedDuration += bonusTime;
+
+            Debug.Log($"[LevelController] Power-up ExtraTime activo: +{bonusTime:F1}s ({extraPercent * 100:F0}%)");
         }
 
         return modifiedDuration;
@@ -254,6 +283,8 @@ public class LevelController : MonoBehaviour
     {
         levelFailed = true;
         levelCompleted = true;
+
+        Debug.Log("[LevelController] Nivel marcado como fallido");
 
         if (LevelManager.Instance != null)
         {
@@ -277,6 +308,7 @@ public class LevelController : MonoBehaviour
 
         if (previousProgress.completedObjectiveIds.Count > 0)
         {
+            Debug.Log($"[LevelController] Objetivos previos completados ({previousProgress.completedObjectiveIds.Count}):");
             foreach (var objectiveId in previousProgress.completedObjectiveIds)
             {
                 Debug.Log($"  - {objectiveId}");
@@ -287,15 +319,23 @@ public class LevelController : MonoBehaviour
     public void PauseTimer()
     {
         isTimerPaused = true;
+        Debug.Log("[LevelController] Timer pausado");
     }
 
     public void ResumeTimer()
     {
         isTimerPaused = false;
+        Debug.Log("[LevelController] Timer reanudado");
     }
 
     public bool IsTimerPaused()
     {
         return isTimerPaused;
+    }
+
+    private void OnComboTimeBonus(float bonusSeconds)
+    {
+        AddTime(bonusSeconds);
+        Debug.Log($"[LevelController] Bonus de combo aplicado: +{bonusSeconds:F1}s");
     }
 }

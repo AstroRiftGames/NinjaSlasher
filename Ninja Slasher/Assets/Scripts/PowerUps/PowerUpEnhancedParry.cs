@@ -11,7 +11,7 @@ public class PowerUpEnhancedParry : PowerUpBase
         context.EnhancedParryActive = true;
         context.EnhancedParryBounces = bouncesAmount;
         context.EnhancedParryVelocityRetention = velocityRetentionPerBounce;
-        context.EnhancedParryRemaining = duration;
+        context.EnhancedParryUsesRemaining = maxUses;
     }
 
     public override void Deactivate(PowerUpContext context)
@@ -19,6 +19,16 @@ public class PowerUpEnhancedParry : PowerUpBase
         context.EnhancedParryActive = false;
         context.EnhancedParryBounces = 3;
         context.EnhancedParryVelocityRetention = 0.9f;
-        context.EnhancedParryRemaining = 0f;
+        context.EnhancedParryUsesRemaining = 0;
+    }
+
+    public override void OnUseConsumed(PowerUpContext context)
+    {
+        Debug.Log($"[EnhancedParry] Uso consumido. Restantes: {context.EnhancedParryUsesRemaining}");
+
+        if (context.EnhancedParryUsesRemaining == 1)
+        {
+            Debug.LogWarning("[EnhancedParry] Ultimo uso disponible");
+        }
     }
 }

@@ -3,11 +3,6 @@ using UnityEngine;
 
 public class LifeManager : MonoBehaviourSingleton<LifeManager>
 {
-    [Header("LIVES SETTINGS")]
-    [SerializeField] private int _maxLives = 5;
-    [SerializeField] private int _startingLives = 5;
-    [SerializeField] private int _lifeRechargeSeconds = 1800;
-
     public int CurrentLives { get; private set; }
     private DateTime _lastLifeUsedUtc;
 
@@ -15,10 +10,22 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
     private int _virtualLives;
     private bool _hasVirtualDeduction = false;
 
-    [Header("ADS CONFIGURATION")]
-    [SerializeField] private int lossesRequiredForAd = 2;
-    [SerializeField] private bool enableConsecutiveLossAds = true;
-    [SerializeField] private bool enableNoLivesAds = true;
+    // DEPRECATED
+    //[Header("ADS CONFIGURATION")]
+    //[SerializeField] private int lossesRequiredForAd = 2;
+    //[SerializeField] private bool enableConsecutiveLossAds = true;
+    //[SerializeField] private bool enableNoLivesAds = true;
+    //[Header("LIVES SETTINGS")]
+    //[SerializeField] private int _maxLives = 5;
+    //[SerializeField] private int _startingLives = 5;
+    //[SerializeField] private int _lifeRechargeSeconds = 1800;
+
+    private int MaxLives => GameConfigManager.Config.maxLives;
+    private int StartingLives => GameConfigManager.Config.startingLives;
+    private int LifeRechargeSeconds => GameConfigManager.Config.lifeRechargeSeconds;
+    private int LossesRequiredForAd => GameConfigManager.Config.lossesRequiredForAd;
+    private bool EnableConsecutiveLossAds => GameConfigManager.Config.enableConsecutiveLossAds;
+    private bool EnableNoLivesAds => GameConfigManager.Config.enableNoLivesAds;
 
     private int totalLivesLostThisSession = 0;
 
@@ -55,18 +62,18 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
         bool isCorruptOrFirstTime =
             data == null ||
             data.currentLives < 0 ||
-            data.currentLives > _maxLives ||
+            data.currentLives > MaxLives ||
             !validDate;
 
         if (isCorruptOrFirstTime)
         {
-            CurrentLives = Mathf.Clamp(_startingLives, 0, _maxLives);
+            CurrentLives = Mathf.Clamp(StartingLives, 0, MaxLives);
             _lastLifeUsedUtc = DateTime.UtcNow;
             Persist("Init (default)");
         }
         else
         {
-            CurrentLives = Mathf.Clamp(data.currentLives, 0, _maxLives);
+            CurrentLives = Mathf.Clamp(data.currentLives, 0, MaxLives);
             _lastLifeUsedUtc = DateTime.SpecifyKind(lastRegenUtc, DateTimeKind.Utc);
         }
 
@@ -76,7 +83,7 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
 
     private void Persist(string reason = "Autosave")
     {
-        bool hasTimer = CurrentLives < _maxLives;
+        bool hasTimer = CurrentLives < MaxLives;
         if (AutoSaveManager.Instance != null)
         {
             AutoSaveManager.Instance.OnLivesChanged(CurrentLives, _lastLifeUsedUtc, hasTimer);
@@ -92,15 +99,15 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
 
     private void UpdateLifeRecharge()
     {
-        if (CurrentLives >= _maxLives) return;
+        if (CurrentLives >= MaxLives) return;
 
         double seconds = (DateTime.UtcNow - _lastLifeUsedUtc).TotalSeconds;
-        if (seconds < _lifeRechargeSeconds) return;
+        if (seconds < LifeRechargeSeconds) return;
 
-        int toGenerate = Mathf.FloorToInt((float)seconds / _lifeRechargeSeconds);
-        int newLives = Mathf.Min(CurrentLives + toGenerate, _maxLives);
+        int toGenerate = Mathf.FloorToInt((float)seconds / LifeRechargeSeconds);
+        int newLives = Mathf.Min(CurrentLives + toGenerate, MaxLives);
 
-        _lastLifeUsedUtc = _lastLifeUsedUtc.AddSeconds(toGenerate * _lifeRechargeSeconds);
+        _lastLifeUsedUtc = _lastLifeUsedUtc.AddSeconds(toGenerate * LifeRechargeSeconds);
         CurrentLives = newLives;
 
         if (_hasVirtualDeduction)
@@ -123,15 +130,15 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
 
     private void CheckOfflineRegeneration()
     {
-        if (CurrentLives >= _maxLives) return;
+        if (CurrentLives >= MaxLives) return;
 
         double seconds = (DateTime.UtcNow - _lastLifeUsedUtc).TotalSeconds;
-        if (seconds < _lifeRechargeSeconds) return;
+        if (seconds < LifeRechargeSeconds) return;
 
-        int toGenerate = Mathf.FloorToInt((float)seconds / _lifeRechargeSeconds);
-        int newLives = Mathf.Min(CurrentLives + toGenerate, _maxLives);
+        int toGenerate = Mathf.FloorToInt((float)seconds / LifeRechargeSeconds);
+        int newLives = Mathf.Min(CurrentLives + toGenerate, MaxLives);
 
-        _lastLifeUsedUtc = _lastLifeUsedUtc.AddSeconds(toGenerate * _lifeRechargeSeconds);
+        _lastLifeUsedUtc = _lastLifeUsedUtc.AddSeconds(toGenerate * LifeRechargeSeconds);
         CurrentLives = newLives;
 
         _virtualLives = _hasVirtualDeduction ? Mathf.Max(0, CurrentLives - 1) : CurrentLives;
@@ -140,7 +147,15 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
         EmitDisplayLivesChanged();
     }
 
-    public bool CanPlay() => CurrentLives > 0;
+    public bool CanPlay()
+    {
+        if (GameConfigManager.IsReady() && GameConfigManager.Config.infiniteLives)
+        {
+            return true;
+        }
+
+        return CurrentLives > 0;
+    }
 
     public void OnLevelStart()
     {
@@ -167,7 +182,7 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
 
         if (_hasVirtualDeduction)
         {
-            CurrentLives = Mathf.Clamp(_virtualLives, 0, _maxLives);
+            CurrentLives = Mathf.Clamp(_virtualLives, 0, MaxLives);
             _lastLifeUsedUtc = DateTime.UtcNow;
 
             _hasVirtualDeduction = false;
@@ -231,7 +246,7 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
     {
         if (_hasVirtualDeduction)
         {
-            CurrentLives = Mathf.Clamp(_virtualLives, 0, _maxLives);
+            CurrentLives = Mathf.Clamp(_virtualLives, 0, MaxLives);
             _lastLifeUsedUtc = DateTime.UtcNow;
 
             _hasVirtualDeduction = false;
@@ -247,7 +262,7 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
 
     public void AddLife()
     {
-        if (CurrentLives >= _maxLives) return;
+        if (CurrentLives >= MaxLives) return;
 
         CurrentLives++;
 
@@ -270,10 +285,10 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
 
     public void FillAllLives()
     {
-        if (CurrentLives >= _maxLives) return;
+        if (CurrentLives >= MaxLives) return;
 
         int previousLives = CurrentLives;
-        CurrentLives = _maxLives;
+        CurrentLives = MaxLives;
         _lastLifeUsedUtc = DateTime.UtcNow;
 
         if (_hasVirtualDeduction)
@@ -287,16 +302,16 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
 
     public float GetRechargeProgress()
     {
-        if (CurrentLives >= _maxLives) return 1f;
+        if (CurrentLives >= MaxLives) return 1f;
         double seconds = (DateTime.UtcNow - _lastLifeUsedUtc).TotalSeconds;
-        return Mathf.Clamp01((float)(seconds / _lifeRechargeSeconds));
+        return Mathf.Clamp01((float)(seconds / LifeRechargeSeconds));
     }
 
     public TimeSpan GetTimeToNextLife()
     {
-        if (CurrentLives >= _maxLives) return TimeSpan.Zero;
+        if (CurrentLives >= MaxLives) return TimeSpan.Zero;
         double seconds = (DateTime.UtcNow - _lastLifeUsedUtc).TotalSeconds;
-        double secondsLeft = _lifeRechargeSeconds - seconds;
+        double secondsLeft = LifeRechargeSeconds - seconds;
         return TimeSpan.FromSeconds(Mathf.Max(0, (float)secondsLeft));
     }
 
@@ -306,7 +321,12 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
 
     private void EmitDisplayLivesChanged()
     {
-        OnLivesChanged?.Invoke(GetDisplayLives());
+        int displayLives = GetDisplayLives();
+
+        GameEvents.RaiseLivesChanged(displayLives);
+
+        // DEPRECATED
+        //OnLivesChanged?.Invoke(displayLives);
     }
 
     private void LoadAdsProgress()
@@ -322,16 +342,16 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
 
     private void CheckLifeLossAds()
     {
-        if (enableNoLivesAds && CurrentLives == 0)
+        if (EnableNoLivesAds && CurrentLives == 0)
         {
             ShowNoLivesAd();
             ResetLossCounter();
         }
-        else if (enableConsecutiveLossAds)
+        else if (EnableConsecutiveLossAds)
         {
             currentConsecutiveLosses++;
 
-            if (currentConsecutiveLosses >= lossesRequiredForAd)
+            if (currentConsecutiveLosses >= LossesRequiredForAd)
             {
                 ShowConsecutiveLossAd();
                 ResetLossCounter();

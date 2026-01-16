@@ -247,12 +247,18 @@ public class PreGameUIManager : MonoBehaviour
 
     private void OnEnable()
     {
-        DailyRewardSystem.OnRewardClaimed += OnDailyRewardClaimedRefresh;
+        GameEvents.OnRewardClaimed += OnDailyRewardClaimedRefresh;
+
+        // DEPRECATED
+        //DailyRewardSystem.OnRewardClaimed += OnDailyRewardClaimedRefresh;
     }
 
     private void OnDisable()
     {
-        DailyRewardSystem.OnRewardClaimed -= OnDailyRewardClaimedRefresh;
+        GameEvents.OnRewardClaimed -= OnDailyRewardClaimedRefresh;
+
+        // DEPRECATED
+        //DailyRewardSystem.OnRewardClaimed -= OnDailyRewardClaimedRefresh;
         StopAllAnimations();
     }
 
@@ -321,21 +327,10 @@ public class PreGameUIManager : MonoBehaviour
     {
         if (item.quantity <= 0) return;
 
-        var powerUpBase = GetPowerUpBaseByType(item.type);
-        float duration = powerUpBase != null ? powerUpBase.duration : 3600f;
-
-        if (PowerUpManager.Instance.ActivatePowerUpFromInventory(item.type, duration))
+        if (PowerUpManager.Instance.ActivatePowerUpFromInventory(item.type))
         {
             ShowPreGamePowerUps();
         }
-    }
-
-    private PowerUpBase GetPowerUpBaseByType(PowerUpType type)
-    {
-        foreach (var pu in allPowerUpBases)
-            if (pu.powerUpType == type)
-                return pu;
-        return null;
     }
 
     private void SetGoals()

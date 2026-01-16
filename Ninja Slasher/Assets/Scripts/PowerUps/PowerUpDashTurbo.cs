@@ -16,4 +16,14 @@ public class PowerUpDashTurbo : PowerUpBase
         context.DashTurboActive = false;
         context.DashCooldownMultiplier /= dashCooldownMultiplier;
     }
+
+    public override void OnUseConsumed(PowerUpContext context)
+    {
+        Debug.Log($"[DashTurbo] Uso consumido. Restantes: {context.DashTurboUsesRemaining}");
+
+        if (context.DashTurboUsesRemaining == 1)
+        {
+            Debug.LogWarning("[DashTurbo] Ultimo uso disponible");
+        }
+    }
 }

@@ -5,30 +5,33 @@ public class PowerUpContext
 {
     public bool ExtraTimeActive;
     public float ExtraTimePercent;
-    public float ExtraTimeRemaining;
+    public int ExtraTimeUsesRemaining;
 
     public bool DashTurboActive;
     public float DashCooldownMultiplier = 1f;
-    public float DashTurboRemaining;
+    public int DashTurboUsesRemaining;
 
     public bool ParryPerfectActive;
     public float ParryBonusWindow = 0f;
-    public float ParryPerfectRemaining;
+    public int ParryPerfectUsesRemaining;
 
     public bool ComboMasterActive;
     public float ComboBonusPercent;
-    public float ComboMasterRemaining;
+    public int ComboMasterUsesRemaining;
 
     public bool SecondChanceActive;
-    public float SecondChanceRemaining;
+    public int SecondChanceUsesRemaining;
 
     public bool TrajectoryGuideActive;
-    public float TrajectoryGuideRemaining;
+    public int TrajectoryGuideUsesRemaining;
 
     public bool EnhancedParryActive;
     public int EnhancedParryBounces = 3;
     public float EnhancedParryVelocityRetention = 0.9f;
-    public float EnhancedParryRemaining;
+    public int EnhancedParryUsesRemaining;
+
+    public bool HawkVisionActive;
+    public int HawkVisionUsesRemaining;
 
     public bool AnyPowerUpActive()
     {
@@ -41,19 +44,19 @@ public class PowerUpContext
                EnhancedParryActive;
     }
 
-    public float GetLowestRemainingTime()
+    public int GetLowestRemainingUses()
     {
-        var times = new List<float>();
+        var uses = new List<int>();
 
-        if (ExtraTimeActive) times.Add(ExtraTimeRemaining);
-        if (DashTurboActive) times.Add(DashTurboRemaining);
-        if (ParryPerfectActive) times.Add(ParryPerfectRemaining);
-        if (ComboMasterActive) times.Add(ComboMasterRemaining);
-        if (SecondChanceActive) times.Add(SecondChanceRemaining);
-        if (TrajectoryGuideActive) times.Add(TrajectoryGuideRemaining);
-        if (EnhancedParryActive) times.Add(EnhancedParryRemaining);
+        if (ExtraTimeActive) uses.Add(ExtraTimeUsesRemaining);
+        if (DashTurboActive) uses.Add(DashTurboUsesRemaining);
+        if (ParryPerfectActive) uses.Add(ParryPerfectUsesRemaining);
+        if (ComboMasterActive) uses.Add(ComboMasterUsesRemaining);
+        if (SecondChanceActive) uses.Add(SecondChanceUsesRemaining);
+        if (TrajectoryGuideActive) uses.Add(TrajectoryGuideUsesRemaining);
+        if (EnhancedParryActive) uses.Add(EnhancedParryUsesRemaining);
 
-        return times.Count > 0 ? times.Min() : 0f;
+        return uses.Count > 0 ? uses.Min() : 0;
     }
 
     public int GetActivePowerUpsCount()
