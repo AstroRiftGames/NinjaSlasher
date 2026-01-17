@@ -22,6 +22,7 @@ public class FloatingComboText : MonoBehaviour
     [SerializeField] private float _punchStrength = 0.3f;
 
     private Sequence _animationSequence;
+    private FloatingTextPool _pool;
 
     private void Awake()
     {
@@ -30,6 +31,11 @@ public class FloatingComboText : MonoBehaviour
 
         if (_canvasGroup == null)
             _canvasGroup = GetComponent<CanvasGroup>();
+    }
+
+    public void Initialize(FloatingTextPool pool)
+    {
+        _pool = pool;
     }
 
     public void Show(string message, Vector3 worldPosition, Color color)
@@ -41,14 +47,17 @@ public class FloatingComboText : MonoBehaviour
 
         if (canvas == null)
         {
+            Debug.LogWarning("[FloatingComboText] No se encontró Canvas parent");
+            ReturnToPool();
             return;
         }
 
-        Camera canvasCamera = canvas.worldCamera != null ?
-            canvas.worldCamera : Camera.main;
+        Camera canvasCamera = canvas.worldCamera != null ? canvas.worldCamera : Camera.main;
 
         if (canvasCamera == null)
         {
+            Debug.LogWarning("[FloatingComboText] No se encontró Camera");
+            ReturnToPool();
             return;
         }
 
@@ -111,10 +120,19 @@ public class FloatingComboText : MonoBehaviour
         _animationSequence.Append(_canvasGroup.DOFade(0f, _duration * 0.35f)
             .SetEase(Ease.InQuad));
 
-        _animationSequence.OnComplete(() =>
+        _animationSequence.OnComplete(ReturnToPool);
+    }
+
+    private void ReturnToPool()
+    {
+        if (_pool != null)
         {
-            FloatingComboTextManager.Instance?.ReturnToPool(this);
-        });
+            _pool.Return(this);
+        }
+        else
+        {
+            gameObject.SetActive(false);
+        }
     }
 
     private void OnDestroy()
