@@ -29,7 +29,7 @@ public class LevelSessionManager : MonoBehaviourSingleton<LevelSessionManager>
 
         DontDestroyOnLoad(gameObject);
 
-        Debug.Log("[LevelSessionManager] Inicializado - Persistente entre escenas");
+        Debug.Log("[LevelSessionManager] Inicializado");
     }
 
     private void OnEnable()

@@ -53,34 +53,29 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        if (scene.name.Contains("Level"))
-        {
-            if (!_levelStarted && LifeManager.Instance.CanPlay())
-            {
-                StartLevel();
-            }
-        }
+        Time.timeScale = 1f;
 
-        Debug.Log($"[LevelManager] Escena cargada: {scene.name}");
+        Debug.Log($"[GameManager] Escena cargada: {scene.name}");
     }
 
-    private void StartLevel()
-    {
-        if (_levelStarted || !LifeManager.Instance.CanPlay()) return;
+    //DEPRECATED
+    //private void StartLevel()
+    //{
+    //    if (_levelStarted || !LifeManager.Instance.CanPlay()) return;
 
-        _playerHasDied = false;
-        _levelEnded = false;
+    //    _playerHasDied = false;
+    //    _levelEnded = false;
 
-        _levelStarted = true;
-        LifeManager.Instance.OnLevelStart();
+    //    _levelStarted = true;
+    //    LifeManager.Instance.OnLevelStart();
 
-        if (LevelSessionManager.Instance != null)
-        {
-            LevelSessionManager.Instance.StartLevel();
-        }
+    //    if (LevelSessionManager.Instance != null)
+    //    {
+    //        LevelSessionManager.Instance.StartLevel();
+    //    }
 
-        Debug.Log("[LevelManager] Nivel iniciado");
-    }
+    //    Debug.Log("[LevelManager] Nivel iniciado");
+    //}
 
     private void OnLevelCompleted(LevelStats stats)
     {

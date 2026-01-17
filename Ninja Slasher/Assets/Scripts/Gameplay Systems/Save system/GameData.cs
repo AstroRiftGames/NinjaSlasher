@@ -15,6 +15,8 @@ public class GameData
     public List<int> unlockedAreas = new List<int> { 1 }; // areas desbloqueadas
     public Dictionary<int, LevelProgressData> levelProgressData = new Dictionary<int, LevelProgressData>();
     public int totalStars = 0;
+    public int consecutiveLevelWins = 0;
+    public int lastCompletedLevel = -1;
 
     // Sistema de vidas
     public int currentLives;

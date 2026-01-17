@@ -37,8 +37,6 @@ public class FloatingTextPool : MonoBehaviour
         );
 
         pool.OnObjectRetrieved += InitializeText;
-
-        Debug.Log($"[FloatingTextPool] Pool inicializado con {initialPoolSize} textos");
     }
 
     private void InitializeText(FloatingComboText text)

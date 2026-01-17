@@ -210,7 +210,7 @@ public class DailyRewardUIManager : MonoBehaviourSingleton<DailyRewardUIManager>
     }
 
     void OnRewardAvailabilityChanged(bool isAvailable)
-    {
+    { 
         Debug.Log($"[DailyRewardUIManager] Disponibilidad cambiada: {isAvailable}");
         UpdateClaimButton();
     }

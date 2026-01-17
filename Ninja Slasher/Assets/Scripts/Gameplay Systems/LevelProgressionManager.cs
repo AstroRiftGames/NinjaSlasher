@@ -20,18 +20,14 @@ public class LevelProgressionManager : MonoBehaviourSingleton<LevelProgressionMa
     //[SerializeField] private int levelsRequiredForAd = 3;
     //[SerializeField] private bool enableConsecutiveLevelAds = true;
     //[SerializeField] private bool enableAreaUnlockAds = true;
-
-    [Header("BOSS REQUIREMENTS")]
-    [SerializeField] private int[] starsRequiredPerBoss = { 5, 15, 30, 50, 75 };
+    //[Header("BOSS REQUIREMENTS")]
+    //[SerializeField] private int[] starsRequiredPerBoss = { 5, 15, 30, 50, 75 };
 
     private int LevelsPerArea => GameConfigManager.Config.levelsPerArea;
     private int TotalAreas => GameConfigManager.Config.totalAreas;
     private int LevelsRequiredForAd => GameConfigManager.Config.levelsRequiredForAd;
     private bool EnableConsecutiveLevelAds => GameConfigManager.Config.enableConsecutiveLevelAds;
     private bool EnableAreaUnlockAds => GameConfigManager.Config.enableAreaUnlockAds;
-
-    private int currentConsecutiveWins = 0;
-    private int lastCompletedLevel = -1;
 
     private bool isInitialized = false;
 
@@ -43,7 +39,6 @@ public class LevelProgressionManager : MonoBehaviourSingleton<LevelProgressionMa
         var _ = SaveManager.Instance;
         base.Awake();
         Initialize();
-        LoadConsecutiveProgress();
     }
 
     private void Initialize()
@@ -71,28 +66,20 @@ public class LevelProgressionManager : MonoBehaviourSingleton<LevelProgressionMa
         OnProgressionUpdated?.Invoke();
     }
 
-    private void LoadConsecutiveProgress()
-    {
-        currentConsecutiveWins = PlayerPrefs.GetInt("ConsecutiveWins", 0);
-        lastCompletedLevel = PlayerPrefs.GetInt("LastCompletedLevel", -1);
-    }
-
-    private void SaveConsecutiveProgress()
-    {
-        PlayerPrefs.SetInt("ConsecutiveWins", currentConsecutiveWins);
-        PlayerPrefs.SetInt("LastCompletedLevel", lastCompletedLevel);
-        PlayerPrefs.Save();
-    }
-
     private void CheckConsecutiveLevelAd(int levelId, int starsEarned)
     {
-        if (!EnableConsecutiveLevelAds)
+        if (!EnableConsecutiveLevelAds || SaveManager.Instance == null)
             return;
+
+        var gameData = SaveManager.Instance.GetGameData();
+        int currentConsecutiveWins = gameData.consecutiveLevelWins;
+        int lastCompletedLevel = gameData.lastCompletedLevel;
 
         if (lastCompletedLevel == -1 || levelId == lastCompletedLevel + 1)
         {
             currentConsecutiveWins++;
-            lastCompletedLevel = levelId;
+            gameData.consecutiveLevelWins = currentConsecutiveWins;
+            gameData.lastCompletedLevel = levelId;
 
             if (currentConsecutiveWins >= LevelsRequiredForAd)
             {
@@ -103,11 +90,11 @@ public class LevelProgressionManager : MonoBehaviourSingleton<LevelProgressionMa
         else
         {
             ResetConsecutiveCounter();
-            currentConsecutiveWins = 1;
-            lastCompletedLevel = levelId;
+            gameData.consecutiveLevelWins = 1;
+            gameData.lastCompletedLevel = levelId;
         }
 
-        SaveConsecutiveProgress();
+        SaveManager.Instance.SaveData();
     }
 
     private void ShowConsecutiveLevelAd()
@@ -142,12 +129,18 @@ public class LevelProgressionManager : MonoBehaviourSingleton<LevelProgressionMa
 
     private void ResetConsecutiveCounter()
     {
-        if (currentConsecutiveWins > 0)
+        if (SaveManager.Instance == null) return;
+
+        var gameData = SaveManager.Instance.GetGameData();
+
+        if (gameData.consecutiveLevelWins > 0)
         {
-            Debug.Log($"Contador consecutivo reseteado (era: {currentConsecutiveWins})");
+            Debug.Log($"[LevelProgressionManager] Contador consecutivo reseteado (era: {gameData.consecutiveLevelWins})");
         }
-        currentConsecutiveWins = 0;
-        lastCompletedLevel = -1;
+
+        gameData.consecutiveLevelWins = 0;
+        gameData.lastCompletedLevel = -1;
+        SaveManager.Instance.SaveData();
     }
 
     public bool IsLevelUnlocked(int levelId)
@@ -228,7 +221,7 @@ public class LevelProgressionManager : MonoBehaviourSingleton<LevelProgressionMa
                 highestUnlockedLevel = 1,
                 highestUnlockedArea = 1,
                 totalStars = 0,
-                nextBossRequirement = starsRequiredPerBoss.Length > 0 ? starsRequiredPerBoss[0] : 0
+                nextBossRequirement = GameConfigManager.Config.starsRequiredPerBoss.Length > 0 ? GameConfigManager.Config.starsRequiredPerBoss[0] : 0
             };
         }
 
@@ -302,17 +295,24 @@ public class LevelProgressionManager : MonoBehaviourSingleton<LevelProgressionMa
 
     private int GetNextBossStarRequirement(int currentArea)
     {
-        if (currentArea <= starsRequiredPerBoss.Length)
+        if (GameConfigManager.IsReady())
         {
-            return starsRequiredPerBoss[currentArea - 1];
+            return GameConfigManager.Config.GetStarsRequiredForBoss(currentArea);
         }
+
+        Debug.LogWarning($"[LevelProgressionManager] GameConfigManager no está listo");
         return 0;
     }
 
-    private int GetStarsForBoss(int bossIndex)
-    {
-        return GameConfigManager.Config.GetStarsRequiredForBoss(bossIndex);
-    }
+    //DEPRECATED
+    //private int GetNextBossStarRequirement(int currentArea)
+    //{
+    //    if (currentArea <= starsRequiredPerBoss.Length)
+    //    {
+    //        return starsRequiredPerBoss[currentArea - 1];
+    //    }
+    //    return 0;
+    //}
 
     private void UnlockAllLevelsForDebug()
     {
@@ -324,22 +324,22 @@ public class LevelProgressionManager : MonoBehaviourSingleton<LevelProgressionMa
     }
 
 #if UNITY_EDITOR
-    [ContextMenu("Debug/Simular Desbloqueo Área 1")]
+    [ContextMenu("Debug/Simular Desbloqueo Area 1")]
     private void SimulateUnlockArea1() => SimulateAreaUnlock(1);
 
-    [ContextMenu("Debug/Simular Desbloqueo Área 2")]
+    [ContextMenu("Debug/Simular Desbloqueo Area 2")]
     private void SimulateUnlockArea2() => SimulateAreaUnlock(2);
 
-    [ContextMenu("Debug/Simular Desbloqueo Área 3")]
+    [ContextMenu("Debug/Simular Desbloqueo Area 3")]
     private void SimulateUnlockArea3() => SimulateAreaUnlock(3);
 
-    [ContextMenu("Debug/Simular Desbloqueo Área 4")]
+    [ContextMenu("Debug/Simular Desbloqueo Area 4")]
     private void SimulateUnlockArea4() => SimulateAreaUnlock(4);
 
-    [ContextMenu("Debug/Simular Desbloqueo Área 5")]
+    [ContextMenu("Debug/Simular Desbloqueo Area 5")]
     private void SimulateUnlockArea5() => SimulateAreaUnlock(5);
 
-    [ContextMenu("Debug/Simular Desbloqueo de TODAS las Áreas")]
+    [ContextMenu("Debug/Simular Desbloqueo de TODAS las Areas")]
     private void SimulateUnlockAllAreas()
     {
         for (int area = 1; area <= TotalAreas; area++)
@@ -347,7 +347,7 @@ public class LevelProgressionManager : MonoBehaviourSingleton<LevelProgressionMa
             SimulateAreaUnlock(area, logDetails: false);
         }
 
-        Debug.Log($"[LevelProgressionManager] TODAS LAS ÁREAS DESBLOQUEADAS (1-{TotalAreas})");
+        Debug.Log($"[LevelProgressionManager] TODAS LAS AREAS DESBLOQUEADAS (1-{TotalAreas})");
         Debug.Log($"[LevelProgressionManager] Total de niveles desbloqueados: {TotalAreas * LevelsPerArea}");
         Debug.Log($"[LevelProgressionManager] Estrellas totales simuladas: {SaveManager.Instance.GetGameData().totalStars}");
 
@@ -373,7 +373,7 @@ public class LevelProgressionManager : MonoBehaviourSingleton<LevelProgressionMa
 
         if (logDetails)
         {
-            Debug.Log($"[LevelProgressionManager] === SIMULANDO DESBLOQUEO ÁREA {areaId} ===");
+            Debug.Log($"[LevelProgressionManager] SIMULANDO DESBLOQUEO AREA {areaId}");
             Debug.Log($"[LevelProgressionManager] Niveles: {firstLevelInArea} - {lastLevelInArea}");
         }
 
@@ -393,7 +393,7 @@ public class LevelProgressionManager : MonoBehaviourSingleton<LevelProgressionMa
 
             if (logDetails)
             {
-                Debug.Log($"[LevelProgressionManager]   Nivel {levelId}: {starsForLevel}");
+                Debug.Log($"[LevelProgressionManager] Nivel {levelId}: {starsForLevel}");
             }
         }
 
@@ -418,10 +418,9 @@ public class LevelProgressionManager : MonoBehaviourSingleton<LevelProgressionMa
 
         if (logDetails)
         {
-            Debug.Log($"[LevelProgressionManager] Área {areaId} desbloqueada completamente");
-            Debug.Log($"[LevelProgressionManager] Estrellas ganadas en área: {starsAddedThisArea}");
+            Debug.Log($"[LevelProgressionManager] Area {areaId} desbloqueada completamente");
+            Debug.Log($"[LevelProgressionManager] Estrellas ganadas en area: {starsAddedThisArea}");
             Debug.Log($"[LevelProgressionManager] Total de estrellas acumuladas: {gameData.totalStars}");
-            Debug.Log($"[LevelProgressionManager] ===================================");
         }
 
         OnProgressionUpdated?.Invoke();
@@ -431,18 +430,18 @@ public class LevelProgressionManager : MonoBehaviourSingleton<LevelProgressionMa
     {
         if (targetArea < 1 || targetArea > TotalAreas)
         {
-            Debug.LogError($"[LevelProgressionManager] Área objetivo inválida: {targetArea}");
+            Debug.LogError($"[LevelProgressionManager] Area objetivo invalida: {targetArea}");
             return;
         }
 
-        Debug.Log($"[LevelProgressionManager] === DESBLOQUEANDO HASTA ÁREA {targetArea} ===");
+        Debug.Log($"[LevelProgressionManager] DESBLOQUEANDO HASTA AREA {targetArea}");
 
         for (int area = 1; area <= targetArea; area++)
         {
             SimulateAreaUnlock(area, logDetails: false);
         }
 
-        Debug.Log($"[LevelProgressionManager] Áreas 1-{targetArea} desbloqueadas");
+        Debug.Log($"[LevelProgressionManager] Areas 1-{targetArea} desbloqueadas");
         Debug.Log($"[LevelProgressionManager] Total estrellas: {SaveManager.Instance.GetGameData().totalStars}");
 
         OnProgressionUpdated?.Invoke();
@@ -458,10 +457,10 @@ public class LevelProgressionManager : MonoBehaviourSingleton<LevelProgressionMa
         gameData.totalStars = total;
     }
 
-    [ContextMenu("Debug/Resetear Progreso Área 1")]
+    [ContextMenu("Debug/Resetear Progreso Area 1")]
     private void ResetArea1Progress() => ResetAreaProgress(1);
 
-    [ContextMenu("Debug/Resetear Progreso Área 2")]
+    [ContextMenu("Debug/Resetear Progreso Area 2")]
     private void ResetArea2Progress() => ResetAreaProgress(2);
 
     public void ResetAreaProgress(int areaId)
@@ -474,7 +473,7 @@ public class LevelProgressionManager : MonoBehaviourSingleton<LevelProgressionMa
 
         if (areaId < 1 || areaId > TotalAreas)
         {
-            Debug.LogError($"[LevelProgressionManager] Área inválida: {areaId}");
+            Debug.LogError($"[LevelProgressionManager] Area invalida: {areaId}");
             return;
         }
 
@@ -483,7 +482,7 @@ public class LevelProgressionManager : MonoBehaviourSingleton<LevelProgressionMa
         int firstLevelInArea = ((areaId - 1) * LevelsPerArea) + 1;
         int lastLevelInArea = areaId * LevelsPerArea;
 
-        Debug.Log($"[LevelProgressionManager] Reseteando área {areaId} (niveles {firstLevelInArea}-{lastLevelInArea})");
+        Debug.Log($"[LevelProgressionManager] Reseteando area {areaId} (niveles {firstLevelInArea}-{lastLevelInArea})");
 
         for (int levelId = firstLevelInArea; levelId <= lastLevelInArea; levelId++)
         {
@@ -512,13 +511,13 @@ public class LevelProgressionManager : MonoBehaviourSingleton<LevelProgressionMa
 
         SaveManager.Instance.SaveData();
 
-        Debug.Log($"[LevelProgressionManager] Área {areaId} reseteada");
+        Debug.Log($"[LevelProgressionManager] Area {areaId} reseteada");
         Debug.Log($"[LevelProgressionManager] Estrellas totales restantes: {gameData.totalStars}");
 
         OnProgressionUpdated?.Invoke();
     }
 
-    [ContextMenu("Debug/Mostrar Progreso Actual")]
+    [ContextMenu("Debug/Mostrar Progreso")]
     private void ShowCurrentProgress()
     {
         if (SaveManager.Instance == null)
@@ -529,13 +528,13 @@ public class LevelProgressionManager : MonoBehaviourSingleton<LevelProgressionMa
 
         var gameData = SaveManager.Instance.GetGameData();
 
-        Debug.Log("========== PROGRESO ACTUAL ==========");
-        Debug.Log($"Área más alta desbloqueada: {gameData.highestUnlockedArea}");
-        Debug.Log($"Nivel más alto desbloqueado: {gameData.highestUnlockedLevel}");
+        Debug.Log("[PROGRESO ACTUAL]");
+        Debug.Log($"Area mas alta desbloqueada: {gameData.highestUnlockedArea}");
+        Debug.Log($"Nivel mas alto desbloqueado: {gameData.highestUnlockedLevel}");
         Debug.Log($"Total de estrellas: {gameData.totalStars}");
-        Debug.Log($"Áreas desbloqueadas: {string.Join(", ", gameData.unlockedAreas)}");
+        Debug.Log($"Areas desbloqueadas: {string.Join(", ", gameData.unlockedAreas)}");
 
-        Debug.Log("\n--- Desglose por Área ---");
+        Debug.Log("\n Desglose por area");
         for (int area = 1; area <= TotalAreas; area++)
         {
             int firstLevel = ((area - 1) * LevelsPerArea) + 1;
@@ -555,10 +554,8 @@ public class LevelProgressionManager : MonoBehaviourSingleton<LevelProgressionMa
             bool isUnlocked = gameData.unlockedAreas.Contains(area);
             string status = isUnlocked ? "DESBLOQUEADA" : "BLOQUEADA";
 
-            Debug.Log($"Área {area} ({status}): {levelsCompleted}/{LevelsPerArea} niveles | {starsInArea} ⭐");
+            Debug.Log($"Area {area} ({status}): {levelsCompleted}/{LevelsPerArea} niveles | {starsInArea} ⭐");
         }
-
-        Debug.Log("=====================================");
     }
 
 #endif

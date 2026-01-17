@@ -18,6 +18,9 @@ public class GameDataDTO
     public string lastLifeRegenTime;
     public bool canRegenLives;
 
+    public int consecutiveLevelWins;
+    public int lastCompletedLevel;
+
     public List<PowerUpData> activePowerUps = new();
     public List<PowerUpInventoryItem> powerUpInventory = new();
 
@@ -70,6 +73,9 @@ public static class GameDataMapper
             bestCombo = d.bestCombo,
             totalPlayTime = d.totalPlayTime,
             lastPlayDate = d.lastPlayDate.ToString("o"),
+
+            consecutiveLevelWins = d.consecutiveLevelWins,
+            lastCompletedLevel = d.lastCompletedLevel,
         };
 
         if (d.levelStars != null)
@@ -114,7 +120,10 @@ public static class GameDataMapper
             totalGamesPlayed = dto.totalGamesPlayed,
             totalEnemiesKilled = dto.totalEnemiesKilled,
             bestCombo = dto.bestCombo,
-            totalPlayTime = dto.totalPlayTime
+            totalPlayTime = dto.totalPlayTime,
+
+            consecutiveLevelWins = dto.consecutiveLevelWins,
+            lastCompletedLevel = dto.lastCompletedLevel,
         };
 
         if (DateTime.TryParse(dto.lastPlayDate, null,
