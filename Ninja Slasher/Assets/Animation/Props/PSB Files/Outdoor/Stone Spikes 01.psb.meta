@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: 072960bc7af405f48affe0c9d796261b
+guid: ea556ed42a518264eb4002b685a5fd9a
 ScriptedImporter:
   internalIDToNameTable: []
   externalObjects: {}
@@ -83,7 +83,7 @@ ScriptedImporter:
       y: 0
       width: 0
       height: 0
-    spriteID: 069a47569da84cc42b4e2dd8a41d0eb9
+    spriteID: 3e9531447112cab40b3a2b713d6d5fdb
     spriteBone: []
     spriteOutline: []
     vertices: []
@@ -95,7 +95,7 @@ ScriptedImporter:
     spritePosition: {x: 0, y: 0}
   multiSpriteImportData: []
   layeredSpriteImportData:
-  - name: Thorny Plant
+  - name: Base
     originalName: 
     pivot: {x: 0.5, y: 0.5}
     alignment: 0
@@ -105,9 +105,9 @@ ScriptedImporter:
       serializedVersion: 2
       x: 4
       y: 4
-      width: 210
-      height: 278
-    spriteID: 7a6f574b6950fee44855d4226677a7a4
+      width: 721
+      height: 79
+    spriteID: a76d3f0f6cb971f4ebdb8e611e9926b1
     spriteBone: []
     spriteOutline: []
     vertices: []
@@ -116,7 +116,29 @@ ScriptedImporter:
     edges: []
     tessellationDetail: 0
     uvTransform: {x: 4, y: 4}
-    spritePosition: {x: 4, y: 15}
+    spritePosition: {x: 6, y: 9}
+  - name: Spikes
+    originalName: 
+    pivot: {x: 0.5, y: 0.5}
+    alignment: 0
+    border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
+    rect:
+      serializedVersion: 2
+      x: 4
+      y: 91
+      width: 604
+      height: 70
+    spriteID: 52c10ed009bb1714699087bb063ddd12
+    spriteBone: []
+    spriteOutline: []
+    vertices: []
+    spritePhysicsOutline: []
+    indices: 
+    edges: []
+    tessellationDetail: 0
+    uvTransform: {x: 4, y: 91}
+    spritePosition: {x: 65, y: 84}
   spriteImportData: []
   rigSpriteImportData: []
   sharedRigSpriteImportData: []
@@ -204,13 +226,33 @@ ScriptedImporter:
   resliceFromLayer: 0
   pSDLayerImportSetting: []
   psdLayers:
-  - name: Thorny Plant
-    spriteName: Thorny Plant
-    isGroup: 0
+  - name: Spikes
+    spriteName: 
+    isGroup: 1
     parentIndex: -1
-    spriteID: 7a6f574b6950fee44855d4226677a7a4
-    layerID: 12
+    spriteID: 8629541a8c0697b4684d7da5499bdfbc
+    layerID: 36
+    mosaicPosition: {x: 0, y: 0}
+    flatten: 0
+    isImported: 0
+    isVisible: 1
+  - name: Base
+    spriteName: Base
+    isGroup: 0
+    parentIndex: 0
+    spriteID: a76d3f0f6cb971f4ebdb8e611e9926b1
+    layerID: 41
     mosaicPosition: {x: 4, y: 4}
+    flatten: 0
+    isImported: 1
+    isVisible: 1
+  - name: Spikes
+    spriteName: Spikes
+    isGroup: 0
+    parentIndex: 0
+    spriteID: 52c10ed009bb1714699087bb063ddd12
+    layerID: 40
+    mosaicPosition: {x: 4, y: 91}
     flatten: 0
     isImported: 1
     isVisible: 1
@@ -218,7 +260,7 @@ ScriptedImporter:
   rigPSDLayers: []
   sharedRigPSDLayers: []
   importFileNodeState: 1
-  platformSettingsDirtyTick: 639020359860391479
+  platformSettingsDirtyTick: 639042216395533472
   spriteSizeExpandChanged: 0
   generateGOHierarchy: 0
   textureAssetName: 

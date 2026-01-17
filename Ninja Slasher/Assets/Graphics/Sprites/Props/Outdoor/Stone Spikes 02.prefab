@@ -1,6 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!1 &1582414274572217137
+--- !u!1 &4337465028529245370
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -8,37 +8,37 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 9170537583345173290}
-  - component: {fileID: 1516997793073774343}
+  - component: {fileID: 7268277600242379199}
+  - component: {fileID: 6469521815252141007}
   m_Layer: 0
-  m_Name: Hollow Tree-Foreground
+  m_Name: Base
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &9170537583345173290
+--- !u!4 &7268277600242379199
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1582414274572217137}
+  m_GameObject: {fileID: 4337465028529245370}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -0.09500027, y: 7.1349998, z: 0}
+  m_LocalPosition: {x: 0.029999971, y: 0.48499998, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 2614621526857251552}
+  m_Father: {fileID: 3510531213210152924}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!212 &1516997793073774343
+--- !u!212 &6469521815252141007
 SpriteRenderer:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1582414274572217137}
+  m_GameObject: {fileID: 4337465028529245370}
   m_Enabled: 1
   m_CastShadows: 0
   m_ReceiveShadows: 0
@@ -76,18 +76,18 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 2
-  m_Sprite: {fileID: -7349075342671746021, guid: 588b44c3c4d609a448dd3c7cbdf06a00, type: 3}
+  m_Sprite: {fileID: 5822560393657887400, guid: 6a84c05f4e26c394b8cab883c526457a, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
-  m_Size: {x: 9.17, y: 13.89}
+  m_Size: {x: 5.79, y: 0.79}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
---- !u!1 &3456248715197498828
+--- !u!1 &5891744213939815048
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -95,32 +95,32 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 2614621526857251552}
+  - component: {fileID: 3510531213210152924}
   m_Layer: 0
-  m_Name: Hollow Tree
+  m_Name: Stone Spikes 02
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &2614621526857251552
+--- !u!4 &3510531213210152924
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3456248715197498828}
+  m_GameObject: {fileID: 5891744213939815048}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -14.7, y: 0.24, z: 0}
-  m_LocalScale: {x: 0.60225, y: 0.60225, z: 0.60225}
+  m_LocalPosition: {x: 2.967, y: -5.36, z: 0}
+  m_LocalScale: {x: 0.29289, y: 0.29289, z: 0.29289}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 9170537583345173290}
-  - {fileID: 6698581565592069743}
+  - {fileID: 7268277600242379199}
+  - {fileID: 423621702117055033}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &5221141408012714885
+--- !u!1 &8370834412235706215
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -128,37 +128,37 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 6698581565592069743}
-  - component: {fileID: 2148066624541666657}
+  - component: {fileID: 423621702117055033}
+  - component: {fileID: 4341261967954027989}
   m_Layer: 0
-  m_Name: Hollow Tree-Background
+  m_Name: Spikes
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &6698581565592069743
+--- !u!4 &423621702117055033
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5221141408012714885}
+  m_GameObject: {fileID: 8370834412235706215}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -0.075000286, y: 7.0899997, z: 0}
+  m_LocalPosition: {x: 0.035000086, y: 1.1899999, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 2614621526857251552}
+  m_Father: {fileID: 3510531213210152924}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!212 &2148066624541666657
+--- !u!212 &4341261967954027989
 SpriteRenderer:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5221141408012714885}
+  m_GameObject: {fileID: 8370834412235706215}
   m_Enabled: 1
   m_CastShadows: 0
   m_ReceiveShadows: 0
@@ -196,12 +196,12 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 1
-  m_Sprite: {fileID: 2366097288707804669, guid: 588b44c3c4d609a448dd3c7cbdf06a00, type: 3}
+  m_Sprite: {fileID: 6259178339443431587, guid: 6a84c05f4e26c394b8cab883c526457a, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
-  m_Size: {x: 7.63, y: 9.34}
+  m_Size: {x: 4.62, y: 0.7}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1

@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: c18edb8862b594a419c6513590c7ed44
+guid: 6a84c05f4e26c394b8cab883c526457a
 ScriptedImporter:
   internalIDToNameTable: []
   externalObjects: {}
@@ -83,7 +83,7 @@ ScriptedImporter:
       y: 0
       width: 0
       height: 0
-    spriteID: c4a5fe0a15962b44f8055a35e4490deb
+    spriteID: 051f7439e694e9e418094e5b777a1b7e
     spriteBone: []
     spriteOutline: []
     vertices: []
@@ -95,7 +95,7 @@ ScriptedImporter:
     spritePosition: {x: 0, y: 0}
   multiSpriteImportData: []
   layeredSpriteImportData:
-  - name: Tree Leaves 02
+  - name: Base
     originalName: 
     pivot: {x: 0.5, y: 0.5}
     alignment: 0
@@ -105,9 +105,9 @@ ScriptedImporter:
       serializedVersion: 2
       x: 4
       y: 4
-      width: 350
-      height: 356
-    spriteID: bcf5c19435fc9e740a0cd2e54042ba39
+      width: 579
+      height: 79
+    spriteID: 2ca2179026262124ba90c83ec18ad27c
     spriteBone: []
     spriteOutline: []
     vertices: []
@@ -116,7 +116,29 @@ ScriptedImporter:
     edges: []
     tessellationDetail: 0
     uvTransform: {x: 4, y: 4}
-    spritePosition: {x: 633, y: 310}
+    spritePosition: {x: 6, y: 9}
+  - name: Spikes
+    originalName: 
+    pivot: {x: 0.5, y: 0.5}
+    alignment: 0
+    border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
+    rect:
+      serializedVersion: 2
+      x: 4
+      y: 91
+      width: 462
+      height: 70
+    spriteID: adfbbe9fb4f40ac44bf8cfec3f833de9
+    spriteBone: []
+    spriteOutline: []
+    vertices: []
+    spritePhysicsOutline: []
+    indices: 
+    edges: []
+    tessellationDetail: 0
+    uvTransform: {x: 4, y: 91}
+    spritePosition: {x: 65, y: 84}
   spriteImportData: []
   rigSpriteImportData: []
   sharedRigSpriteImportData: []
@@ -204,51 +226,41 @@ ScriptedImporter:
   resliceFromLayer: 0
   pSDLayerImportSetting: []
   psdLayers:
-  - name: Tree Leaves 01
+  - name: Stone Spikes
     spriteName: 
-    isGroup: 0
+    isGroup: 1
     parentIndex: -1
-    spriteID: 375f0c9fe987a4845a41f7aeb5c1c569
-    layerID: 15
+    spriteID: 4837af9ed2d7e7d4ea6b0a9214ed42fe
+    layerID: 29
     mosaicPosition: {x: 0, y: 0}
     flatten: 0
     isImported: 0
-    isVisible: 0
-  - name: Tree Leaves 02
-    spriteName: Tree Leaves 02
+    isVisible: 1
+  - name: Base
+    spriteName: Base
     isGroup: 0
-    parentIndex: -1
-    spriteID: bcf5c19435fc9e740a0cd2e54042ba39
-    layerID: 14
+    parentIndex: 0
+    spriteID: 2ca2179026262124ba90c83ec18ad27c
+    layerID: 34
     mosaicPosition: {x: 4, y: 4}
     flatten: 0
     isImported: 1
     isVisible: 1
-  - name: "Rect\xE1ngulo 1"
-    spriteName: 
+  - name: Spikes
+    spriteName: Spikes
     isGroup: 0
-    parentIndex: -1
-    spriteID: ba673329636a86048ad6b6e855b40030
-    layerID: 13
-    mosaicPosition: {x: 0, y: 0}
+    parentIndex: 0
+    spriteID: adfbbe9fb4f40ac44bf8cfec3f833de9
+    layerID: 33
+    mosaicPosition: {x: 4, y: 91}
     flatten: 0
-    isImported: 0
-    isVisible: 0
-  - name: Fondo
-    spriteName: 
-    isGroup: 0
-    parentIndex: -1
-    spriteID: 735fb177f5a721046892ddc181457404
-    layerID: 1
-    mosaicPosition: {x: 0, y: 0}
-    flatten: 0
-    isImported: 0
-    isVisible: 0
+    isImported: 1
+    isVisible: 1
   mosaicPSDLayers: []
   rigPSDLayers: []
   sharedRigPSDLayers: []
   importFileNodeState: 1
-  platformSettingsDirtyTick: 639042193644790808
+  platformSettingsDirtyTick: 639042223343617694
   spriteSizeExpandChanged: 0
   generateGOHierarchy: 0
   textureAssetName: 

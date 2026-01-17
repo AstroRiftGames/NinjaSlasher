@@ -83,7 +83,7 @@ ScriptedImporter:
       y: 0
       width: 0
       height: 0
-    spriteID: 14f8fe9146660cd46bc838a3a722f39b
+    spriteID: 74bbd9e2c6a5658429041c61496409fc
     spriteBone: []
     spriteOutline: []
     vertices: []
@@ -95,7 +95,7 @@ ScriptedImporter:
     spritePosition: {x: 0, y: 0}
   multiSpriteImportData: []
   layeredSpriteImportData:
-  - name: Hollow Tree
+  - name: Hollow Tree-Foreground
     originalName: 
     pivot: {x: 0.5, y: 0.5}
     alignment: 0
@@ -105,9 +105,9 @@ ScriptedImporter:
       serializedVersion: 2
       x: 4
       y: 4
-      width: 1181
-      height: 1870
-    spriteID: d894048c07744ed42830a226fced9b99
+      width: 917
+      height: 1389
+    spriteID: b5018e635ceb11a4ba7f4bbc11cf3e32
     spriteBone: []
     spriteOutline: []
     vertices: []
@@ -116,7 +116,29 @@ ScriptedImporter:
     edges: []
     tessellationDetail: 0
     uvTransform: {x: 4, y: 4}
-    spritePosition: {x: 3, y: 4}
+    spritePosition: {x: 3, y: 19}
+  - name: Hollow Tree-Background
+    originalName: 
+    pivot: {x: 0.5, y: 0.5}
+    alignment: 0
+    border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
+    rect:
+      serializedVersion: 2
+      x: 929
+      y: 4
+      width: 763
+      height: 934
+    spriteID: 33f06595ba158934986a49d5908b2516
+    spriteBone: []
+    spriteOutline: []
+    vertices: []
+    spritePhysicsOutline: []
+    indices: 
+    edges: []
+    tessellationDetail: 0
+    uvTransform: {x: 929, y: 4}
+    spritePosition: {x: 82, y: 242}
   spriteImportData: []
   rigSpriteImportData: []
   sharedRigSpriteImportData: []
@@ -205,12 +227,32 @@ ScriptedImporter:
   pSDLayerImportSetting: []
   psdLayers:
   - name: Hollow Tree
-    spriteName: Hollow Tree
-    isGroup: 0
+    spriteName: 
+    isGroup: 1
     parentIndex: -1
-    spriteID: d894048c07744ed42830a226fced9b99
-    layerID: 76
+    spriteID: cee321f0b8fec5541a0494c0cf2d4d6d
+    layerID: 13
+    mosaicPosition: {x: 0, y: 0}
+    flatten: 0
+    isImported: 0
+    isVisible: 1
+  - name: Hollow Tree-Foreground
+    spriteName: Hollow Tree-Foreground
+    isGroup: 0
+    parentIndex: 0
+    spriteID: b5018e635ceb11a4ba7f4bbc11cf3e32
+    layerID: 18
     mosaicPosition: {x: 4, y: 4}
+    flatten: 0
+    isImported: 1
+    isVisible: 1
+  - name: Hollow Tree-Background
+    spriteName: Hollow Tree-Background
+    isGroup: 0
+    parentIndex: 0
+    spriteID: 33f06595ba158934986a49d5908b2516
+    layerID: 19
+    mosaicPosition: {x: 929, y: 4}
     flatten: 0
     isImported: 1
     isVisible: 1
@@ -218,7 +260,7 @@ ScriptedImporter:
   rigPSDLayers: []
   sharedRigPSDLayers: []
   importFileNodeState: 1
-  platformSettingsDirtyTick: 639020359860391479
+  platformSettingsDirtyTick: 639042216395522704
   spriteSizeExpandChanged: 0
   generateGOHierarchy: 0
   textureAssetName: 
