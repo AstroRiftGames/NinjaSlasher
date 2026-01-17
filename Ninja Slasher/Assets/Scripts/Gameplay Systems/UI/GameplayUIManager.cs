@@ -180,7 +180,7 @@ public class GameplayUIManager : MonoBehaviour
             canvasManager.CloseCanvas(canvasManager.GetResultsCanvas());
         }
 
-        LevelManager.Instance.GoToLevelSelection(confirmPendingDeduction: false);
+        GameManager.Instance.GoToLevelSelection(confirmPendingDeduction: false);
     }
 
     public void ContinueToLevelSelector()
@@ -192,7 +192,7 @@ public class GameplayUIManager : MonoBehaviour
             canvasManager.CloseCanvas(canvasManager.GetResultsCanvas());
         }
 
-        LevelManager.Instance.GoToLevelSelection(confirmPendingDeduction: false);
+        GameManager.Instance.GoToLevelSelection(confirmPendingDeduction: false);
     }
 
     private void OnLivesChanged(int lives)
@@ -273,9 +273,9 @@ public class GameplayUIManager : MonoBehaviour
         if (_levelTimerText != null)
             _levelTimerText.text = "00:00";
 
-        if (LevelManager.Instance != null)
+        if (GameManager.Instance != null)
         {
-            LevelManager.Instance.OnLevelFailed();
+            GameManager.Instance.OnLevelFailed();
         }
     }
 

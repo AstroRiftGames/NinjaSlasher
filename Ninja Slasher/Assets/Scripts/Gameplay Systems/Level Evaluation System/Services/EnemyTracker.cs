@@ -47,7 +47,7 @@ public class EnemyTracker : MonoBehaviour, ITracker
             return;
         }
 
-        if (LevelManager.Instance != null && LevelManager.Instance.PlayerHasDied)
+        if (GameManager.Instance != null && GameManager.Instance.PlayerHasDied)
         {
             Debug.LogWarning("[EnemyTracker] Jugador murió, no se completa el nivel");
             return;

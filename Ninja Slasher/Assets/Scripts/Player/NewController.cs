@@ -317,13 +317,16 @@ public class NewController : MonoBehaviour
             CameraShake.Instance.TriggerShake(0.4f, 0.5f);
         }
 
-        var levelController = FindObjectOfType<LevelController>();
-        if (levelController != null)
+        if (LevelSessionManager.Instance != null)
         {
-            levelController.MarkLevelAsFailed();
+            LevelSessionManager.Instance.FailLevel("Jugador murió");
+        }
+        else
+        {
+            Debug.LogError("[NewController] LevelSessionManager no encontrado - nivel no será marcado como fallido");
         }
 
-        LevelManager.Instance.OnPlayerLose();
+        GameManager.Instance.OnPlayerLose();
         if (UIManager.Instance.IsHapticFeedbackActive) HapticFeedback.HeavyFeedback();
     }
     #endregion

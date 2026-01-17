@@ -178,7 +178,7 @@ public class ButtonManager : MonoBehaviour
         _resumeButton.onClick.AddListener(UIManager.Instance.ShowHidePauseCanvas);
         _restartButton.onClick.AddListener(OnRestartPressed);
 
-        _quitButton.onClick.AddListener(() => LevelManager.Instance.GoToLevelSelection(confirmPendingDeduction: true));
+        _quitButton.onClick.AddListener(() => GameManager.Instance.GoToLevelSelection(confirmPendingDeduction: true));
 
         _musicPausePanelButton.onClick.AddListener(_configToggles.MusicButtonPushed);
         _sfxPausePanelButton.onClick.AddListener(_configToggles.SFXButtonPushed);
@@ -423,7 +423,7 @@ public class ButtonManager : MonoBehaviour
 
     private void OnRestartPressed()
     {
-        LevelManager.Instance.RestartLevel();
+        GameManager.Instance.RestartLevel();
         UIManager.Instance.ShowHidePauseCanvas();
     }
 

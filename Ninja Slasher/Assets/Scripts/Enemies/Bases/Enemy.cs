@@ -84,7 +84,14 @@ public class Enemy : MonoBehaviour
 
     public void RegisterKill()
     {
-        tracker.OnEnemyKilled(this);
+        if (LevelSessionManager.Instance != null)
+        {
+            LevelSessionManager.Instance.RegisterEnemyKilled(this);
+        }
+        else
+        {
+            Debug.LogError("[Enemy] LevelSessionManager no encontrado - el enemigo no será trackeado");
+        }
 
         var combo = ComboManager.Instance;
         if (combo != null)

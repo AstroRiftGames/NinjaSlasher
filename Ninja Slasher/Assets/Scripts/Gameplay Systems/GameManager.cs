@@ -2,10 +2,8 @@ using UnityEngine;
 using System.Collections;
 using UnityEngine.SceneManagement;
 
-public class LevelManager : MonoBehaviourSingleton<LevelManager>
+public class GameManager : MonoBehaviourSingleton<GameManager>
 {
-    public LevelController levelController;
-
     [Header("Testing")]
     [SerializeField] private string[] testingScenes = { "TestScene" };
 
@@ -19,11 +17,6 @@ public class LevelManager : MonoBehaviourSingleton<LevelManager>
     public override void Awake()
     {
         base.Awake();
-
-        if (!IsTestingScene())
-        {
-            HookEnemyEvents();
-        }
     }
 
     private void Start()
@@ -44,11 +37,15 @@ public class LevelManager : MonoBehaviourSingleton<LevelManager>
     private void OnEnable()
     {
         SceneManager.sceneLoaded += OnSceneLoaded;
+
+        GameEvents.OnLevelCompleted += OnLevelCompleted;
+        GameEvents.OnLevelFailed += OnLevelFailed;
     }
 
     private void OnDisable()
     {
-        GameEvents.OnAllEnemiesDefeated -= OnLevelCompleted;
+        GameEvents.OnLevelCompleted -= OnLevelCompleted;
+        GameEvents.OnLevelFailed -= OnLevelFailed;
         GameEvents.OnLivesChanged -= OnLivesChanged;
 
         SceneManager.sceneLoaded -= OnSceneLoaded;
@@ -58,22 +55,13 @@ public class LevelManager : MonoBehaviourSingleton<LevelManager>
     {
         if (scene.name.Contains("Level"))
         {
-            if (!IsTestingScene())
-                HookEnemyEvents();
-
             if (!_levelStarted && LifeManager.Instance.CanPlay())
+            {
                 StartLevel();
+            }
         }
 
         Debug.Log($"[LevelManager] Escena cargada: {scene.name}");
-    }
-
-    private void HookEnemyEvents()
-    {
-        GameEvents.OnAllEnemiesDefeated -= OnLevelCompleted;
-        GameEvents.OnAllEnemiesDefeated += OnLevelCompleted;
-
-        Debug.Log("[LevelManager] Suscrito a GameEvents.OnAllEnemiesDefeated");
     }
 
     private void StartLevel()
@@ -83,15 +71,18 @@ public class LevelManager : MonoBehaviourSingleton<LevelManager>
         _playerHasDied = false;
         _levelEnded = false;
 
-        ParryKillTracker.Reset();
-
         _levelStarted = true;
         LifeManager.Instance.OnLevelStart();
+
+        if (LevelSessionManager.Instance != null)
+        {
+            LevelSessionManager.Instance.StartLevel();
+        }
 
         Debug.Log("[LevelManager] Nivel iniciado");
     }
 
-    public void OnLevelCompleted(LevelStats stats)
+    private void OnLevelCompleted(LevelStats stats)
     {
         if (IsTestingScene()) return;
 
@@ -103,22 +94,7 @@ public class LevelManager : MonoBehaviourSingleton<LevelManager>
             return;
         }
 
-        if (levelController == null)
-            levelController = FindObjectOfType<LevelController>();
-
         currentStats = stats;
-
-        stats.timeTaken = levelController.TimeTaken;
-        stats.movesUsed = MoveTracker.TotalMoves;
-        stats.parryKillDone = ParryKillTracker.KillWithParryPerformed;
-
-        ParryKillTracker.Reset();
-
-        if (levelController != null)
-            levelController.StopTimer();
-
-        int starsEarned = levelController.Evaluate(stats);
-        int currentLevelId = GetCurrentLevelId();
 
         if (_levelStarted)
         {
@@ -128,7 +104,13 @@ public class LevelManager : MonoBehaviourSingleton<LevelManager>
 
         _levelEnded = true;
 
-        GameEvents.RaiseLevelCompleted(stats);
+        int currentLevelId = GetCurrentLevelId();
+        int starsEarned = 0;
+
+        if (LevelSessionManager.Instance != null && LevelSessionManager.Instance.CurrentSession != null)
+        {
+            starsEarned = LevelSessionManager.Instance.CurrentSession.CurrentStats.enemiesDefeated > 0 ? 1 : 0;
+        }
 
         Debug.Log($"[LevelManager] Nivel {currentLevelId} completado con {starsEarned} estrellas");
 
@@ -163,15 +145,16 @@ public class LevelManager : MonoBehaviourSingleton<LevelManager>
 
         AudioManager.Instance.PlaySFX(SFXClip.UI_Defeat);
 
-        if (levelController != null)
-        {
-            levelController.StopTimer(true);
-        }
-
         if (_levelStarted && AnalyticsManager.Instance != null)
         {
             int currentLevelId = GetCurrentLevelId();
-            float attemptTime = levelController?.TimeTaken ?? 0f;
+            float attemptTime = 0f;
+
+            if (LevelSessionManager.Instance != null)
+            {
+                attemptTime = LevelSessionManager.Instance.GetTimeTaken();
+            }
+
             AnalyticsManager.Instance.RecordLevelFailed(
                 currentLevelId,
                 reason,
@@ -184,8 +167,6 @@ public class LevelManager : MonoBehaviourSingleton<LevelManager>
             LifeManager.Instance.UseLife();
             _levelStarted = false;
         }
-
-        GameEvents.RaiseLevelFailed(reason);
 
         Debug.Log($"[LevelManager] Nivel fallado - Razón: {reason}");
 
@@ -227,7 +208,12 @@ public class LevelManager : MonoBehaviourSingleton<LevelManager>
 
     public void OnLevelFailed()
     {
-        HandleLevelDefeat("timeExpired");
+        OnLevelFailed("timeExpired");
+    }
+
+    private void OnLevelFailed(string reason)
+    {
+        HandleLevelDefeat(reason);
         GameEvents.RaiseLevelEndedConsumePowerUps();
     }
 
@@ -319,7 +305,8 @@ public class LevelManager : MonoBehaviourSingleton<LevelManager>
 
     private void OnDestroy()
     {
-        GameEvents.OnAllEnemiesDefeated -= OnLevelCompleted;
+        GameEvents.OnLevelCompleted -= OnLevelCompleted;
+        GameEvents.OnLevelFailed -= OnLevelFailed;
         GameEvents.OnLivesChanged -= OnLivesChanged;
     }
 
@@ -338,7 +325,7 @@ public class LevelManager : MonoBehaviourSingleton<LevelManager>
 
     private void OnApplicationPause(bool pauseStatus)
     {
-        // Hook para futuro
+        // TO DO
     }
 
     private void OnApplicationFocus(bool hasFocus)
