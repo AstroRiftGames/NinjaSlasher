@@ -21,8 +21,11 @@ public class SlipperyPlatform : PlatformBase
         playerRb = view.RB;
         if (playerRb == null) return;
 
-        Vector2 lastDir = playerController.LastDashDirection;
-        slideDirection = new Vector2(Mathf.Sign(lastDir.x), 0f);
+        Vector2 tangent = new Vector2(transform.up.y, -transform.up.x);
+        Vector2 incomingDir = playerController.LastDashDirection;
+        float sign = Mathf.Sign(Vector2.Dot(incomingDir, tangent));
+        slideDirection = tangent * sign;
+
 
         playerRb.linearVelocity = Vector2.zero;
         _isSliding = true;
@@ -30,10 +33,27 @@ public class SlipperyPlatform : PlatformBase
 
     public override void OnPlayerExit(GameObject player, bool isForced = false)
     {
-        if (playerRb != null)
+        if (playerRb == null)
         {
-            playerRb.linearVelocityY = isForced ? 0 : -falloffVelocity; ;
+            return;
         }
+
+        if(Mathf.Abs(transform.up.y) < 0.1f && playerRb.linearVelocityY > 0f)
+        {
+            playerRb.linearVelocityY = 0f;
+        }
+
+        bool isHorizontal = transform.up.y > 0.9f;
+        bool isRightWall = transform.up.x > 0.9f;
+        if (isHorizontal)
+        {
+            playerRb.linearVelocityY = isForced ? 0 : -falloffVelocity;
+        }
+        else
+        {
+            playerRb.linearVelocityX = isForced ? 0 : -falloffVelocity * (isRightWall ? 1 : -1);
+        }
+
         ResetValues();
     }
 
@@ -54,7 +74,7 @@ public class SlipperyPlatform : PlatformBase
             return;
         }
 
-        Debug.Log(slideDirection * slideSpeed);
         playerRb.linearVelocity = slideDirection * slideSpeed;
+
     }
 }
