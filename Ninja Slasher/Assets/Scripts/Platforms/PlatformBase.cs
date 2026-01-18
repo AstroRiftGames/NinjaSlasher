@@ -28,7 +28,7 @@ public abstract class PlatformBase : MonoBehaviour, IPlatform
     }
 
     public abstract void OnPlayerEnter(GameObject player);
-    public abstract void OnPlayerExit(GameObject player);
+    public abstract void OnPlayerExit(GameObject player, bool isForced = false);
     public abstract void OnPlatformUpdate();
 
     protected virtual void OnCollisionEnter2D(Collision2D collision)

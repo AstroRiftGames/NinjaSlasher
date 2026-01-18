@@ -46,7 +46,7 @@ public class MovingPlatform : PlatformBase
             behavior.OnPlayerEnter(player);
     }
 
-    public override void OnPlayerExit(GameObject player)
+    public override void OnPlayerExit(GameObject player, bool isForced = false)
     {
         if (_playerOnPlatform == player)
         {

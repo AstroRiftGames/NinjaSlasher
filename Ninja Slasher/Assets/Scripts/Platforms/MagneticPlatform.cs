@@ -37,7 +37,7 @@ public class MagneticPlatform : PlatformBase
     }
 
     public override void OnPlayerEnter(GameObject player) { }
-    public override void OnPlayerExit(GameObject player) { }
+    public override void OnPlayerExit(GameObject player, bool isForced = false) { }
 
     private void OnDrawGizmos()
     {
