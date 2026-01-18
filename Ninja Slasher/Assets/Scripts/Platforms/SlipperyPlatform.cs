@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 public class SlipperyPlatform : PlatformBase
@@ -36,22 +37,25 @@ public class SlipperyPlatform : PlatformBase
         if (playerRb == null)
         {
             return;
-        }
+        }   
 
-        if(Mathf.Abs(transform.up.y) < 0.1f && playerRb.linearVelocityY > 0f)
+        if (isForced)
         {
-            playerRb.linearVelocityY = 0f;
-        }
-
-        bool isHorizontal = transform.up.y > 0.9f;
-        bool isRightWall = transform.up.x > 0.9f;
-        if (isHorizontal)
-        {
-            playerRb.linearVelocityY = isForced ? 0 : -falloffVelocity;
+            playerRb.linearVelocity = Vector2.zero;
         }
         else
         {
-            playerRb.linearVelocityX = isForced ? 0 : -falloffVelocity * (isRightWall ? 1 : -1);
+            bool isHorizontal = transform.up.y > 0.9f;
+            bool isRightWall = transform.up.x > 0.9f;
+
+            if (isHorizontal)
+            {
+                playerRb.linearVelocityY = -falloffVelocity;
+            }
+            else
+            {
+                playerRb.linearVelocityX = -falloffVelocity * (isRightWall ? 1 : -1);
+            }
         }
 
         ResetValues();
