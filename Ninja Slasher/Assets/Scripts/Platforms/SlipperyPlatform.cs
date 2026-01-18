@@ -32,9 +32,7 @@ public class SlipperyPlatform : PlatformBase
     {
         if (playerRb != null)
         {
-            Vector2 newVel = Vector2.zero;
-            newVel.y = isForced ? 0: -falloffVelocity;
-            playerRb.linearVelocity = newVel;
+            playerRb.linearVelocityY = isForced ? 0 : -falloffVelocity; ;
         }
         ResetValues();
     }
