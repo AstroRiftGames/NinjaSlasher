@@ -1,9 +1,18 @@
+using System.Collections;
 using UnityEngine;
 
+public enum PlatformTypes
+{
+    Normal,
+    Slippery,
+    Elastic,
+}
 public abstract class PlatformBase : MonoBehaviour, IPlatform
 {
     [Header("BASIC SETTINGS")]
     [SerializeField] protected bool isActive = true;
+    public PlatformTypes Type => _type;
+    [SerializeField] protected PlatformTypes _type = PlatformTypes.Normal; 
 
     protected virtual void Start()
     {

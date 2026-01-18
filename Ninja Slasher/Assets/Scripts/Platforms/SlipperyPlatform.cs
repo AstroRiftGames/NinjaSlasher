@@ -8,7 +8,7 @@ public class SlipperyPlatform : PlatformBase
     private Rigidbody2D playerRb;
     private NewController playerController;
     private Vector2 slideDirection;
-    private bool isSliding = false;
+    private bool _isSliding = false;
 
     public override void OnPlayerEnter(GameObject player)
     {
@@ -25,12 +25,12 @@ public class SlipperyPlatform : PlatformBase
         slideDirection = new Vector2(Mathf.Sign(lastDir.x), 0f);
 
         playerRb.linearVelocity = Vector2.zero;
-        isSliding = true;
+        _isSliding = true;
     }
 
     public override void OnPlayerExit(GameObject player)
     {
-        isSliding = false;
+        _isSliding = false;
         if (playerRb != null)
         {
             playerRb.linearVelocityY = -falloffVelocity;
@@ -41,11 +41,11 @@ public class SlipperyPlatform : PlatformBase
 
     public override void OnPlatformUpdate()
     {
-        if (!isSliding || playerRb == null || playerController == null) return;
+        if (!_isSliding || playerRb == null || playerController == null) return;
 
         if (playerController.IsDashing)
         {
-            isSliding = false;
+            _isSliding = false;
             return;
         }
 
