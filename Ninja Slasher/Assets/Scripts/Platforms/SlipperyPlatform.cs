@@ -28,13 +28,20 @@ public class SlipperyPlatform : PlatformBase
         _isSliding = true;
     }
 
-    public override void OnPlayerExit(GameObject player)
+    public override void OnPlayerExit(GameObject player, bool isForced = false)
     {
-        _isSliding = false;
         if (playerRb != null)
         {
-            playerRb.linearVelocityY = -falloffVelocity;
+            Vector2 newVel = Vector2.zero;
+            newVel.y = isForced ? 0: -falloffVelocity;
+            playerRb.linearVelocity = newVel;
         }
+        ResetValues();
+    }
+
+    private void ResetValues()
+    {
+        _isSliding = false;
         playerRb = null;
         playerController = null;
     }
