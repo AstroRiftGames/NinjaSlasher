@@ -36,6 +36,8 @@ public class NewController : MonoBehaviour
     private float _lastDash;
     private Vector2 _lastNormal;
 
+    private PlatformBase _currentSurface;
+
     [SerializeField] private LayerMask _proyectilesLayer;
 
     private string[] colMatrix = { "Obstacle", "Scenario", };
@@ -185,6 +187,14 @@ public class NewController : MonoBehaviour
 
         _lastDashDirection = dashDir;
 
+        if(_currentSurface != null)
+        {
+           if(_currentSurface.Type == PlatformTypes.Slippery)
+           {
+                _currentSurface.OnPlayerExit(gameObject, true);
+           }
+        }
+
         _view.RB.AddForce(dashDir * _model.DashForce);
         AudioManager.Instance.PlaySFXAtPosition(SFXClip.P_Movement, transform.position);
         _isDashing = true;
@@ -275,7 +285,7 @@ public class NewController : MonoBehaviour
         else return _model.ParryRange;
     }
 
-    private void Grab(Vector2 normal)
+    private void Grab(Vector2 normal, PlatformBase platform = null, bool isSlippery = false)
     {
         _isDashing = false;
         _lastNormal = normal;
@@ -296,6 +306,10 @@ public class NewController : MonoBehaviour
         {
             _view.Animator.SetBool("IsCeilingGrabbed", true);
             RotateSprites(Vector2.left);
+        }
+        if (platform != null)
+        {
+            _currentSurface = platform;
         }
     }
 
@@ -338,11 +352,27 @@ public class NewController : MonoBehaviour
         if (colMatrix.Contains(colTag))
         {
             _view.TrailRendererComponent.emitting = false;
-            collision.collider.TryGetComponent(out ElasticPlatform elasticComponent);
+            collision.collider.TryGetComponent(out PlatformBase platformComponent);
 
-            if (!elasticComponent)
+
+            if (platformComponent == null)
             {
                 Grab(collision.GetContact(0).normal);
+            }
+            else
+            {
+                switch (platformComponent)
+                {
+                    case PlatformBase platform when platform != null && platform.Type == PlatformTypes.Slippery:
+                        Grab(collision.GetContact(0).normal, platform, true);
+                        break;
+                    case PlatformBase platform when platform != null && platform.Type == PlatformTypes.Elastic:
+                        break;
+                    default:
+                        Debug.LogError($"Behaviour for {platformComponent} not defined");
+                        Grab(collision.GetContact(0).normal);
+                        break;
+                }
             }
         }
     }

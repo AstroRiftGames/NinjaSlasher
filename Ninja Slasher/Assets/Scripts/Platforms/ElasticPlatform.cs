@@ -57,13 +57,11 @@ public class ElasticPlatform : PlatformBase
         rb.linearVelocity = Vector2.zero;
         rb.AddForce(bounceDir * bounceForce, ForceMode2D.Impulse);
 
-        //controller.ForceExitSurface();
-
         Debug.DrawRay(rb.position, dashDir * 2f, Color.red, 2f);
         Debug.DrawRay(rb.position, bounceDir * 2f, Color.green, 2f);
     }
 
-    public override void OnPlayerExit(GameObject player) { }
+    public override void OnPlayerExit(GameObject player, bool isForced = false) { }
 
     public override void OnPlatformUpdate() { }
 }

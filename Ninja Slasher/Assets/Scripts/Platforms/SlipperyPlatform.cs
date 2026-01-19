@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 public class SlipperyPlatform : PlatformBase
@@ -8,7 +9,7 @@ public class SlipperyPlatform : PlatformBase
     private Rigidbody2D playerRb;
     private NewController playerController;
     private Vector2 slideDirection;
-    private bool isSliding = false;
+    private bool _isSliding = false;
 
     public override void OnPlayerEnter(GameObject player)
     {
@@ -21,35 +22,63 @@ public class SlipperyPlatform : PlatformBase
         playerRb = view.RB;
         if (playerRb == null) return;
 
-        Vector2 lastDir = playerController.LastDashDirection;
-        slideDirection = new Vector2(Mathf.Sign(lastDir.x), 0f);
+        Vector2 tangent = new Vector2(transform.up.y, -transform.up.x);
+        Vector2 incomingDir = playerController.LastDashDirection;
+        float sign = Mathf.Sign(Vector2.Dot(incomingDir, tangent));
+        slideDirection = tangent * sign;
+
 
         playerRb.linearVelocity = Vector2.zero;
-        isSliding = true;
+        _isSliding = true;
     }
 
-    public override void OnPlayerExit(GameObject player)
+    public override void OnPlayerExit(GameObject player, bool isForced = false)
     {
-        isSliding = false;
-        if (playerRb != null)
+        if (playerRb == null)
         {
-            playerRb.linearVelocityY = -falloffVelocity;
+            return;
+        }   
+
+        if (isForced)
+        {
+            playerRb.linearVelocity = Vector2.zero;
         }
+        else
+        {
+            bool isHorizontal = transform.up.y > 0.9f;
+            bool isRightWall = transform.up.x > 0.9f;
+
+            if (isHorizontal)
+            {
+                playerRb.linearVelocityY = -falloffVelocity;
+            }
+            else
+            {
+                playerRb.linearVelocityX = -falloffVelocity * (isRightWall ? 1 : -1);
+            }
+        }
+
+        ResetValues();
+    }
+
+    private void ResetValues()
+    {
+        _isSliding = false;
         playerRb = null;
         playerController = null;
     }
 
     public override void OnPlatformUpdate()
     {
-        if (!isSliding || playerRb == null || playerController == null) return;
+        if (!_isSliding || playerRb == null || playerController == null) return;
 
         if (playerController.IsDashing)
         {
-            isSliding = false;
+            _isSliding = false;
             return;
         }
 
-        Debug.Log(slideDirection * slideSpeed);
         playerRb.linearVelocity = slideDirection * slideSpeed;
+
     }
 }

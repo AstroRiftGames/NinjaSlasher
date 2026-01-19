@@ -27,7 +27,7 @@ public class SpikePlatform : PlatformBase
         isCounting = true;
     }
 
-    public override void OnPlayerExit(GameObject player)
+    public override void OnPlayerExit(GameObject player, bool isForced = false)
     {
         if (player == currentPlayer && isCounting)
         {

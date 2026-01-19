@@ -36,7 +36,7 @@ public class BreakablePlatform : PlatformBase
         remainingUses = maxUses;
     }
 
-    public override void OnPlayerExit(GameObject player) { }
+    public override void OnPlayerExit(GameObject player, bool isForced = false) { }
 
     public override void OnPlayerEnter(GameObject player)
     {

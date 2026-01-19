@@ -18,7 +18,7 @@ public class ConveyorPlatform : PlatformBase
         playerController = player.GetComponent<Controller>();
     }
 
-    public override void OnPlayerExit(GameObject player)
+    public override void OnPlayerExit(GameObject player, bool isForced = false)
     {
         if (player.GetComponent<View>()?.RB == playerRb)
         {

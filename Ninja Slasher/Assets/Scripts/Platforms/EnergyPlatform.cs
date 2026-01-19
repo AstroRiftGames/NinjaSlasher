@@ -58,5 +58,5 @@ public class EnergyPlatform : PlatformBase
         }
     }
 
-    public override void OnPlayerExit(GameObject player) { }
+    public override void OnPlayerExit(GameObject player, bool isForced = false) { }
 }
