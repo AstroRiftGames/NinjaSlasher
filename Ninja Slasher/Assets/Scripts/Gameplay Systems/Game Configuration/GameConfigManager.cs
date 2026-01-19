@@ -47,7 +47,7 @@ public class GameConfigManager : MonoBehaviourSingleton<GameConfigManager>
 
         _isInitialized = true;
 
-        Debug.Log($"[GameConfigManager] Inicializado correctamente con config: {_config.name}");
+        //Debug.Log($"[GameConfigManager] Inicializado correctamente con config: {_config.name}");
     }
 
     public static bool IsReady()

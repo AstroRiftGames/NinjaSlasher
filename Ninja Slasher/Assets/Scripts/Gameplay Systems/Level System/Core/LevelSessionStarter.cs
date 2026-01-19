@@ -34,8 +34,6 @@ public class LevelSessionStarter : MonoBehaviour
 
         LevelSessionManager.Instance.StartLevel();
         hasStarted = true;
-
-        Debug.Log("[LevelSessionStarter] Nivel iniciado automáticamente");
     }
 
     public void ManualStart()

@@ -28,8 +28,6 @@ public class LevelSessionManager : MonoBehaviourSingleton<LevelSessionManager>
         }
 
         DontDestroyOnLoad(gameObject);
-
-        Debug.Log("[LevelSessionManager] Inicializado");
     }
 
     private void OnEnable()
@@ -39,8 +37,6 @@ public class LevelSessionManager : MonoBehaviourSingleton<LevelSessionManager>
         GameEvents.OnAllEnemiesDefeated += OnAllEnemiesDefeated;
         GameEvents.OnLevelTimeExpired += OnLevelTimeExpired;
         GameEvents.OnLevelTimeBonus += OnComboTimeBonus;
-
-        Debug.Log("[LevelSessionManager] Eventos suscritos");
     }
 
     private void OnDisable()
@@ -79,7 +75,6 @@ public class LevelSessionManager : MonoBehaviourSingleton<LevelSessionManager>
             return levelId;
         }
 
-        Debug.LogWarning($"[LevelSessionManager] No se pudo extraer ID del nivel de: {sceneName}");
         return 1;
     }
 
@@ -91,38 +86,44 @@ public class LevelSessionManager : MonoBehaviourSingleton<LevelSessionManager>
 
         if (config == null)
         {
-            Debug.LogError($"[LevelSessionManager] No se encontró configuración para nivel {levelId}");
             return;
         }
-
-        Debug.Log($"[LevelSessionManager] === INICIALIZANDO NIVEL {levelId} ===");
 
         currentSession = new LevelSession(config);
 
         trackingService = new TrackingService(currentSession);
-        timerService = new LevelTimerService(currentSession, this);
-        objectiveService = new ObjectiveService(config);
-
         trackingService.Initialize();
+        timerService = new LevelTimerService(currentSession, this);
+
+        try
+        {
+            objectiveService = new ObjectiveService(config);
+
+            if (objectiveService == null)
+            {
+                Debug.LogError($"[LevelSessionManager] CRÍTICO: ObjectiveService es null después de crearlo para nivel {levelId}");
+            }
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"[LevelSessionManager] Stack trace: {e.StackTrace}");
+        }
+
         timerService.Initialize();
         currentSession.Initialize();
 
         isLevelActive = true;
-
-        Debug.Log($"[LevelSessionManager] Sesión de nivel {levelId} creada y lista");
     }
 
     public void StartLevel()
     {
         if (currentSession == null)
         {
-            Debug.LogError("[LevelSessionManager] No hay sesión activa para iniciar");
             return;
         }
 
         if (currentSession.State != LevelSessionState.Ready)
         {
-            Debug.LogWarning($"[LevelSessionManager] No se puede iniciar - Estado: {currentSession.State}");
             return;
         }
 
@@ -130,8 +131,6 @@ public class LevelSessionManager : MonoBehaviourSingleton<LevelSessionManager>
         timerService.Start();
 
         GameEvents.RaiseLevelStarted();
-
-        Debug.Log($"[LevelSessionManager] Nivel {currentSession.LevelId} INICIADO");
     }
 
     public void PauseLevel()
@@ -140,8 +139,6 @@ public class LevelSessionManager : MonoBehaviourSingleton<LevelSessionManager>
 
         currentSession.Pause();
         timerService.Pause();
-
-        Debug.Log($"[LevelSessionManager] Nivel pausado");
     }
 
     public void ResumeLevel()
@@ -150,8 +147,6 @@ public class LevelSessionManager : MonoBehaviourSingleton<LevelSessionManager>
 
         currentSession.Resume();
         timerService.Resume();
-
-        Debug.Log($"[LevelSessionManager] Nivel resumido");
     }
 
     private void OnAllEnemiesDefeated(LevelStats stats)
@@ -160,7 +155,6 @@ public class LevelSessionManager : MonoBehaviourSingleton<LevelSessionManager>
 
         if (GameManager.Instance != null && GameManager.Instance.PlayerHasDied)
         {
-            Debug.LogWarning("[LevelSessionManager] Jugador murió, no se completa el nivel");
             return;
         }
 
@@ -175,8 +169,6 @@ public class LevelSessionManager : MonoBehaviourSingleton<LevelSessionManager>
         currentSession.Complete();
 
         EvaluateAndSave();
-
-        Debug.Log($"[LevelSessionManager] ¡NIVEL COMPLETADO!");
     }
 
     private void OnLevelTimeExpired()
@@ -194,20 +186,24 @@ public class LevelSessionManager : MonoBehaviourSingleton<LevelSessionManager>
         currentSession.Fail(reason);
 
         GameEvents.RaiseLevelFailed(reason);
-
-        Debug.Log($"[LevelSessionManager] Nivel FALLIDO - Razón: {reason}");
     }
 
     private void EvaluateAndSave()
     {
         if (currentSession == null || !currentSession.CanEvaluate)
         {
-            Debug.LogWarning("[LevelSessionManager] No se puede evaluar la sesión");
+            return;
+        }
+
+        if (objectiveService == null)
+        {
             return;
         }
 
         var stats = currentSession.CurrentStats;
         var result = objectiveService.Evaluate(stats);
+
+        stats.starsEarned = result.starsEarned;
 
         SaveManager.Instance?.SaveLevelProgress(currentSession.LevelId, result, stats);
         LevelProgressionManager.Instance?.HandleLevelCompletion(currentSession.LevelId, result.starsEarned);
@@ -222,8 +218,6 @@ public class LevelSessionManager : MonoBehaviourSingleton<LevelSessionManager>
         }
 
         GameEvents.RaiseLevelCompleted(stats);
-
-        Debug.Log($"[LevelSessionManager] Evaluación guardada - {result.starsEarned} estrellas");
     }
 
     private void OnComboTimeBonus(float bonusSeconds)
@@ -285,8 +279,6 @@ public class LevelSessionManager : MonoBehaviourSingleton<LevelSessionManager>
     {
         if (currentSession != null)
         {
-            Debug.Log($"[LevelSessionManager] Limpiando sesión del nivel {currentSession.LevelId}");
-
             trackingService?.Dispose();
             timerService?.Dispose();
             currentSession?.Clear();

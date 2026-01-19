@@ -203,7 +203,7 @@ public class DailyRewardUIManager : MonoBehaviourSingleton<DailyRewardUIManager>
 
     void OnRewardClaimed(DailyReward reward)
     {
-        Debug.Log($"[DailyRewardUIManager] Recompensa reclamada: {reward.displayName}");
+        //Debug.Log($"[DailyRewardUIManager] Recompensa reclamada: {reward.displayName}");
 
         ShowDailyReward();
         StartCoroutine(ShowRewardClaimedFeedback(reward));
@@ -211,7 +211,7 @@ public class DailyRewardUIManager : MonoBehaviourSingleton<DailyRewardUIManager>
 
     void OnRewardAvailabilityChanged(bool isAvailable)
     { 
-        Debug.Log($"[DailyRewardUIManager] Disponibilidad cambiada: {isAvailable}");
+        //Debug.Log($"[DailyRewardUIManager] Disponibilidad cambiada: {isAvailable}");
         UpdateClaimButton();
     }
 
@@ -240,7 +240,7 @@ public class DailyRewardUIManager : MonoBehaviourSingleton<DailyRewardUIManager>
 
         if (dailyRewardSystem.ClaimReward())
         {
-            Debug.Log("[DailyRewardUIManager] Recompensa reclamada exitosamente");
+            //Debug.Log("[DailyRewardUIManager] Recompensa reclamada exitosamente");
 
             ShowDailyReward();
 

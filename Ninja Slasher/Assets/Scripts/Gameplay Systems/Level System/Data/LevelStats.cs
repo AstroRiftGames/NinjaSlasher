@@ -1,3 +1,6 @@
+using System;
+
+[Serializable]
 public class LevelStats
 {
     public float timeTaken;
@@ -5,4 +8,5 @@ public class LevelStats
     public int totalEnemies;
     public int movesUsed;
     public bool parryKillDone;
+    public int starsEarned;
 }

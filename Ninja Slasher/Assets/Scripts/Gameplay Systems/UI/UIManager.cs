@@ -124,8 +124,6 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
     {
         if (_gameplayUIManager != null)
             _gameplayUIManager.OnSceneLoaded();
-
-        Debug.Log($"[UIManager] Escena cargada: {scene.name}");
     }
 
     public void OpenURL(string url)

@@ -63,7 +63,7 @@ public class ComboManager : MonoBehaviourSingleton<ComboManager>
                 TutorialManager.Instance.OnComboPerformed();
             }
 
-            Debug.Log($"[ComboManager] Combo x{level} activado en posición {lastEnemyPosition}");
+            //Debug.Log($"[ComboManager] Combo x{level} activado en posición {lastEnemyPosition}");
 
             GameEvents.RaiseComboUpdated(level, lastEnemyPosition);
 
@@ -95,19 +95,19 @@ public class ComboManager : MonoBehaviourSingleton<ComboManager>
             float bonusExtra = bonus * percent;
             bonus += bonusExtra;
 
-            Debug.Log($"[ComboManager] Bonus aumentado por ComboMaster: {bonus:F1}s (base + {bonusExtra:F1}s)");
+            //Debug.Log($"[ComboManager] Bonus aumentado por ComboMaster: {bonus:F1}s (base + {bonusExtra:F1}s)");
         }
 
         GameEvents.RaiseLevelTimeBonus(bonus);
 
-        Debug.Log($"[ComboManager] Bonus de tiempo otorgado: +{bonus:F1}s");
+        //Debug.Log($"[ComboManager] Bonus de tiempo otorgado: +{bonus:F1}s");
     }
 
     private void ResetCombo()
     {
         if (killCount > 1)
         {
-            Debug.Log($"[ComboManager] Combo x{killCount} terminado");
+            //Debug.Log($"[ComboManager] Combo x{killCount} terminado");
         }
 
         killCount = 0;

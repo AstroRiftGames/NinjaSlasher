@@ -10,13 +10,14 @@ public class LevelTimerService
     private float initialDuration;
     private bool isPaused;
     private bool isRunning;
+    private float elapsedTime;
 
     private Coroutine timerCoroutine;
 
     public float CurrentTime => currentTime;
     public float InitialDuration => initialDuration;
     public float TimeRemaining => Mathf.Max(0, currentTime);
-    public float TimeTaken => initialDuration - currentTime;
+    public float TimeTaken => elapsedTime;
     public bool IsPaused => isPaused;
 
     public LevelTimerService(LevelSession levelSession, MonoBehaviour runner)
@@ -25,8 +26,7 @@ public class LevelTimerService
         coroutineRunner = runner;
         isPaused = false;
         isRunning = false;
-
-        Debug.Log($"[LevelTimerService] Servicio creado");
+        elapsedTime = 0f;
     }
 
     public void Initialize()
@@ -38,46 +38,39 @@ public class LevelTimerService
         initialDuration = baseDuration;
         isPaused = false;
         isRunning = false;
-
-        Debug.Log($"[LevelTimerService] Inicializado - Tiempo: {currentTime:F1}s (base: {baseDuration:F1}s)");
+        elapsedTime = 0f;
     }
 
     public void Start()
     {
         if (isRunning)
         {
-            Debug.LogWarning($"[LevelTimerService] Timer ya está corriendo");
             return;
         }
 
         isRunning = true;
+        elapsedTime = 0f;
         timerCoroutine = coroutineRunner.StartCoroutine(TimerCoroutine());
-
-        Debug.Log($"[LevelTimerService] Timer iniciado");
     }
 
     public void Pause()
     {
         if (!isRunning)
         {
-            Debug.LogWarning($"[LevelTimerService] Timer no está corriendo");
             return;
         }
 
         isPaused = true;
-        Debug.Log($"[LevelTimerService] Timer pausado");
     }
 
     public void Resume()
     {
         if (!isPaused)
         {
-            Debug.LogWarning($"[LevelTimerService] Timer no está pausado");
             return;
         }
 
         isPaused = false;
-        Debug.Log($"[LevelTimerService] Timer resumido");
     }
 
     public void Stop()
@@ -90,22 +83,17 @@ public class LevelTimerService
 
         isRunning = false;
         isPaused = false;
-
-        Debug.Log($"[LevelTimerService] Timer detenido - Tiempo final: {TimeTaken:F2}s");
     }
 
     public void AddTime(float seconds)
     {
         if (!isRunning)
         {
-            Debug.LogWarning($"[LevelTimerService] No se puede agregar tiempo - Timer no está corriendo");
             return;
         }
 
         currentTime += seconds;
         GameEvents.RaiseLevelTimeChanged(currentTime);
-
-        Debug.Log($"[LevelTimerService] +{seconds:F1}s agregados - Tiempo actual: {currentTime:F1}s");
     }
 
     private IEnumerator TimerCoroutine()
@@ -114,8 +102,11 @@ public class LevelTimerService
         {
             if (!isPaused)
             {
-                currentTime -= Time.deltaTime;
-                session.UpdateTime(TimeTaken);
+                float deltaTime = Time.deltaTime;
+                currentTime -= deltaTime;
+                elapsedTime += deltaTime;
+
+                session.UpdateTime(elapsedTime);
 
                 GameEvents.RaiseLevelTimeChanged(currentTime);
 
@@ -136,8 +127,6 @@ public class LevelTimerService
         isRunning = false;
 
         GameEvents.RaiseLevelTimeExpired();
-
-        Debug.Log($"[LevelTimerService] ¡Tiempo agotado!");
     }
 
     private float ApplyPowerUpModifiers(float baseDuration)
@@ -150,8 +139,6 @@ public class LevelTimerService
             float extraPercent = powerUpContext.ExtraTimePercent;
             float bonusTime = baseDuration * extraPercent;
             modifiedDuration += bonusTime;
-
-            Debug.Log($"[LevelTimerService] Power-up ExtraTime activo: +{bonusTime:F1}s ({extraPercent * 100:F0}%)");
         }
 
         return modifiedDuration;
@@ -160,6 +147,5 @@ public class LevelTimerService
     public void Dispose()
     {
         Stop();
-        Debug.Log($"[LevelTimerService] Servicio destruido");
     }
 }
