@@ -1,5 +1,5 @@
-using Managers;
 using UnityEngine;
+using AstroRift.Core.Update;
 using AstroRift.Core.Pooling;
 
 public class RangeEnemy : Enemy
@@ -32,7 +32,6 @@ public class RangeEnemy : Enemy
         base.OnEnable();
         _target = FindAnyObjectByType<NewController>().transform;
     }
-
 
     public override void CustomUpdate()
     {

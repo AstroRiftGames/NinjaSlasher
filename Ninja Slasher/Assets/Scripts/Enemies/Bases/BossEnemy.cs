@@ -1,4 +1,4 @@
-using Managers;
+using AstroRift.Core.Update;
 using System;
 using UnityEngine;
 

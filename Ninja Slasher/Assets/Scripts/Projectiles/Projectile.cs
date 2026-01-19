@@ -205,14 +205,8 @@ public class Projectile : MonoBehaviour, IPoolable
         ParryKillTracker.RegisterParryKill();
         Debug.Log("Parry kill registrada.");
 
-        EnemyTracker tracker = FindObjectOfType<EnemyTracker>();
-
         enemy.TryGetComponent(out Enemy script);
 
-        if (tracker != null)
-        {
-            tracker.OnEnemyKilled(script);
-        }
         script.Die();
     }
 

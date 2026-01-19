@@ -2,87 +2,72 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Managers
+namespace AstroRift.Core.Update
 {
-    public class CustomUpdateManager : MonoBehaviour
+    public sealed class CustomUpdateManager : MonoBehaviour
     {
-        private static CustomUpdateManager _instance;
-    
-        public static CustomUpdateManager Instance
-        {
-            get
-            {
-                if (_instance != null) return _instance;
-
-                _instance = FindFirstObjectByType<CustomUpdateManager>();
-
-                return _instance;
-            }
-        }
-        
-        #region Actions Lists (3)
+        public static CustomUpdateManager Instance { get; private set; }
 
         private readonly List<Action> _updateActions = new();
         private readonly List<Action> _fixedUpdateActions = new();
         private readonly List<Action> _lateUpdateActions = new();
 
-        #endregion
-    
-        #region Subscribe Methods (3)
+        private readonly List<Action> _updateBuffer = new();
+        private readonly List<Action> _fixedUpdateBuffer = new();
+        private readonly List<Action> _lateUpdateBuffer = new();
 
-        /// <summary>
-        /// Subscribes a method to be called during the Unity Update loop.
-        /// </summary>
-        /// <param name="action"></param>
+        private void Awake()
+        {
+            if (Instance != null && Instance != this)
+            {
+                Destroy(gameObject);
+                return;
+            }
+
+            Instance = this;
+            DontDestroyOnLoad(gameObject);
+        }
+
+        #region Subscribe
+
         public void SubscribeToUpdate(Action action)
         {
+            if (action == null || _updateActions.Contains(action))
+                return;
+
             _updateActions.Add(action);
         }
 
-        /// <summary>
-        /// Subscribes a method to be called during the Unity FixedUpdate loop.
-        /// </summary>
-        /// <param name="action"></param>
         public void SubscribeToFixedUpdate(Action action)
         {
+            if (action == null || _fixedUpdateActions.Contains(action))
+                return;
+
             _fixedUpdateActions.Add(action);
         }
 
-        /// <summary>
-        /// Subscribes a method to be called during the Unity LateUpdate loop.
-        /// </summary>
-        /// <param name="action"></param>
         public void SubscribeToLateUpdate(Action action)
         {
+            if (action == null || _lateUpdateActions.Contains(action))
+                return;
+
             _lateUpdateActions.Add(action);
         }
 
         #endregion
 
-        #region Unsuscribe Methods (3)
+        #region Unsubscribe
 
-        /// <summary>
-        /// Unsubscribes a method from being called during the Unity Update loop.
-        /// </summary>
-        /// <param name="action"></param>
         public void UnsubscribeFromUpdate(Action action)
         {
             _updateActions.Remove(action);
         }
 
-        /// <summary>
-        /// Unsubscribes a method from being called during the Unity FixedUpdate loop.
-        /// </summary>
-        /// <param name="action"></param>
         public void UnsubscribeFromFixedUpdate(Action action)
         {
             _fixedUpdateActions.Remove(action);
         }
 
-        /// <summary>
-        /// Unsubscribes a method from being called during the Unity LateUpdate loop.
-        /// </summary>
-        /// <param name="action"></param>
         public void UnsubscribeFromLateUpdate(Action action)
         {
             _lateUpdateActions.Remove(action);
@@ -90,48 +75,35 @@ namespace Managers
 
         #endregion
 
-        #region Unity Built-In Methods (3)
+        #region Unity Loops
 
         private void Update()
         {
-            foreach (var action in _updateActions)
-            {
-                action?.Invoke();
-            }
+            _updateBuffer.Clear();
+            _updateBuffer.AddRange(_updateActions);
+
+            foreach (var action in _updateBuffer)
+                action.Invoke();
         }
 
         private void FixedUpdate()
         {
-            foreach (var action in _fixedUpdateActions)
-            {
-                action?.Invoke();
-            }
+            _fixedUpdateBuffer.Clear();
+            _fixedUpdateBuffer.AddRange(_fixedUpdateActions);
+
+            foreach (var action in _fixedUpdateBuffer)
+                action.Invoke();
         }
 
         private void LateUpdate()
         {
-            foreach (var action in _lateUpdateActions)
-            {
-                action?.Invoke();
-            }
-        }
-        
-        private void OnDestroy()
-        {
-            if (_instance != this) return;
-            _instance = null;
+            _lateUpdateBuffer.Clear();
+            _lateUpdateBuffer.AddRange(_lateUpdateActions);
 
-#if UNITY_EDITOR
-            if (!Application.isPlaying)
-            {
-                DestroyImmediate(gameObject);
-            }
-            else
-#endif
-            {
-                Destroy(gameObject);
-            }
+            foreach (var action in _lateUpdateBuffer)
+                action.Invoke();
         }
+
         #endregion
     }
 }

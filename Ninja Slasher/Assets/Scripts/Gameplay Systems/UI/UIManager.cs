@@ -1,7 +1,7 @@
-using Managers;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using AstroRift.Core.Update;
 
 public class UIManager : MonoBehaviourSingleton<UIManager>
 {

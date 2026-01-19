@@ -1,9 +1,9 @@
-using Managers;
 using System.Collections;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UIElements;
 using AstroRift.Core.Pooling;
+using AstroRift.Core.Update;
 
 public enum Surface
 {

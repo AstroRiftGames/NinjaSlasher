@@ -1,10 +1,10 @@
-using Managers;
 using System;
 using UnityEngine;
 using CandyCoded.HapticFeedback;
 using System.Linq;
 using Unity.VisualScripting;
 using System.Collections;
+using AstroRift.Core.Update;
 
 public enum NinjaStates
 {

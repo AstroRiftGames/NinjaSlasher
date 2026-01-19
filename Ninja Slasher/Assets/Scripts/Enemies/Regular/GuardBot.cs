@@ -1,7 +1,7 @@
-using Managers;
 using System.Collections;
 using System.Threading.Tasks;
 using UnityEngine;
+using AstroRift.Core.Update;
 
 public class GuardBot : Enemy
 {
