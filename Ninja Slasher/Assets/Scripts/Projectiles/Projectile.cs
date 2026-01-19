@@ -1,8 +1,10 @@
+using AstroRift.Core.Pooling;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Projectile : MonoBehaviour
+public class Projectile : MonoBehaviour, IPoolable
 {
     [SerializeField] protected float _speed;
     public float MultiplySpeed(float value) => _speed *= value;
@@ -20,9 +22,6 @@ public class Projectile : MonoBehaviour
     protected Controller _playerInZone;
     [SerializeField] protected bool isParryable = true;
     public void SetIsParryable(bool value) => isParryable = value;
-    GenericPool<Projectile> _ownerPool;
-    public GenericPool<Projectile> OwnerPool => _ownerPool;
-    private void SetPool(GenericPool<Projectile> ownerPool) => _ownerPool = ownerPool;
 
     private bool _isEnhancedParry = false;
     private int _bouncesRemaining = 0;
@@ -30,37 +29,46 @@ public class Projectile : MonoBehaviour
     private HashSet<Enemy> _hitEnemies = new HashSet<Enemy>();
     private Collider2D _projectileCollider;
 
-    private void OnEnable()
+    public event Action<Projectile> OnRequestDespawn;
+
+    public void Initialize(Vector2 direction, Transform owner)
     {
-        TryGetComponent(out Rigidbody2D rb);
-        _rb = rb;
-
-        TryGetComponent(out Collider2D col);
-        _projectileCollider = col;
-
-        TryGetComponent(out Animator animator);
-        _animator = animator;
-
-        _hitEnemies.Clear();
-    }
-
-    public void Initialize(Vector2 direction, Transform owner, GenericPool<Projectile> pool = null)
-    {
-        if (pool != null) SetPool(pool);
         SetOwner(owner);
         SetDirection(direction);
-        _hitEnemies.Clear();
     }
 
-    public void Initialize(Transform owner, GenericPool<Projectile> pool = null)
+    public void Initialize(Transform owner)
     {
-        if (pool != null) SetPool(pool);
         SetOwner(owner);
         SetDirection(transform.up);
-        _hitEnemies.Clear();
     }
 
     public virtual void Update() { }
+
+    public void OnSpawn()
+    {
+        if (_rb == null) TryGetComponent(out _rb);
+        if (_projectileCollider == null) TryGetComponent(out _projectileCollider);
+        if (_animator == null) TryGetComponent(out _animator);
+
+        _hitEnemies.Clear();
+        _isEnhancedParry = false;
+        _bouncesRemaining = 0;
+        _velocityRetention = 1f;
+
+        _rb.linearVelocity = Vector2.zero;
+    }
+
+    public void OnDespawn()
+    {
+        StopAllCoroutines();
+        _rb.linearVelocity = Vector2.zero;
+    }
+
+    public void RequestDespawn()
+    {
+        OnRequestDespawn?.Invoke(this);
+    }
 
     public virtual void SetDirection(Vector2 direction)
     {
@@ -98,7 +106,7 @@ public class Projectile : MonoBehaviour
                 if (_bouncesRemaining > 0)
                     HandleEnhancedParryBounce(collision);
                 else
-                    StartCoroutine(DestroyAfterDelay());
+                    RequestDespawn();
 
                 return;
             }
@@ -147,20 +155,6 @@ public class Projectile : MonoBehaviour
         }
     }
 
-    private IEnumerator DestroyAfterDelay()
-    {
-        yield return new WaitForSeconds(0.1f);
-
-        if (_ownerPool == null)
-        {
-            Destroy(gameObject);
-        }
-        else
-        {
-            _ownerPool.Return(this);
-        }
-    }
-
     public virtual void Collide(Collider2D collision)
     {
         if (collision.CompareTag("Player"))
@@ -172,32 +166,12 @@ public class Projectile : MonoBehaviour
             DamageEnemy(collision.gameObject);
         }
 
-        if (_ownerPool == null)
-        {
-            Destroy(gameObject, _impactTime);
-        }
-        else
-        {
-            StartCoroutine(ReturnProjectile());
-        }
         _rb.linearVelocity = Vector2.zero;
         collision.TryGetComponent(out Rigidbody2D rb);
         if (rb != null) rb.linearVelocity = Vector2.zero;
         _animator.SetTrigger("OnImpact");
-    }
 
-    IEnumerator ReturnProjectile()
-    {
-        yield return new WaitForSeconds(_impactTime);
-
-        if (_ownerPool != null)
-        {
-            _ownerPool.Return(this);
-        }
-        else
-        {
-            Destroy(gameObject);
-        }
+        RequestDespawn();
     }
 
     private bool TryDamageEnemy(Collider2D collider)
@@ -278,9 +252,6 @@ public class Projectile : MonoBehaviour
         _velocityRetention = velocityRetention;
         _hitEnemies.Clear();
 
-        if (_ownerPool != null)
-            _ownerPool = null;
-
         transform.SetParent(null);
     }
 
@@ -288,7 +259,7 @@ public class Projectile : MonoBehaviour
     {
         _isEnhancedParry = false;
 
-        StartCoroutine(DestroyAfterDelay());
+        RequestDespawn();
     }
 
     public bool IsParryable => isParryable;

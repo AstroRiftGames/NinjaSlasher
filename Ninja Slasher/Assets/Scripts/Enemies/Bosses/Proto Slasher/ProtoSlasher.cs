@@ -1,6 +1,6 @@
 using System.Collections;
 using UnityEngine;
-
+using AstroRift.Core.Pooling;
 
 enum AttackEnum
 {
@@ -29,15 +29,15 @@ public class ProtoSlasher : BossEnemy
     [Header("Projectiles Burst")]
     [SerializeField] int _projectilesAmount;
     [SerializeField] float _timeBetweenShots;
-    GenericPool<Projectile> _burstPool;
-    [SerializeField] GameObject _burstProjectilePrefab;
+    ObjectPool<Projectile> _burstPool;
+    [SerializeField] Projectile _burstProjectilePrefab;
     [SerializeField] int _burstsToEnergy;
     private int _burstsShot;
 
     [Header("Energy Shot")]
-    [SerializeField] GameObject _energyProjectilePrefab;
+    [SerializeField] Projectile _energyProjectilePrefab;
     [SerializeField] float _chargingTime;
-    GenericPool<Projectile> _energyPool;
+    ObjectPool<Projectile> _energyPool;
 
     [Header("Parry")]
     [SerializeField] int _maxEnergyParries;
@@ -53,8 +53,18 @@ public class ProtoSlasher : BossEnemy
     public override void Awake()
     {
         base.Awake();
-        _energyPool = new GenericPool<Projectile>(_energyProjectilePrefab, 5, transform);
-        _burstPool = new GenericPool<Projectile>(_burstProjectilePrefab, _projectilesAmount * _burstsToEnergy, transform);
+
+        _energyPool = new ObjectPool<Projectile>(
+            _energyProjectilePrefab,
+            5,
+            transform
+        );
+
+        _burstPool = new ObjectPool<Projectile>(
+            _burstProjectilePrefab,
+            _projectilesAmount * _burstsToEnergy,
+            transform
+        );
     }
 
     public override void CustomUpdate()
@@ -151,7 +161,7 @@ public class ProtoSlasher : BossEnemy
         _body.rotation = Quaternion.Euler(0, 0, angle);
     }
 
-    private void Shoot(GenericPool<Projectile> pool)
+    private void Shoot(ObjectPool<Projectile> pool)
     {
         Projectile newProjectile = pool.Get();
         newProjectile.transform.SetPositionAndRotation(_refPoint.position, Quaternion.identity);
@@ -181,12 +191,14 @@ public class ProtoSlasher : BossEnemy
         foreach (var hit in hits)
         {
             Projectile proj = hit.GetComponent<Projectile>();
+
             if (proj != null && proj.IsParryable)
             {
                 proj.ReflectBackwards(transform, GetDirToPlayer());
             }
         }
     }
+
     #endregion
 
     #region STUN/VULNERABILITY MANAGEMENT
@@ -210,10 +222,13 @@ public class ProtoSlasher : BossEnemy
     #endregion
 
     #region RESOURCES
+
     private Vector2 GetDirToPlayer() => (_player.position - transform.position).normalized;
+
     #endregion
 
     #region COLLISIONS/TRIGGERS MANAGEMENT
+
     private void OnCollisionEnter2D(Collision2D collision)
     {
         string colTag = collision.gameObject.tag;
@@ -233,7 +248,7 @@ public class ProtoSlasher : BossEnemy
                     else
                     {
                         StartCoroutine(SetVulnerable());
-                        Destroy(projectile.gameObject);
+                        projectile.RequestDespawn();
                     }
                 }
                 break;
@@ -250,5 +265,6 @@ public class ProtoSlasher : BossEnemy
                 break;
         }
     }
+
     #endregion
 }

@@ -16,8 +16,6 @@ public class BossEnemy : Enemy
         CustomUpdateManager.Instance.UnsubscribeFromUpdate(CustomUpdate);
     }
 
-
-
     public override void Die()
     {
         _animator.SetTrigger("OnHit");

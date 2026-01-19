@@ -33,11 +33,6 @@ public class ComboVisualFeedback : MonoBehaviour
         {
             targetCanvas = FindGameplayCanvas();
         }
-
-        if (textPool != null && config != null)
-        {
-            textPool.SetPoolSize(config.poolSize);
-        }
     }
 
     private void ValidateReferences()
@@ -111,24 +106,4 @@ public class ComboVisualFeedback : MonoBehaviour
 
         text.Show(message, worldPosition, color);
     }
-
-    public void SetConfig(ComboFeedbackConfig newConfig)
-    {
-        config = newConfig;
-
-        if (textPool != null && config != null)
-        {
-            textPool.SetPoolSize(config.poolSize);
-        }
-    }
-
-#if UNITY_EDITOR
-    private void OnValidate()
-    {
-        if (config != null && textPool != null && Application.isPlaying)
-        {
-            textPool.SetPoolSize(config.poolSize);
-        }
-    }
-#endif
 }

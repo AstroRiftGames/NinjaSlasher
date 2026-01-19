@@ -1,85 +1,36 @@
 using UnityEngine;
+using AstroRift.Core.Pooling;
 
 public class FloatingTextPool : MonoBehaviour
 {
-    [Header("References")]
     [SerializeField] private FloatingComboText textPrefab;
     [SerializeField] private Transform poolContainer;
-
-    [Header("Configuration")]
     [SerializeField] private int initialPoolSize = 10;
 
-    private GenericPool<FloatingComboText> pool;
+    private ObjectPool<FloatingComboText> _pool;
 
     private void Awake()
     {
-        InitializePool();
-    }
-
-    private void InitializePool()
-    {
-        if (textPrefab == null)
-        {
-            Debug.LogError("[FloatingTextPool] Prefab no asignado");
-            return;
-        }
-
-        if (poolContainer == null)
-        {
-            poolContainer = transform;
-        }
-
-        pool = new GenericPool<FloatingComboText>(
-            textPrefab.gameObject,
+        _pool = new ObjectPool<FloatingComboText>(
+            textPrefab,
             initialPoolSize,
-            poolContainer,
-            "FloatingTextPool"
+            poolContainer != null ? poolContainer : transform
         );
-
-        pool.OnObjectRetrieved += InitializeText;
-    }
-
-    private void InitializeText(FloatingComboText text)
-    {
-        if (text != null)
-        {
-            text.Initialize(this);
-        }
     }
 
     public FloatingComboText Get()
     {
-        if (pool == null)
-        {
-            Debug.LogError("[FloatingTextPool] Pool no inicializado");
-            return null;
-        }
+        var text = _pool.Get();
 
-        return pool.Get();
+        text.OnRequestDespawn -= HandleTextDespawn;
+        text.OnRequestDespawn += HandleTextDespawn;
+
+        return text;
     }
 
-    public void Return(FloatingComboText text)
+    private void HandleTextDespawn(FloatingComboText text)
     {
-        if (text == null || pool == null) return;
-        pool.Return(text);
-    }
-
-    public void SetPoolSize(int size)
-    {
-        initialPoolSize = size;
-
-        if (pool != null)
-        {
-            pool.Clear();
-            InitializePool();
-        }
-    }
-
-    private void OnDestroy()
-    {
-        if (pool != null)
-        {
-            pool.Clear();
-        }
+        text.OnRequestDespawn -= HandleTextDespawn;
+        _pool.Release(text);
     }
 }
