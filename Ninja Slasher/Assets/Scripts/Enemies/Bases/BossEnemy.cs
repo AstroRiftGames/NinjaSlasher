@@ -1,4 +1,4 @@
-using Managers;
+using AstroRift.Core.Update;
 using System;
 using UnityEngine;
 
@@ -15,8 +15,6 @@ public class BossEnemy : Enemy
         base.OnDisable();
         CustomUpdateManager.Instance.UnsubscribeFromUpdate(CustomUpdate);
     }
-
-
 
     public override void Die()
     {

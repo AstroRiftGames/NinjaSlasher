@@ -1,10 +1,11 @@
-using Managers;
-using System;
-using UnityEngine;
+using AstroRift.Core.Update;
 using CandyCoded.HapticFeedback;
+using System;
+using System.Collections;
 using System.Linq;
 using Unity.VisualScripting;
-using System.Collections;
+using UnityEngine;
+using static SwipeDetection;
 
 public enum NinjaStates
 {
@@ -107,10 +108,8 @@ public class NewController : MonoBehaviour
     #region MAGIC METHODS
     private void Awake()
     {
-        //InitializeFSM();
-        //InitializeTree(); 
-        _swipeDetection.OnSwipe += context => { TryDash(context); };
-        _swipeDetection.OnTap += context => { TryParry(context); } ;
+        _swipeDetection.OnSwipe += OnSwipe;
+        _swipeDetection.OnTap += OnTap;
     }
 
     private void Update()
@@ -124,6 +123,25 @@ public class NewController : MonoBehaviour
             _trajectoryRenderer.HideTrajectory();
         }
     }
+
+    private void OnDestroy()
+    {
+        if (_swipeDetection == null) return;
+
+        _swipeDetection.OnSwipe -= OnSwipe;
+        _swipeDetection.OnTap -= OnTap;
+    }
+
+    private void OnSwipe(Vector2 direction)
+    {
+        TryDash(direction);
+    }
+
+    private void OnTap(Vector2 position)
+    {
+        TryParry(position);
+    }
+
     #endregion
 
     #region MECHANICS
@@ -380,8 +398,7 @@ public class NewController : MonoBehaviour
     private void OnTriggerEnter2D(Collider2D collision)
     {
         string colTag = collision.gameObject.tag;
-        
-        Debug.Log($"Collided with: {colTag} ({collision.name})");
+
         if (deadlyMatrix.Contains(colTag))
         {
             switch (colTag)

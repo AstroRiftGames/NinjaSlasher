@@ -112,7 +112,7 @@ public class IAPTestButton : MonoBehaviour
         {
             statusText.text = message;
         }
-        Debug.Log($"[IAPTest] {message}");
+        //Debug.Log($"[IAPTest] {message}");
     }
 
     private void OnDestroy()

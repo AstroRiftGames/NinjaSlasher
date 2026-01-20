@@ -1,5 +1,5 @@
-using Managers;
 using UnityEngine;
+using AstroRift.Core.Update;
 
 public class FlyingEnemy : Enemy
 {

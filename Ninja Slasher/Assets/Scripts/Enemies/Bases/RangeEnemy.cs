@@ -1,5 +1,6 @@
-using Managers;
 using UnityEngine;
+using AstroRift.Core.Update;
+using AstroRift.Core.Pooling;
 
 public class RangeEnemy : Enemy
 {
@@ -9,7 +10,7 @@ public class RangeEnemy : Enemy
     protected void SetDirToTarget(Vector2 dir) => _dirToTarget = dir;
 
     [Header("LOS Stats")]
-    [SerializeField] private float _range;
+    [SerializeField] private float _LOSRange;
     protected bool _hasLOS;
     private bool _hasTarget;
 
@@ -17,13 +18,13 @@ public class RangeEnemy : Enemy
     [SerializeField] private float _cooldDown;
     [SerializeField] protected Transform _refPoint;
     private float _lastAttack;
-    private GenericPool<Projectile> _pool;
+    private ObjectPool<Projectile> _pool;
     protected void SetLastAttack() => _lastAttack = Time.time;
 
     public override void Awake()
     {
         base.Awake();
-        _pool = new GenericPool<Projectile>(_data.Projectile, 5, transform);
+        _pool = new ObjectPool<Projectile>(_data.Projectile, 5, transform);
     }
 
     public override void OnEnable()
@@ -31,7 +32,6 @@ public class RangeEnemy : Enemy
         base.OnEnable();
         _target = FindAnyObjectByType<NewController>().transform;
     }
-
 
     public override void CustomUpdate()
     {
@@ -71,7 +71,7 @@ public class RangeEnemy : Enemy
         Vector2 LOSv = _target.position - transform.position;
         Vector2 LOSvNormalized = LOSv.normalized;
         float distance = LOSv.magnitude;
-        if (distance > _range) return false;
+        if (distance > _LOSRange) return false;
 
         bool hit = Physics2D.Raycast(transform.position, LOSvNormalized, distance, _obstaclesLayer).collider != null;
         return !hit;
@@ -87,15 +87,32 @@ public class RangeEnemy : Enemy
     protected void Shoot()
     {
         var projectile = _pool.Get();
-        projectile.transform.SetPositionAndRotation(_refPoint.position, _refPoint.rotation);
-        projectile.Initialize(_dirToTarget.normalized, transform, _pool);
+
+        projectile.transform.SetPositionAndRotation(
+            _refPoint.position,
+            _refPoint.rotation
+        );
+
+        projectile.OnRequestDespawn -= HandleProjectileDespawn;
+        projectile.OnRequestDespawn += HandleProjectileDespawn;
+
+        projectile.Initialize(_dirToTarget.normalized, transform);
+    }
+
+    private void HandleProjectileDespawn(Projectile projectile)
+    {
+        if (projectile == null)
+            return;
+
+        projectile.OnRequestDespawn -= HandleProjectileDespawn;
+        _pool.Release(projectile);
     }
 
 #if UNITY_EDITOR
     private void OnDrawGizmos()
     {
         Gizmos.color = Color.yellow;
-        Gizmos.DrawWireSphere(transform.position, _range);
+        Gizmos.DrawWireSphere(transform.position, _LOSRange);
     }
 #endif
 }

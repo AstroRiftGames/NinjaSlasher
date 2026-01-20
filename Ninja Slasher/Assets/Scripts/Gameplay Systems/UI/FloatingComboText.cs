@@ -1,8 +1,9 @@
-﻿using UnityEngine;
+﻿using DG.Tweening;
+using System;
 using TMPro;
-using DG.Tweening;
+using UnityEngine;
 
-public class FloatingComboText : MonoBehaviour
+public class FloatingComboText : MonoBehaviour, IPoolable
 {
     [Header("REFERENCES")]
     [SerializeField] private TextMeshProUGUI _text;
@@ -22,7 +23,8 @@ public class FloatingComboText : MonoBehaviour
     [SerializeField] private float _punchStrength = 0.3f;
 
     private Sequence _animationSequence;
-    private FloatingTextPool _pool;
+
+    public event Action<FloatingComboText> OnRequestDespawn;
 
     private void Awake()
     {
@@ -31,11 +33,6 @@ public class FloatingComboText : MonoBehaviour
 
         if (_canvasGroup == null)
             _canvasGroup = GetComponent<CanvasGroup>();
-    }
-
-    public void Initialize(FloatingTextPool pool)
-    {
-        _pool = pool;
     }
 
     public void Show(string message, Vector3 worldPosition, Color color)
@@ -47,8 +44,7 @@ public class FloatingComboText : MonoBehaviour
 
         if (canvas == null)
         {
-            Debug.LogWarning("[FloatingComboText] No se encontró Canvas parent");
-            ReturnToPool();
+            RequestDespawn();
             return;
         }
 
@@ -56,8 +52,7 @@ public class FloatingComboText : MonoBehaviour
 
         if (canvasCamera == null)
         {
-            Debug.LogWarning("[FloatingComboText] No se encontró Camera");
-            ReturnToPool();
+            RequestDespawn();
             return;
         }
 
@@ -120,22 +115,29 @@ public class FloatingComboText : MonoBehaviour
         _animationSequence.Append(_canvasGroup.DOFade(0f, _duration * 0.35f)
             .SetEase(Ease.InQuad));
 
-        _animationSequence.OnComplete(ReturnToPool);
+        _animationSequence.OnComplete(RequestDespawn);
     }
 
-    private void ReturnToPool()
+    private void RequestDespawn()
     {
-        if (_pool != null)
-        {
-            _pool.Return(this);
-        }
-        else
-        {
-            gameObject.SetActive(false);
-        }
+        OnRequestDespawn?.Invoke(this);
     }
 
     private void OnDestroy()
+    {
+        if (_animationSequence != null && _animationSequence.IsActive())
+            _animationSequence.Kill();
+    }
+
+    public void OnSpawn()
+    {
+        if (_animationSequence != null && _animationSequence.IsActive())
+            _animationSequence.Kill();
+
+        _canvasGroup.alpha = 1f;
+    }
+
+    public void OnDespawn()
     {
         if (_animationSequence != null && _animationSequence.IsActive())
             _animationSequence.Kill();

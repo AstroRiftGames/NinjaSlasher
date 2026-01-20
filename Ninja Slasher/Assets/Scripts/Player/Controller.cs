@@ -1,7 +1,7 @@
-using Managers;
 using System.Collections;
 using UnityEngine;
 using CandyCoded.HapticFeedback;
+using AstroRift.Core.Update;
 
 public class Controller : MonoBehaviour
 {

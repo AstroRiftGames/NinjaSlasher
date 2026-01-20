@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class TrackingService
 {
@@ -19,8 +20,6 @@ public class TrackingService
         session = levelSession;
         config = levelSession.Configuration;
         isActive = false;
-
-        Debug.Log($"[TrackingService] Servicio creado para nivel {session.LevelId}");
     }
 
     public void Initialize()
@@ -35,23 +34,30 @@ public class TrackingService
         isActive = true;
 
         UpdateSessionStats();
-
-        Debug.Log($"[TrackingService] Inicializado - {totalEnemiesAtStart} enemigos registrados");
     }
 
     private void RegisterEnemies()
     {
         Enemy[] foundEnemies = Object.FindObjectsOfType<Enemy>();
         activeEnemies.Clear();
-        activeEnemies.AddRange(foundEnemies);
+
+        Scene currentScene = SceneManager.GetActiveScene();
+
+        foreach (Enemy enemy in foundEnemies)
+        {
+            if (enemy != null && enemy.gameObject != null &&
+                enemy.gameObject.scene == currentScene)
+            {
+                activeEnemies.Add(enemy);
+            }
+        }
+
         totalEnemiesAtStart = activeEnemies.Count;
 
         if (config.levelContext != null)
         {
             config.levelContext.Initialize(totalEnemiesAtStart);
         }
-
-        Debug.Log($"[TrackingService] {totalEnemiesAtStart} enemigos encontrados en la escena");
     }
 
     private void SubscribeToEvents()
@@ -70,8 +76,6 @@ public class TrackingService
 
         movesCount++;
         session.IncrementMoves();
-
-        Debug.Log($"[TrackingService] Movimiento registrado - Total: {movesCount}");
     }
 
     public void RegisterParryKill()
@@ -82,8 +86,6 @@ public class TrackingService
         {
             parryKillRegistered = true;
             session.RegisterParryKill();
-
-            Debug.Log($"[TrackingService] Parry kill registrado");
         }
     }
 
@@ -97,8 +99,6 @@ public class TrackingService
 
             int defeated = totalEnemiesAtStart - activeEnemies.Count;
             UpdateSessionStats();
-
-            Debug.Log($"[TrackingService] Enemigo eliminado - Progreso: {defeated}/{totalEnemiesAtStart}");
 
             if (activeEnemies.Count == 0)
             {
@@ -115,8 +115,6 @@ public class TrackingService
 
     private void OnAllEnemiesDefeated()
     {
-        Debug.Log($"[TrackingService] ¡Todos los enemigos eliminados!");
-
         GameEvents.RaiseAllEnemiesDefeated(session.CurrentStats);
     }
 
@@ -139,15 +137,11 @@ public class TrackingService
         movesCount = 0;
         parryKillRegistered = false;
         isActive = false;
-
-        Debug.Log($"[TrackingService] Servicio reseteado");
     }
 
     public void Dispose()
     {
         UnsubscribeFromEvents();
         Reset();
-
-        Debug.Log($"[TrackingService] Servicio destruido");
     }
 }

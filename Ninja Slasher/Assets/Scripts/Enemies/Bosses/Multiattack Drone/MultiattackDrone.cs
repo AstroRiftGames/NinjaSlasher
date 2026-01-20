@@ -1,5 +1,6 @@
 using System.Collections;
 using UnityEngine;
+using AstroRift.Core.Pooling;
 
 public enum AttackType
 {
@@ -22,9 +23,9 @@ public class MultiattackDrone : BossEnemy
     [SerializeField] CapsuleCollider2D _capsuleCol;
 
     [Header("Bullet Prefabs")]
-    [SerializeField] GameObject _coneBullet;
-    [SerializeField] GameObject _riccochetBullet;
-    [SerializeField] GameObject _burstBullet;
+    [SerializeField] Projectile _coneBullet;
+    [SerializeField] Projectile _riccochetBullet;
+    [SerializeField] Projectile _burstBullet;
 
     [Header("Attacking Parameters")]
     [SerializeField] float _cooldown;
@@ -37,9 +38,9 @@ public class MultiattackDrone : BossEnemy
     [SerializeField] float _timeBetweenShots;
     [SerializeField] float _timeBetweenReboundShots;
     private AttackType _nextAttack;
-    private GenericPool<Projectile> _conePool;
-    private GenericPool<Projectile> _ricochetPool;
-    private GenericPool<Projectile> _burstPool;
+    private ObjectPool<Projectile> _conePool;
+    private ObjectPool<Projectile> _ricochetPool;
+    private ObjectPool<Projectile> _burstPool;
 
     [Header("Vulnerability Parameters")]
     [SerializeField] float _vulnerabilityTime;
@@ -48,17 +49,25 @@ public class MultiattackDrone : BossEnemy
     private bool _isActive = false;
     [SerializeField] private float _waitTime;
 
+    [SerializeField] private ShootingPointContainer _shootingPointContainer;
+
     public override void Awake()
     {
         base.Awake();
-        _conePool = new GenericPool<Projectile>(_coneBullet, _coneAmount * 2, transform);
-        _ricochetPool = new GenericPool<Projectile>(_riccochetBullet, _reboundAmount * 2, transform);
-        _burstPool = new GenericPool<Projectile>(_burstBullet, _burstAmount * 2, transform);
+        _conePool = new ObjectPool<Projectile>(_coneBullet, _coneAmount * 2, transform);
+        _ricochetPool = new ObjectPool<Projectile>(_riccochetBullet, _reboundAmount * 2, transform);
+        _burstPool = new ObjectPool<Projectile>(_burstBullet, _burstAmount * 2, transform);
     }
 
     public override void Start()
     {
         base.Start();
+
+        if (_shootingPointContainer != null && _player != null)
+        {
+            _shootingPointContainer.SetPlayer(_player);
+        }
+
         StartCoroutine(Activate());
     }
 
@@ -231,42 +240,37 @@ public class MultiattackDrone : BossEnemy
 
     private void Shoot(AttackType type)
     {
-        GameObject prefab = type switch
+        ObjectPool<Projectile> pool = type switch
         {
-            AttackType.Burst => _burstBullet,
-            AttackType.Cone => _coneBullet,
-            AttackType.Rebound => _riccochetBullet,
-            _ => _burstBullet,
+            AttackType.Burst => _burstPool,
+            AttackType.Cone => _conePool,
+            AttackType.Rebound => _ricochetPool,
+            _ => _burstPool
         };
 
-        Transform t = null;
+        Projectile projectile = pool.Get();
 
-        if (type == AttackType.Cone)
-        {
-            Projectile cone = _conePool.Get();
-            t = cone.transform;
+        projectile.transform.SetPositionAndRotation(
+            _shootingPoint.position,
+            Quaternion.identity
+        );
 
-            Vector2 dir = GetDirToPlayer();
-            float angle = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg;
-            cone.transform.rotation = Quaternion.Euler(0, 0, angle - 90);
-            cone.transform.parent = null;
+        projectile.OnRequestDespawn -= HandleProjectileDespawn;
+        projectile.OnRequestDespawn += HandleProjectileDespawn;
 
-            for (int n = 0; n < cone.transform.childCount; n++)
-            {
-                cone.transform.GetChild(n).TryGetComponent(out Projectile newProjectile);
-                newProjectile.Initialize(transform, _conePool);
-            }
-        }
+        projectile.Initialize(GetDirToPlayer(), transform);
+    }
+
+    private void HandleProjectileDespawn(Projectile projectile)
+    {
+        projectile.OnRequestDespawn -= HandleProjectileDespawn;
+
+        if (_conePool != null && _conePool.AvailableCount >= 0)
+            _conePool.Release(projectile);
+        else if (_ricochetPool != null)
+            _ricochetPool.Release(projectile);
         else
-        {
-            GenericPool<Projectile> pool = type == AttackType.Rebound ? _ricochetPool : _burstPool;
-            Projectile projectile = pool.Get();
-            t = projectile.transform;
-            projectile.transform.SetPositionAndRotation(_shootingPoint.position, Quaternion.identity);
-            projectile.Initialize(GetDirToPlayer(), transform, pool);
-            projectile.transform.parent = null;
-        }
-        AudioManager.Instance.PlaySFXAtPosition(type == AttackType.Burst ? SFXClip.B_Drone_BurstAttack: type == AttackType.Cone ? SFXClip.B_Drone_ConeAttack: SFXClip.B_Drone_ReboundAttack, t.position);
+            _burstPool.Release(projectile);
     }
 
     #endregion

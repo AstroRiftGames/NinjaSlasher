@@ -1,4 +1,4 @@
-using Managers;
+using AstroRift.Core.Update;
 using UnityEngine;
 
 public class Enemy : MonoBehaviour
@@ -13,26 +13,27 @@ public class Enemy : MonoBehaviour
     [SerializeField] protected LayerMask _obstaclesLayer;
     [SerializeField] protected LayerMask _playerLayer;
 
-
     protected Transform _player;
     protected Rigidbody2D _rb;
     protected Collider2D _col;
     [SerializeField] protected Animator _animator;
     public Animator Animator => _animator;
-    private EnemyTracker tracker;
 
     public virtual void OnEnable()
     {
-        VulnerabilityCheck.OnVulnerabilityCheckColision -= DetectCollision;
-        CustomUpdateManager.Instance.SubscribeToUpdate(CustomUpdate);
+        VulnerabilityCheck.OnVulnerabilityCheckColision += DetectCollision;
+
+        if (CustomUpdateManager.Instance != null)
+            CustomUpdateManager.Instance.SubscribeToUpdate(CustomUpdate);
     }
 
     public virtual void OnDisable()
     {
-        VulnerabilityCheck.OnVulnerabilityCheckColision += DetectCollision;
-        CustomUpdateManager.Instance.UnsubscribeFromUpdate(CustomUpdate);
-    }
+        VulnerabilityCheck.OnVulnerabilityCheckColision -= DetectCollision;
 
+        if (CustomUpdateManager.Instance != null)
+            CustomUpdateManager.Instance.UnsubscribeFromUpdate(CustomUpdate);
+    }
 
     public virtual void Awake()
     {
@@ -47,7 +48,6 @@ public class Enemy : MonoBehaviour
         }
 
         _player = FindAnyObjectByType<NewController>().transform;
-        tracker = FindAnyObjectByType<EnemyTracker>();
     }
 
     public virtual void Start()
@@ -80,7 +80,7 @@ public class Enemy : MonoBehaviour
         RegisterKill();
 
         Destroy(gameObject, _deathTime);
-}
+    }
 
     public void RegisterKill()
     {

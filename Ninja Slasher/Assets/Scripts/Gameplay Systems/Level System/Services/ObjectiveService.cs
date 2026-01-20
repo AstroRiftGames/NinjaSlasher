@@ -8,7 +8,15 @@ public class ObjectiveService
     {
         config = levelConfig;
 
-        Debug.Log($"[ObjectiveService] Servicio creado con {config.objectives.Length} objetivos");
+        if (config == null)
+        {
+            return;
+        }
+
+        if (config.objectives == null || config.objectives.Length == 0)
+        {
+            return;
+        }
     }
 
     public ObjectiveEvaluationResult Evaluate(LevelStats stats, bool includePreviouslyCompleted = true)
@@ -17,14 +25,12 @@ public class ObjectiveService
 
         if (config == null || config.objectives == null)
         {
-            Debug.LogError("[ObjectiveService] No hay configuración de objetivos válida");
             return result;
         }
 
         var primaryObjective = config.GetPrimaryObjective();
         if (primaryObjective == null)
         {
-            Debug.LogError("[ObjectiveService] No se encontró objetivo principal");
             return result;
         }
 
@@ -33,15 +39,12 @@ public class ObjectiveService
         {
             result.starsEarned = 0;
             result.primaryCompleted = false;
-            Debug.Log($"[ObjectiveService] Objetivo principal NO completado");
             return result;
         }
 
         result.primaryCompleted = true;
         result.starsEarned = primaryObjective.starValue;
         result.completedObjectives.Add(primaryObjective);
-
-        Debug.Log($"[ObjectiveService] Objetivo principal completado: {primaryObjective.objectiveName}");
 
         var secondaryObjectives = config.GetSecondaryObjectives();
         foreach (var objective in secondaryObjectives)
@@ -57,20 +60,17 @@ public class ObjectiveService
             {
                 result.completedObjectives.Add(objective);
                 result.starsEarned += objective.starValue;
-                Debug.Log($"[ObjectiveService] Objetivo '{objective.objectiveName}' completado previamente");
             }
             else if (objective.CanBeEvaluated(stats, config.levelContext) &&
                      objective.IsCompleted(stats, config.levelContext))
             {
                 result.starsEarned += objective.starValue;
                 result.completedObjectives.Add(objective);
-                Debug.Log($"[ObjectiveService] ¡Nuevo objetivo completado! '{objective.objectiveName}'");
             }
         }
 
         result.starsEarned = Mathf.Min(result.starsEarned, 3);
 
-        Debug.Log($"[ObjectiveService] Evaluación completa - {result.starsEarned} estrellas");
         return result;
     }
 

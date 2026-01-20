@@ -39,34 +39,28 @@ public class LevelSession
         sessionStartTime = Time.time;
         isComplete = false;
         isFailed = false;
-
-        Debug.Log($"[LevelSession] Sesión creada para nivel {LevelId}");
     }
 
     public void Initialize()
     {
         ChangeState(LevelSessionState.Ready);
-        Debug.Log($"[LevelSession] Sesión inicializada para nivel {LevelId}");
     }
 
     public void Start()
     {
         if (State != LevelSessionState.Ready)
         {
-            Debug.LogWarning($"[LevelSession] No se puede iniciar - Estado actual: {State}");
             return;
         }
 
         sessionStartTime = Time.time;
         ChangeState(LevelSessionState.Running);
-        Debug.Log($"[LevelSession] Nivel {LevelId} iniciado");
     }
 
     public void Pause()
     {
         if (State != LevelSessionState.Running)
         {
-            Debug.LogWarning($"[LevelSession] No se puede pausar - Estado actual: {State}");
             return;
         }
 
@@ -77,7 +71,6 @@ public class LevelSession
     {
         if (State != LevelSessionState.Paused)
         {
-            Debug.LogWarning($"[LevelSession] No se puede resumir - Estado actual: {State}");
             return;
         }
 
@@ -88,30 +81,24 @@ public class LevelSession
     {
         if (isComplete || isFailed)
         {
-            Debug.LogWarning($"[LevelSession] Sesión ya finalizada - Complete: {isComplete}, Failed: {isFailed}");
             return;
         }
 
         isComplete = true;
         CurrentStats.timeTaken = Time.time - sessionStartTime;
         ChangeState(LevelSessionState.Completed);
-
-        Debug.Log($"[LevelSession] Nivel {LevelId} completado - Tiempo: {CurrentStats.timeTaken:F2}s");
     }
 
     public void Fail(string reason)
     {
         if (isComplete || isFailed)
         {
-            Debug.LogWarning($"[LevelSession] Sesión ya finalizada");
             return;
         }
 
         isFailed = true;
         CurrentStats.timeTaken = Time.time - sessionStartTime;
         ChangeState(LevelSessionState.Failed);
-
-        Debug.Log($"[LevelSession] Nivel {LevelId} fallido - Razón: {reason}");
     }
 
     public void UpdateEnemyCount(int defeated, int total)
@@ -160,8 +147,6 @@ public class LevelSession
         CurrentStats = new LevelStats();
         isComplete = false;
         isFailed = false;
-
-        Debug.Log($"[LevelSession] Sesión limpiada para nivel {LevelId}");
     }
 
     private void ChangeState(LevelSessionState newState)
@@ -172,8 +157,6 @@ public class LevelSession
         State = newState;
 
         OnStateChanged?.Invoke(newState);
-
-        Debug.Log($"[LevelSession] Estado cambiado: {oldState} → {newState}");
     }
 
     private void NotifyStatsUpdated()

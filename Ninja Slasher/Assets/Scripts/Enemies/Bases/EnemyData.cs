@@ -31,12 +31,12 @@ public class VulnerabilityValues
 public class EnemyData : ScriptableObject
 {
     [SerializeField] EnemyType _type;
-    [SerializeField] GameObject _projectile;
-    [SerializeField] float _range;
+    [SerializeField] Projectile _projectile;
+    [SerializeField] private float _range;
     [SerializeField] VulnerabilityValues _isVulnerable;
 
     public EnemyType Type => _type;
-    public GameObject Projectile => _projectile;
+    public Projectile Projectile => _projectile;
     public float Range => _range;
     public VulnerabilityValues IsVulnerable => _isVulnerable;
 }

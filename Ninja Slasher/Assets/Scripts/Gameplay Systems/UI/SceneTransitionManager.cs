@@ -112,8 +112,6 @@ public class SceneTransitionManager : MonoBehaviour
         bool canSpinWheel = DailyWheelSystem.Instance.CanSpinToday();
         bool canClaimReward = DailyRewardSystem.Instance.CanClaimToday();
 
-        Debug.Log($"[SceneTransition] CanSpinWheel: {canSpinWheel}, CanClaimReward: {canClaimReward}");
-
         if (canSpinWheel)
         {
             StartCoroutine(ShowDailyWheelAfterDelay(1f));

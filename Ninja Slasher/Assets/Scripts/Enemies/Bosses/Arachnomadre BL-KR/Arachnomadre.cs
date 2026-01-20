@@ -1,8 +1,9 @@
-using Managers;
 using System.Collections;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UIElements;
+using AstroRift.Core.Pooling;
+using AstroRift.Core.Update;
 
 public enum Surface
 {
@@ -36,10 +37,10 @@ public class Arachnomadre : BossEnemy
     [SerializeField] private float _launchingBaseForce;
     [SerializeField] private float _timeBetweenEggs;
     [SerializeField] [Range(0f,1f)] private float _spawnAttackChance;
-    [SerializeField] private GameObject _blaztEgg;
+    [SerializeField] private BlaztEgg _blaztEgg;
     [SerializeField] private int _blaztEggsAmount;
-    private GenericPool<BlaztEgg> _pool;
-    public GenericPool<BlaztEgg> Pool => _pool;
+    private ObjectPool<BlaztEgg> _pool;
+    public ObjectPool<BlaztEgg> Pool => _pool;
     private int _blaztsAmount;
     public void DecreaseEggsAmount() => _blaztsAmount--;
     public void IncreaseEggsAmount() => _blaztsAmount++;
@@ -54,7 +55,7 @@ public class Arachnomadre : BossEnemy
     public override void Awake()
     {
         base.Awake();
-        _pool = new GenericPool<BlaztEgg>(_blaztEgg, _blaztEggsAmount, transform);
+        _pool = new ObjectPool<BlaztEgg>(_blaztEgg, _blaztEggsAmount, transform);
     }
 
     public override void CustomUpdate()
@@ -132,13 +133,29 @@ public class Arachnomadre : BossEnemy
         for(int n = 0; n < _blaztEggsAmount; n++)
         {
             BlaztEgg newEgg = _pool.Get();
-            newEgg.transform.SetPositionAndRotation(transform.position + transform.up, Quaternion.identity);
+
+            newEgg.transform.SetPositionAndRotation(
+                transform.position + transform.up,
+                Quaternion.identity
+            );
+
             newEgg.TryGetComponent(out Rigidbody2D eggRB);
             eggRB.AddForce(SetDirection(n), ForceMode2D.Impulse);
+
             newEgg.SetArachnomadre(this);
+
+            newEgg.OnRequestDespawn -= HandleEggDespawn;
+            newEgg.OnRequestDespawn += HandleEggDespawn;
+
             yield return new WaitForSeconds(_timeBetweenEggs);
         }
         _isAttacking = false;
+    }
+
+    private void HandleEggDespawn(BlaztEgg egg)
+    {
+        egg.OnRequestDespawn -= HandleEggDespawn;
+        _pool.Release(egg);
     }
 
     private Vector2 SetDirection(int index)
