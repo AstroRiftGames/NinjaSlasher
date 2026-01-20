@@ -1,6 +1,6 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
-    
+
 public class SwipeDetection : MonoBehaviour
 {
     public delegate void Swipe(Vector2 direction);
