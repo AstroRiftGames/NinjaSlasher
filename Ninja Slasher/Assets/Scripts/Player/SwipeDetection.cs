@@ -1,6 +1,6 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
-    
+
 public class SwipeDetection : MonoBehaviour
 {
     public delegate void Swipe(Vector2 direction);
@@ -30,34 +30,6 @@ public class SwipeDetection : MonoBehaviour
         press.canceled += _ => DetectInput();
     }
 
-    private void OnEnable()
-    {
-        position.Enable();
-        press.Enable();
-
-        press.performed += OnPressPerformed;
-        press.canceled += OnPressCanceled;
-    }
-
-    private void OnDisable()
-    {
-        press.performed -= OnPressPerformed;
-        press.canceled -= OnPressCanceled;
-
-        position.Disable();
-        press.Disable();
-    }
-    private void OnPressPerformed(InputAction.CallbackContext _)
-    {
-        initialPos = currentPos;
-        pressTime = currentTime;
-    }
-
-    private void OnPressCanceled(InputAction.CallbackContext _)
-    {
-        DetectInput();
-    }
-
     private void Update()
     {
         if (IsPressing)
@@ -72,20 +44,18 @@ public class SwipeDetection : MonoBehaviour
 
     private void DetectInput()
     {
-        if (!isActiveAndEnabled) return;
-
         Vector2 direction = CalculateDirection();
 
         if (direction != Vector2.zero)
         {
-            OnSwipe?.Invoke(direction);
+            OnSwipe(direction);
         }
         else
         {
             float deltaTime = currentTime - pressTime;
             if (deltaTime <= timeThreshold)
             {
-                OnTap?.Invoke(initialPos);
+                OnTap(initialPos);
             }
         }
     }

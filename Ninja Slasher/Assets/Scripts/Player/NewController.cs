@@ -1,11 +1,9 @@
-using AstroRift.Core.Update;
-using CandyCoded.HapticFeedback;
 using System;
-using System.Collections;
+using UnityEngine;
+using CandyCoded.HapticFeedback;
 using System.Linq;
 using Unity.VisualScripting;
-using UnityEngine;
-using static SwipeDetection;
+using System.Collections;
 
 public enum NinjaStates
 {
@@ -36,8 +34,6 @@ public class NewController : MonoBehaviour
     private Vector2 _lastDashDirection;
     private float _lastDash;
     private Vector2 _lastNormal;
-
-    private PlatformBase _currentSurface;
 
     [SerializeField] private LayerMask _proyectilesLayer;
 
@@ -106,10 +102,28 @@ public class NewController : MonoBehaviour
     #endregion
 
     #region MAGIC METHODS
-    private void Awake()
+    //private void Awake()
+    //{
+    //    //InitializeFSM();
+    //    //InitializeTree(); 
+    //    _swipeDetection.OnSwipe += context => { TryDash(context); };
+    //    _swipeDetection.OnTap += context => { TryParry(context); };
+    //}
+
+    private void OnEnable()
     {
-        _swipeDetection.OnSwipe += OnSwipe;
-        _swipeDetection.OnTap += OnTap;
+        if (_swipeDetection == null) return;
+
+        _swipeDetection.OnSwipe += TryDash;
+        _swipeDetection.OnTap += TryParry;
+    }
+
+    private void OnDisable()
+    {
+        if (_swipeDetection == null) return;
+
+        _swipeDetection.OnSwipe -= TryDash;
+        _swipeDetection.OnTap -= TryParry;
     }
 
     private void Update()
@@ -123,31 +137,12 @@ public class NewController : MonoBehaviour
             _trajectoryRenderer.HideTrajectory();
         }
     }
-
-    private void OnDestroy()
-    {
-        if (_swipeDetection == null) return;
-
-        _swipeDetection.OnSwipe -= OnSwipe;
-        _swipeDetection.OnTap -= OnTap;
-    }
-
-    private void OnSwipe(Vector2 direction)
-    {
-        TryDash(direction);
-    }
-
-    private void OnTap(Vector2 position)
-    {
-        TryParry(position);
-    }
-
     #endregion
 
     #region MECHANICS
     private void TryDash(Vector2 direction)
     {
-        if(!_isKO && !_isDashing && !_isParrying && CheckDashCD())
+        if (!_isKO && !_isDashing && !_isParrying && CheckDashCD())
         {
             Dash(direction);
         }
@@ -164,7 +159,7 @@ public class NewController : MonoBehaviour
                 if (angle is > 90 and < 180)
                 {
                     dashDir = -transform.right;
-                    
+
                 }
                 else if (angle is > -180 and < -90)
                 {
@@ -205,14 +200,6 @@ public class NewController : MonoBehaviour
 
         _lastDashDirection = dashDir;
 
-        if(_currentSurface != null)
-        {
-           if(_currentSurface.Type == PlatformTypes.Slippery)
-           {
-                _currentSurface.OnPlayerExit(gameObject, true);
-           }
-        }
-
         _view.RB.AddForce(dashDir * _model.DashForce);
         AudioManager.Instance.PlaySFXAtPosition(SFXClip.P_Movement, transform.position);
         _isDashing = true;
@@ -246,12 +233,12 @@ public class NewController : MonoBehaviour
 
     private void TryParry(Vector2 tapPos)
     {
-        if(!_isKO && !_isDashing && !_isParrying && CheckParryCD())
+        if (!_isKO && !_isDashing && !_isParrying && CheckParryCD())
         {
             Vector2 dir = CalculateDirection(tapPos);
             Parry(dir);
         }
-        
+
     }
 
     private Vector2 CalculateDirection(Vector2 tapPos)
@@ -303,7 +290,7 @@ public class NewController : MonoBehaviour
         else return _model.ParryRange;
     }
 
-    private void Grab(Vector2 normal, PlatformBase platform = null, bool isSlippery = false)
+    private void Grab(Vector2 normal)
     {
         _isDashing = false;
         _lastNormal = normal;
@@ -320,21 +307,17 @@ public class NewController : MonoBehaviour
             RotateSprites(Vector2.zero);
             SetMirrored(normal == Vector2.left);
         }
-        else if(normal == Vector2.down)
+        else if (normal == Vector2.down)
         {
             _view.Animator.SetBool("IsCeilingGrabbed", true);
             RotateSprites(Vector2.left);
-        }
-        if (platform != null)
-        {
-            _currentSurface = platform;
         }
     }
 
     public void Die()
     {
         Debug.Log("Player Died");
-        if(_isKO) return;
+        if (_isKO) return;
         _isKO = true;
 
         _view.TriggerCol.enabled = false;
@@ -349,16 +332,6 @@ public class NewController : MonoBehaviour
             CameraShake.Instance.TriggerShake(0.4f, 0.5f);
         }
 
-        if (LevelSessionManager.Instance != null)
-        {
-            LevelSessionManager.Instance.FailLevel("Jugador murió");
-        }
-        else
-        {
-            Debug.LogError("[NewController] LevelSessionManager no encontrado - nivel no será marcado como fallido");
-        }
-
-        GameManager.Instance.OnPlayerLose();
         if (UIManager.Instance.IsHapticFeedbackActive) HapticFeedback.HeavyFeedback();
     }
     #endregion
@@ -370,27 +343,11 @@ public class NewController : MonoBehaviour
         if (colMatrix.Contains(colTag))
         {
             _view.TrailRendererComponent.emitting = false;
-            collision.collider.TryGetComponent(out PlatformBase platformComponent);
+            collision.collider.TryGetComponent(out ElasticPlatform elasticComponent);
 
-
-            if (platformComponent == null)
+            if (!elasticComponent)
             {
                 Grab(collision.GetContact(0).normal);
-            }
-            else
-            {
-                switch (platformComponent)
-                {
-                    case PlatformBase platform when platform != null && platform.Type == PlatformTypes.Slippery:
-                        Grab(collision.GetContact(0).normal, platform, true);
-                        break;
-                    case PlatformBase platform when platform != null && platform.Type == PlatformTypes.Elastic:
-                        break;
-                    default:
-                        Debug.LogError($"Behaviour for {platformComponent} not defined");
-                        Grab(collision.GetContact(0).normal);
-                        break;
-                }
             }
         }
     }
@@ -399,12 +356,13 @@ public class NewController : MonoBehaviour
     {
         string colTag = collision.gameObject.tag;
 
+        Debug.Log($"Collided with: {colTag} ({collision.name})");
         if (deadlyMatrix.Contains(colTag))
         {
             switch (colTag)
             {
                 case "Enemy":
-                    if (_isDashing) 
+                    if (_isDashing)
                     {
                         collision.TryGetComponent(out Enemy enemy);
                         enemy.Die();
