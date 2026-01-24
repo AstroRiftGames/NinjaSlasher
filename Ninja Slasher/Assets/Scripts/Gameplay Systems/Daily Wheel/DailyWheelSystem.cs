@@ -54,8 +54,6 @@ public class DailyWheelSystem : MonoBehaviourSingleton<DailyWheelSystem>
             SaveWheelData();
         }
 
-        AudioManager.Instance?.PlaySFX(SFXClip.UI_Claim);
-
         OnRewardSpun?.Invoke(reward);
 
         CheckWheelAvailability();
@@ -71,7 +69,7 @@ public class DailyWheelSystem : MonoBehaviourSingleton<DailyWheelSystem>
         DateTime lastSpin = GetLastSpinDateSafe();
         DateTime currentDate = DateTime.Now.Date;
 
-        return lastSpin < currentDate;
+        return true; // lastSpin < currentDate;
     }
 
     private WheelReward GetCalculatedReward()
