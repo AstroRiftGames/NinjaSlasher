@@ -69,7 +69,7 @@ public class DailyWheelSystem : MonoBehaviourSingleton<DailyWheelSystem>
         DateTime lastSpin = GetLastSpinDateSafe();
         DateTime currentDate = DateTime.Now.Date;
 
-        return true; // lastSpin < currentDate;
+        return lastSpin < currentDate;
     }
 
     private WheelReward GetCalculatedReward()
