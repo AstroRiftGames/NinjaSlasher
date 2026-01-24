@@ -162,7 +162,7 @@ public class DailyWheelUI : MonoBehaviour
 
         yield return new WaitForSeconds(crankDuration/2);
 
-        AudioManager.Instance?.PlaySFX(SFXClip.DW_Prize);
+        AudioManager.Instance?.PlaySFX(SFXClip.Reward_Prize);
 
         yield return new WaitForSeconds(crankDuration/2);
 

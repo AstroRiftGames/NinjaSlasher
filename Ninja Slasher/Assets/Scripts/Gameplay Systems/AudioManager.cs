@@ -98,9 +98,9 @@ public enum SFXClip
     B_Drone_PlayerHit,
     DW_Spin,
     DW_LeverPull,
-    DW_PrizeCoins,
-    DW_Coins,
-    DW_Prize,
+    Reward_PrizeCoins,
+    Reward_Coins,
+    Reward_Prize,
 }
 
 [Serializable]
