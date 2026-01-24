@@ -26,8 +26,9 @@ public class ElasticPlatform : PlatformBase
 
         Rigidbody2D rb = view.RB;
         if (rb == null)        
-            return;        
+            return;
 
+        AudioManager.Instance.PlaySFXAtPosition(Clip, player.transform.position);
         StartCoroutine(ApplyBounceAfterCollision(rb, lastDashDir.normalized, controller));
     }
 

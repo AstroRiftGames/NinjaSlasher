@@ -6,17 +6,29 @@ public enum PlatformTypes
     Normal,
     Slippery,
     Elastic,
+    Breakable,
 }
 public abstract class PlatformBase : MonoBehaviour, IPlatform
 {
     [Header("BASIC SETTINGS")]
     [SerializeField] protected bool isActive = true;
     public PlatformTypes Type => _type;
-    [SerializeField] protected PlatformTypes _type = PlatformTypes.Normal; 
+    [SerializeField] protected PlatformTypes _type = PlatformTypes.Normal;
+
+    public SFXClip Clip => _clip;
+    private SFXClip _clip = SFXClip.P_Landing_General;
 
     protected virtual void Start()
     {
         InitializePlatform();
+        _clip = _type switch
+        {
+            PlatformTypes.Normal => SFXClip.P_Landing_General,
+            PlatformTypes.Elastic => SFXClip.P_Landing_Elastic,
+            PlatformTypes.Slippery => SFXClip.P_Landing_Slippery,
+            PlatformTypes.Breakable => SFXClip.P_Landing_Breakable,
+            _ => _clip,
+        };
     }
 
     protected virtual void InitializePlatform() { }

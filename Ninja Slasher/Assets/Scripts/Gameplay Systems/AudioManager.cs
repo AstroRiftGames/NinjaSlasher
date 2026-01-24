@@ -101,6 +101,11 @@ public enum SFXClip
     Reward_PrizeCoins,
     Reward_Coins,
     Reward_Prize,
+    P_Landing_Slippery,
+    P_Landing_Elastic,
+    P_Landing_Breakable,
+    Plat_Breakable,
+
 }
 
 [Serializable]

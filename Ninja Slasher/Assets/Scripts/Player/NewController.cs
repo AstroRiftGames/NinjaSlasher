@@ -299,7 +299,6 @@ public class NewController : MonoBehaviour
         _view.RB.linearVelocity = Vector2.zero;
         _view.Animator.SetBool("IsWallGrabbed", false);
         _view.Animator.SetBool("IsCeilingGrabbed", false);
-        AudioManager.Instance.PlaySFXAtPosition(SFXClip.P_Landing_General, transform.position);
 
         if (normal == Vector2.right || normal == Vector2.left)
         {
@@ -343,9 +342,14 @@ public class NewController : MonoBehaviour
         if (colMatrix.Contains(colTag))
         {
             _view.TrailRendererComponent.emitting = false;
-            collision.collider.TryGetComponent(out ElasticPlatform elasticComponent);
+            collision.collider.TryGetComponent(out PlatformBase platform);
 
-            if (!elasticComponent)
+            if(platform == null)
+            {
+                AudioManager.Instance.PlaySFXAtPosition(SFXClip.P_Landing_General, transform.position);
+                Grab(collision.GetContact(0).normal);
+            }
+            else if(platform.Type != PlatformTypes.Elastic)
             {
                 Grab(collision.GetContact(0).normal);
             }
