@@ -8,6 +8,7 @@ public static class GameEvents
     public static event Action<int> OnLivesChanged;
     public static event Action<TimeSpan> OnLifeRegenTimeChanged;
     public static event Action OnLifeGainedFromReward;
+    public static event Action<string> OnNicknameChanged;
 
     public static void RaiseLivesChanged(int newLives)
     {

@@ -5,6 +5,7 @@ using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using System;
 
 public class ButtonManager : MonoBehaviour
 {
@@ -31,9 +32,6 @@ public class ButtonManager : MonoBehaviour
     [SerializeField] private Button _userIconButton;
     [SerializeField] private Button _userNicknameButton;
     [SerializeField] private TextMeshProUGUI _userNicknameButtonText;
-    [SerializeField] private TMP_InputField _userNicknameText;
-    [SerializeField] private Button _confirmUserNicknameButton;
-    [SerializeField] private Button _closeUserNicknameEditButton;
     [SerializeField] private Button _closeProfileButton;
     [SerializeField] private Button _creditsButton;
     [SerializeField] private Button _closeCreditsButton;
@@ -95,6 +93,11 @@ public class ButtonManager : MonoBehaviour
 
     private void OnSaveDataLoaded(GameData _) => RefreshLevelProgression();
 
+    [Header("PANELS REFERENCES")]
+    [SerializeField] private UserIconsPanel _userIconsPanel;
+    [SerializeField] private UserNicknameEditPanel _userNicknameEditPanel;
+    [SerializeField] private ConfirmationPanel _confirmationPanel;
+
     private void Awake()
     {
         _configToggles = GetComponent<ConfigToggles>();
@@ -126,6 +129,7 @@ public class ButtonManager : MonoBehaviour
 
         GameEvents.OnRewardClaimed += OnRewardClaimed;
         GameEvents.OnRewardAvailabilityChanged += UpdateCalendarButtonIcon;
+        UIEvents.OnNicknameChanged += OnNicknameChanged;
 
         SaveManager.OnDataLoaded += OnSaveDataLoaded;
     }
@@ -139,6 +143,8 @@ public class ButtonManager : MonoBehaviour
 
         GameEvents.OnRewardClaimed -= OnRewardClaimed;
         GameEvents.OnRewardAvailabilityChanged -= UpdateCalendarButtonIcon;
+
+        UIEvents.OnNicknameChanged -= OnNicknameChanged;
 
         SaveManager.OnDataLoaded -= OnSaveDataLoaded;
     }
@@ -186,6 +192,14 @@ public class ButtonManager : MonoBehaviour
         _retryButton.onClick.AddListener(GetComponent<GameplayUIManager>().OnRetryPressed);
         _backToSelectionButton.onClick.AddListener(GetComponent<GameplayUIManager>().OnBackToSelectionPressed);
         _continueButton.onClick.AddListener(GetComponent<GameplayUIManager>().ContinueToLevelSelector);
+    }
+
+    private void OnNicknameChanged(string newNickname)
+    {
+        if (_userNicknameButtonText != null)
+            _userNicknameButtonText.text = newNickname;
+
+        Debug.Log($"[ButtonManager] Nickname actualizado a: {newNickname}");
     }
 
     private IEnumerator InitializeCalendarIcon()
@@ -251,6 +265,8 @@ public class ButtonManager : MonoBehaviour
 
     private void SetupLevelSelectorButtons()
     {
+        //_userIconButton.onClick.AddListener(ToggleUserIconsPanel);
+
         _musicButton.onClick.AddListener(_configToggles.MusicButtonPushed);
         _sfxButton.onClick.AddListener(_configToggles.SFXButtonPushed);
         _profileButton.onClick.AddListener(UIManager.Instance.ShowHideProfileCanvas);
@@ -264,19 +280,14 @@ public class ButtonManager : MonoBehaviour
 
         //_adForMoreLifeButton.onClick.AddListener(AdsManager.Instance.ShowRewardedAdForExtraLife);
 
-        _userIconButton.onClick.AddListener(UIManager.Instance.ShowHideUserIconsCanvas);
+        _userIconButton.onClick.AddListener(ToggleUserIconsPanel);
 
         //_userNicknameButtonText = LoginManager.Instance.PlayerName;
         //_userNicknameButtonText = LoginManager.Instance.PlayerId;
         _claimButton.onClick.AddListener(OnClaimLifeButtonPressed);
 
-        _userNicknameButton.onClick.AddListener(UIManager.Instance.ShowHideUserNicknameEditCanvas);
-        _closeUserNicknameEditButton.onClick.AddListener(UIManager.Instance.ShowHideUserNicknameEditCanvas);
-        _confirmUserNicknameButton.onClick.AddListener(() =>
-        {
-            _userNicknameButtonText.text = _userNicknameText.text;
-            UIManager.Instance.ShowHideUserNicknameEditCanvas();        
-        });
+        //_userNicknameButton.onClick.AddListener(UIManager.Instance.ShowHideUserNicknameEditCanvas);
+        _userNicknameButton.onClick.AddListener(ShowNicknameEditPopup);
 
         _creditsButton.onClick.AddListener(UIManager.Instance.ShowHideCreditsCanvas);
         _closeProfileButton.onClick.AddListener(UIManager.Instance.ShowHideProfileCanvas);
@@ -291,7 +302,8 @@ public class ButtonManager : MonoBehaviour
                 _userIconImagePanel.color = icon.color;
                 _profileButtonImage.sprite = icon.sprite;
                 _profileButtonImage.color = icon.color;
-                UIManager.Instance.ShowHideUserIconsCanvas();
+                if (_userIconsPanel != null)
+                    _userIconsPanel.Hide();
             });
         }
 
@@ -318,6 +330,32 @@ public class ButtonManager : MonoBehaviour
                 }
             });
         }
+    }
+
+    private void ToggleUserIconsPanel()
+    {
+        if (_userIconsPanel == null)
+        {
+            Debug.LogWarning("[ButtonManager] UserIconsPanel no asignado");
+            return;
+        }
+
+        if (_userIconsPanel.IsVisible)
+            _userIconsPanel.Hide();
+        else
+            _userIconsPanel.Show();
+    }
+
+    private void ShowNicknameEditPopup()
+    {
+        if (_userNicknameEditPanel == null)
+        {
+            Debug.LogWarning("[ButtonManager] UserNicknameEditPanel no asignado");
+            return;
+        }
+
+        _userNicknameEditPanel.SetNickname(_userNicknameButtonText.text);
+        _userNicknameEditPanel.Show();
     }
 
     public void OnClaimLifeButtonPressed()
@@ -427,6 +465,49 @@ public class ButtonManager : MonoBehaviour
         UIManager.Instance.ShowHidePauseCanvas();
     }
 
+    public void ShowConfirmation(
+    string message,
+    Action onConfirm,
+    Action onCancel = null,
+    string title = "Confirmation",
+    string confirmText = "Confirm",
+    string cancelText = "Cancel")
+    {
+        if (_confirmationPanel == null)
+        {
+            Debug.LogWarning("[UIManager] ConfirmationPanel no asignado");
+            return;
+        }
+
+        _confirmationPanel.ShowConfirmation(message, onConfirm, onCancel, title, confirmText, cancelText);
+    }
+
+    private void OnQuitButtonPressed()
+    {
+        ShowConfirmation(
+            message: "Are you sure you want to exit? You will lose your progress in this level?",
+            onConfirm: () => GameManager.Instance.GoToLevelSelection(confirmPendingDeduction: true),
+            onCancel: () => Debug.Log("Cancelled"),
+            title: "Exit level",
+            confirmText: "Exit",
+            cancelText: "Continue"
+        );
+    }
+
+    private void OnBuyItemPressed(string itemName, int cost)
+    {
+        ShowConfirmation(
+            message: $"Buy {itemName} for {cost} coins?",
+            onConfirm: () =>
+            {
+                Debug.Log($"Buying {itemName}");
+            },
+            title: "Confirm Purchase",
+            confirmText: "Buy",
+            cancelText: "Cancel"
+        );
+    }
+
     private bool IsLevelUnlocked(int levelId)
     {
         if (LevelProgressionManager.Instance == null)
@@ -459,7 +540,7 @@ public class ButtonManager : MonoBehaviour
 
         if (addRotationEffect)
         {
-            float heavyRotation = Random.Range(-90f, 90f);
+            float heavyRotation = UnityEngine.Random.Range(-90f, 90f);
             rectTransform.rotation = Quaternion.Euler(0, 0, heavyRotation);
         }
 
@@ -501,7 +582,7 @@ public class ButtonManager : MonoBehaviour
 
         RectTransform rectTransform = button.GetComponent<RectTransform>();
 
-        Vector2 sideShake = new Vector2(Random.Range(-15f, 15f), 0f);
+        Vector2 sideShake = new Vector2(UnityEngine.Random.Range(-15f, 15f), 0f);
         rectTransform.DOPunchAnchorPos(sideShake, 0.4f, 8, 1f);
 
         rectTransform.DOPunchScale(Vector3.one * 0.2f, 0.3f, 6, 0.8f);

@@ -130,6 +130,23 @@ public static class UIEvents
 
     #endregion
 
+    #region PROFILE AND USER DATA EVENTS
+
+    public static event Action<string> OnNicknameChanged;
+    public static event Action<int> OnUserIconChanged;
+
+    public static void RaiseNicknameChanged(string newNickname)
+    {
+        OnNicknameChanged?.Invoke(newNickname);
+    }
+
+    public static void RaiseUserIconChanged(int iconIndex)
+    {
+        OnUserIconChanged?.Invoke(iconIndex);
+    }
+
+    #endregion
+
     #region CLEANING SUPPLIES
 
     public static void ClearNavigationEvents()
@@ -168,6 +185,11 @@ public static class UIEvents
         OnShowLifeLostPanelRequested = null;
         OnShowDailyRewardRequested = null;
     }
+    public static void ClearProfileEvents()
+    {
+        OnNicknameChanged = null;
+        OnUserIconChanged = null;
+    }
 
     public static void ClearAllUIEvents()
     {
@@ -176,6 +198,7 @@ public static class UIEvents
         ClearButtonEvents();
         ClearUpdateEvents();
         ClearPanelDisplayEvents();
+        ClearProfileEvents();
     }
 
     #endregion
