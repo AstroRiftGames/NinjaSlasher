@@ -93,10 +93,10 @@ public class ButtonManager : MonoBehaviour
 
     private void OnSaveDataLoaded(GameData _) => RefreshLevelProgression();
 
-    [Header("PANELS REFERENCES")]
-    [SerializeField] private UserIconsPanel _userIconsPanel;
-    [SerializeField] private UserNicknameEditPanel _userNicknameEditPanel;
-    [SerializeField] private ConfirmationPanel _confirmationPanel;
+    [Header("POP UPS")]
+    [SerializeField] private UserIconsPopUp _userIconsPanel;
+    [SerializeField] private UserNicknameEditPopUp _userNicknameEditPanel;
+    [SerializeField] private ConfirmationPopUp _confirmationPanel;
 
     private void Awake()
     {
@@ -180,8 +180,8 @@ public class ButtonManager : MonoBehaviour
 
     private void SetupGameplayButtons()
     {
-        _pauseButton.onClick.AddListener(UIManager.Instance.ShowHidePauseCanvas);
-        _resumeButton.onClick.AddListener(UIManager.Instance.ShowHidePauseCanvas);
+        _pauseButton.onClick.AddListener(UIManager.Instance.TogglePauseOverlay);
+        _resumeButton.onClick.AddListener(UIManager.Instance.TogglePauseOverlay);
         _restartButton.onClick.AddListener(OnRestartPressed);
 
         _quitButton.onClick.AddListener(() => GameManager.Instance.GoToLevelSelection(confirmPendingDeduction: true));
@@ -276,7 +276,7 @@ public class ButtonManager : MonoBehaviour
             _hapticButton.onClick.AddListener(_configToggles.HapticFeedbackPushed);
         }
 
-        _closeNoLivesPanelButton.onClick.AddListener(UIManager.Instance.ShowHideNoLivesCanvas);
+        _closeNoLivesPanelButton.onClick.AddListener(UIManager.Instance.HideNoLivesOverlay);
 
         //_adForMoreLifeButton.onClick.AddListener(AdsManager.Instance.ShowRewardedAdForExtraLife);
 
@@ -367,7 +367,7 @@ public class ButtonManager : MonoBehaviour
 
             if (UIManager.Instance != null)
             {
-                UIManager.Instance.ShowHideNoLivesCanvas();
+                UIManager.Instance.HideNoLivesOverlay();                
             }
         }
     }

@@ -10,14 +10,9 @@ public class CanvasManager : MonoBehaviour
     [SerializeField] private Canvas _preGameCanvas;
     [SerializeField] private Canvas _gameplayCanvas;
     [SerializeField] private Canvas _creditsCanvas;
-    [SerializeField] private Canvas _pauseCanvas;
     [SerializeField] private Canvas _profileCanvas;
     [SerializeField] private Canvas _dailyRewardCanvas;
-    [SerializeField] private Canvas _noLivesCanvas;
     [SerializeField] private Canvas _resultsCanvas;
-    [SerializeField] private Canvas _userIconsCanvas;
-    [SerializeField] private Canvas _userNicknameEditCanvas;
-    [SerializeField] private Canvas _lifeLostCanvas;
     [SerializeField] private Canvas _dailyWheelCanvas;
     [SerializeField] private Canvas _storeCanvas;
 
@@ -26,9 +21,6 @@ public class CanvasManager : MonoBehaviour
     [SerializeField] private RectTransform _dailyRewardPanel;
     [SerializeField] private RectTransform _resultsPanel;
     [SerializeField] private RectTransform _preGamePanel;
-    [SerializeField] private RectTransform _pausePanel;
-    [SerializeField] private RectTransform _noLivesPanel;
-    [SerializeField] private RectTransform _lifeLostPanel;
     [SerializeField] private RectTransform _dailyWheelPanel;
     [SerializeField] private RectTransform _storePanel;
 
@@ -169,9 +161,6 @@ public class CanvasManager : MonoBehaviour
         if (canvas == _dailyRewardCanvas) return _dailyRewardPanel;
         if (canvas == _resultsCanvas) return _resultsPanel;
         if (canvas == _preGameCanvas) return _preGamePanel;
-        if (canvas == _pauseCanvas) return _pausePanel;
-        if (canvas == _noLivesCanvas) return _noLivesPanel;
-        if (canvas == _lifeLostCanvas) return _lifeLostPanel;
         if (canvas == _dailyWheelCanvas) return _dailyWheelPanel;
         if (canvas == _storeCanvas) return _storePanel;
 
@@ -184,23 +173,6 @@ public class CanvasManager : MonoBehaviour
         if (canvasGroup == null)
             canvasGroup = canvas.gameObject.AddComponent<CanvasGroup>();
         return canvasGroup;
-    }
-
-    public void ShowHideLifeLostCanvas()
-    {
-        bool isCanvasActive = !_lifeLostCanvas.enabled;
-        var panelAnimation = _lifeLostPanel.GetComponent<Animator>();
-        if (isCanvasActive)
-        {
-            panelAnimation.SetTrigger("Open");
-            ShowCanvasAnimated(_lifeLostCanvas);
-            SetGameplayCanvasEnabled(false);
-        }
-        else
-        {
-            panelAnimation.SetTrigger("Close");
-            HideCanvasAnimated(_lifeLostCanvas);
-        }
     }
 
     public void ShowHideResultsCanvas()
@@ -324,23 +296,6 @@ public class CanvasManager : MonoBehaviour
         }
     }
 
-    public void ShowHidePauseCanvas()
-    {
-        bool isCanvasActive = !_pauseCanvas.enabled;
-        var panelAnimation = _pausePanel.GetComponent<Animator>();
-        if (isCanvasActive)
-        {
-            panelAnimation.SetTrigger("Open");
-            ShowHideCanvas(_pauseCanvas, isCanvasActive);
-        }
-        else
-        {
-            panelAnimation.SetTrigger("Close");
-            ShowHideCanvas(_pauseCanvas, isCanvasActive);
-        }
-        Time.timeScale = isCanvasActive ? 0 : 1;
-    }
-
     public void SetLevelsCanvasEnabled(bool enabled)
     {
         _levelsCanvas.enabled = enabled;
@@ -390,22 +345,6 @@ public class CanvasManager : MonoBehaviour
         }
     }
 
-    public void ShowHideNoLivesCanvas()
-    {
-        bool isCanvasActive = !_noLivesCanvas.enabled;
-        var panelAnimation = _noLivesPanel.GetComponent<Animator>();
-        if (isCanvasActive)
-        {
-            panelAnimation.SetTrigger("Open");
-            ShowHideCanvas(_noLivesCanvas, isCanvasActive);
-        }
-        else
-        {
-            panelAnimation.SetTrigger("Close");
-            ShowHideCanvas(_noLivesCanvas, isCanvasActive);
-        }
-    }
-
     private void ToggleCanvas(Canvas canvas)
     {
         bool isCanvasActive = !canvas.enabled;
@@ -418,11 +357,8 @@ public class CanvasManager : MonoBehaviour
         ShowHideCanvas(_dailyWheelCanvas, isCanvasActive);
     }
 
-    public void ShowHideUserNicknameEditCanvas() => ToggleCanvas(_userNicknameEditCanvas);
-    public void ShowHideUserIconsCanvas() => ToggleCanvas(_userIconsCanvas);
     public void SetSplashCanvasEnabled(bool enabled) => _splashCanvas.enabled = enabled;
     public void SetGameplayCanvasEnabled(bool enabled) => _gameplayCanvas.enabled = enabled;
-    public void SetPauseCanvasEnabled(bool enabled) => _pauseCanvas.enabled = enabled;
     public Canvas GetResultsCanvas() => _resultsCanvas;
     public Canvas GetGameplayCanvas() => _gameplayCanvas;
 

@@ -151,7 +151,7 @@ public class GameplayUIManager : MonoBehaviour
     public void ShowNoLivesPanel()
     {
         _noLivesActive = true;
-        UIManager.Instance.ShowHideNoLivesCanvas();
+        UIManager.Instance.ShowNoLivesOverlay();
     }
 
     public void UpdateLivesUI(int lives)

@@ -2,7 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
-public class UserNicknameEditPanel : UIPopupBase
+public class UserNicknameEditPopUp : UIPopupBase
 {
     [Header("References")]
     [SerializeField] private TMP_InputField _nicknameInputField;

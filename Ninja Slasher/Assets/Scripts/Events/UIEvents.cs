@@ -83,6 +83,7 @@ public static class UIEvents
     public static event Action<int> OnUILivesUpdateRequested;
     public static event Action<float> OnUITimerUpdateRequested;
     public static event Action<string> OnUIPowerUpTextUpdateRequested;
+    public static event Action<bool> RaiseGamePaused;
 
     public static void RequestUpdateLivesUI(int lives)
     {
@@ -97,6 +98,11 @@ public static class UIEvents
     public static void RequestUpdatePowerUpUI(string text)
     {
         OnUIPowerUpTextUpdateRequested?.Invoke(text);
+    }
+
+    public static void RaisePause(bool isPaused)
+    {
+        RaiseGamePaused?.Invoke(isPaused);
     }
 
     #endregion

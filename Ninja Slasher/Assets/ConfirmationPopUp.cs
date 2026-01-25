@@ -3,7 +3,7 @@ using UnityEngine.UI;
 using TMPro;
 using System;
 
-public class ConfirmationPanel : UIPopupBase
+public class ConfirmationPopUp : UIPopupBase
 {
     [Header("References")]
     [SerializeField] private TextMeshProUGUI _titleText;

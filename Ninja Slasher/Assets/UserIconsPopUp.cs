@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class UserIconsPanel : UIPopupBase
+public class UserIconsPopUp : UIPopupBase
 {
     protected override void OnShown()
     {
