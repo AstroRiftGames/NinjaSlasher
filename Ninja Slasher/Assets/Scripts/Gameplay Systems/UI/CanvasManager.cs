@@ -8,7 +8,7 @@ public class CanvasManager : MonoBehaviour
     //[SerializeField] private Canvas _splashCanvas;
     [SerializeField] private Canvas _levelsCanvas;
     [SerializeField] private Canvas _preGameCanvas;
-    [SerializeField] private Canvas _gameplayCanvas;
+    //[SerializeField] private Canvas _gameplayCanvas;
     //[SerializeField] private Canvas _creditsCanvas;
     //[SerializeField] private Canvas _profileCanvas;
     [SerializeField] private Canvas _dailyRewardCanvas;
@@ -184,7 +184,7 @@ public class CanvasManager : MonoBehaviour
             panelAnimation.SetTrigger("Open");
             GetComponent<ResultsUIManager>()?.PrepareResultsIntro();
             ShowCanvasAnimated(_resultsCanvas);
-            SetGameplayCanvasEnabled(false);
+            //SetGameplayCanvasEnabled(false);
             StartCoroutine(DelayedResultsShow());
         }
         else
@@ -358,9 +358,9 @@ public class CanvasManager : MonoBehaviour
     }
 
     //public void SetSplashCanvasEnabled(bool enabled) => _splashCanvas.enabled = enabled;
-    public void SetGameplayCanvasEnabled(bool enabled) => _gameplayCanvas.enabled = enabled;
+    //public void SetGameplayCanvasEnabled(bool enabled) => _gameplayCanvas.enabled = enabled;
     public Canvas GetResultsCanvas() => _resultsCanvas;
-    public Canvas GetGameplayCanvas() => _gameplayCanvas;
+    //public Canvas GetGameplayCanvas() => _gameplayCanvas;
 
     private void OnDisable()
     {

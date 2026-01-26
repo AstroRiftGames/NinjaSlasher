@@ -56,7 +56,8 @@ public class SceneTransitionManager : MonoBehaviour
         SceneManager.LoadScene(sceneName);
         _transitionAnim.SetTrigger("End");
         AudioManager.Instance.PlaySFX(SFXClip.UI_TransitionSlash);
-        _canvasManager.SetGameplayCanvasEnabled(true);
+        //_canvasManager.SetGameplayCanvasEnabled(true);
+        UIManager.Instance.SetGameplayHUDEnabled(true);
 
         yield return new WaitForEndOfFrame();
         SetHUDActive(true);
@@ -89,7 +90,8 @@ public class SceneTransitionManager : MonoBehaviour
         //_canvasManager.SetSplashCanvasEnabled(false);
         UIManager.Instance.HideSplashScreen();
         _canvasManager.SetLevelsCanvasEnabled(true);
-        _canvasManager.SetGameplayCanvasEnabled(false);
+        //_canvasManager.SetGameplayCanvasEnabled(false);
+        UIManager.Instance.SetGameplayHUDEnabled(true);
         _transitionAnim.SetTrigger("End");
         AudioManager.Instance.PlaySFX(SFXClip.UI_TransitionSlash);
     }
@@ -188,7 +190,8 @@ public class SceneTransitionManager : MonoBehaviour
         _canvasManager.SetLevelsCanvasEnabled(false);
         SceneManager.LoadScene("TestScene");
         _transitionAnim.SetTrigger("End");
-        _canvasManager.SetGameplayCanvasEnabled(true);
+        //_canvasManager.SetGameplayCanvasEnabled(true);
+        UIManager.Instance.SetGameplayHUDEnabled(true);
     }
 
     private void SetHUDActive(bool active)

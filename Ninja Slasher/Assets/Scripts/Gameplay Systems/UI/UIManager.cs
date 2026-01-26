@@ -24,6 +24,9 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
     [SerializeField] private CreditsModal _creditsModal;
     [SerializeField] private ProfileModal _profileModal;
 
+    [Header("HUD")]
+    [SerializeField] private GameplayHUD _gameplayHUD;
+
     public bool IsHapticFeedbackActive => _isHapticFeedbackActive;
     private bool _isHapticFeedbackActive = true;
 
@@ -284,6 +287,32 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
             _profileModal.Hide();
         else
             _profileModal.Show();
+    }
+
+    #endregion
+
+    #region HUD
+
+    public void ShowGameplayHUD()
+    {
+        if (_gameplayHUD != null)
+            _gameplayHUD.Show();
+    }
+
+    public void HideGameplayHUD()
+    {
+        if (_gameplayHUD != null)
+            _gameplayHUD.Hide();
+    }
+
+    public void SetGameplayHUDEnabled(bool enabled)
+    {
+        if (_gameplayHUD == null) return;
+
+        if (enabled)
+            _gameplayHUD.Show();
+        else
+            _gameplayHUD.Hide();
     }
 
     #endregion
