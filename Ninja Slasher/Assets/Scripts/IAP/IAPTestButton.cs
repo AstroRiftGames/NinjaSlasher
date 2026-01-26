@@ -88,6 +88,8 @@ public class IAPTestButton : MonoBehaviour
             UpdateStatus($"Purchase completed: {purchasedProductId}");
             Debug.Log($"[IAPTest] Purchase completed: {purchasedProductId}");
 
+            AudioManager.Instance.PlaySFX(SFXClip.Reward_Coins);
+
             // Aca se otorgaria la recompensa al jugador
             // Metodo.AddBentos(100);
         }

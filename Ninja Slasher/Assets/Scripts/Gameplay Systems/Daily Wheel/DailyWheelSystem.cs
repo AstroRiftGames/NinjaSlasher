@@ -54,8 +54,6 @@ public class DailyWheelSystem : MonoBehaviourSingleton<DailyWheelSystem>
             SaveWheelData();
         }
 
-        AudioManager.Instance?.PlaySFX(SFXClip.UI_Claim);
-
         OnRewardSpun?.Invoke(reward);
 
         CheckWheelAvailability();

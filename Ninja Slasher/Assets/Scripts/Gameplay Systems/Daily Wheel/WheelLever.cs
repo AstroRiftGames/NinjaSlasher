@@ -83,6 +83,7 @@ public class WheelLever : MonoBehaviour, IDragHandler, IBeginDragHandler, IEndDr
 
         float finalAngle = angle + _angleOffset;
 
+
         if (finalAngle > 180) finalAngle -= 360;
 
         float min = Mathf.Min(_startAngle, _targetAngle);
@@ -91,7 +92,34 @@ public class WheelLever : MonoBehaviour, IDragHandler, IBeginDragHandler, IEndDr
         finalAngle = Mathf.Clamp(finalAngle, min, max);
 
         _leverArm.localRotation = Quaternion.Euler(0, 0, finalAngle);
+        if(HasReachedNextThird(finalAngle))
+        {
+            AudioManager.Instance.PlaySFX(SFXClip.DW_LeverPull);
+        }
     }
+
+    private int _lastFourthIndex = 0;
+    private bool HasReachedNextThird(float finalAngle)
+    {
+        float totalRange = Mathf.Abs(_targetAngle - _startAngle);
+        float traveled = Mathf.Abs(finalAngle - _startAngle);
+
+        float progress = traveled / totalRange;
+
+        int currentThirdIndex = Mathf.FloorToInt(progress * 4f);
+
+        currentThirdIndex = Mathf.Clamp(currentThirdIndex, 0, 3);
+
+        if (currentThirdIndex > _lastFourthIndex)
+        {
+            _lastFourthIndex = currentThirdIndex;
+            return true;
+        }
+
+
+        return false;
+    }
+
 
     public void OnEndDrag(PointerEventData eventData)
     {

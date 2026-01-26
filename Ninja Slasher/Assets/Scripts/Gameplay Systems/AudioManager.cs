@@ -96,6 +96,16 @@ public enum SFXClip
     B_Drone_ProjectileHit,
     B_Drone_FloorHit,
     B_Drone_PlayerHit,
+    DW_Spin,
+    DW_LeverPull,
+    Reward_PrizeCoins,
+    Reward_Coins,
+    Reward_Prize,
+    P_Landing_Slippery,
+    P_Landing_Elastic,
+    P_Landing_Breakable,
+    Plat_Breakable,
+
 }
 
 [Serializable]

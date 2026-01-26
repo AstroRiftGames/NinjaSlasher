@@ -151,7 +151,7 @@ public class DailyWheelUI : MonoBehaviour
     private IEnumerator GaraponSequence(WheelReward reward)
     {
         _isSpinning = true;
-        AudioManager.Instance?.PlaySFX(SFXClip.UI_Claim);
+        AudioManager.Instance?.PlaySFX(SFXClip.DW_Spin);
 
         if (wheelBody != null)
         {
@@ -159,7 +159,12 @@ public class DailyWheelUI : MonoBehaviour
                 .SetEase(crankEase);
         }
 
-        yield return new WaitForSeconds(crankDuration);
+
+        yield return new WaitForSeconds(crankDuration/2);
+
+        AudioManager.Instance?.PlaySFX(SFXClip.Reward_Prize);
+
+        yield return new WaitForSeconds(crankDuration/2);
 
         Color ballColor = GetBallColorForReward(reward);
 

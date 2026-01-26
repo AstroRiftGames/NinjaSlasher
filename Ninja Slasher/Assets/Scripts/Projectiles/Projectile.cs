@@ -213,6 +213,7 @@ public class Projectile : MonoBehaviour, IPoolable
     public void SetOwner(Transform shooter)
     {
         _shooter = shooter;
+        gameObject.layer = _shooter.tag == "Player" ? 12 : 8;
     }
 
     protected void ResetTime()
