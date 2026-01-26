@@ -19,6 +19,7 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
 
     [Header("SCREENS")]
     [SerializeField] private SplashScreen _splashScreen;
+    [SerializeField] private PreGameScreen _preGameScreen;
 
     [Header("MODALS")]
     [SerializeField] private CreditsModal _creditsModal;
@@ -236,20 +237,27 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
             _splashScreen.Hide();
     }
 
-    //public void SetSplashCanvasEnabled(bool enabled)
-    //{
-    //    if (_splashScreen != null)
-    //    {
-    //        if (enabled)
-    //            _splashScreen.Show();
-    //        else
-    //            _splashScreen.Hide();
-    //    }
-    //    else if (_canvasManager != null)
-    //    {
-    //        _canvasManager.SetSplashCanvasEnabled(enabled);
-    //    }
-    //}
+    public void ShowPreGameScreen()
+    {
+        if (_preGameScreen != null)
+            _preGameScreen.Show();
+    }
+
+    public void HidePreGameScreen()
+    {
+        if (_preGameScreen != null)
+            _preGameScreen.Hide();
+    }
+
+    public void TogglePreGameScreen()
+    {
+        if (_preGameScreen == null) return;
+
+        if (_preGameScreen.IsVisible)
+            _preGameScreen.Hide();
+        else
+            _preGameScreen.Show();
+    }
 
     #endregion
 
@@ -323,7 +331,12 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
     public void LoadLevelScene(string sceneName) => _sceneTransitionManager.LoadLevelScene(sceneName);
     public void RestartLevel() => _sceneTransitionManager.RestartLevel();
     public void ShowConfirmationPanel(string sceneName) => _preGameUIManager.ShowConfirmationPanel(sceneName);
-    public void ShowHidePreGameCanvas() => _canvasManager.ShowHidePreGameCanvas();
+    public void ShowHidePreGameCanvas()
+    {
+        if (_preGameScreen != null)
+            TogglePreGameScreen();
+    }
+
     public void ShowHideCreditsCanvas()
     {
         if (_creditsModal == null) return;

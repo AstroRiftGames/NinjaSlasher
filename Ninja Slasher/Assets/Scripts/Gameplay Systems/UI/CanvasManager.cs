@@ -5,22 +5,15 @@ using DG.Tweening;
 public class CanvasManager : MonoBehaviour
 {
     [Header("CANVAS")]
-    //[SerializeField] private Canvas _splashCanvas;
     [SerializeField] private Canvas _levelsCanvas;
-    [SerializeField] private Canvas _preGameCanvas;
-    //[SerializeField] private Canvas _gameplayCanvas;
-    //[SerializeField] private Canvas _creditsCanvas;
-    //[SerializeField] private Canvas _profileCanvas;
     [SerializeField] private Canvas _dailyRewardCanvas;
     [SerializeField] private Canvas _resultsCanvas;
     [SerializeField] private Canvas _dailyWheelCanvas;
     [SerializeField] private Canvas _storeCanvas;
 
     [Header("PANEL REFERENCES")]
-    //erializeField] private RectTransform _profilePanel;
     [SerializeField] private RectTransform _dailyRewardPanel;
     [SerializeField] private RectTransform _resultsPanel;
-    [SerializeField] private RectTransform _preGamePanel;
     [SerializeField] private RectTransform _dailyWheelPanel;
     [SerializeField] private RectTransform _storePanel;
 
@@ -157,10 +150,8 @@ public class CanvasManager : MonoBehaviour
 
     private RectTransform GetPanelForCanvas(Canvas canvas)
     {
-        //if (canvas == _profileCanvas) return _profilePanel;
         if (canvas == _dailyRewardCanvas) return _dailyRewardPanel;
         if (canvas == _resultsCanvas) return _resultsPanel;
-        if (canvas == _preGameCanvas) return _preGamePanel;
         if (canvas == _dailyWheelCanvas) return _dailyWheelPanel;
         if (canvas == _storeCanvas) return _storePanel;
 
@@ -184,7 +175,6 @@ public class CanvasManager : MonoBehaviour
             panelAnimation.SetTrigger("Open");
             GetComponent<ResultsUIManager>()?.PrepareResultsIntro();
             ShowCanvasAnimated(_resultsCanvas);
-            //SetGameplayCanvasEnabled(false);
             StartCoroutine(DelayedResultsShow());
         }
         else
@@ -229,70 +219,6 @@ public class CanvasManager : MonoBehaviour
         {
             panelAnimation.SetTrigger("Close");
             HideCanvasAnimated(_dailyRewardCanvas);
-        }
-    }
-
-    //public void ShowHideCreditsCanvas()
-    //{
-    //    bool isCanvasActive = !_creditsCanvas.gameObject.activeInHierarchy;
-    //    ShowHideCanvas(_profileCanvas, !isCanvasActive);
-
-    //    if (isCanvasActive)
-    //    {
-    //        StartCoroutine(DelayedCreditsShow());
-    //    }
-    //    else
-    //    {
-    //        _creditsCanvas.gameObject.SetActive(isCanvasActive);
-    //        AudioManager.Instance.PlayMusic(MusicClip.MainMenu, !isCanvasActive);
-    //    }
-    //}
-
-    //private IEnumerator DelayedCreditsShow()
-    //{
-    //    yield return new WaitForSeconds(_animationDuration + 0.1f);
-    //    _creditsCanvas.gameObject.SetActive(true);
-    //    ShowCanvasAnimated(_creditsCanvas);
-    //    AudioManager.Instance.PlayMusic(MusicClip.Credits, true);
-    //}
-
-    //public void ShowHideProfileCanvas()
-    //{
-    //    bool isCanvasActive = !_profileCanvas.enabled;
-    //    var panelAnimation = _profilePanel.GetComponent<Animator>();
-    //    if (isCanvasActive)
-    //    {
-    //        panelAnimation.SetTrigger("Open");
-    //        ShowHideCanvas(_profileCanvas, isCanvasActive);
-    //    }
-    //    else
-    //    {
-    //        panelAnimation.SetTrigger("Close");
-    //        ShowHideCanvas(_profileCanvas, isCanvasActive);
-    //    }
-    //}
-
-    public void ShowHidePreGameCanvas()
-    {
-        bool isCanvasActive = !_preGameCanvas.enabled;
-        var panelAnimation = _preGamePanel.GetComponent<Animator>();
-        if (isCanvasActive)
-        {
-            panelAnimation.SetTrigger("Open");
-            var buttonManager = GetComponent<ButtonManager>();
-            if (buttonManager != null)
-            {
-                buttonManager.StopAllButtonAnimations();
-            }
-
-            ShowHideCanvas(_preGameCanvas, isCanvasActive);
-            GetComponent<PreGameUIManager>()?.ShowPreGamePowerUps();
-        }
-        else
-        {
-            panelAnimation.SetTrigger("Close");
-            GetComponent<PreGameUIManager>()?.StopAllAnimations();
-            ShowHideCanvas(_preGameCanvas, isCanvasActive);
         }
     }
 
@@ -356,11 +282,7 @@ public class CanvasManager : MonoBehaviour
         bool isCanvasActive = !_dailyWheelCanvas.enabled;
         ShowHideCanvas(_dailyWheelCanvas, isCanvasActive);
     }
-
-    //public void SetSplashCanvasEnabled(bool enabled) => _splashCanvas.enabled = enabled;
-    //public void SetGameplayCanvasEnabled(bool enabled) => _gameplayCanvas.enabled = enabled;
     public Canvas GetResultsCanvas() => _resultsCanvas;
-    //public Canvas GetGameplayCanvas() => _gameplayCanvas;
 
     private void OnDisable()
     {
