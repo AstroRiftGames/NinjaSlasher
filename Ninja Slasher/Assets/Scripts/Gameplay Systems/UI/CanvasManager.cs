@@ -10,14 +10,14 @@ public class CanvasManager : MonoBehaviour
     [SerializeField] private Canvas _preGameCanvas;
     [SerializeField] private Canvas _gameplayCanvas;
     //[SerializeField] private Canvas _creditsCanvas;
-    [SerializeField] private Canvas _profileCanvas;
+    //[SerializeField] private Canvas _profileCanvas;
     [SerializeField] private Canvas _dailyRewardCanvas;
     [SerializeField] private Canvas _resultsCanvas;
     [SerializeField] private Canvas _dailyWheelCanvas;
     [SerializeField] private Canvas _storeCanvas;
 
     [Header("PANEL REFERENCES")]
-    [SerializeField] private RectTransform _profilePanel;
+    //erializeField] private RectTransform _profilePanel;
     [SerializeField] private RectTransform _dailyRewardPanel;
     [SerializeField] private RectTransform _resultsPanel;
     [SerializeField] private RectTransform _preGamePanel;
@@ -157,7 +157,7 @@ public class CanvasManager : MonoBehaviour
 
     private RectTransform GetPanelForCanvas(Canvas canvas)
     {
-        if (canvas == _profileCanvas) return _profilePanel;
+        //if (canvas == _profileCanvas) return _profilePanel;
         if (canvas == _dailyRewardCanvas) return _dailyRewardPanel;
         if (canvas == _resultsCanvas) return _resultsPanel;
         if (canvas == _preGameCanvas) return _preGamePanel;
@@ -256,21 +256,21 @@ public class CanvasManager : MonoBehaviour
     //    AudioManager.Instance.PlayMusic(MusicClip.Credits, true);
     //}
 
-    public void ShowHideProfileCanvas()
-    {
-        bool isCanvasActive = !_profileCanvas.enabled;
-        var panelAnimation = _profilePanel.GetComponent<Animator>();
-        if (isCanvasActive)
-        {
-            panelAnimation.SetTrigger("Open");
-            ShowHideCanvas(_profileCanvas, isCanvasActive);
-        }
-        else
-        {
-            panelAnimation.SetTrigger("Close");
-            ShowHideCanvas(_profileCanvas, isCanvasActive);
-        }
-    }
+    //public void ShowHideProfileCanvas()
+    //{
+    //    bool isCanvasActive = !_profileCanvas.enabled;
+    //    var panelAnimation = _profilePanel.GetComponent<Animator>();
+    //    if (isCanvasActive)
+    //    {
+    //        panelAnimation.SetTrigger("Open");
+    //        ShowHideCanvas(_profileCanvas, isCanvasActive);
+    //    }
+    //    else
+    //    {
+    //        panelAnimation.SetTrigger("Close");
+    //        ShowHideCanvas(_profileCanvas, isCanvasActive);
+    //    }
+    //}
 
     public void ShowHidePreGameCanvas()
     {

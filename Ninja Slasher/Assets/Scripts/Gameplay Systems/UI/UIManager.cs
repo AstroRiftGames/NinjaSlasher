@@ -22,6 +22,7 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
 
     [Header("MODALS")]
     [SerializeField] private CreditsModal _creditsModal;
+    [SerializeField] private ProfileModal _profileModal;
 
     public bool IsHapticFeedbackActive => _isHapticFeedbackActive;
     private bool _isHapticFeedbackActive = true;
@@ -263,6 +264,28 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
             _creditsModal.Hide();
     }
 
+    public void ShowProfileModal()
+    {
+        if (_profileModal != null)
+            _profileModal.Show();
+    }
+
+    public void HideProfileModal()
+    {
+        if (_profileModal != null)
+            _profileModal.Hide();
+    }
+
+    public void ToggleProfileModal()
+    {
+        if (_profileModal == null) return;
+
+        if (_profileModal.IsVisible)
+            _profileModal.Hide();
+        else
+            _profileModal.Show();
+    }
+
     #endregion
 
     #region LEGACY
@@ -282,7 +305,12 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
             _creditsModal.Show();
     }
 
-    public void ShowHideProfileCanvas() => _canvasManager.ShowHideProfileCanvas();
+    public void ShowHideProfileCanvas()
+    {
+        if (_profileModal != null)
+            ToggleProfileModal();
+    }
+
     public void SwitchHapticFeedback() => _isHapticFeedbackActive = !_isHapticFeedbackActive;
     public void ShowHidePauseCanvas() => TogglePauseOverlay();
     //public void ShowHideUserIconsCanvas() => _canvasManager.ShowHideUserIconsCanvas();
