@@ -9,7 +9,7 @@ public class CanvasManager : MonoBehaviour
     [SerializeField] private Canvas _levelsCanvas;
     [SerializeField] private Canvas _preGameCanvas;
     [SerializeField] private Canvas _gameplayCanvas;
-    [SerializeField] private Canvas _creditsCanvas;
+    //[SerializeField] private Canvas _creditsCanvas;
     [SerializeField] private Canvas _profileCanvas;
     [SerializeField] private Canvas _dailyRewardCanvas;
     [SerializeField] private Canvas _resultsCanvas;
@@ -232,29 +232,29 @@ public class CanvasManager : MonoBehaviour
         }
     }
 
-    public void ShowHideCreditsCanvas()
-    {
-        bool isCanvasActive = !_creditsCanvas.gameObject.activeInHierarchy;
-        ShowHideCanvas(_profileCanvas, !isCanvasActive);
+    //public void ShowHideCreditsCanvas()
+    //{
+    //    bool isCanvasActive = !_creditsCanvas.gameObject.activeInHierarchy;
+    //    ShowHideCanvas(_profileCanvas, !isCanvasActive);
 
-        if (isCanvasActive)
-        {
-            StartCoroutine(DelayedCreditsShow());
-        }
-        else
-        {
-            _creditsCanvas.gameObject.SetActive(isCanvasActive);
-            AudioManager.Instance.PlayMusic(MusicClip.MainMenu, !isCanvasActive);
-        }
-    }
+    //    if (isCanvasActive)
+    //    {
+    //        StartCoroutine(DelayedCreditsShow());
+    //    }
+    //    else
+    //    {
+    //        _creditsCanvas.gameObject.SetActive(isCanvasActive);
+    //        AudioManager.Instance.PlayMusic(MusicClip.MainMenu, !isCanvasActive);
+    //    }
+    //}
 
-    private IEnumerator DelayedCreditsShow()
-    {
-        yield return new WaitForSeconds(_animationDuration + 0.1f);
-        _creditsCanvas.gameObject.SetActive(true);
-        ShowCanvasAnimated(_creditsCanvas);
-        AudioManager.Instance.PlayMusic(MusicClip.Credits, true);
-    }
+    //private IEnumerator DelayedCreditsShow()
+    //{
+    //    yield return new WaitForSeconds(_animationDuration + 0.1f);
+    //    _creditsCanvas.gameObject.SetActive(true);
+    //    ShowCanvasAnimated(_creditsCanvas);
+    //    AudioManager.Instance.PlayMusic(MusicClip.Credits, true);
+    //}
 
     public void ShowHideProfileCanvas()
     {

@@ -20,6 +20,9 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
     [Header("SCREENS")]
     [SerializeField] private SplashScreen _splashScreen;
 
+    [Header("MODALS")]
+    [SerializeField] private CreditsModal _creditsModal;
+
     public bool IsHapticFeedbackActive => _isHapticFeedbackActive;
     private bool _isHapticFeedbackActive = true;
 
@@ -246,6 +249,22 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
 
     #endregion
 
+    #region MODALS
+
+    public void ShowCreditsModal()
+    {
+        if (_creditsModal != null)
+            _creditsModal.Show();
+    }
+
+    public void HideCreditsModal()
+    {
+        if (_creditsModal != null)
+            _creditsModal.Hide();
+    }
+
+    #endregion
+
     #region LEGACY
 
     public void ShowLevelSelector() => _sceneTransitionManager.ShowLevelSelector();
@@ -253,7 +272,16 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
     public void RestartLevel() => _sceneTransitionManager.RestartLevel();
     public void ShowConfirmationPanel(string sceneName) => _preGameUIManager.ShowConfirmationPanel(sceneName);
     public void ShowHidePreGameCanvas() => _canvasManager.ShowHidePreGameCanvas();
-    public void ShowHideCreditsCanvas() => _canvasManager.ShowHideCreditsCanvas();
+    public void ShowHideCreditsCanvas()
+    {
+        if (_creditsModal == null) return;
+
+        if (_creditsModal.IsVisible)
+            _creditsModal.Hide();
+        else
+            _creditsModal.Show();
+    }
+
     public void ShowHideProfileCanvas() => _canvasManager.ShowHideProfileCanvas();
     public void SwitchHapticFeedback() => _isHapticFeedbackActive = !_isHapticFeedbackActive;
     public void ShowHidePauseCanvas() => TogglePauseOverlay();
