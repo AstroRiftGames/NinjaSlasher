@@ -173,7 +173,7 @@ public class SceneTransitionManager : MonoBehaviour
             yield break;
         }
 
-        _canvasManager.ShowHideDailyRewardCanvas();
+        UIManager.Instance.ShowHideDailyRewardCanvas();
 
         _dailyRewardUI.ShowDailyReward();
     }

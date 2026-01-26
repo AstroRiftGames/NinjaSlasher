@@ -1,0 +1,94 @@
+using System.Collections;
+using UnityEngine;
+
+public class DailyRewardModal : UIModalBase
+{
+    [Header("Animation")]
+    [SerializeField] private Animator _panelAnimator;
+    [SerializeField] private float _closeAnimationDuration = 0.4f;
+
+    protected override void Awake()
+    {
+        base.Awake();
+
+        if (_panelAnimator == null)
+        {
+            _panelAnimator = GetComponentInChildren<Animator>();
+        }
+    }
+
+    public override void Show()
+    {
+        if (_isVisible) return;
+
+        gameObject.SetActive(true);
+        _isVisible = true;
+
+        if (_canvasGroup != null)
+        {
+            _canvasGroup.alpha = 1f;
+            _canvasGroup.blocksRaycasts = true;
+            _canvasGroup.interactable = true;
+        }
+
+        if (_hasBackground && _backgroundImage != null)
+        {
+            _backgroundImage.raycastTarget = true;
+        }
+
+        if (_panelAnimator != null)
+        {
+            _panelAnimator.SetTrigger("Open");
+        }
+
+        if (DailyRewardUIManager.Instance != null)
+        {
+            DailyRewardUIManager.Instance.ShowDailyReward();
+        }
+
+        OnShown();
+    }
+
+    public override void Hide()
+    {
+        if (!_isVisible) return;
+
+        _isVisible = false;
+
+        if (_canvasGroup != null)
+        {
+            _canvasGroup.blocksRaycasts = false;
+            _canvasGroup.interactable = false;
+        }
+
+        if (_hasBackground && _backgroundImage != null)
+        {
+            _backgroundImage.raycastTarget = false;
+        }
+
+        if (_panelAnimator != null)
+        {
+            _panelAnimator.SetTrigger("Close");
+        }
+
+        OnHidden();
+
+        StartCoroutine(DelayedHide());
+    }
+
+    private IEnumerator DelayedHide()
+    {
+        yield return new WaitForSecondsRealtime(_closeAnimationDuration);
+        gameObject.SetActive(false);
+    }
+
+    protected override void OnShown()
+    {
+        Debug.Log("[DailyRewardModal] Modal mostrado");
+    }
+
+    protected override void OnHidden()
+    {
+        Debug.Log("[DailyRewardModal] Modal ocultado");
+    }
+}

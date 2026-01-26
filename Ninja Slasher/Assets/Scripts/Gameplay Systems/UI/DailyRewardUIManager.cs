@@ -255,11 +255,8 @@ public class DailyRewardUIManager : MonoBehaviourSingleton<DailyRewardUIManager>
     private void OnClosePressed()
     {
         // TO DO: Usar UIEvents.RequestClosePanel("DailyReward")
-        var canvasManager = GetComponentInParent<CanvasManager>();
-        if (canvasManager != null)
-        {
-            canvasManager.ShowHideDailyRewardCanvas();
-        }
+
+        UIManager.Instance.HideDailyRewardModal();
     }
 
     private void OnAvailabilityChanged(bool canClaim)
@@ -346,7 +343,6 @@ public class DailyRewardDayUI
     public Image rewardIcon;
     public TextMeshProUGUI quantityText;
     public Image backgroundImage;
-    public TextMeshProUGUI rewardNameText;
 
     private int dayIndex;
     private DailyReward reward;
@@ -367,9 +363,6 @@ public class DailyRewardDayUI
 
         if (quantityText != null)
             quantityText.text = $"x{reward.quantity}";
-
-        if (rewardNameText != null && !string.IsNullOrEmpty(reward.displayName))
-            rewardNameText.text = reward.displayName;
     }
 
     public void UpdateDayState(DayState state, Color labelColor)
@@ -424,7 +417,6 @@ public class DailyRewardDayUI
 
         if (rewardIcon != null) rewardIcon.color = active ? Color.white : Color.gray;
         if (quantityText != null) quantityText.color = textColor;
-        if (rewardNameText != null) rewardNameText.color = textColor;
     }
 
     void SetElementsAlpha(float alpha)
@@ -439,12 +431,6 @@ public class DailyRewardDayUI
         {
             Color quantityColor = quantityText.color;
             quantityText.color = new Color(quantityColor.r, quantityColor.g, quantityColor.b, alpha);
-        }
-
-        if (rewardNameText != null)
-        {
-            Color nameColor = rewardNameText.color;
-            rewardNameText.color = new Color(nameColor.r, nameColor.g, nameColor.b, alpha);
         }
     }
 

@@ -24,6 +24,7 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
     [Header("MODALS")]
     [SerializeField] private CreditsModal _creditsModal;
     [SerializeField] private ProfileModal _profileModal;
+    [SerializeField] private DailyRewardModal _dailyRewardModal;
 
     [Header("HUD")]
     [SerializeField] private GameplayHUD _gameplayHUD;
@@ -45,6 +46,26 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
         InitializeManagers();
     }
 
+    private void Start()
+    {
+        if (this != Instance) return;
+
+        StartCoroutine(InitializeUI());
+    }
+
+    private void CustomUpdate()
+    {
+        if (_isInitialized)
+        {
+            _gameplayUIManager.UpdateUI();
+
+            if (Input.GetKeyDown(KeyCode.T))
+            {
+                Cursor.visible = !Cursor.visible;
+            }
+        }
+    }
+
     private void OnEnable()
     {
         if (this != Instance) return;
@@ -55,16 +76,6 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
 
         // TO DO: FUTURO: Migrar a UIEvents
         // SubscribeToUIEvents();
-    }
-
-    private IEnumerator SafeSubscribeToCustomUpdate()
-    {
-        while (CustomUpdateManager.Instance == null)
-        {
-            yield return null;
-        }
-
-        CustomUpdateManager.Instance.SubscribeToUpdate(CustomUpdate);
     }
 
     private void OnDisable()
@@ -80,13 +91,6 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
 
         // TO DO: FUTURO: Migrar a UIEvents
         // UnsubscribeFromUIEvents();
-    }
-
-    private void Start()
-    {
-        if (this != Instance) return;
-
-        StartCoroutine(InitializeUI());
     }
 
     private IEnumerator InitializeUI()
@@ -123,17 +127,14 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
             Debug.LogError("[UIManager] GameplayUIManager no encontrado");
     }
 
-    private void CustomUpdate()
+    private IEnumerator SafeSubscribeToCustomUpdate()
     {
-        if (_isInitialized)
+        while (CustomUpdateManager.Instance == null)
         {
-            _gameplayUIManager.UpdateUI();
-
-            if (Input.GetKeyDown(KeyCode.T))
-            {
-                Cursor.visible = !Cursor.visible;
-            }
+            yield return null;
         }
+
+        CustomUpdateManager.Instance.SubscribeToUpdate(CustomUpdate);
     }
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
@@ -223,7 +224,7 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
 
     #endregion
 
-    #region SCREENS (MainCanvas)
+    #region SCREENS
 
     public void ShowSplashScreen()
     {
@@ -297,6 +298,28 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
             _profileModal.Show();
     }
 
+    public void ShowDailyRewardModal()
+    {
+        if (_dailyRewardModal != null)
+            _dailyRewardModal.Show();
+    }
+
+    public void HideDailyRewardModal()
+    {
+        if (_dailyRewardModal != null)
+            _dailyRewardModal.Hide();
+    }
+
+    public void ToggleDailyRewardModal()
+    {
+        if (_dailyRewardModal == null) return;
+
+        if (_dailyRewardModal.IsVisible)
+            _dailyRewardModal.Hide();
+        else
+            _dailyRewardModal.Show();
+    }
+
     #endregion
 
     #region HUD
@@ -355,17 +378,18 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
 
     public void SwitchHapticFeedback() => _isHapticFeedbackActive = !_isHapticFeedbackActive;
     public void ShowHidePauseCanvas() => TogglePauseOverlay();
-    //public void ShowHideUserIconsCanvas() => _canvasManager.ShowHideUserIconsCanvas();
-    //public void ShowHideUserNicknameEditCanvas() => _canvasManager.ShowHideUserNicknameEditCanvas();
     public void ShowHideResultsCanvas() => _canvasManager.ShowHideResultsCanvas();
     public void ShowHideLifeLostCanvas() => ShowLifeLostOverlay(LifeManager.Instance?.CurrentLives ?? 0);
-    public void ShowHideDailyRewardCanvas() => _canvasManager.ShowHideDailyRewardCanvas();
+    public void ShowHideDailyRewardCanvas() => ShowDailyRewardModal();
     public void ShowHideNoLivesCanvas() => ShowNoLivesOverlay();
-    //public void ShowLifeLostPanel() => _gameplayUIManager.ShowLifeLostPanel();
-    //public void HideLifeLostPanel() => _gameplayUIManager.HideLifeLostPanel();
     public void UpdateLivesUI(int lives) => _gameplayUIManager.UpdateLivesUI(lives);
     public void ShowNoLivesPanel() => _gameplayUIManager.ShowNoLivesPanel();
     public void ShowHideStoreCanvas() => _canvasManager.ShowHideStoreCanvas();
 
     #endregion
+
+    public bool IsDailyRewardModalVisible()
+    {
+        return _dailyRewardModal != null && _dailyRewardModal.IsVisible;
+    }
 }

@@ -6,13 +6,11 @@ public class CanvasManager : MonoBehaviour
 {
     [Header("CANVAS")]
     [SerializeField] private Canvas _levelsCanvas;
-    [SerializeField] private Canvas _dailyRewardCanvas;
     [SerializeField] private Canvas _resultsCanvas;
     [SerializeField] private Canvas _dailyWheelCanvas;
     [SerializeField] private Canvas _storeCanvas;
 
     [Header("PANEL REFERENCES")]
-    [SerializeField] private RectTransform _dailyRewardPanel;
     [SerializeField] private RectTransform _resultsPanel;
     [SerializeField] private RectTransform _dailyWheelPanel;
     [SerializeField] private RectTransform _storePanel;
@@ -150,7 +148,6 @@ public class CanvasManager : MonoBehaviour
 
     private RectTransform GetPanelForCanvas(Canvas canvas)
     {
-        if (canvas == _dailyRewardCanvas) return _dailyRewardPanel;
         if (canvas == _resultsCanvas) return _resultsPanel;
         if (canvas == _dailyWheelCanvas) return _dailyWheelPanel;
         if (canvas == _storeCanvas) return _storePanel;
@@ -205,22 +202,6 @@ public class CanvasManager : MonoBehaviour
             HideCanvasAnimated(_storeCanvas);
         }
     }
-    public void ShowHideDailyRewardCanvas()
-    {
-        bool isCanvasActive = !_dailyRewardCanvas.enabled;
-        var panelAnimation = _dailyRewardPanel.GetComponent<Animator>();
-        if (isCanvasActive)
-        {
-            panelAnimation.SetTrigger("Open");
-            ShowCanvasAnimated(_dailyRewardCanvas);
-            GetComponent<DailyRewardUIManager>()?.ShowDailyReward();
-        }
-        else
-        {
-            panelAnimation.SetTrigger("Close");
-            HideCanvasAnimated(_dailyRewardCanvas);
-        }
-    }
 
     public void SetLevelsCanvasEnabled(bool enabled)
     {
@@ -243,9 +224,9 @@ public class CanvasManager : MonoBehaviour
         yield return null;
         yield return new WaitForSeconds(0.3f);
 
-        if (_dailyRewardCanvas.enabled)
+        if (UIManager.Instance.IsDailyRewardModalVisible())
         {
-            while (_dailyRewardCanvas.enabled)
+            while (UIManager.Instance.IsDailyRewardModalVisible())
             {
                 yield return new WaitForSeconds(0.1f);
             }
