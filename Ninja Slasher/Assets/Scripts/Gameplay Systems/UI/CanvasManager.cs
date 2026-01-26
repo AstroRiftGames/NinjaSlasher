@@ -5,7 +5,7 @@ using DG.Tweening;
 public class CanvasManager : MonoBehaviour
 {
     [Header("CANVAS")]
-    [SerializeField] private Canvas _splashCanvas;
+    //[SerializeField] private Canvas _splashCanvas;
     [SerializeField] private Canvas _levelsCanvas;
     [SerializeField] private Canvas _preGameCanvas;
     [SerializeField] private Canvas _gameplayCanvas;
@@ -357,7 +357,7 @@ public class CanvasManager : MonoBehaviour
         ShowHideCanvas(_dailyWheelCanvas, isCanvasActive);
     }
 
-    public void SetSplashCanvasEnabled(bool enabled) => _splashCanvas.enabled = enabled;
+    //public void SetSplashCanvasEnabled(bool enabled) => _splashCanvas.enabled = enabled;
     public void SetGameplayCanvasEnabled(bool enabled) => _gameplayCanvas.enabled = enabled;
     public Canvas GetResultsCanvas() => _resultsCanvas;
     public Canvas GetGameplayCanvas() => _gameplayCanvas;

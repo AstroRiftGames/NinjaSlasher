@@ -12,8 +12,6 @@ public class NoLivesOverlay : UIOverlayBase
     [SerializeField] private Button _watchAdButton;
     [SerializeField] private Button _claimLifeButton;
 
-    private float _nextLifeTime;
-
     protected override void Awake()
     {
         base.Awake();
@@ -58,7 +56,6 @@ public class NoLivesOverlay : UIOverlayBase
         if (_messageText == null) return;
 
         int currentLives = LifeManager.Instance?.CurrentLives ?? 0;
-
         int maxLives = GameConfigManager.Config?.maxLives ?? 5;
 
         _messageText.text = $"Sin vidas disponibles\n{currentLives}/{maxLives}";
@@ -94,18 +91,29 @@ public class NoLivesOverlay : UIOverlayBase
         bool hasLives = LifeManager.Instance?.CanPlay() ?? false;
 
         if (_claimLifeButton != null)
-            _claimLifeButton.interactable = hasLives;
+            _claimLifeButton.gameObject.SetActive(hasLives);
+
+        if (_watchAdButton != null)
+            _watchAdButton.gameObject.SetActive(!hasLives);
     }
 
     private void OnWatchAdClicked()
     {
-        Debug.Log("[NoLivesOverlay] Ver anuncio para vida extra");
-        // AdsManager.Instance?.ShowRewardedAdForExtraLife();
+        Debug.Log("[NoLivesOverlay] Ver anuncio para obtener vida");
+
+        // TODO: Integrar con sistema de ads
+        // AdManager.Instance?.ShowRewardedAd(() => 
+        // {
+        //     LifeManager.Instance?.AddLife();
+        //     Hide();
+        // });
     }
 
     private void OnClaimLifeClicked()
     {
-        if (LifeManager.Instance != null && LifeManager.Instance.CanPlay())
+        Debug.Log("[NoLivesOverlay] Reclamar vida disponible");
+
+        if (LifeManager.Instance?.CanPlay() == true)
         {
             Hide();
         }

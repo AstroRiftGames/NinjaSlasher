@@ -86,7 +86,8 @@ public class SceneTransitionManager : MonoBehaviour
 
         _transitionAnim.SetTrigger("OpeningStart");
         yield return new WaitForSeconds(_transitionTime);
-        _canvasManager.SetSplashCanvasEnabled(false);
+        //_canvasManager.SetSplashCanvasEnabled(false);
+        UIManager.Instance.HideSplashScreen();
         _canvasManager.SetLevelsCanvasEnabled(true);
         _canvasManager.SetGameplayCanvasEnabled(false);
         _transitionAnim.SetTrigger("End");

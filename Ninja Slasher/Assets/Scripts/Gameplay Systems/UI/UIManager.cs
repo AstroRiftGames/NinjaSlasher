@@ -17,6 +17,9 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
     [SerializeField] private NoLivesOverlay _noLivesOverlay;
     [SerializeField] private LifeLostOverlay _lifeLostOverlay;
 
+    [Header("SCREENS")]
+    [SerializeField] private SplashScreen _splashScreen;
+
     public bool IsHapticFeedbackActive => _isHapticFeedbackActive;
     private bool _isHapticFeedbackActive = true;
 
@@ -168,6 +171,8 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
     }
     */
 
+    #region OVERLAYS
+
     public void ShowPauseOverlay()
     {
         if (_pauseOverlay != null)
@@ -208,6 +213,40 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
             _lifeLostOverlay.ShowLifeLost(livesRemaining);
     }
 
+    #endregion
+
+    #region SCREENS (MainCanvas)
+
+    public void ShowSplashScreen()
+    {
+        if (_splashScreen != null)
+            _splashScreen.Show();
+    }
+
+    public void HideSplashScreen()
+    {
+        if (_splashScreen != null)
+            _splashScreen.Hide();
+    }
+
+    //public void SetSplashCanvasEnabled(bool enabled)
+    //{
+    //    if (_splashScreen != null)
+    //    {
+    //        if (enabled)
+    //            _splashScreen.Show();
+    //        else
+    //            _splashScreen.Hide();
+    //    }
+    //    else if (_canvasManager != null)
+    //    {
+    //        _canvasManager.SetSplashCanvasEnabled(enabled);
+    //    }
+    //}
+
+    #endregion
+
+    #region LEGACY
 
     public void ShowLevelSelector() => _sceneTransitionManager.ShowLevelSelector();
     public void LoadLevelScene(string sceneName) => _sceneTransitionManager.LoadLevelScene(sceneName);
@@ -229,4 +268,6 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
     public void UpdateLivesUI(int lives) => _gameplayUIManager.UpdateLivesUI(lives);
     public void ShowNoLivesPanel() => _gameplayUIManager.ShowNoLivesPanel();
     public void ShowHideStoreCanvas() => _canvasManager.ShowHideStoreCanvas();
+
+    #endregion
 }

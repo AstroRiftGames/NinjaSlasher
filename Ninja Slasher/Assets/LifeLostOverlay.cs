@@ -37,7 +37,7 @@ public class LifeLostOverlay : UIOverlayBase
         UpdateUI(livesRemaining);
         Show();
 
-        if (_autoHide)
+        if (_autoHide && livesRemaining > 0)
         {
             if (_autoHideCoroutine != null)
                 StopCoroutine(_autoHideCoroutine);
@@ -98,8 +98,6 @@ public class LifeLostOverlay : UIOverlayBase
         {
             Hide();
         }
-
-        _autoHideCoroutine = null;
     }
 
     private void OnContinueClicked()
@@ -122,15 +120,11 @@ public class LifeLostOverlay : UIOverlayBase
         }
 
         Time.timeScale = 1f;
-
         UIEvents.RaiseQuitToMenuPressed();
     }
 
     private void OnDestroy()
     {
-        if (_autoHideCoroutine != null)
-            StopCoroutine(_autoHideCoroutine);
-
         if (_continueButton != null)
             _continueButton.onClick.RemoveAllListeners();
 
