@@ -25,9 +25,13 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
     [SerializeField] private CreditsModal _creditsModal;
     [SerializeField] private ProfileModal _profileModal;
     [SerializeField] private DailyRewardModal _dailyRewardModal;
+    [SerializeField] private DailyWheelModal _dailyWheelModal;
 
     [Header("HUD")]
     [SerializeField] private GameplayHUD _gameplayHUD;
+
+    [Header("DAILY SYSTEMS")]
+    [SerializeField] private DailyWheelUI _dailyWheelUI;
 
     public bool IsHapticFeedbackActive => _isHapticFeedbackActive;
     private bool _isHapticFeedbackActive = true;
@@ -52,20 +56,6 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
 
         StartCoroutine(InitializeUI());
     }
-
-    private void CustomUpdate()
-    {
-        if (_isInitialized)
-        {
-            _gameplayUIManager.UpdateUI();
-
-            if (Input.GetKeyDown(KeyCode.T))
-            {
-                Cursor.visible = !Cursor.visible;
-            }
-        }
-    }
-
     private void OnEnable()
     {
         if (this != Instance) return;
@@ -74,8 +64,7 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
 
         StartCoroutine(SafeSubscribeToCustomUpdate());
 
-        // TO DO: FUTURO: Migrar a UIEvents
-        // SubscribeToUIEvents();
+        SubscribeToUIEvents();
     }
 
     private void OnDisable()
@@ -89,8 +78,20 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
             CustomUpdateManager.Instance.UnsubscribeFromUpdate(CustomUpdate);
         }
 
-        // TO DO: FUTURO: Migrar a UIEvents
-        // UnsubscribeFromUIEvents();
+        UnsubscribeFromUIEvents();
+    }
+
+    private void CustomUpdate()
+    {
+        if (_isInitialized)
+        {
+            _gameplayUIManager.UpdateUI();
+
+            if (Input.GetKeyDown(KeyCode.T))
+            {
+                Cursor.visible = !Cursor.visible;
+            }
+        }
     }
 
     private IEnumerator InitializeUI()
@@ -118,6 +119,11 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
         _gameplayUIManager = GetComponent<GameplayUIManager>();
         _preGameUIManager = GetComponent<PreGameUIManager>();
         _sceneTransitionManager = GetComponent<SceneTransitionManager>();
+
+        if (_dailyWheelUI == null)
+        {
+            _dailyWheelUI = GetComponentInChildren<DailyWheelUI>();
+        }
 
         if (_canvasManager == null)
             Debug.LogError("[UIManager] CanvasManager no encontrado");
@@ -148,37 +154,120 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
         Application.OpenURL(url);
     }
 
-    // FUTURO: Metodos para migrar a UIEvents
-    /*
     private void SubscribeToUIEvents()
     {
+        UIEvents.OnLevelSelectorReady += OnLevelSelectorReady;
+
+        if (_dailyWheelUI != null)
+        {
+            _dailyWheelUI.OnWheelProcessComplete += OnWheelCompleted;
+        }
+
+        /*TO DO: Migrar a UIEvents
         UIEvents.OnPanelOpenRequested += HandlePanelOpenRequest;
         UIEvents.OnPanelCloseRequested += HandlePanelCloseRequest;
         UIEvents.OnSceneTransitionRequested += HandleSceneTransition;
+        */
     }
 
     private void UnsubscribeFromUIEvents()
     {
+        UIEvents.OnLevelSelectorReady -= OnLevelSelectorReady;
+
+        if (_dailyWheelUI != null)
+        {
+            _dailyWheelUI.OnWheelProcessComplete -= OnWheelCompleted;
+        }
+
+        /*TO DO: Migrar a UIEvents
         UIEvents.OnPanelOpenRequested -= HandlePanelOpenRequest;
         UIEvents.OnPanelCloseRequested -= HandlePanelCloseRequest;
         UIEvents.OnSceneTransitionRequested -= HandleSceneTransition;
+        */
     }
 
-    private void HandlePanelOpenRequest(string panelName)
+    //private void HandlePanelOpenRequest(string panelName)
+    //{
+    //    // Logica para abrir paneles por nombre
+    //}
+
+    //private void HandlePanelCloseRequest(string panelName)
+    //{
+    //    // Logica para cerrar paneles por nombre
+    //}
+
+    //private void HandleSceneTransition(string sceneName)
+    //{
+    //    _sceneTransitionManager.LoadLevelScene(sceneName);
+    //}
+
+    #region DAILY SEQUENCE (UI Logic Only)
+
+    private void OnLevelSelectorReady()
     {
-        // Logica para abrir paneles por nombre
+        UIEvents.RequestUpdateLivesUI(LifeManager.Instance.CurrentLives);
+
+        GetComponent<DebugUIManager>()?.ShowStarsDebug();
+
+        StartCoroutine(CheckAndShowDailySequence());
     }
 
-    private void HandlePanelCloseRequest(string panelName)
+    private IEnumerator CheckAndShowDailySequence()
     {
-        // Logica para cerrar paneles por nombre
+        while (SaveManager.Instance == null || !SaveManager.Instance.IsDataLoaded ||
+               DailyWheelSystem.Instance == null || DailyRewardSystem.Instance == null)
+        {
+            yield return null;
+        }
+
+        yield return null;
+
+        bool canSpinWheel = DailyWheelSystem.Instance.CanSpinToday();
+        bool canClaimReward = DailyRewardSystem.Instance.CanClaimToday();
+
+        if (canSpinWheel)
+        {
+            yield return new WaitForSeconds(1f);
+            ShowDailyWheelModal();
+        }
+        else if (canClaimReward)
+        {
+            yield return new WaitForSeconds(1f);
+            ShowDailyRewardWithRefresh();
+        }
     }
 
-    private void HandleSceneTransition(string sceneName)
+    private void OnWheelCompleted()
     {
-        _sceneTransitionManager.LoadLevelScene(sceneName);
+        HideDailyWheelModal();
+        StartCoroutine(CheckDailyRewardAfterWheel());
     }
-    */
+
+    private IEnumerator CheckDailyRewardAfterWheel()
+    {
+        yield return new WaitForSeconds(0.5f);
+
+        bool canClaimReward = DailyRewardSystem.Instance.CanClaimToday();
+
+        if (canClaimReward)
+        {
+            yield return new WaitForSeconds(0.5f);
+            ShowDailyRewardWithRefresh();
+        }
+    }
+
+    private void ShowDailyRewardWithRefresh()
+    {
+        ShowDailyRewardModal();
+
+        if (DailyRewardUIManager.Instance != null)
+        {
+            DailyRewardUIManager.Instance.ShowDailyReward();
+        }
+    }
+
+    #endregion
+
 
     #region OVERLAYS
 
@@ -320,6 +409,38 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
             _dailyRewardModal.Show();
     }
 
+    public bool IsDailyRewardModalVisible()
+    {
+        return _dailyRewardModal != null && _dailyRewardModal.IsVisible;
+    }
+
+    public void ShowDailyWheelModal()
+    {
+        if (_dailyWheelModal != null)
+            _dailyWheelModal.Show();
+    }
+
+    public void HideDailyWheelModal()
+    {
+        if (_dailyWheelModal != null)
+            _dailyWheelModal.Hide();
+    }
+
+    public void ToggleDailyWheelModal()
+    {
+        if (_dailyWheelModal == null) return;
+
+        if (_dailyWheelModal.IsVisible)
+            _dailyWheelModal.Hide();
+        else
+            _dailyWheelModal.Show();
+    }
+
+    public bool IsDailyWheelModalVisible()
+    {
+        return _dailyWheelModal != null && _dailyWheelModal.IsVisible;
+    }
+
     #endregion
 
     #region HUD
@@ -350,9 +471,6 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
 
     #region LEGACY
 
-    public void ShowLevelSelector() => _sceneTransitionManager.ShowLevelSelector();
-    public void LoadLevelScene(string sceneName) => _sceneTransitionManager.LoadLevelScene(sceneName);
-    public void RestartLevel() => _sceneTransitionManager.RestartLevel();
     public void ShowConfirmationPanel(string sceneName) => _preGameUIManager.ShowConfirmationPanel(sceneName);
     public void ShowHidePreGameCanvas()
     {
@@ -386,10 +504,26 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
     public void ShowNoLivesPanel() => _gameplayUIManager.ShowNoLivesPanel();
     public void ShowHideStoreCanvas() => _canvasManager.ShowHideStoreCanvas();
 
-    #endregion
-
-    public bool IsDailyRewardModalVisible()
+    public void ShowHideDailyWheelCanvas()
     {
-        return _dailyRewardModal != null && _dailyRewardModal.IsVisible;
+        if (_dailyWheelModal != null)
+            ToggleDailyWheelModal();
     }
+
+    public void ShowLevelSelector()
+    {
+        UIEvents.RequestShowLevelSelector();
+    }
+
+    public void LoadLevelScene(string sceneName)
+    {
+        UIEvents.RequestSceneTransition(sceneName);
+    }
+
+    public void RestartLevel()
+    {
+        UIEvents.RequestRestartLevel();
+    }
+
+    #endregion
 }

@@ -15,16 +15,15 @@ public class GameplayUIManager : MonoBehaviour
     [SerializeField] private TextMeshProUGUI _puRemainingTime;
 
     private bool _noLivesActive = false;
-    //private LevelController _levelController;
-    //private ComboManager _comboManager;
+    private void OnDisable()
+    {
+        GameEvents.OnLivesChanged -= OnLivesChanged;
+        UIEvents.OnUILivesUpdateRequested -= UpdateLivesUI;
+    }
 
     public void Initialize()
     {
         GameEvents.OnLivesChanged += OnLivesChanged;
-
-        // DEPRECATED
-        //if (LifeManager.Instance != null)
-        //    LifeManager.Instance.OnLivesChanged += OnLivesChanged;
 
         UpdateLivesUI(LifeManager.Instance?.GetDisplayLives() ?? 0);
 
@@ -52,44 +51,12 @@ public class GameplayUIManager : MonoBehaviour
         GameEvents.OnLevelTimeChanged += OnLevelTimeChanged;
         GameEvents.OnLevelTimeExpired += OnLevelTimeExpired;
         GameEvents.OnComboUpdated += OnComboUpdated;
-
-        // DEPRECATED
-        //_levelController = FindFirstObjectByType<LevelController>();
-        //if (_levelController != null)
-        //{
-        //    _levelController.OnTimeChanged += OnLevelTimeChanged;
-        //    _levelController.OnTimeExpired += OnLevelTimeExpired;
-        //}
-
-        //_comboManager = ComboManager.Instance;
-        //if (_comboManager != null)
-        //{
-        //    _comboManager.OnComboUpdatedWithPosition += OnComboUpdated;
-        //}
-
-        //PowerUpManager.OnPowerUpRemainingTextChanged += OnPowerUpRemainingTextChanged;
+        UIEvents.OnUILivesUpdateRequested += UpdateLivesUI;
     }
-
-    //private void UnsubscribeFromEvents()
-    //{
-    //    if (_levelController != null)
-    //    {
-    //        _levelController.OnTimeChanged -= OnLevelTimeChanged;
-    //        _levelController.OnTimeExpired -= OnLevelTimeExpired;
-    //    }
-
-    //    if (_comboManager != null)
-    //    {
-    //        _comboManager.OnComboUpdatedWithPosition -= OnComboUpdated;
-    //    }
-
-    //    PowerUpManager.OnPowerUpRemainingTextChanged -= OnPowerUpRemainingTextChanged;
-    //}
 
     public void UpdateUI()
     {
         UpdateNoLivesTimer();
-        //UpdatePowerUpsUI();
     }
 
     private void UpdateNoLivesTimer()
@@ -167,7 +134,6 @@ public class GameplayUIManager : MonoBehaviour
         AudioManager.Instance.PlaySFX(SFXClip.UI_Select);
         UIManager.Instance.RestartLevel();
         UIManager.Instance.ShowHideLifeLostCanvas();
-        //HideLifeLostPanel();
     }
 
     public void OnBackToSelectionPressed()
@@ -277,15 +243,5 @@ public class GameplayUIManager : MonoBehaviour
         {
             GameManager.Instance.OnLevelFailed();
         }
-    }
-
-    private void OnDisable()
-    {
-        GameEvents.OnLivesChanged -= OnLivesChanged;
-
-        // DEPRECATED
-        //UnsubscribeFromEvents();
-        //if (LifeManager.Instance != null)
-        //    LifeManager.Instance.OnLivesChanged -= OnLivesChanged;
     }
 }

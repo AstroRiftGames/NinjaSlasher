@@ -7,12 +7,12 @@ public class CanvasManager : MonoBehaviour
     [Header("CANVAS")]
     [SerializeField] private Canvas _levelsCanvas;
     [SerializeField] private Canvas _resultsCanvas;
-    [SerializeField] private Canvas _dailyWheelCanvas;
+    //[SerializeField] private Canvas _dailyWheelCanvas;
     [SerializeField] private Canvas _storeCanvas;
 
     [Header("PANEL REFERENCES")]
     [SerializeField] private RectTransform _resultsPanel;
-    [SerializeField] private RectTransform _dailyWheelPanel;
+    //[SerializeField] private RectTransform _dailyWheelPanel;
     [SerializeField] private RectTransform _storePanel;
 
     [Header("ANIMATION")]
@@ -149,7 +149,7 @@ public class CanvasManager : MonoBehaviour
     private RectTransform GetPanelForCanvas(Canvas canvas)
     {
         if (canvas == _resultsCanvas) return _resultsPanel;
-        if (canvas == _dailyWheelCanvas) return _dailyWheelPanel;
+        //if (canvas == _dailyWheelCanvas) return _dailyWheelPanel;
         if (canvas == _storeCanvas) return _storePanel;
 
         return null;
@@ -258,11 +258,12 @@ public class CanvasManager : MonoBehaviour
         ShowHideCanvas(canvas, isCanvasActive);
     }
 
-    public void ShowHideDailyWheelCanvas()
-    {
-        bool isCanvasActive = !_dailyWheelCanvas.enabled;
-        ShowHideCanvas(_dailyWheelCanvas, isCanvasActive);
-    }
+    //public void ShowHideDailyWheelCanvas()
+    //{
+    //    bool isCanvasActive = !_dailyWheelCanvas.enabled;
+    //    ShowHideCanvas(_dailyWheelCanvas, isCanvasActive);
+    //}
+
     public Canvas GetResultsCanvas() => _resultsCanvas;
 
     private void OnDisable()

@@ -32,6 +32,8 @@ public static class UIEvents
     public static event Action OnShowLevelSelectorRequested;
     public static event Action OnRestartLevelRequested;
 
+    public static event Action OnLevelSelectorReady;
+
     public static void RequestSceneTransition(string sceneName)
     {
         OnSceneTransitionRequested?.Invoke(sceneName);
@@ -45,6 +47,11 @@ public static class UIEvents
     public static void RequestRestartLevel()
     {
         OnRestartLevelRequested?.Invoke();
+    }
+
+    public static void RaiseLevelSelectorReady()
+    {
+        OnLevelSelectorReady?.Invoke();
     }
 
     #endregion
