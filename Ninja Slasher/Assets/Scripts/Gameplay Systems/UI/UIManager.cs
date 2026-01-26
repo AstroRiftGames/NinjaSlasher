@@ -26,6 +26,7 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
     [SerializeField] private ProfileModal _profileModal;
     [SerializeField] private DailyRewardModal _dailyRewardModal;
     [SerializeField] private DailyWheelModal _dailyWheelModal;
+    [SerializeField] private StoreModal _storeModal;
 
     [Header("HUD")]
     [SerializeField] private GameplayHUD _gameplayHUD;
@@ -441,6 +442,33 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
         return _dailyWheelModal != null && _dailyWheelModal.IsVisible;
     }
 
+    public void ShowStoreModal()
+    {
+        if (_storeModal != null)
+            _storeModal.Show();
+    }
+
+    public void HideStoreModal()
+    {
+        if (_storeModal != null)
+            _storeModal.Hide();
+    }
+
+    public void ToggleStoreModal()
+    {
+        if (_storeModal == null) return;
+
+        if (_storeModal.IsVisible)
+            _storeModal.Hide();
+        else
+            _storeModal.Show();
+    }
+
+    public bool IsStoreModalVisible()
+    {
+        return _storeModal != null && _storeModal.IsVisible;
+    }
+
     #endregion
 
     #region HUD
@@ -502,7 +530,11 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
     public void ShowHideNoLivesCanvas() => ShowNoLivesOverlay();
     public void UpdateLivesUI(int lives) => _gameplayUIManager.UpdateLivesUI(lives);
     public void ShowNoLivesPanel() => _gameplayUIManager.ShowNoLivesPanel();
-    public void ShowHideStoreCanvas() => _canvasManager.ShowHideStoreCanvas();
+    public void ShowHideStoreCanvas()
+    {
+        if (_storeModal != null)
+            ToggleStoreModal();
+    }
 
     public void ShowHideDailyWheelCanvas()
     {
