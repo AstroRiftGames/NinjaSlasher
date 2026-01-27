@@ -7,11 +7,10 @@ using UnityEngine.UI;
 using TMPro;
 using System;
 
-public class ButtonManager : MonoBehaviour
+public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
 {
     [Header("LEVEL SELECTOR BUTTONS")]
     [SerializeField] private Button[] levelButtons;
-    [SerializeField] private Button _testLevelButton;
     [SerializeField] private Button _configDropdownButton;
     [SerializeField] private Button _calendarButton;
     [SerializeField] private Button _storeButton;
@@ -98,8 +97,10 @@ public class ButtonManager : MonoBehaviour
     [SerializeField] private UserNicknameEditPopUp _userNicknameEditPanel;
     [SerializeField] private ConfirmationPopUp _confirmationPanel;
 
-    private void Awake()
+    public override void Awake()
     {
+        base.Awake();
+
         _configToggles = GetComponent<ConfigToggles>();
         _configPanelManager = GetComponent<ConfigDropdown>();
 
@@ -311,7 +312,6 @@ public class ButtonManager : MonoBehaviour
         _closeStoreButton.onClick.AddListener(UIManager.Instance.ShowHideStoreCanvas);
         _calendarButton.onClick.AddListener(UIManager.Instance.ShowHideDailyRewardCanvas);
         _configDropdownButton.onClick.AddListener(_configPanelManager.OpenCloseConfigPanel);
-        _testLevelButton.onClick.AddListener(() => GetComponent<SceneTransitionManager>().LoadDebugTestScene());
 
         for (int i = 0; i < levelButtons.Length; i++)
         {

@@ -20,6 +20,7 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
     [Header("SCREENS")]
     [SerializeField] private SplashScreen _splashScreen;
     [SerializeField] private PreGameScreen _preGameScreen;
+    [SerializeField] private LevelsScreen _levelsScreen;
 
     [Header("MODALS")]
     [SerializeField] private CreditsModal _creditsModal;
@@ -203,7 +204,7 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
     //    _sceneTransitionManager.LoadLevelScene(sceneName);
     //}
 
-    #region DAILY SEQUENCE (UI Logic Only)
+    #region DAILY SEQUENCE
 
     private void OnLevelSelectorReady()
     {
@@ -327,6 +328,34 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
     {
         if (_splashScreen != null)
             _splashScreen.Hide();
+    }
+
+    public void ShowLevelsScreen()
+    {
+        if (_levelsScreen != null)
+            _levelsScreen.Show();
+    }
+
+    public void HideLevelsScreen()
+    {
+        if (_levelsScreen != null)
+            _levelsScreen.Hide();
+    }
+
+    public void SetLevelsScreenEnabled(bool enabled)
+    {
+        if (_levelsScreen == null) return;
+
+        if (enabled)
+            _levelsScreen.Show();
+        else
+            _levelsScreen.Hide();
+    }
+
+    public void ResetLevelsScreenAnimation()
+    {
+        if (_levelsScreen != null)
+            _levelsScreen.ResetAnimationFlag();
     }
 
     public void ShowPreGameScreen()

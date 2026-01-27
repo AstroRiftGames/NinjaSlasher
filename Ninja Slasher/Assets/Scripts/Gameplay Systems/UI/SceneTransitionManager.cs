@@ -44,6 +44,7 @@ public class SceneTransitionManager : MonoBehaviour
         yield return new WaitForSeconds(_transitionTime);
 
         _canvasManager.SetLevelsCanvasEnabled(false);
+
         SceneManager.LoadScene(sceneName);
 
         _transitionAnim.SetTrigger("End");

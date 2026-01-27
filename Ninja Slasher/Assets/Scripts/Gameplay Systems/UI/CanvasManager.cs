@@ -4,9 +4,6 @@ using DG.Tweening;
 
 public class CanvasManager : MonoBehaviour
 {
-    [Header("CANVAS")]
-    [SerializeField] private Canvas _levelsCanvas;
-
     [Header("ANIMATION")]
     [SerializeField] private float _animationDuration = 0.1f;
     [SerializeField] private Ease _openEase = Ease.OutBack;
@@ -153,51 +150,7 @@ public class CanvasManager : MonoBehaviour
 
     public void SetLevelsCanvasEnabled(bool enabled)
     {
-        _levelsCanvas.enabled = enabled;
-
-        if (enabled && !_hasAnimatedButtons)
-        {
-            _hasAnimatedButtons = true;
-            ButtonManager buttonManager = GetComponent<ButtonManager>();
-            if (buttonManager != null)
-            {
-                HideLevelButtons(buttonManager);
-            }
-            StartCoroutine(TriggerButtonAnimation());
-        }
-    }
-
-    private IEnumerator TriggerButtonAnimation()
-    {
-        yield return null;
-        yield return new WaitForSeconds(0.3f);
-
-        if (UIManager.Instance.IsDailyRewardModalVisible())
-        {
-            while (UIManager.Instance.IsDailyRewardModalVisible())
-            {
-                yield return new WaitForSeconds(0.1f);
-            }
-            yield return new WaitForSeconds(0.5f);
-        }
-
-        ButtonManager buttonManager = GetComponent<ButtonManager>();
-        if (buttonManager != null)
-        {
-            buttonManager.TriggerNinjaWaveAnimation();
-        }
-    }
-
-    private void HideLevelButtons(ButtonManager buttonManager)
-    {
-        var levelButtons = buttonManager.GetLevelButtons();
-        foreach (var button in levelButtons)
-        {
-            if (button != null)
-            {
-                button.gameObject.SetActive(false);
-            }
-        }
+        UIManager.Instance.SetLevelsScreenEnabled(enabled);
     }
 
     private void ToggleCanvas(Canvas canvas)
