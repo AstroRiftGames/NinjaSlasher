@@ -40,14 +40,13 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
 
     private bool _isInitialized = false;
 
+    #region INITIALIZATION
+
     public override void Awake()
     {
         base.Awake();
 
-        if (this != Instance)
-        {
-            return;
-        }
+        if (this != Instance) return;
 
         InitializeManagers();
     }
@@ -58,14 +57,13 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
 
         StartCoroutine(InitializeUI());
     }
+
     private void OnEnable()
     {
         if (this != Instance) return;
 
         SceneManager.sceneLoaded += OnSceneLoaded;
-
         StartCoroutine(SafeSubscribeToCustomUpdate());
-
         SubscribeToUIEvents();
     }
 
@@ -81,37 +79,6 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
         }
 
         UnsubscribeFromUIEvents();
-    }
-
-    private void CustomUpdate()
-    {
-        if (_isInitialized)
-        {
-            _gameplayUIManager.UpdateUI();
-
-            if (Input.GetKeyDown(KeyCode.T))
-            {
-                Cursor.visible = !Cursor.visible;
-            }
-        }
-    }
-
-    private IEnumerator InitializeUI()
-    {
-        yield return new WaitForEndOfFrame();
-
-        while (SaveManager.Instance == null ||
-               !SaveManager.Instance.IsDataLoaded)
-        {
-            yield return null;
-        }
-
-        _buttonManager.SetupButtons();
-        _gameplayUIManager.Initialize();
-
-        _isInitialized = true;
-
-        Debug.Log("[UIManager] Inicializacion completa");
     }
 
     private void InitializeManagers()
@@ -132,6 +99,23 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
             Debug.LogError("[UIManager] GameplayUIManager no encontrado");
     }
 
+    private IEnumerator InitializeUI()
+    {
+        yield return new WaitForEndOfFrame();
+
+        while (SaveManager.Instance == null || !SaveManager.Instance.IsDataLoaded)
+        {
+            yield return null;
+        }
+
+        _buttonManager.SetupButtons();
+        _gameplayUIManager.Initialize();
+
+        _isInitialized = true;
+
+        Debug.Log("[UIManager] Inicializacion completa");
+    }
+
     private IEnumerator SafeSubscribeToCustomUpdate()
     {
         while (CustomUpdateManager.Instance == null)
@@ -142,16 +126,28 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
         CustomUpdateManager.Instance.SubscribeToUpdate(CustomUpdate);
     }
 
+    private void CustomUpdate()
+    {
+        if (_isInitialized)
+        {
+            _gameplayUIManager.UpdateUI();
+
+            if (Input.GetKeyDown(KeyCode.T))
+            {
+                Cursor.visible = !Cursor.visible;
+            }
+        }
+    }
+
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
         if (_gameplayUIManager != null)
             _gameplayUIManager.OnSceneLoaded();
     }
 
-    public void OpenURL(string url)
-    {
-        Application.OpenURL(url);
-    }
+    #endregion
+
+    #region EVENT MANAGEMENT
 
     private void SubscribeToUIEvents()
     {
@@ -161,12 +157,6 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
         {
             _dailyWheelUI.OnWheelProcessComplete += OnWheelCompleted;
         }
-
-        /*TO DO: Migrar a UIEvents
-        UIEvents.OnPanelOpenRequested += HandlePanelOpenRequest;
-        UIEvents.OnPanelCloseRequested += HandlePanelCloseRequest;
-        UIEvents.OnSceneTransitionRequested += HandleSceneTransition;
-        */
     }
 
     private void UnsubscribeFromUIEvents()
@@ -177,37 +167,16 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
         {
             _dailyWheelUI.OnWheelProcessComplete -= OnWheelCompleted;
         }
-
-        /*TO DO: Migrar a UIEvents
-        UIEvents.OnPanelOpenRequested -= HandlePanelOpenRequest;
-        UIEvents.OnPanelCloseRequested -= HandlePanelCloseRequest;
-        UIEvents.OnSceneTransitionRequested -= HandleSceneTransition;
-        */
     }
 
-    //private void HandlePanelOpenRequest(string panelName)
-    //{
-    //    // Logica para abrir paneles por nombre
-    //}
-
-    //private void HandlePanelCloseRequest(string panelName)
-    //{
-    //    // Logica para cerrar paneles por nombre
-    //}
-
-    //private void HandleSceneTransition(string sceneName)
-    //{
-    //    _sceneTransitionManager.LoadLevelScene(sceneName);
-    //}
+    #endregion
 
     #region DAILY SEQUENCE
 
     private void OnLevelSelectorReady()
     {
         UIEvents.RequestUpdateLivesUI(LifeManager.Instance.CurrentLives);
-
         GetComponent<DebugUIManager>()?.ShowStarsDebug();
-
         StartCoroutine(CheckAndShowDailySequence());
     }
 
@@ -267,42 +236,45 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
 
     #endregion
 
+    #region GENERIC PANEL METHODS
+
+    private void ShowPanel(UIPanel panel)
+    {
+        if (panel != null)
+            panel.Show();
+    }
+
+    private void HidePanel(UIPanel panel)
+    {
+        if (panel != null)
+            panel.Hide();
+    }
+
+    private void TogglePanel(UIPanel panel)
+    {
+        if (panel == null) return;
+
+        if (panel.IsVisible)
+            panel.Hide();
+        else
+            panel.Show();
+    }
+
+    private bool IsPanelVisible(UIPanel panel)
+    {
+        return panel != null && panel.IsVisible;
+    }
+
+    #endregion
 
     #region OVERLAYS
 
-    public void ShowPauseOverlay()
-    {
-        if (_pauseOverlay != null)
-            _pauseOverlay.Show();
-    }
+    public void ShowPauseOverlay() => ShowPanel(_pauseOverlay);
+    public void HidePauseOverlay() => HidePanel(_pauseOverlay);
+    public void TogglePauseOverlay() => TogglePanel(_pauseOverlay);
 
-    public void HidePauseOverlay()
-    {
-        if (_pauseOverlay != null)
-            _pauseOverlay.Hide();
-    }
-
-    public void TogglePauseOverlay()
-    {
-        if (_pauseOverlay == null) return;
-
-        if (_pauseOverlay.IsVisible)
-            _pauseOverlay.Hide();
-        else
-            _pauseOverlay.Show();
-    }
-
-    public void ShowNoLivesOverlay()
-    {
-        if (_noLivesOverlay != null)
-            _noLivesOverlay.Show();
-    }
-
-    public void HideNoLivesOverlay()
-    {
-        if (_noLivesOverlay != null)
-            _noLivesOverlay.Hide();
-    }
+    public void ShowNoLivesOverlay() => ShowPanel(_noLivesOverlay);
+    public void HideNoLivesOverlay() => HidePanel(_noLivesOverlay);
 
     public void ShowLifeLostOverlay(int livesRemaining)
     {
@@ -314,38 +286,18 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
 
     #region SCREENS
 
-    public void ShowSplashScreen()
-    {
-        if (_splashScreen != null)
-            _splashScreen.Show();
-    }
+    public void ShowSplashScreen() => ShowPanel(_splashScreen);
+    public void HideSplashScreen() => HidePanel(_splashScreen);
 
-    public void HideSplashScreen()
-    {
-        if (_splashScreen != null)
-            _splashScreen.Hide();
-    }
-
-    public void ShowLevelsScreen()
-    {
-        if (_levelsScreen != null)
-            _levelsScreen.Show();
-    }
-
-    public void HideLevelsScreen()
-    {
-        if (_levelsScreen != null)
-            _levelsScreen.Hide();
-    }
+    public void ShowLevelsScreen() => ShowPanel(_levelsScreen);
+    public void HideLevelsScreen() => HidePanel(_levelsScreen);
 
     public void SetLevelsScreenEnabled(bool enabled)
     {
-        if (_levelsScreen == null) return;
-
         if (enabled)
-            _levelsScreen.Show();
+            ShowLevelsScreen();
         else
-            _levelsScreen.Hide();
+            HideLevelsScreen();
     }
 
     public void ResetLevelsScreenAnimation()
@@ -354,266 +306,83 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
             _levelsScreen.ResetAnimationFlag();
     }
 
-    public void ShowPreGameScreen()
-    {
-        if (_preGameScreen != null)
-            _preGameScreen.Show();
-    }
-
-    public void HidePreGameScreen()
-    {
-        if (_preGameScreen != null)
-            _preGameScreen.Hide();
-    }
-
-    public void TogglePreGameScreen()
-    {
-        if (_preGameScreen == null) return;
-
-        if (_preGameScreen.IsVisible)
-            _preGameScreen.Hide();
-        else
-            _preGameScreen.Show();
-    }
+    public void ShowPreGameScreen() => ShowPanel(_preGameScreen);
+    public void HidePreGameScreen() => HidePanel(_preGameScreen);
+    public void TogglePreGameScreen() => TogglePanel(_preGameScreen);
 
     #endregion
 
     #region MODALS
 
-    public void ShowCreditsModal()
-    {
-        if (_creditsModal != null)
-            _creditsModal.Show();
-    }
+    public void ShowCreditsModal() => ShowPanel(_creditsModal);
+    public void HideCreditsModal() => HidePanel(_creditsModal);
+    public void ToggleCreditsModal() => TogglePanel(_creditsModal);
 
-    public void HideCreditsModal()
-    {
-        if (_creditsModal != null)
-            _creditsModal.Hide();
-    }
+    public void ShowProfileModal() => ShowPanel(_profileModal);
+    public void HideProfileModal() => HidePanel(_profileModal);
+    public void ToggleProfileModal() => TogglePanel(_profileModal);
 
-    public void ShowProfileModal()
-    {
-        if (_profileModal != null)
-            _profileModal.Show();
-    }
+    public void ShowDailyRewardModal() => ShowPanel(_dailyRewardModal);
+    public void HideDailyRewardModal() => HidePanel(_dailyRewardModal);
+    public void ToggleDailyRewardModal() => TogglePanel(_dailyRewardModal);
+    public bool IsDailyRewardModalVisible() => IsPanelVisible(_dailyRewardModal);
 
-    public void HideProfileModal()
-    {
-        if (_profileModal != null)
-            _profileModal.Hide();
-    }
+    public void ShowDailyWheelModal() => ShowPanel(_dailyWheelModal);
+    public void HideDailyWheelModal() => HidePanel(_dailyWheelModal);
+    public void ToggleDailyWheelModal() => TogglePanel(_dailyWheelModal);
+    public bool IsDailyWheelModalVisible() => IsPanelVisible(_dailyWheelModal);
 
-    public void ToggleProfileModal()
-    {
-        if (_profileModal == null) return;
+    public void ShowStoreModal() => ShowPanel(_storeModal);
+    public void HideStoreModal() => HidePanel(_storeModal);
+    public void ToggleStoreModal() => TogglePanel(_storeModal);
+    public bool IsStoreModalVisible() => IsPanelVisible(_storeModal);
 
-        if (_profileModal.IsVisible)
-            _profileModal.Hide();
-        else
-            _profileModal.Show();
-    }
-
-    public void ShowDailyRewardModal()
-    {
-        if (_dailyRewardModal != null)
-            _dailyRewardModal.Show();
-    }
-
-    public void HideDailyRewardModal()
-    {
-        if (_dailyRewardModal != null)
-            _dailyRewardModal.Hide();
-    }
-
-    public void ToggleDailyRewardModal()
-    {
-        if (_dailyRewardModal == null) return;
-
-        if (_dailyRewardModal.IsVisible)
-            _dailyRewardModal.Hide();
-        else
-            _dailyRewardModal.Show();
-    }
-
-    public bool IsDailyRewardModalVisible()
-    {
-        return _dailyRewardModal != null && _dailyRewardModal.IsVisible;
-    }
-
-    public void ShowDailyWheelModal()
-    {
-        if (_dailyWheelModal != null)
-            _dailyWheelModal.Show();
-    }
-
-    public void HideDailyWheelModal()
-    {
-        if (_dailyWheelModal != null)
-            _dailyWheelModal.Hide();
-    }
-
-    public void ToggleDailyWheelModal()
-    {
-        if (_dailyWheelModal == null) return;
-
-        if (_dailyWheelModal.IsVisible)
-            _dailyWheelModal.Hide();
-        else
-            _dailyWheelModal.Show();
-    }
-
-    public bool IsDailyWheelModalVisible()
-    {
-        return _dailyWheelModal != null && _dailyWheelModal.IsVisible;
-    }
-
-    public void ShowStoreModal()
-    {
-        if (_storeModal != null)
-            _storeModal.Show();
-    }
-
-    public void HideStoreModal()
-    {
-        if (_storeModal != null)
-            _storeModal.Hide();
-    }
-
-    public void ToggleStoreModal()
-    {
-        if (_storeModal == null) return;
-
-        if (_storeModal.IsVisible)
-            _storeModal.Hide();
-        else
-            _storeModal.Show();
-    }
-
-    public bool IsStoreModalVisible()
-    {
-        return _storeModal != null && _storeModal.IsVisible;
-    }
-
-    public void ShowResultsModal()
-    {
-        if (_resultsModal != null)
-            _resultsModal.Show();
-    }
-
-    public void HideResultsModal()
-    {
-        if (_resultsModal != null)
-            _resultsModal.Hide();
-    }
-
-    public void ToggleResultsModal()
-    {
-        if (_resultsModal == null) return;
-
-        if (_resultsModal.IsVisible)
-            _resultsModal.Hide();
-        else
-            _resultsModal.Show();
-    }
-
-    public bool IsResultsModalVisible()
-    {
-        return _resultsModal != null && _resultsModal.IsVisible;
-    }
+    public void ShowResultsModal() => ShowPanel(_resultsModal);
+    public void HideResultsModal() => HidePanel(_resultsModal);
+    public void ToggleResultsModal() => TogglePanel(_resultsModal);
+    public bool IsResultsModalVisible() => IsPanelVisible(_resultsModal);
 
     #endregion
 
     #region HUD
 
-    public void ShowGameplayHUD()
-    {
-        if (_gameplayHUD != null)
-            _gameplayHUD.Show();
-    }
-
-    public void HideGameplayHUD()
-    {
-        if (_gameplayHUD != null)
-            _gameplayHUD.Hide();
-    }
+    public void ShowGameplayHUD() => ShowPanel(_gameplayHUD);
+    public void HideGameplayHUD() => HidePanel(_gameplayHUD);
 
     public void SetGameplayHUDEnabled(bool enabled)
     {
-        if (_gameplayHUD == null) return;
-
         if (enabled)
-            _gameplayHUD.Show();
+            ShowGameplayHUD();
         else
-            _gameplayHUD.Hide();
+            HideGameplayHUD();
     }
 
     #endregion
 
-    #region LEGACY
+    #region LEGACY METHODS
 
     public void ShowConfirmationPanel(string sceneName) => _preGameUIManager.ShowConfirmationPanel(sceneName);
-    public void ShowHidePreGameCanvas()
-    {
-        if (_preGameScreen != null)
-            TogglePreGameScreen();
-    }
-
-    public void ShowHideCreditsCanvas()
-    {
-        if (_creditsModal == null) return;
-
-        if (_creditsModal.IsVisible)
-            _creditsModal.Hide();
-        else
-            _creditsModal.Show();
-    }
-
-    public void ShowHideProfileCanvas()
-    {
-        if (_profileModal != null)
-            ToggleProfileModal();
-    }
-
-    public void SwitchHapticFeedback() => _isHapticFeedbackActive = !_isHapticFeedbackActive;
+    public void ShowHidePreGameCanvas() => TogglePreGameScreen();
+    public void ShowHideCreditsCanvas() => ToggleCreditsModal();
+    public void ShowHideProfileCanvas() => ToggleProfileModal();
     public void ShowHidePauseCanvas() => TogglePauseOverlay();
-    public void ShowHideResultsCanvas()
-    {
-        if (_resultsModal != null)
-            ToggleResultsModal();
-    }
-
-    public void ShowHideLifeLostCanvas() => ShowLifeLostOverlay(LifeManager.Instance?.CurrentLives ?? 0);
+    public void ShowHideResultsCanvas() => ToggleResultsModal();
+    public void ShowHideStoreCanvas() => ToggleStoreModal();
+    public void ShowHideDailyWheelCanvas() => ToggleDailyWheelModal();
     public void ShowHideDailyRewardCanvas() => ShowDailyRewardModal();
     public void ShowHideNoLivesCanvas() => ShowNoLivesOverlay();
+    public void ShowHideLifeLostCanvas() => ShowLifeLostOverlay(LifeManager.Instance?.CurrentLives ?? 0);
+
     public void UpdateLivesUI(int lives) => _gameplayUIManager.UpdateLivesUI(lives);
     public void ShowNoLivesPanel() => _gameplayUIManager.ShowNoLivesPanel();
-    public void ShowHideStoreCanvas()
-    {
-        if (_storeModal != null)
-            ToggleStoreModal();
-    }
 
-    public void ShowHideDailyWheelCanvas()
-    {
-        if (_dailyWheelModal != null)
-            ToggleDailyWheelModal();
-    }
+    public void SwitchHapticFeedback() => _isHapticFeedbackActive = !_isHapticFeedbackActive;
 
-    public void ShowLevelSelector()
-    {
-        UIEvents.RequestShowLevelSelector();
-    }
+    public void ShowLevelSelector() => UIEvents.RequestShowLevelSelector();
+    public void LoadLevelScene(string sceneName) => UIEvents.RequestSceneTransition(sceneName);
+    public void RestartLevel() => UIEvents.RequestRestartLevel();
 
-    public void LoadLevelScene(string sceneName)
-    {
-        UIEvents.RequestSceneTransition(sceneName);
-    }
-
-    public void RestartLevel()
-    {
-        UIEvents.RequestRestartLevel();
-    }
+    public void OpenURL(string url) => Application.OpenURL(url);
 
     #endregion
 }
