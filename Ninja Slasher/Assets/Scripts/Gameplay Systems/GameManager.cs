@@ -153,13 +153,15 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
 
         yield return new WaitForSeconds(soundDuration);
 
-        if (LifeManager.Instance.GetRealLives() <= 0)
+        int currentLives = LifeManager.Instance.GetRealLives();
+
+        if (currentLives <= 0)
         {
             GoToLevelSelection();
         }
         else if (LifeManager.Instance.CanPlay())
         {
-            UIManager.Instance.ShowHideLifeLostCanvas();
+            UIManager.Instance.ShowLifeLostOverlay(currentLives);
         }
         else
         {

@@ -54,7 +54,7 @@ public class ResultsModal : UIModalBase
 
     private IEnumerator ShowResultsDelayed()
     {
-        yield return new WaitForSeconds(_delayBeforeShowingResults);
+        yield return new WaitForSecondsRealtime(_delayBeforeShowingResults);
 
         if (ResultsUIManager.Instance != null)
         {

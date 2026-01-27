@@ -332,6 +332,8 @@ public class NewController : MonoBehaviour
         }
 
         if (UIManager.Instance.IsHapticFeedbackActive) HapticFeedback.HeavyFeedback();
+
+        GameManager.Instance?.OnPlayerLose();
     }
     #endregion
 

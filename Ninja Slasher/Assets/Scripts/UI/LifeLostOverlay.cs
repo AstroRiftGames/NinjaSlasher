@@ -11,12 +11,6 @@ public class LifeLostOverlay : UIOverlayBase
     [SerializeField] private Button _continueButton;
     [SerializeField] private Button _quitButton;
 
-    [Header("Auto-hide Settings")]
-    [SerializeField] private bool _autoHide = true;
-    [SerializeField] private float _autoHideDelay = 3f;
-
-    private Coroutine _autoHideCoroutine;
-
     protected override void Awake()
     {
         base.Awake();
@@ -36,14 +30,6 @@ public class LifeLostOverlay : UIOverlayBase
     {
         UpdateUI(livesRemaining);
         Show();
-
-        if (_autoHide && livesRemaining > 0)
-        {
-            if (_autoHideCoroutine != null)
-                StopCoroutine(_autoHideCoroutine);
-
-            _autoHideCoroutine = StartCoroutine(AutoHideAfterDelay());
-        }
     }
 
     protected override void OnShown()
@@ -88,37 +74,13 @@ public class LifeLostOverlay : UIOverlayBase
         }
     }
 
-    private IEnumerator AutoHideAfterDelay()
-    {
-        yield return new WaitForSecondsRealtime(_autoHideDelay);
-
-        int livesRemaining = LifeManager.Instance?.CurrentLives ?? 0;
-
-        if (livesRemaining > 0)
-        {
-            Hide();
-        }
-    }
-
     private void OnContinueClicked()
     {
-        if (_autoHideCoroutine != null)
-        {
-            StopCoroutine(_autoHideCoroutine);
-            _autoHideCoroutine = null;
-        }
-
         Hide();
     }
 
     private void OnQuitClicked()
     {
-        if (_autoHideCoroutine != null)
-        {
-            StopCoroutine(_autoHideCoroutine);
-            _autoHideCoroutine = null;
-        }
-
         Time.timeScale = 1f;
         UIEvents.RaiseQuitToMenuPressed();
     }

@@ -432,15 +432,12 @@ MonoBehaviour:
   _backgroundImage: {fileID: 6871607357266449187}
   _backgroundColor: {r: 0, g: 0, b: 0, a: 0.7}
   _blockRaycastsWhenHidden: 0
-  _contentPanel: {fileID: 6582502038641656033}
   _backgroundFadeDuration: 0.2
-  _contentAnimationDuration: 0.3
-  _openEase: 27
-  _closeEase: 26
-  _scaleOvershoot: 1.1
+  _contentFadeDuration: 0.3
+  _fadeEase: 6
   _panelAnimator: {fileID: 4928253257624985461}
-  _useAnimator: 1
-  _animatorDelay: 0.1
+  _animatorOpenDuration: 0.35
+  _animatorCloseDuration: 0.35
   _titleText: {fileID: 2723141066096597671}
   _livesRemainingText: {fileID: 0}
   _continueButton: {fileID: 8370257289394137960}
@@ -900,7 +897,7 @@ Animator:
   m_Avatar: {fileID: 0}
   m_Controller: {fileID: 9100000, guid: 2d8eaea4cac13af4a873e76177078983, type: 2}
   m_CullingMode: 0
-  m_UpdateMode: 0
+  m_UpdateMode: 2
   m_ApplyRootMotion: 0
   m_LinearVelocityBlending: 0
   m_StabilizeFeet: 0
