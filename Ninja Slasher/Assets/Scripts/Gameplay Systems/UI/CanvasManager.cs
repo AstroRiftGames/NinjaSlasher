@@ -6,10 +6,6 @@ public class CanvasManager : MonoBehaviour
 {
     [Header("CANVAS")]
     [SerializeField] private Canvas _levelsCanvas;
-    [SerializeField] private Canvas _resultsCanvas;
-
-    [Header("PANEL REFERENCES")]
-    [SerializeField] private RectTransform _resultsPanel;
 
     [Header("ANIMATION")]
     [SerializeField] private float _animationDuration = 0.1f;
@@ -144,8 +140,6 @@ public class CanvasManager : MonoBehaviour
 
     private RectTransform GetPanelForCanvas(Canvas canvas)
     {
-        if (canvas == _resultsCanvas) return _resultsPanel;
-
         return null;
     }
 
@@ -155,30 +149,6 @@ public class CanvasManager : MonoBehaviour
         if (canvasGroup == null)
             canvasGroup = canvas.gameObject.AddComponent<CanvasGroup>();
         return canvasGroup;
-    }
-
-    public void ShowHideResultsCanvas()
-    {
-        bool isCanvasActive = !_resultsCanvas.enabled;
-        var panelAnimation = _resultsPanel.GetComponent<Animator>();
-        if (isCanvasActive)
-        {
-            panelAnimation.SetTrigger("Open");
-            GetComponent<ResultsUIManager>()?.PrepareResultsIntro();
-            ShowCanvasAnimated(_resultsCanvas);
-            StartCoroutine(DelayedResultsShow());
-        }
-        else
-        {
-            panelAnimation.SetTrigger("Close");
-            HideCanvasAnimated(_resultsCanvas);
-        }
-    }
-
-    private IEnumerator DelayedResultsShow()
-    {
-        yield return new WaitForSeconds(_animationDuration);
-        GetComponent<ResultsUIManager>()?.ShowResultsPanel();
     }
 
     public void SetLevelsCanvasEnabled(bool enabled)
@@ -236,7 +206,7 @@ public class CanvasManager : MonoBehaviour
         ShowHideCanvas(canvas, isCanvasActive);
     }
 
-    public Canvas GetResultsCanvas() => _resultsCanvas;
+    public Canvas GetResultsCanvas() => null;
 
     private void OnDisable()
     {

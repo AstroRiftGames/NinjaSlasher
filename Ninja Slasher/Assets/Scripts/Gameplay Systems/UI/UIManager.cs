@@ -27,6 +27,7 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
     [SerializeField] private DailyRewardModal _dailyRewardModal;
     [SerializeField] private DailyWheelModal _dailyWheelModal;
     [SerializeField] private StoreModal _storeModal;
+    [SerializeField] private ResultsModal _resultsModal;
 
     [Header("HUD")]
     [SerializeField] private GameplayHUD _gameplayHUD;
@@ -469,6 +470,33 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
         return _storeModal != null && _storeModal.IsVisible;
     }
 
+    public void ShowResultsModal()
+    {
+        if (_resultsModal != null)
+            _resultsModal.Show();
+    }
+
+    public void HideResultsModal()
+    {
+        if (_resultsModal != null)
+            _resultsModal.Hide();
+    }
+
+    public void ToggleResultsModal()
+    {
+        if (_resultsModal == null) return;
+
+        if (_resultsModal.IsVisible)
+            _resultsModal.Hide();
+        else
+            _resultsModal.Show();
+    }
+
+    public bool IsResultsModalVisible()
+    {
+        return _resultsModal != null && _resultsModal.IsVisible;
+    }
+
     #endregion
 
     #region HUD
@@ -524,7 +552,12 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
 
     public void SwitchHapticFeedback() => _isHapticFeedbackActive = !_isHapticFeedbackActive;
     public void ShowHidePauseCanvas() => TogglePauseOverlay();
-    public void ShowHideResultsCanvas() => _canvasManager.ShowHideResultsCanvas();
+    public void ShowHideResultsCanvas()
+    {
+        if (_resultsModal != null)
+            ToggleResultsModal();
+    }
+
     public void ShowHideLifeLostCanvas() => ShowLifeLostOverlay(LifeManager.Instance?.CurrentLives ?? 0);
     public void ShowHideDailyRewardCanvas() => ShowDailyRewardModal();
     public void ShowHideNoLivesCanvas() => ShowNoLivesOverlay();

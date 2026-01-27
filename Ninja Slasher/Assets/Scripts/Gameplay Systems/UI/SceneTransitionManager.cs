@@ -72,7 +72,7 @@ public class SceneTransitionManager : MonoBehaviour
 
         SetHUDActive(false);
 
-        _canvasManager.CloseCanvas(_canvasManager.GetResultsCanvas());
+        UIManager.Instance.HideResultsModal();
 
         _transitionAnim.SetTrigger("OpeningStart");
         yield return new WaitForSeconds(_transitionTime);
