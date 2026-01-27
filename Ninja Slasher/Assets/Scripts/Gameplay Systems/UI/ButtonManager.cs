@@ -163,7 +163,6 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
     public void SetupButtons()
     {
         SetupLevelSelectorButtons();
-        SetupPreGameButtons();
         SetupGameplayButtons();
         SetupLevelProgression();
         UpdateButtonProgression();
@@ -171,12 +170,6 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
 #if UNITY_EDITOR
         SetupDebugButtons();
 #endif
-    }
-
-    private void SetupPreGameButtons()
-    {
-        _closePregameButton.onClick.AddListener(UIManager.Instance.ShowHidePreGameCanvas);
-        _playButton.onClick.AddListener(UIManager.Instance.ShowHidePreGameCanvas);
     }
 
     private void SetupGameplayButtons()
