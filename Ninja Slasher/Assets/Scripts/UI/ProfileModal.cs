@@ -94,14 +94,4 @@ public class ProfileModal : UIModalBase
 
         gameObject.SetActive(false);
     }
-
-    protected override void OnShown()
-    {
-        Debug.Log("[ProfileModal] Modal de perfil mostrado");
-    }
-
-    protected override void OnHidden()
-    {
-        Debug.Log("[ProfileModal] Modal de perfil ocultado");
-    }
 }

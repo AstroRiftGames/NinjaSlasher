@@ -140,24 +140,14 @@ public class GameplayUIManager : MonoBehaviour
     {
         UIManager.Instance.ShowHideLifeLostCanvas();
         AudioManager.Instance.PlaySFX(SFXClip.UI_Select);
-        var canvasManager = UIManager.Instance.GetComponent<CanvasManager>();
-        if (canvasManager != null)
-        {
-            canvasManager.CloseCanvas(canvasManager.GetResultsCanvas());
-        }
-
+        UIManager.Instance.HideResultsModal();
         GameManager.Instance.GoToLevelSelection(confirmPendingDeduction: false);
     }
 
     public void ContinueToLevelSelector()
     {
         AudioManager.Instance.PlaySFX(SFXClip.UI_Select);
-        var canvasManager = UIManager.Instance.GetComponent<CanvasManager>();
-        if (canvasManager != null)
-        {
-            canvasManager.CloseCanvas(canvasManager.GetResultsCanvas());
-        }
-
+        UIManager.Instance.HideResultsModal();
         GameManager.Instance.GoToLevelSelection(confirmPendingDeduction: false);
     }
 

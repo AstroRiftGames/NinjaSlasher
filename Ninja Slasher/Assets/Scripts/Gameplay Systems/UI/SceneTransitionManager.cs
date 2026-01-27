@@ -10,13 +10,6 @@ public class SceneTransitionManager : MonoBehaviour
 
     [SerializeField] private GameObject _hudObject;
 
-    private CanvasManager _canvasManager;
-
-    private void Awake()
-    {
-        _canvasManager = GetComponent<CanvasManager>();
-    }
-
     private void OnEnable()
     {
         UIEvents.OnSceneTransitionRequested += LoadLevelScene;
@@ -43,7 +36,7 @@ public class SceneTransitionManager : MonoBehaviour
         _transitionAnim.SetTrigger("Start");
         yield return new WaitForSeconds(_transitionTime);
 
-        _canvasManager.SetLevelsCanvasEnabled(false);
+        UIManager.Instance.SetLevelsScreenEnabled(false);
 
         SceneManager.LoadScene(sceneName);
 
@@ -79,30 +72,13 @@ public class SceneTransitionManager : MonoBehaviour
         yield return new WaitForSeconds(_transitionTime);
 
         UIManager.Instance.HideSplashScreen();
-        _canvasManager.SetLevelsCanvasEnabled(true);
+        UIManager.Instance.SetLevelsScreenEnabled(true);
         UIManager.Instance.SetGameplayHUDEnabled(false);
 
         _transitionAnim.SetTrigger("End");
         AudioManager.Instance.PlaySFX(SFXClip.UI_TransitionSlash);
 
         UIEvents.RaiseLevelSelectorReady();
-    }
-
-    public void LoadDebugTestScene()
-    {
-        StartCoroutine(LoadDebugTestLevel());
-    }
-
-    private IEnumerator LoadDebugTestLevel()
-    {
-        _transitionAnim.SetTrigger("Start");
-        yield return new WaitForSeconds(_transitionTime);
-
-        _canvasManager.SetLevelsCanvasEnabled(false);
-        SceneManager.LoadScene("TestScene");
-
-        _transitionAnim.SetTrigger("End");
-        UIManager.Instance.SetGameplayHUDEnabled(true);
     }
 
     private void SetHUDActive(bool active)

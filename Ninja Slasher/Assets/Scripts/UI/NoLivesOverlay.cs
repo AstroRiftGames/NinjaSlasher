@@ -46,11 +46,6 @@ public class NoLivesOverlay : UIOverlayBase
         UpdateButtons();
     }
 
-    protected override void OnHidden()
-    {
-        Debug.Log("[NoLivesOverlay] Overlay ocultado");
-    }
-
     private void UpdateMessage()
     {
         if (_messageText == null) return;
@@ -75,7 +70,7 @@ public class NoLivesOverlay : UIOverlayBase
 
         if (timeUntilNextLife.TotalSeconds <= 0)
         {
-            _timerText.text = "¡Vida disponible!";
+            _timerText.text = "Vida disponible";
             UpdateButtons();
             return;
         }

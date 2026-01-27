@@ -32,14 +32,4 @@ public class GameplayHUD : UIPanel
 
         gameObject.SetActive(false);
     }
-
-    protected override void OnShown()
-    {
-        Debug.Log("[GameplayHUD] HUD de gameplay mostrado");
-    }
-
-    protected override void OnHidden()
-    {
-        Debug.Log("[GameplayHUD] HUD de gameplay ocultado");
-    }
 }

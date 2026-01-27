@@ -59,14 +59,4 @@ public class DailyWheelModal : UIModalBase
         yield return new WaitForSecondsRealtime(_closeAnimationDuration);
         gameObject.SetActive(false);
     }
-
-    protected override void OnShown()
-    {
-        Debug.Log("[DailyWheelModal] Modal de ruleta diaria mostrado");
-    }
-
-    protected override void OnHidden()
-    {
-        Debug.Log("[DailyWheelModal] Modal de ruleta diaria ocultado");
-    }
 }

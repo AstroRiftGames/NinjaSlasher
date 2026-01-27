@@ -42,15 +42,8 @@ public class UserNicknameEditPopUp : UIPopupBase
 
     protected override void OnShown()
     {
-        Debug.Log("[UserNicknameEditPanel] Panel mostrado");
-
         if (_nicknameInputField != null)
             _nicknameInputField.ActivateInputField();
-    }
-
-    protected override void OnHidden()
-    {
-        Debug.Log("[UserNicknameEditPanel] Panel ocultado");
     }
 
     private void OnDestroy()

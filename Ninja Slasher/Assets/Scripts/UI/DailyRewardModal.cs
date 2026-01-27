@@ -81,14 +81,4 @@ public class DailyRewardModal : UIModalBase
         yield return new WaitForSecondsRealtime(_closeAnimationDuration);
         gameObject.SetActive(false);
     }
-
-    protected override void OnShown()
-    {
-        Debug.Log("[DailyRewardModal] Modal mostrado");
-    }
-
-    protected override void OnHidden()
-    {
-        Debug.Log("[DailyRewardModal] Modal ocultado");
-    }
 }

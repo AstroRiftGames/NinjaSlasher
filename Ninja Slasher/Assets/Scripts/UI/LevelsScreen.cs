@@ -55,7 +55,6 @@ public class LevelsScreen : UIScreenBase
 
     private IEnumerator AnimateLevelButtonsSequence()
     {
-        // Ocultar botones primero
         if (ButtonManager.Instance != null)
         {
             HideLevelButtons();
@@ -98,15 +97,5 @@ public class LevelsScreen : UIScreenBase
     public void ResetAnimationFlag()
     {
         _hasAnimatedButtons = false;
-    }
-
-    protected override void OnShown()
-    {
-        Debug.Log("[LevelsScreen] Screen de selección de niveles mostrado");
-    }
-
-    protected override void OnHidden()
-    {
-        Debug.Log("[LevelsScreen] Screen de selección de niveles ocultado");
     }
 }

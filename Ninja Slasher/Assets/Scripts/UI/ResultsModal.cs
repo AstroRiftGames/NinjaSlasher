@@ -94,14 +94,4 @@ public class ResultsModal : UIModalBase
         yield return new WaitForSecondsRealtime(_closeAnimationDuration);
         gameObject.SetActive(false);
     }
-
-    protected override void OnShown()
-    {
-        Debug.Log("[ResultsModal] Modal de resultados mostrado");
-    }
-
-    protected override void OnHidden()
-    {
-        Debug.Log("[ResultsModal] Modal de resultados ocultado");
-    }
 }

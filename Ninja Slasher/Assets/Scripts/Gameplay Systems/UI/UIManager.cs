@@ -6,7 +6,6 @@ using AstroRift.Core.Update;
 public class UIManager : MonoBehaviourSingleton<UIManager>
 {
     [Header("MANAGERS")]
-    private CanvasManager _canvasManager;
     private ButtonManager _buttonManager;
     private GameplayUIManager _gameplayUIManager;
     private PreGameUIManager _preGameUIManager;
@@ -117,7 +116,6 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
 
     private void InitializeManagers()
     {
-        _canvasManager = GetComponent<CanvasManager>();
         _buttonManager = GetComponent<ButtonManager>();
         _gameplayUIManager = GetComponent<GameplayUIManager>();
         _preGameUIManager = GetComponent<PreGameUIManager>();
@@ -128,8 +126,6 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
             _dailyWheelUI = GetComponentInChildren<DailyWheelUI>();
         }
 
-        if (_canvasManager == null)
-            Debug.LogError("[UIManager] CanvasManager no encontrado");
         if (_buttonManager == null)
             Debug.LogError("[UIManager] ButtonManager no encontrado");
         if (_gameplayUIManager == null)

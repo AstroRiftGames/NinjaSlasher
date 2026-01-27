@@ -77,14 +77,8 @@ public class ConfirmationPopUp : UIPopupBase
         _onCancelAction = null;
     }
 
-    protected override void OnShown()
-    {
-        Debug.Log("[ConfirmationPanel] Panel mostrado");
-    }
-
     protected override void OnHidden()
     {
-        Debug.Log("[ConfirmationPanel] Panel ocultado");
         ClearCallbacks();
     }
 

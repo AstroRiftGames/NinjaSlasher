@@ -75,14 +75,4 @@ public class StoreModal : UIModalBase
         yield return new WaitForSecondsRealtime(_closeAnimationDuration);
         gameObject.SetActive(false);
     }
-
-    protected override void OnShown()
-    {
-        Debug.Log("[StoreModal] Modal de tienda mostrado");
-    }
-
-    protected override void OnHidden()
-    {
-        Debug.Log("[StoreModal] Modal de tienda ocultado");
-    }
 }

@@ -95,14 +95,4 @@ public class PreGameScreen : UIScreenBase
 
         gameObject.SetActive(false);
     }
-
-    protected override void OnShown()
-    {
-        Debug.Log("[PreGameScreen] Pantalla de pre-game mostrada");
-    }
-
-    protected override void OnHidden()
-    {
-        Debug.Log("[PreGameScreen] Pantalla de pre-game ocultada");
-    }
 }
