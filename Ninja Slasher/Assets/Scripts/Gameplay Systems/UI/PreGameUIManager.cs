@@ -278,7 +278,8 @@ public class PreGameUIManager : MonoBehaviour
         StopAllAnimations();
         _isLevelSelected = false;
 
-        UIManager.Instance.HidePreGameScreen();
+        //UIManager.Instance.HidePreGameScreen();
+        UIEvents.RequestHidePreGameScreen();
         UIManager.Instance.LoadLevelScene(_pendingSceneName);
         PlayLevelMusic();
     }
@@ -287,7 +288,8 @@ public class PreGameUIManager : MonoBehaviour
     {
         StopAllAnimations();
         _isLevelSelected = false;
-        UIManager.Instance.HidePreGameScreen();
+        //UIManager.Instance.HidePreGameScreen();
+        UIEvents.RequestHidePreGameScreen();
         _pendingSceneName = null;
     }
 

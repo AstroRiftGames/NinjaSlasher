@@ -66,12 +66,19 @@ public class SceneTransitionManager : MonoBehaviour
 
         SetHUDActive(false);
 
-        UIManager.Instance.HideResultsModal();
+        UIEvents.RequestHideResultsModal();
+        UIEvents.RequestHidePauseOverlay();
+        UIEvents.RequestHideNoLivesOverlay();
+
+        if (UIManager.Instance != null)
+        {
+            UIManager.Instance.HideLifeLostOverlay();
+        }
 
         _transitionAnim.SetTrigger("OpeningStart");
         yield return new WaitForSeconds(_transitionTime);
 
-        UIManager.Instance.HideSplashScreen();
+        UIEvents.RequestHideSplashScreen();
         UIManager.Instance.SetLevelsScreenEnabled(true);
         UIManager.Instance.SetGameplayHUDEnabled(false);
 

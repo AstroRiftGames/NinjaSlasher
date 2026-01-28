@@ -174,8 +174,10 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
 
     private void SetupGameplayButtons()
     {
-        _pauseButton.onClick.AddListener(UIManager.Instance.TogglePauseOverlay);
-        _resumeButton.onClick.AddListener(UIManager.Instance.TogglePauseOverlay);
+        //_pauseButton.onClick.AddListener(UIManager.Instance.TogglePauseOverlay);
+        _pauseButton.onClick.AddListener(() => UIEvents.RequestTogglePauseOverlay());
+        //_resumeButton.onClick.AddListener(UIManager.Instance.TogglePauseOverlay);
+        _resumeButton.onClick.AddListener(() => UIEvents.RequestTogglePauseOverlay());
         _restartButton.onClick.AddListener(OnRestartPressed);
 
         _quitButton.onClick.AddListener(() => GameManager.Instance.GoToLevelSelection(confirmPendingDeduction: true));
@@ -270,7 +272,8 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
             _hapticButton.onClick.AddListener(_configToggles.HapticFeedbackPushed);
         }
 
-        _closeNoLivesPanelButton.onClick.AddListener(UIManager.Instance.HideNoLivesOverlay);
+        //_closeNoLivesPanelButton.onClick.AddListener(UIManager.Instance.HideNoLivesOverlay);
+        _closeNoLivesPanelButton.onClick.AddListener(UIEvents.RequestHideNoLivesOverlay);
 
         //_adForMoreLifeButton.onClick.AddListener(AdsManager.Instance.ShowRewardedAdForExtraLife);
 
@@ -360,7 +363,8 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
 
             if (UIManager.Instance != null)
             {
-                UIManager.Instance.HideNoLivesOverlay();                
+                //UIManager.Instance.HideNoLivesOverlay();        
+                UIEvents.RequestHideNoLivesOverlay();
             }
         }
     }

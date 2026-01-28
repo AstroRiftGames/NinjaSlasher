@@ -254,9 +254,8 @@ public class DailyRewardUIManager : MonoBehaviourSingleton<DailyRewardUIManager>
 
     private void OnClosePressed()
     {
-        // TO DO: Usar UIEvents.RequestClosePanel("DailyReward")
-
-        UIManager.Instance.HideDailyRewardModal();
+        //UIManager.Instance.HideDailyRewardModal();
+        UIEvents.RequestHideDailyRewardModal();
     }
 
     private void OnAvailabilityChanged(bool canClaim)

@@ -118,7 +118,8 @@ public class GameplayUIManager : MonoBehaviour
     public void ShowNoLivesPanel()
     {
         _noLivesActive = true;
-        UIManager.Instance.ShowNoLivesOverlay();
+        //UIManager.Instance.ShowNoLivesOverlay();
+        UIEvents.RequestShowNoLivesOverlay();
     }
 
     public void UpdateLivesUI(int lives)
@@ -140,14 +141,16 @@ public class GameplayUIManager : MonoBehaviour
     {
         UIManager.Instance.ShowHideLifeLostCanvas();
         AudioManager.Instance.PlaySFX(SFXClip.UI_Select);
-        UIManager.Instance.HideResultsModal();
+        //UIManager.Instance.HideResultsModal();
+        UIEvents.RequestHideResultsModal();
         GameManager.Instance.GoToLevelSelection(confirmPendingDeduction: false);
     }
 
     public void ContinueToLevelSelector()
     {
         AudioManager.Instance.PlaySFX(SFXClip.UI_Select);
-        UIManager.Instance.HideResultsModal();
+        //UIManager.Instance.HideResultsModal();
+        UIEvents.RequestHideResultsModal();
         GameManager.Instance.GoToLevelSelection(confirmPendingDeduction: false);
     }
 

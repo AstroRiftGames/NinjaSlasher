@@ -2,6 +2,7 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using AstroRift.Core.Update;
+using System;
 
 public class UIManager : MonoBehaviourSingleton<UIManager>
 {
@@ -147,10 +148,58 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
 
     #endregion
 
-    #region EVENT MANAGEMENT
+    #region EVENT SUBSCRIPTION
 
     private void SubscribeToUIEvents()
     {
+        UIEvents.OnShowPauseOverlayRequested += ShowPauseOverlay;
+        UIEvents.OnHidePauseOverlayRequested += HidePauseOverlay;
+        UIEvents.OnTogglePauseOverlayRequested += TogglePauseOverlay;
+
+        UIEvents.OnShowNoLivesOverlayRequested += ShowNoLivesOverlay;
+        UIEvents.OnHideNoLivesOverlayRequested += HideNoLivesOverlay;
+
+        UIEvents.OnShowLifeLostOverlayRequested += ShowLifeLostOverlay;
+
+        UIEvents.OnShowSplashScreenRequested += ShowSplashScreen;
+        UIEvents.OnHideSplashScreenRequested += HideSplashScreen;
+
+        UIEvents.OnShowLevelsScreenRequested += ShowLevelsScreen;
+        UIEvents.OnHideLevelsScreenRequested += HideLevelsScreen;
+
+        UIEvents.OnShowPreGameScreenRequested += ShowPreGameScreen;
+        UIEvents.OnHidePreGameScreenRequested += HidePreGameScreen;
+        UIEvents.OnTogglePreGameScreenRequested += TogglePreGameScreen;
+
+        UIEvents.OnShowCreditsModalRequested += ShowCreditsModal;
+        UIEvents.OnHideCreditsModalRequested += HideCreditsModal;
+        UIEvents.OnToggleCreditsModalRequested += ToggleCreditsModal;
+
+        UIEvents.OnShowProfileModalRequested += ShowProfileModal;
+        UIEvents.OnHideProfileModalRequested += HideProfileModal;
+        UIEvents.OnToggleProfileModalRequested += ToggleProfileModal;
+
+        UIEvents.OnShowDailyRewardModalRequested += ShowDailyRewardModal;
+        UIEvents.OnHideDailyRewardModalRequested += HideDailyRewardModal;
+        UIEvents.OnToggleDailyRewardModalRequested += ToggleDailyRewardModal;
+
+        UIEvents.OnShowDailyWheelModalRequested += ShowDailyWheelModal;
+        UIEvents.OnHideDailyWheelModalRequested += HideDailyWheelModal;
+        UIEvents.OnToggleDailyWheelModalRequested += ToggleDailyWheelModal;
+
+        UIEvents.OnShowStoreModalRequested += ShowStoreModal;
+        UIEvents.OnHideStoreModalRequested += HideStoreModal;
+        UIEvents.OnToggleStoreModalRequested += ToggleStoreModal;
+
+        UIEvents.OnShowResultsModalRequested += ShowResultsModal;
+        UIEvents.OnHideResultsModalRequested += HideResultsModal;
+        UIEvents.OnToggleResultsModalRequested += ToggleResultsModal;
+
+        UIEvents.OnShowGameplayHUDRequested += ShowGameplayHUD;
+        UIEvents.OnHideGameplayHUDRequested += HideGameplayHUD;
+
+        UIEvents.OnLevelPreviewRequested += HandleLevelPreviewRequested;
+
         UIEvents.OnLevelSelectorReady += OnLevelSelectorReady;
 
         if (_dailyWheelUI != null)
@@ -161,6 +210,54 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
 
     private void UnsubscribeFromUIEvents()
     {
+        UIEvents.OnShowPauseOverlayRequested -= ShowPauseOverlay;
+        UIEvents.OnHidePauseOverlayRequested -= HidePauseOverlay;
+        UIEvents.OnTogglePauseOverlayRequested -= TogglePauseOverlay;
+
+        UIEvents.OnShowNoLivesOverlayRequested -= ShowNoLivesOverlay;
+        UIEvents.OnHideNoLivesOverlayRequested -= HideNoLivesOverlay;
+
+        UIEvents.OnShowLifeLostOverlayRequested -= ShowLifeLostOverlay;
+
+        UIEvents.OnShowSplashScreenRequested -= ShowSplashScreen;
+        UIEvents.OnHideSplashScreenRequested -= HideSplashScreen;
+
+        UIEvents.OnShowLevelsScreenRequested -= ShowLevelsScreen;
+        UIEvents.OnHideLevelsScreenRequested -= HideLevelsScreen;
+
+        UIEvents.OnShowPreGameScreenRequested -= ShowPreGameScreen;
+        UIEvents.OnHidePreGameScreenRequested -= HidePreGameScreen;
+        UIEvents.OnTogglePreGameScreenRequested -= TogglePreGameScreen;
+
+        UIEvents.OnShowCreditsModalRequested -= ShowCreditsModal;
+        UIEvents.OnHideCreditsModalRequested -= HideCreditsModal;
+        UIEvents.OnToggleCreditsModalRequested -= ToggleCreditsModal;
+
+        UIEvents.OnShowProfileModalRequested -= ShowProfileModal;
+        UIEvents.OnHideProfileModalRequested -= HideProfileModal;
+        UIEvents.OnToggleProfileModalRequested -= ToggleProfileModal;
+
+        UIEvents.OnShowDailyRewardModalRequested -= ShowDailyRewardModal;
+        UIEvents.OnHideDailyRewardModalRequested -= HideDailyRewardModal;
+        UIEvents.OnToggleDailyRewardModalRequested -= ToggleDailyRewardModal;
+
+        UIEvents.OnShowDailyWheelModalRequested -= ShowDailyWheelModal;
+        UIEvents.OnHideDailyWheelModalRequested -= HideDailyWheelModal;
+        UIEvents.OnToggleDailyWheelModalRequested -= ToggleDailyWheelModal;
+
+        UIEvents.OnShowStoreModalRequested -= ShowStoreModal;
+        UIEvents.OnHideStoreModalRequested -= HideStoreModal;
+        UIEvents.OnToggleStoreModalRequested -= ToggleStoreModal;
+
+        UIEvents.OnShowResultsModalRequested -= ShowResultsModal;
+        UIEvents.OnHideResultsModalRequested -= HideResultsModal;
+        UIEvents.OnToggleResultsModalRequested -= ToggleResultsModal;
+
+        UIEvents.OnShowGameplayHUDRequested -= ShowGameplayHUD;
+        UIEvents.OnHideGameplayHUDRequested -= HideGameplayHUD;
+
+        UIEvents.OnLevelPreviewRequested -= HandleLevelPreviewRequested;
+
         UIEvents.OnLevelSelectorReady -= OnLevelSelectorReady;
 
         if (_dailyWheelUI != null)
@@ -236,18 +333,124 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
 
     #endregion
 
-    #region GENERIC PANEL METHODS
+    #region OVERLAYS
+
+    private void ShowPauseOverlay() => ShowPanel(_pauseOverlay);
+    private void HidePauseOverlay() => HidePanel(_pauseOverlay);
+    public void TogglePauseOverlay() => TogglePanel(_pauseOverlay);
+
+    private void ShowNoLivesOverlay() => ShowPanel(_noLivesOverlay);
+    private void HideNoLivesOverlay() => HidePanel(_noLivesOverlay);
+
+    private void ShowLifeLostOverlay(int livesRemaining)
+    {
+        if (_lifeLostOverlay != null)
+            _lifeLostOverlay.ShowLifeLost(livesRemaining);
+    }
+
+    public void HideLifeLostOverlay()
+    {
+        if (_lifeLostOverlay != null)
+            _lifeLostOverlay.Hide();
+    }
+
+    #endregion
+
+    #region SCREENS
+
+    private void ShowSplashScreen() => ShowPanel(_splashScreen);
+    private void HideSplashScreen() => HidePanel(_splashScreen);
+
+    private void ShowLevelsScreen() => ShowPanel(_levelsScreen);
+    private void HideLevelsScreen() => HidePanel(_levelsScreen);
+
+    private void ShowPreGameScreen() => ShowPanel(_preGameScreen);
+    private void HidePreGameScreen() => HidePanel(_preGameScreen);
+    private void TogglePreGameScreen() => TogglePanel(_preGameScreen);
+
+    public void SetLevelsScreenEnabled(bool enabled)
+    {
+        if (enabled)
+            ShowLevelsScreen();
+        else
+            HideLevelsScreen();
+    }
+
+    public void ResetLevelsScreenAnimation()
+    {
+        if (_levelsScreen != null)
+            _levelsScreen.ResetAnimationFlag();
+    }
+
+    #endregion
+
+    #region MODALS
+
+    private void ShowCreditsModal() => ShowPanel(_creditsModal);
+    private void HideCreditsModal() => HidePanel(_creditsModal);
+    private void ToggleCreditsModal() => TogglePanel(_creditsModal);
+
+    private void ShowProfileModal() => ShowPanel(_profileModal);
+    private void HideProfileModal() => HidePanel(_profileModal);
+    private void ToggleProfileModal() => TogglePanel(_profileModal);
+
+    private void ShowDailyRewardModal() => ShowPanel(_dailyRewardModal);
+    private void HideDailyRewardModal() => HidePanel(_dailyRewardModal);
+    private void ToggleDailyRewardModal() => TogglePanel(_dailyRewardModal);
+    public bool IsDailyRewardModalVisible() => IsPanelVisible(_dailyRewardModal);
+
+    private void ShowDailyWheelModal() => ShowPanel(_dailyWheelModal);
+    private void HideDailyWheelModal() => HidePanel(_dailyWheelModal);
+    private void ToggleDailyWheelModal() => TogglePanel(_dailyWheelModal);
+
+    private void ShowStoreModal() => ShowPanel(_storeModal);
+    private void HideStoreModal() => HidePanel(_storeModal);
+    private void ToggleStoreModal() => TogglePanel(_storeModal);
+
+    private void ShowResultsModal() => ShowPanel(_resultsModal);
+    private void HideResultsModal() => HidePanel(_resultsModal);
+    private void ToggleResultsModal() => TogglePanel(_resultsModal);
+
+    #endregion
+
+    #region HUD
+
+    private void ShowGameplayHUD() => ShowPanel(_gameplayHUD);
+    private void HideGameplayHUD() => HidePanel(_gameplayHUD);
+    public void SetGameplayHUDEnabled(bool enabled)
+    {
+        if (enabled)
+            ShowGameplayHUD();
+        else
+            HideGameplayHUD();
+    }
+
+    #endregion
+
+    #region LEVEL PREVIEW
+
+    private void HandleLevelPreviewRequested(string sceneName)
+    {
+        if (_preGameUIManager != null)
+        {
+            _preGameUIManager.ShowConfirmationPanel(sceneName);
+        }
+    }
+
+    #endregion
+
+    #region UTILITY METHODS
 
     private void ShowPanel(UIPanel panel)
     {
-        if (panel != null)
-            panel.Show();
+        if (panel == null) return;
+        panel.Show();
     }
 
     private void HidePanel(UIPanel panel)
     {
-        if (panel != null)
-            panel.Hide();
+        if (panel == null) return;
+        panel.Hide();
     }
 
     private void TogglePanel(UIPanel panel)
@@ -267,119 +470,57 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
 
     #endregion
 
-    #region OVERLAYS
+    #region LEGACY PUBLIC METHODS - DEPRECATED
 
-    public void ShowPauseOverlay() => ShowPanel(_pauseOverlay);
-    public void HidePauseOverlay() => HidePanel(_pauseOverlay);
-    public void TogglePauseOverlay() => TogglePanel(_pauseOverlay);
+    [Obsolete("Usa UIEvents.RequestTogglePauseOverlay() en su lugar")]
+    public void ShowHidePauseCanvas() => UIEvents.RequestTogglePauseOverlay();
 
-    public void ShowNoLivesOverlay() => ShowPanel(_noLivesOverlay);
-    public void HideNoLivesOverlay() => HidePanel(_noLivesOverlay);
+    [Obsolete("Usa UIEvents.RequestTogglePreGameScreen() en su lugar")]
+    public void ShowHidePreGameCanvas() => UIEvents.RequestTogglePreGameScreen();
 
-    public void ShowLifeLostOverlay(int livesRemaining)
-    {
-        if (_lifeLostOverlay != null)
-            _lifeLostOverlay.ShowLifeLost(livesRemaining);
-    }
+    [Obsolete("Usa UIEvents.RequestToggleCreditsModal() en su lugar")]
+    public void ShowHideCreditsCanvas() => UIEvents.RequestToggleCreditsModal();
 
-    #endregion
+    [Obsolete("Usa UIEvents.RequestToggleProfileModal() en su lugar")]
+    public void ShowHideProfileCanvas() => UIEvents.RequestToggleProfileModal();
 
-    #region SCREENS
+    [Obsolete("Usa UIEvents.RequestToggleResultsModal() en su lugar")]
+    public void ShowHideResultsCanvas() => UIEvents.RequestToggleResultsModal();
 
-    public void ShowSplashScreen() => ShowPanel(_splashScreen);
-    public void HideSplashScreen() => HidePanel(_splashScreen);
+    [Obsolete("Usa UIEvents.RequestToggleStoreModal() en su lugar")]
+    public void ShowHideStoreCanvas() => UIEvents.RequestToggleStoreModal();
 
-    public void ShowLevelsScreen() => ShowPanel(_levelsScreen);
-    public void HideLevelsScreen() => HidePanel(_levelsScreen);
+    [Obsolete("Usa UIEvents.RequestToggleDailyWheelModal() en su lugar")]
+    public void ShowHideDailyWheelCanvas() => UIEvents.RequestToggleDailyWheelModal();
 
-    public void SetLevelsScreenEnabled(bool enabled)
-    {
-        if (enabled)
-            ShowLevelsScreen();
-        else
-            HideLevelsScreen();
-    }
+    [Obsolete("Usa UIEvents.RequestShowDailyRewardModal() en su lugar")]
+    public void ShowHideDailyRewardCanvas() => UIEvents.RequestShowDailyRewardModal();
 
-    public void ResetLevelsScreenAnimation()
-    {
-        if (_levelsScreen != null)
-            _levelsScreen.ResetAnimationFlag();
-    }
+    [Obsolete("Usa UIEvents.RequestShowNoLivesOverlay() en su lugar")]
+    public void ShowHideNoLivesCanvas() => UIEvents.RequestShowNoLivesOverlay();
 
-    public void ShowPreGameScreen() => ShowPanel(_preGameScreen);
-    public void HidePreGameScreen() => HidePanel(_preGameScreen);
-    public void TogglePreGameScreen() => TogglePanel(_preGameScreen);
+    [Obsolete("Usa UIEvents.RequestShowLifeLostOverlay(lives) en su lugar")]
+    public void ShowHideLifeLostCanvas() => UIEvents.RequestShowLifeLostOverlay(LifeManager.Instance?.CurrentLives ?? 0);
 
-    #endregion
+    [Obsolete("Usa UIEvents.RequestLevelPreview(sceneName) en su lugar")]
+    public void ShowConfirmationPanel(string sceneName) => UIEvents.RequestLevelPreview(sceneName);
 
-    #region MODALS
+    [Obsolete("Usa UIEvents.RequestUpdateLivesUI(lives) en su lugar")]
+    public void UpdateLivesUI(int lives) => UIEvents.RequestUpdateLivesUI(lives);
 
-    public void ShowCreditsModal() => ShowPanel(_creditsModal);
-    public void HideCreditsModal() => HidePanel(_creditsModal);
-    public void ToggleCreditsModal() => TogglePanel(_creditsModal);
+    [Obsolete("Usa UIEvents.RequestShowNoLivesPanel() en su lugar")]
+    public void ShowNoLivesPanel() => UIEvents.RequestShowNoLivesPanel();
 
-    public void ShowProfileModal() => ShowPanel(_profileModal);
-    public void HideProfileModal() => HidePanel(_profileModal);
-    public void ToggleProfileModal() => TogglePanel(_profileModal);
-
-    public void ShowDailyRewardModal() => ShowPanel(_dailyRewardModal);
-    public void HideDailyRewardModal() => HidePanel(_dailyRewardModal);
-    public void ToggleDailyRewardModal() => TogglePanel(_dailyRewardModal);
-    public bool IsDailyRewardModalVisible() => IsPanelVisible(_dailyRewardModal);
-
-    public void ShowDailyWheelModal() => ShowPanel(_dailyWheelModal);
-    public void HideDailyWheelModal() => HidePanel(_dailyWheelModal);
-    public void ToggleDailyWheelModal() => TogglePanel(_dailyWheelModal);
-    public bool IsDailyWheelModalVisible() => IsPanelVisible(_dailyWheelModal);
-
-    public void ShowStoreModal() => ShowPanel(_storeModal);
-    public void HideStoreModal() => HidePanel(_storeModal);
-    public void ToggleStoreModal() => TogglePanel(_storeModal);
-    public bool IsStoreModalVisible() => IsPanelVisible(_storeModal);
-
-    public void ShowResultsModal() => ShowPanel(_resultsModal);
-    public void HideResultsModal() => HidePanel(_resultsModal);
-    public void ToggleResultsModal() => TogglePanel(_resultsModal);
-    public bool IsResultsModalVisible() => IsPanelVisible(_resultsModal);
-
-    #endregion
-
-    #region HUD
-
-    public void ShowGameplayHUD() => ShowPanel(_gameplayHUD);
-    public void HideGameplayHUD() => HidePanel(_gameplayHUD);
-
-    public void SetGameplayHUDEnabled(bool enabled)
-    {
-        if (enabled)
-            ShowGameplayHUD();
-        else
-            HideGameplayHUD();
-    }
-
-    #endregion
-
-    #region LEGACY METHODS
-
-    public void ShowConfirmationPanel(string sceneName) => _preGameUIManager.ShowConfirmationPanel(sceneName);
-    public void ShowHidePreGameCanvas() => TogglePreGameScreen();
-    public void ShowHideCreditsCanvas() => ToggleCreditsModal();
-    public void ShowHideProfileCanvas() => ToggleProfileModal();
-    public void ShowHidePauseCanvas() => TogglePauseOverlay();
-    public void ShowHideResultsCanvas() => ToggleResultsModal();
-    public void ShowHideStoreCanvas() => ToggleStoreModal();
-    public void ShowHideDailyWheelCanvas() => ToggleDailyWheelModal();
-    public void ShowHideDailyRewardCanvas() => ShowDailyRewardModal();
-    public void ShowHideNoLivesCanvas() => ShowNoLivesOverlay();
-    public void ShowHideLifeLostCanvas() => ShowLifeLostOverlay(LifeManager.Instance?.CurrentLives ?? 0);
-
-    public void UpdateLivesUI(int lives) => _gameplayUIManager.UpdateLivesUI(lives);
-    public void ShowNoLivesPanel() => _gameplayUIManager.ShowNoLivesPanel();
-
+    [Obsolete("Llama directamente a SwitchHapticFeedback()")]
     public void SwitchHapticFeedback() => _isHapticFeedbackActive = !_isHapticFeedbackActive;
 
+    [Obsolete("Usa UIEvents.RequestShowLevelSelector() en su lugar")]
     public void ShowLevelSelector() => UIEvents.RequestShowLevelSelector();
+
+    [Obsolete("Usa UIEvents.RequestSceneTransition(sceneName) en su lugar")]
     public void LoadLevelScene(string sceneName) => UIEvents.RequestSceneTransition(sceneName);
+
+    [Obsolete("Usa UIEvents.RequestRestartLevel() en su lugar")]
     public void RestartLevel() => UIEvents.RequestRestartLevel();
 
     public void OpenURL(string url) => Application.OpenURL(url);

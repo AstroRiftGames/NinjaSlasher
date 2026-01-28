@@ -161,7 +161,8 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
         }
         else if (LifeManager.Instance.CanPlay())
         {
-            UIManager.Instance.ShowLifeLostOverlay(currentLives);
+            //UIManager.Instance.ShowLifeLostOverlay(currentLives);
+            UIEvents.RequestShowLifeLostOverlay(currentLives);
         }
         else
         {
