@@ -157,7 +157,6 @@ public class AudioManager : MonoBehaviourSingleton<AudioManager>
     private void Start()
     {
         InitializeAudioManager();
-        PlayMusic(MusicClip.Splash);
     }
 
     void InitializeAudioManager()
