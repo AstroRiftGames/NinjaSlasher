@@ -14,7 +14,15 @@ public class GameplayUIManager : MonoBehaviour
     [SerializeField] private TextMeshProUGUI _bonusTimeText;
     [SerializeField] private TextMeshProUGUI _puRemainingTime;
 
+    private UIAudioContext _audioContext;
+
     private bool _noLivesActive = false;
+
+    private void Awake()
+    {
+        _audioContext = GetComponentInParent<UIAudioContext>();
+    }
+
     private void OnDisable()
     {
         GameEvents.OnLivesChanged -= OnLivesChanged;
@@ -132,7 +140,9 @@ public class GameplayUIManager : MonoBehaviour
 
     public void OnRetryPressed()
     {
-        AudioManager.Instance.PlaySFX(SFXClip.UI_Select);
+        //AudioManager.Instance.PlaySFX(SFXClip.UI_Select);
+        AudioService.Instance?.PlaySFX(_audioContext.Audio.select);
+
         UIManager.Instance.RestartLevel();
         UIManager.Instance.ShowHideLifeLostCanvas();
     }
@@ -140,7 +150,11 @@ public class GameplayUIManager : MonoBehaviour
     public void OnBackToSelectionPressed()
     {
         UIManager.Instance.ShowHideLifeLostCanvas();
-        AudioManager.Instance.PlaySFX(SFXClip.UI_Select);
+
+        //AudioManager.Instance.PlaySFX(SFXClip.UI_Select);
+
+        AudioService.Instance?.PlaySFX(_audioContext.Audio.select);
+
         //UIManager.Instance.HideResultsModal();
         UIEvents.RequestHideResultsModal();
         GameManager.Instance.GoToLevelSelection(confirmPendingDeduction: false);
@@ -148,7 +162,8 @@ public class GameplayUIManager : MonoBehaviour
 
     public void ContinueToLevelSelector()
     {
-        AudioManager.Instance.PlaySFX(SFXClip.UI_Select);
+        //AudioManager.Instance.PlaySFX(SFXClip.UI_Select);
+        AudioService.Instance?.PlaySFX(_audioContext.Audio.select);
         //UIManager.Instance.HideResultsModal();
         UIEvents.RequestHideResultsModal();
         GameManager.Instance.GoToLevelSelection(confirmPendingDeduction: false);

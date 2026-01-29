@@ -9,13 +9,13 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8639206987761951752}
-  - component: {fileID: 2870901090016681095}
+  - component: {fileID: 1034947280318806221}
   - component: {fileID: 4198015471619335935}
   - component: {fileID: 6905579431728325560}
+  - component: {fileID: 340358578149418589}
+  - component: {fileID: 2870901090016681095}
   - component: {fileID: 5760230160173246306}
   - component: {fileID: 8146807997240465576}
-  - component: {fileID: 340358578149418589}
-  - component: {fileID: 1034947280318806221}
   - component: {fileID: 6549881993182166334}
   - component: {fileID: 2435951141245640258}
   m_Layer: 10
@@ -43,33 +43,26 @@ Transform:
   - {fileID: 8525842389228153400}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!50 &2870901090016681095
-Rigidbody2D:
-  serializedVersion: 5
+--- !u!114 &1034947280318806221
+MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1104090747853785710}
-  m_BodyType: 0
-  m_Simulated: 1
-  m_UseFullKinematicContacts: 0
-  m_UseAutoMass: 0
-  m_Mass: 1
-  m_LinearDamping: 0
-  m_AngularDamping: 0.05
-  m_GravityScale: 0
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 44c27bb3875202e4889c979954db8515, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _view: {fileID: 4198015471619335935}
+  _model: {fileID: 6905579431728325560}
+  _swipeDetection: {fileID: 340358578149418589}
+  _trajectoryRenderer: {fileID: 3827957799280484405}
+  _audio: {fileID: 11400000, guid: 4032d9d64165d6c4ab7b8746366dc31c, type: 2}
+  _proyectilesLayer:
     serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_Interpolate: 2
-  m_SleepingMode: 0
-  m_CollisionDetection: 1
-  m_Constraints: 4
+    m_Bits: 256
 --- !u!114 &4198015471619335935
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -106,6 +99,98 @@ MonoBehaviour:
   _parryRange: 2
   _parryCD: 1
   slashEffectDuration: 0.5
+--- !u!114 &340358578149418589
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1104090747853785710}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 08b2357ef1fafc14bbaa8902d7fa0880, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Direction: {x: 0, y: 0}
+  position:
+    m_Name: Position
+    m_Type: 0
+    m_ExpectedControlType: Vector2
+    m_Id: c2c47782-9b12-4562-bc8c-fb2b95364eb3
+    m_Processors: 
+    m_Interactions: 
+    m_SingletonActionBindings:
+    - m_Name: 
+      m_Id: 399e086a-a088-42af-9446-d072cbd672c5
+      m_Path: <Touchscreen>/touch0/position
+      m_Interactions: 
+      m_Processors: 
+      m_Groups: 
+      m_Action: Position
+      m_Flags: 0
+    - m_Name: 
+      m_Id: ad6cd838-9832-4ff3-b95b-a3c7d91793ee
+      m_Path: <Mouse>/position
+      m_Interactions: 
+      m_Processors: 
+      m_Groups: 
+      m_Action: Position
+      m_Flags: 0
+    m_Flags: 0
+  press:
+    m_Name: Press
+    m_Type: 1
+    m_ExpectedControlType: Button
+    m_Id: 2f219c69-323e-48f1-90d8-652a39d6e2c5
+    m_Processors: 
+    m_Interactions: Press
+    m_SingletonActionBindings:
+    - m_Name: 
+      m_Id: 303dc8ff-d48f-4ad0-be0e-88ad07f1da07
+      m_Path: <Touchscreen>/Press
+      m_Interactions: 
+      m_Processors: 
+      m_Groups: 
+      m_Action: Press
+      m_Flags: 0
+    - m_Name: 
+      m_Id: da8cdf24-22e6-4a78-b470-d37dcddb5fe2
+      m_Path: <Mouse>/leftButton
+      m_Interactions: 
+      m_Processors: 
+      m_Groups: 
+      m_Action: Press
+      m_Flags: 0
+    m_Flags: 0
+  swipeResistance: 100
+  timeThreshold: 0.2
+--- !u!50 &2870901090016681095
+Rigidbody2D:
+  serializedVersion: 5
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1104090747853785710}
+  m_BodyType: 0
+  m_Simulated: 1
+  m_UseFullKinematicContacts: 0
+  m_UseAutoMass: 0
+  m_Mass: 1
+  m_LinearDamping: 0
+  m_AngularDamping: 0.05
+  m_GravityScale: 0
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_Interpolate: 2
+  m_SleepingMode: 0
+  m_CollisionDetection: 1
+  m_Constraints: 4
 --- !u!120 &5760230160173246306
 LineRenderer:
   serializedVersion: 2
@@ -259,90 +344,6 @@ BoxCollider2D:
   m_AutoTiling: 0
   m_Size: {x: 1.2, y: 1.89}
   m_EdgeRadius: 0
---- !u!114 &340358578149418589
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1104090747853785710}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 08b2357ef1fafc14bbaa8902d7fa0880, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  Direction: {x: 0, y: 0}
-  position:
-    m_Name: Position
-    m_Type: 0
-    m_ExpectedControlType: Vector2
-    m_Id: c2c47782-9b12-4562-bc8c-fb2b95364eb3
-    m_Processors: 
-    m_Interactions: 
-    m_SingletonActionBindings:
-    - m_Name: 
-      m_Id: 399e086a-a088-42af-9446-d072cbd672c5
-      m_Path: <Touchscreen>/touch0/position
-      m_Interactions: 
-      m_Processors: 
-      m_Groups: 
-      m_Action: Position
-      m_Flags: 0
-    - m_Name: 
-      m_Id: ad6cd838-9832-4ff3-b95b-a3c7d91793ee
-      m_Path: <Mouse>/position
-      m_Interactions: 
-      m_Processors: 
-      m_Groups: 
-      m_Action: Position
-      m_Flags: 0
-    m_Flags: 0
-  press:
-    m_Name: Press
-    m_Type: 1
-    m_ExpectedControlType: Button
-    m_Id: 2f219c69-323e-48f1-90d8-652a39d6e2c5
-    m_Processors: 
-    m_Interactions: Press
-    m_SingletonActionBindings:
-    - m_Name: 
-      m_Id: 303dc8ff-d48f-4ad0-be0e-88ad07f1da07
-      m_Path: <Touchscreen>/Press
-      m_Interactions: 
-      m_Processors: 
-      m_Groups: 
-      m_Action: Press
-      m_Flags: 0
-    - m_Name: 
-      m_Id: da8cdf24-22e6-4a78-b470-d37dcddb5fe2
-      m_Path: <Mouse>/leftButton
-      m_Interactions: 
-      m_Processors: 
-      m_Groups: 
-      m_Action: Press
-      m_Flags: 0
-    m_Flags: 0
-  swipeResistance: 100
-  timeThreshold: 0.2
---- !u!114 &1034947280318806221
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1104090747853785710}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 44c27bb3875202e4889c979954db8515, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _view: {fileID: 4198015471619335935}
-  _model: {fileID: 6905579431728325560}
-  _swipeDetection: {fileID: 340358578149418589}
-  _trajectoryRenderer: {fileID: 3827957799280484405}
-  _proyectilesLayer:
-    serializedVersion: 2
-    m_Bits: 256
 --- !u!96 &6549881993182166334
 TrailRenderer:
   serializedVersion: 3

@@ -2,7 +2,6 @@ using System;
 using UnityEngine;
 using CandyCoded.HapticFeedback;
 using System.Linq;
-using Unity.VisualScripting;
 using System.Collections;
 
 public enum NinjaStates
@@ -22,6 +21,10 @@ public class NewController : MonoBehaviour
 
     [SerializeField] SwipeDetection _swipeDetection;
     [SerializeField] TrajectoryRenderer _trajectoryRenderer;
+
+    [Header("Audio")]
+    [SerializeField] private PlayerAudioSet _audio;
+
 
     public bool IsDashing => _isDashing;
     private bool _isDashing = false;
@@ -201,7 +204,7 @@ public class NewController : MonoBehaviour
         _lastDashDirection = dashDir;
 
         _view.RB.AddForce(dashDir * _model.DashForce);
-        AudioManager.Instance.PlaySFXAtPosition(SFXClip.P_Movement, transform.position);
+        AudioService.Instance.PlaySFXAtPosition(_audio.movementLoop, transform.position);
         _isDashing = true;
         _lastDash = Time.time;
         _view.Animator.SetBool("IsGrounded", false);
@@ -264,7 +267,7 @@ public class NewController : MonoBehaviour
         Collider2D[] hitColliders = Physics2D.OverlapCircleAll(transform.position, _parryRange, _proyectilesLayer);
 
         _view.Animator.SetTrigger("OnParry");
-        AudioManager.Instance.PlaySFXAtPosition(SFXClip.P_ParrySwing, transform.position);
+        AudioService.Instance.PlaySFXAtPosition(_audio.parrySwing, transform.position);
 
         foreach (var col in hitColliders)
         {
@@ -274,7 +277,7 @@ public class NewController : MonoBehaviour
             {
                 projectile.ReflectBackwards(transform, dirToParry);
                 HapticFeedback.LightFeedback();
-                AudioManager.Instance.PlaySFXAtPosition(SFXClip.P_ProjectileParried, transform.position);
+                AudioService.Instance.PlaySFXAtPosition(_audio.projectileParried, transform.position);
 
                 return;
             }
@@ -348,7 +351,7 @@ public class NewController : MonoBehaviour
 
             if(platform == null)
             {
-                AudioManager.Instance.PlaySFXAtPosition(SFXClip.P_Landing_General, transform.position);
+                AudioService.Instance.PlaySFXAtPosition(_audio.landGeneral, transform.position);
                 Grab(collision.GetContact(0).normal);
             }
             else if(platform.Type != PlatformTypes.Elastic)
@@ -373,7 +376,7 @@ public class NewController : MonoBehaviour
                         collision.TryGetComponent(out Enemy enemy);
                         enemy.Die();
                         HapticFeedback.MediumFeedback();
-                        AudioManager.Instance.PlaySFXAtPosition(SFXClip.P_Attack, transform.position);
+                        AudioService.Instance.PlaySFXAtPosition(_audio.attack, transform.position);
                         StartCoroutine(SlashEffectCoroutine());
                     }
                     else

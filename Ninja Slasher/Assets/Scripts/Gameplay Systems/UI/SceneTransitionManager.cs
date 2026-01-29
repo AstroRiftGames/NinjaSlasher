@@ -10,6 +10,13 @@ public class SceneTransitionManager : MonoBehaviour
 
     [SerializeField] private GameObject _hudObject;
 
+    private UIAudioContext _audioContext;
+
+    private void Awake()
+    {
+        _audioContext = GetComponentInParent<UIAudioContext>();
+    }
+
     private void OnEnable()
     {
         UIEvents.OnSceneTransitionRequested += LoadLevelScene;
@@ -41,7 +48,8 @@ public class SceneTransitionManager : MonoBehaviour
         SceneManager.LoadScene(sceneName);
 
         _transitionAnim.SetTrigger("End");
-        AudioManager.Instance.PlaySFX(SFXClip.UI_TransitionSlash);
+        //AudioManager.Instance.PlaySFX(SFXClip.UI_TransitionSlash);
+        AudioService.Instance?.PlaySFX(_audioContext.Audio.transitionSlash);
 
         UIManager.Instance.SetGameplayHUDEnabled(true);
 
@@ -83,8 +91,8 @@ public class SceneTransitionManager : MonoBehaviour
         UIManager.Instance.SetGameplayHUDEnabled(false);
 
         _transitionAnim.SetTrigger("End");
-        AudioManager.Instance.PlaySFX(SFXClip.UI_TransitionSlash);
-
+        //AudioManager.Instance.PlaySFX(SFXClip.UI_TransitionSlash);
+        AudioService.Instance?.PlaySFX(_audioContext.Audio.transitionSlash);
         UIEvents.RaiseLevelSelectorReady();
     }
 

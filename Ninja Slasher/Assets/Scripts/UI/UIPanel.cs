@@ -7,6 +7,8 @@ public abstract class UIPanel : MonoBehaviour
 
     protected bool _isVisible = false;
 
+    protected UIAudioContext _audioContext;
+
     protected virtual void Awake()
     {
         if (_canvasGroup == null)
@@ -14,6 +16,8 @@ public abstract class UIPanel : MonoBehaviour
 
         if (_panelTransform == null)
             _panelTransform = GetComponent<RectTransform>();
+
+        _audioContext = GetComponentInParent<UIAudioContext>();
     }
 
     public virtual void Show()

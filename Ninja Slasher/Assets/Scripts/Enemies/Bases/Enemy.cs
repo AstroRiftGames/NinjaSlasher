@@ -1,9 +1,9 @@
-using AstroRift.Core.Update;
 using UnityEngine;
 
 public class Enemy : MonoBehaviour
 {
     [SerializeField] protected EnemyData _data;
+    private EnemyAudioContext _audio;
     [SerializeField] protected GameObject UpperCol;
     [SerializeField] protected GameObject LowerCol;
     [SerializeField] protected GameObject RearCol;
@@ -46,7 +46,7 @@ public class Enemy : MonoBehaviour
             TryGetComponent(out Animator anim);
             _animator = anim;
         }
-
+        _audio = GetComponent<EnemyAudioContext>();
         _player = FindAnyObjectByType<NewController>().transform;
     }
 

@@ -94,4 +94,24 @@ public class ResultsModal : UIModalBase
         yield return new WaitForSecondsRealtime(_closeAnimationDuration);
         gameObject.SetActive(false);
     }
+
+    public void ShowVictory()
+    {
+        Show();
+
+        if (_audioContext != null)
+        {
+            AudioService.Instance?.PlaySFX(_audioContext.Audio.victory);
+        }
+    }
+
+    public void ShowDefeat()
+    {
+        Show();
+
+        if (_audioContext != null)
+        {
+            AudioService.Instance?.PlaySFX(_audioContext.Audio.defeat);
+        }
+    }
 }

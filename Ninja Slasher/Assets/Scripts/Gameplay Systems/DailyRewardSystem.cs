@@ -37,6 +37,8 @@ public class DailyRewardSystem : MonoBehaviourSingleton<DailyRewardSystem>
 
     private DailyRewardSaveData rewardData;
 
+    private UIAudioContext _audioContext;
+
     // DEPRECATED
     //public static event Action<DailyReward> OnRewardClaimed;
     //public static event Action<int> OnConsecutiveDaysUpdated;
@@ -49,6 +51,8 @@ public class DailyRewardSystem : MonoBehaviourSingleton<DailyRewardSystem>
     public override void Awake()
     {
         base.Awake();
+
+        _audioContext = GetComponentInParent<UIAudioContext>();
     }
 
     void Start()
@@ -270,7 +274,9 @@ public class DailyRewardSystem : MonoBehaviourSingleton<DailyRewardSystem>
         {
             return false;
         }
-        AudioManager.Instance.PlaySFX(SFXClip.Reward_Prize);
+
+        //AudioManager.Instance.PlaySFX(SFXClip.Reward_Prize);
+        AudioService.Instance.PlaySFX(_audioContext.Audio.rewardPrize);
 
         rewardData.claimedDays[rewardData.currentWeekDay] = true;
         rewardData.lastClaimDate = DateTime.Now.ToString("yyyy-MM-dd");

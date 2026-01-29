@@ -6,6 +6,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using DG.Tweening;
+using UnityEditor;
 
 public class PreGameUIManager : MonoBehaviour
 {
@@ -41,10 +42,14 @@ public class PreGameUIManager : MonoBehaviour
     private Dictionary<TextMeshProUGUI, string> originalTexts = new Dictionary<TextMeshProUGUI, string>();
     private List<Sequence> activeSequences = new List<Sequence>();
 
+    private UIAudioContext _audioContext;
+
     private void Awake()
     {
         CacheOriginalTexts();
         SetupButtonListeners();
+        
+        _audioContext = GetComponentInParent<UIAudioContext>();
     }
 
     private void SetupButtonListeners()
@@ -133,10 +138,12 @@ public class PreGameUIManager : MonoBehaviour
         _title.DOColor(originalColor, flashDuration * 0.5f);
         _title.transform.DOPunchScale(Vector3.one * 0.2f, flashDuration, 1, 0.8f);
 
-        if (AudioManager.Instance != null)
-        {
-            AudioManager.Instance.PlaySFX(SFXClip.UI_Select);
-        }
+        //if (AudioManager.Instance != null)
+        //{
+        //    AudioManager.Instance.PlaySFX(SFXClip.UI_Select);
+        //}
+
+        AudioService.Instance?.PlaySFX(_audioContext.Audio.select);
 
         yield return new WaitForSeconds(flashDuration);
     }
@@ -171,10 +178,12 @@ public class PreGameUIManager : MonoBehaviour
         objectiveText.DOColor(objectiveText.color, flashDuration * 0.5f);
         objectiveText.transform.DOPunchScale(Vector3.one * 0.15f, flashDuration, 1, 0.5f);
 
-        if (AudioManager.Instance != null)
-        {
-            AudioManager.Instance.PlaySFX(SFXClip.UI_Select);
-        }
+        //if (AudioManager.Instance != null)
+        //{
+        //    AudioManager.Instance.PlaySFX(SFXClip.UI_Select);
+        //}
+
+        AudioService.Instance?.PlaySFX(_audioContext.Audio.select);
     }
 
     private void AnimateSlashEffect(Image slashImage)
@@ -281,7 +290,7 @@ public class PreGameUIManager : MonoBehaviour
         //UIManager.Instance.HidePreGameScreen();
         UIEvents.RequestHidePreGameScreen();
         UIManager.Instance.LoadLevelScene(_pendingSceneName);
-        PlayLevelMusic();
+        //PlayLevelMusic();
     }
 
     private void CancelLevelSelection()
@@ -408,37 +417,37 @@ public class PreGameUIManager : MonoBehaviour
         img.sprite = acquired ? _starAcquiredSprite : _starNotAcquiredSprite;
     }
 
-    void PlayLevelMusic()
-    {
-        int levelId = GetLevelIdFromSceneName(_pendingSceneName);
-        var cfgMgr = LevelConfigurationManager.Instance;
-        var config = cfgMgr != null ? cfgMgr.GetConfigurationForLevel(levelId) : null;
+    //void PlayLevelMusic()
+    //{
+    //    int levelId = GetLevelIdFromSceneName(_pendingSceneName);
+    //    var cfgMgr = LevelConfigurationManager.Instance;
+    //    var config = cfgMgr != null ? cfgMgr.GetConfigurationForLevel(levelId) : null;
 
-        if (config.unlockRequirements.isBossLevel)
-        {
-            AudioManager.Instance.PlayMusic(MusicClip.BossLevel);
-            return;
-        }
+    //    if (config.unlockRequirements.isBossLevel)
+    //    {
+    //        AudioManager.Instance.PlayMusic(MusicClip.BossLevel);
+    //        return;
+    //    }
 
-        switch (config.unlockRequirements.areaId)
-        {
-            case 1:
-                AudioManager.Instance.PlayMusic(MusicClip.Area1);
-                break;
-            case 2:
-                AudioManager.Instance.PlayMusic(MusicClip.Area2);
-                break;
-            case 3:
-                AudioManager.Instance.PlayMusic(MusicClip.Area3);
-                break;
-            case 4:
-                AudioManager.Instance.PlayMusic(MusicClip.Area4);
-                break;
-            case 5:
-                AudioManager.Instance.PlayMusic(MusicClip.Area5);
-                break;
-        }
-    }
+    //    switch (config.unlockRequirements.areaId)
+    //    {
+    //        case 1:
+    //            AudioManager.Instance.PlayMusic(MusicClip.Area1);
+    //            break;
+    //        case 2:
+    //            AudioManager.Instance.PlayMusic(MusicClip.Area2);
+    //            break;
+    //        case 3:
+    //            AudioManager.Instance.PlayMusic(MusicClip.Area3);
+    //            break;
+    //        case 4:
+    //            AudioManager.Instance.PlayMusic(MusicClip.Area4);
+    //            break;
+    //        case 5:
+    //            AudioManager.Instance.PlayMusic(MusicClip.Area5);
+    //            break;
+    //    }
+    //}
 
     private int GetLevelIdFromSceneName(string name)
     {

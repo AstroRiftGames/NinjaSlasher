@@ -90,6 +90,8 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
     private List<Sequence> activeButtonSequences = new List<Sequence>();
     private Dictionary<int, Vector2> savedButtonPositions = new Dictionary<int, Vector2>();
 
+    private UIAudioContext _audioContext;
+
     private void OnSaveDataLoaded(GameData _) => RefreshLevelProgression();
 
     [Header("POP UPS")]
@@ -100,7 +102,7 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
     public override void Awake()
     {
         base.Awake();
-
+        _audioContext = GetComponentInParent<UIAudioContext>();
         _configToggles = GetComponent<ConfigToggles>();
         _configPanelManager = GetComponent<ConfigDropdown>();
 
@@ -597,10 +599,7 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
                 });
         }
 
-        if (AudioManager.Instance != null)
-        {
-            AudioManager.Instance.PlaySFX(SFXClip.UI_Select);
-        }
+        AudioService.Instance?.PlaySFX(_audioContext.Audio.select);
     }
 
     public void StopAllButtonAnimations()

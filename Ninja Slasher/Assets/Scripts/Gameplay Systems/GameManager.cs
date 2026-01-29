@@ -91,16 +91,17 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
 
     private IEnumerator HandleVictoryWithDelay()
     {
-        AudioManager.Instance.PlaySFX(SFXClip.UI_Victory);
+        //AudioManager.Instance.PlaySFX(SFXClip.UI_Victory);
 
-        float soundDuration = AudioManager.Instance.GetSFXDuration(SFXClip.UI_Victory);
+        //float soundDuration = AudioManager.Instance.GetSFXDuration(SFXClip.UI_Victory);
 
-        if (soundDuration <= 0f)
-        {
-            soundDuration = 2.0f;
-        }
+        //if (soundDuration <= 0f)
+        //{
+        //    soundDuration = 2.0f;
+        //}
 
-        yield return new WaitForSeconds(soundDuration);
+        //yield return new WaitForSeconds(soundDuration);
+        yield return new WaitForSeconds(0.1f);
 
         UIManager.Instance.ShowHideResultsCanvas();
     }
@@ -114,7 +115,7 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
 
         _levelEnded = true;
 
-        AudioManager.Instance.PlaySFX(SFXClip.UI_Defeat);
+        //AudioManager.Instance.PlaySFX(SFXClip.UI_Defeat);
 
         if (_levelStarted && AnalyticsManager.Instance != null)
         {
@@ -144,14 +145,15 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
 
     private IEnumerator HandleDefeatUIWithDelay()
     {
-        float soundDuration = AudioManager.Instance.GetSFXDuration(SFXClip.UI_Defeat);
+        //float soundDuration = AudioManager.Instance.GetSFXDuration(SFXClip.UI_Defeat);
 
-        if (soundDuration <= 0f)
-        {
-            soundDuration = 1.5f;
-        }
+        //if (soundDuration <= 0f)
+        //{
+        //    soundDuration = 1.5f;
+        //}
 
-        yield return new WaitForSeconds(soundDuration);
+        //yield return new WaitForSeconds(soundDuration);
+        yield return new WaitForSeconds(0.1f);
 
         int currentLives = LifeManager.Instance.GetRealLives();
 
@@ -217,7 +219,7 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
         SaveManager.Instance.SaveData();
         SceneManager.sceneLoaded += HandleScreenflowLoaded;
         SceneManager.LoadScene("SplashScreen");
-        AudioManager.Instance.PlayMusic(MusicClip.MainMenu, true);
+        MusicEvents.OnEnterLevelSelection?.Invoke();
     }
 
     private void HandleScreenflowLoaded(Scene scene, LoadSceneMode mode)

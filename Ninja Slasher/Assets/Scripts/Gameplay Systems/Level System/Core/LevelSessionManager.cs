@@ -130,6 +130,8 @@ public class LevelSessionManager : MonoBehaviourSingleton<LevelSessionManager>
         currentSession.Start();
         timerService.Start();
 
+        PlayGameplayMusic();
+
         GameEvents.RaiseLevelStarted();
     }
 
@@ -291,6 +293,23 @@ public class LevelSessionManager : MonoBehaviourSingleton<LevelSessionManager>
             isLevelActive = false;
         }
     }
+
+    private void PlayGameplayMusic()
+    {
+        var config = currentSession?.Configuration;
+        if (config == null)
+            return;
+
+        AudioEvent music = config.unlockRequirements.isBossLevel
+            ? config.bossMusic
+            : config.gameplayMusic;
+
+        if (music != null)
+        {
+            AudioService.Instance.PlayMusic(music);
+        }
+    }
+
 
     private void OnDestroy()
     {
