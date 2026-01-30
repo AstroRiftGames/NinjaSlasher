@@ -12,7 +12,6 @@ GameObject:
   - component: {fileID: 6391668477862170959}
   - component: {fileID: 8143181119019381039}
   - component: {fileID: 2234693890108503027}
-  - component: {fileID: 8005450151810578804}
   - component: {fileID: 8174576930485009954}
   - component: {fileID: 539905384003771168}
   - component: {fileID: 8007740839878991477}
@@ -23,6 +22,7 @@ GameObject:
   - component: {fileID: 3453207442286635059}
   - component: {fileID: 6745091640480951052}
   - component: {fileID: 6146392794090672321}
+  - component: {fileID: 7256938055722210256}
   m_Layer: 0
   m_Name: UIManager
   m_TagString: Untagged
@@ -265,32 +265,6 @@ MonoBehaviour:
   _rectMask2D: {fileID: 3589523687119420839}
   _loadingDuration: 3
   _loadingEase: 12
---- !u!114 &8005450151810578804
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 52824968843742465}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 48232dc000cadc74a8b7e31e0a21c5c9, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _sfxTurnOnIcon: {fileID: -1559203494, guid: b8f4ab3e9e56b5e4693c5f62817f175b, type: 3}
-  _sfxTurnOffIcon: {fileID: 1210573043, guid: b8f4ab3e9e56b5e4693c5f62817f175b, type: 3}
-  _musicTurnOnIcon: {fileID: -1864691746, guid: b8f4ab3e9e56b5e4693c5f62817f175b, type: 3}
-  _musicTurnOffIcon: {fileID: 968980675, guid: b8f4ab3e9e56b5e4693c5f62817f175b, type: 3}
-  _hapticTurnOnIcon: {fileID: 1896148662887422212, guid: 8a8e342002502cb48904d1da5234ac55, type: 3}
-  _hapticTurnOffIcon: {fileID: 21300000, guid: b213cf2268330064cb01dcfaf7dbdfc6, type: 3}
-  _musicImage: {fileID: 8050896032328050075}
-  _sfxImage: {fileID: 6460355610299079527}
-  _hapticImage: {fileID: 2281808778251055062}
-  _musicPauseImage: {fileID: 3868351097286519265}
-  _sfxPauseImage: {fileID: 1007923029120456528}
-  _isMusicOn: 0
-  _isSfxOn: 0
-  _isHapticOn: 0
 --- !u!114 &8174576930485009954
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -543,6 +517,31 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _audio: {fileID: 11400000, guid: a6e80c8b640adc44e840944ffc031e29, type: 2}
+--- !u!114 &7256938055722210256
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 52824968843742465}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5b70369176f4dd249866a8095292928f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  audioConfig: {fileID: 11400000, guid: 7ec7b8ab819915045adb06bc85f2f71b, type: 2}
+  musicImage: {fileID: 8050896032328050075}
+  musicPauseImage: {fileID: 3868351097286519265}
+  musicTurnOnIcon: {fileID: 21300000, guid: 8a694bbc315b3754fbc8b7d70032fe36, type: 3}
+  musicTurnOffIcon: {fileID: 21300000, guid: 9aa9b5d9c765dc043a1155eafdb69022, type: 3}
+  sfxImage: {fileID: 6460355610299079527}
+  sfxPauseImage: {fileID: 1007923029120456528}
+  sfxTurnOnIcon: {fileID: 21300000, guid: 903ed58cd39a19941846b1fdbfb21a9f, type: 3}
+  sfxTurnOffIcon: {fileID: 21300000, guid: bd717b7325ca5cf4390ec5dfd873f509, type: 3}
+  _hapticTurnOnIcon: {fileID: 1896148662887422212, guid: 8a8e342002502cb48904d1da5234ac55, type: 3}
+  _hapticTurnOffIcon: {fileID: 21300000, guid: b213cf2268330064cb01dcfaf7dbdfc6, type: 3}
+  _hapticImage: {fileID: 2281808778251055062}
+  _isHapticOn: 0
 --- !u!1 &281887844316290728
 GameObject:
   m_ObjectHideFlags: 0

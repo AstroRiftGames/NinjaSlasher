@@ -6,6 +6,8 @@ public class MusicPlayer
     private readonly AudioSource _source;
     private readonly AudioSettings _settings;
     private readonly MonoBehaviour _coroutineRunner;
+    private bool isMuted = false;
+    private float volumeBeforeMute = 1f;
 
     public MusicPlayer(AudioSource source, AudioSettings settings, MonoBehaviour coroutineRunner)
     {
@@ -110,5 +112,30 @@ public class MusicPlayer
 
         _source.Stop();
         _source.volume = startVolume;
+    }
+
+    public void MuteMusic()
+    {
+        if (isMuted) return;
+
+        isMuted = true;
+
+        if (_source != null && _source.isPlaying)
+        {
+            volumeBeforeMute = _source.volume;
+            _source.volume = 0f;
+        }
+    }
+
+    public void UnmuteMusic()
+    {
+        if (!isMuted) return;
+
+        isMuted = false;
+
+        if (_source != null)
+        {
+            _source.volume = volumeBeforeMute;
+        }
     }
 }

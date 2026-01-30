@@ -10,6 +10,8 @@ public class SFXPlayer
     private readonly Dictionary<AudioEvent, PooledAudioSource> _loopingSources
     = new Dictionary<AudioEvent, PooledAudioSource>();
 
+    private bool isMuted = false;
+
     public SFXPlayer(PooledAudioSource prefab, int poolSize, AudioSettings settings, Transform parent)
     {
         _settings = settings;
@@ -19,7 +21,7 @@ public class SFXPlayer
 
     public void Play(AudioEvent audioEvent)
     {
-        if (audioEvent == null || audioEvent.clip == null)
+        if (audioEvent == null || audioEvent.clip == null || isMuted)
         {
             Debug.LogWarning("SFXPlayer: AudioEvent o clip null.");
             return;
@@ -83,5 +85,15 @@ public class SFXPlayer
         }
 
         _loopingSources.Clear();
+    }
+
+    public void MuteSFX()
+    {
+        isMuted = true;
+    }
+
+    public void UnmuteSFX()
+    {
+        isMuted = false;
     }
 }

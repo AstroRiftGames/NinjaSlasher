@@ -84,7 +84,7 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
     [SerializeField] private Button deleteSaveButton;
 #endif
 
-    private ConfigToggles _configToggles;
+    private AudioSettingsUI _configToggles;
     private ConfigDropdown _configPanelManager;
 
     private List<Sequence> activeButtonSequences = new List<Sequence>();
@@ -103,7 +103,7 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
     {
         base.Awake();
         _audioContext = GetComponentInParent<UIAudioContext>();
-        _configToggles = GetComponent<ConfigToggles>();
+        _configToggles = GetComponent<AudioSettingsUI>();
         _configPanelManager = GetComponent<ConfigDropdown>();
 
         if (_calendarButtonImage == null && _calendarButton != null)

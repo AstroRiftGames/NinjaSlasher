@@ -11,7 +11,7 @@ public class PauseOverlay : UIOverlayBase
     [SerializeField] private Button _sfxButton;
 
     [Header("Dependencies")]
-    [SerializeField] private ConfigToggles _configToggles;
+    [SerializeField] private AudioSettingsUI _configToggles;
 
     private bool _wasPausedBeforeShow = false;
 
@@ -21,7 +21,7 @@ public class PauseOverlay : UIOverlayBase
 
         if (_configToggles == null)
         {
-            _configToggles = UIManager.Instance?.GetComponent<ConfigToggles>();
+            _configToggles = UIManager.Instance?.GetComponent<AudioSettingsUI>();
         }
 
         SetupButtons();

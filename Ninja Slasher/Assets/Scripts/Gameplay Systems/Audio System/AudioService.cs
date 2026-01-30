@@ -5,7 +5,8 @@ public class AudioService : MonoBehaviour
     public static AudioService Instance { get; private set; }
 
     [Header("Settings")]
-    [SerializeField] private AudioSettings audioSettings = new AudioSettings();
+    [SerializeField] private AudioSettings audioSettings;
+    [SerializeField] private AudioConfig audioConfig;
 
     [Header("Music")]
     [SerializeField] private AudioSource musicSource;
@@ -28,8 +29,9 @@ public class AudioService : MonoBehaviour
         Instance = this;
         DontDestroyOnLoad(gameObject);
 
-        InitializeSettings();
         InitializePlayers();
+
+        InitializeSettings();
     }
 
     private void Start()
@@ -37,9 +39,29 @@ public class AudioService : MonoBehaviour
         MusicEvents.OnEnterSplash?.Invoke();
     }
 
+    private void OnDestroy()
+    {
+        if (Instance == this)
+        {
+            Instance = null;
+        }
+
+        if (audioConfig != null)
+        {
+            audioConfig.OnMusicEnabledChanged -= OnMusicEnabledChanged;
+            audioConfig.OnSFXEnabledChanged -= OnSFXEnabledChanged;
+        }
+    }
+
     private void InitializeSettings()
     {
-        audioSettings.Load();
+        audioConfig.LoadFromPlayerPrefs();
+
+        audioConfig.OnMusicEnabledChanged += OnMusicEnabledChanged;
+        audioConfig.OnSFXEnabledChanged += OnSFXEnabledChanged;
+
+        ApplyMusicState(audioConfig.MusicEnabled);
+        ApplySFXState(audioConfig.SFXEnabled);
     }
 
     private void InitializePlayers()
@@ -94,18 +116,39 @@ public class AudioService : MonoBehaviour
     public void StopAllSFX()
         => _sfxPlayer.StopAll();
 
-    public AudioSettings Settings => audioSettings;
-
-    public void SaveSettings()
-        => audioSettings.Save();
-
     #endregion
 
-    private void OnDestroy()
+    private void OnMusicEnabledChanged(bool enabled)
     {
-        if (Instance == this)
+        ApplyMusicState(enabled);
+    }
+
+    private void OnSFXEnabledChanged(bool enabled)
+    {
+        ApplySFXState(enabled);
+    }
+
+    private void ApplyMusicState(bool enabled)
+    {
+        if (enabled)
         {
-            Instance = null;
+            _musicPlayer.UnmuteMusic();
+        }
+        else
+        {
+            _musicPlayer.MuteMusic();
+        }
+    }
+
+    private void ApplySFXState(bool enabled)
+    {
+        if (enabled)
+        {
+            _sfxPlayer.UnmuteSFX();
+        }
+        else
+        {
+            _sfxPlayer.MuteSFX();
         }
     }
 }
