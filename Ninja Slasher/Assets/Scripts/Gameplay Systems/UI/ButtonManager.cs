@@ -182,14 +182,22 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
         _resumeButton.onClick.AddListener(() => UIEvents.RequestTogglePauseOverlay());
         _restartButton.onClick.AddListener(OnRestartPressed);
 
-        _quitButton.onClick.AddListener(() => GameManager.Instance.GoToLevelSelection(confirmPendingDeduction: true));
+        //_quitButton.onClick.AddListener(() => GameManager.Instance.GoToLevelSelection(confirmPendingDeduction: true));
+        _quitButton.onClick.AddListener(() =>
+        {
+            UIEvents.RaiseQuitToMenuPressed();
+            UIEvents.RequestShowLevelSelector();
+        });
 
         _musicPausePanelButton.onClick.AddListener(_configToggles.MusicButtonPushed);
         _sfxPausePanelButton.onClick.AddListener(_configToggles.SFXButtonPushed);
 
-        _retryButton.onClick.AddListener(GetComponent<GameplayUIManager>().OnRetryPressed);
-        _backToSelectionButton.onClick.AddListener(GetComponent<GameplayUIManager>().OnBackToSelectionPressed);
-        _continueButton.onClick.AddListener(GetComponent<GameplayUIManager>().ContinueToLevelSelector);
+        //_retryButton.onClick.AddListener(GetComponent<GameplayUIManager>().OnRetryPressed);
+        //_backToSelectionButton.onClick.AddListener(GetComponent<GameplayUIManager>().OnBackToSelectionPressed);
+        //_continueButton.onClick.AddListener(GetComponent<GameplayUIManager>().ContinueToLevelSelector);
+        _retryButton.onClick.AddListener(() => UIEvents.RequestRestartLevel());
+        _backToSelectionButton.onClick.AddListener(() => UIEvents.RequestShowLevelSelector());
+        _continueButton.onClick.AddListener(() => UIEvents.RequestShowLevelSelector());
     }
 
     private void OnNicknameChanged(string newNickname)
@@ -460,8 +468,8 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
 
     private void OnRestartPressed()
     {
-        GameManager.Instance.RestartLevel();
-        UIManager.Instance.ShowHidePauseCanvas();
+        UIEvents.RequestRestartLevel();
+        UIEvents.RequestTogglePauseOverlay();
     }
 
     public void ShowConfirmation(
@@ -485,7 +493,10 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
     {
         ShowConfirmation(
             message: "Are you sure you want to exit? You will lose your progress in this level?",
-            onConfirm: () => GameManager.Instance.GoToLevelSelection(confirmPendingDeduction: true),
+            onConfirm: () => {
+                UIEvents.RaiseQuitToMenuPressed();
+                UIEvents.RequestShowLevelSelector();
+            },
             onCancel: () => Debug.Log("Cancelled"),
             title: "Exit level",
             confirmText: "Exit",

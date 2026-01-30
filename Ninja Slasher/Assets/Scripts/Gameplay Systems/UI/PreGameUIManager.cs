@@ -66,7 +66,7 @@ public class PreGameUIManager : MonoBehaviour
         }
         else
         {
-            UIManager.Instance.ShowHidePreGameCanvas();
+            UIEvents.RequestTogglePreGameScreen();
         }
     }
 
@@ -78,7 +78,7 @@ public class PreGameUIManager : MonoBehaviour
         }
         else
         {
-            UIManager.Instance.ShowHidePreGameCanvas();
+            UIEvents.RequestTogglePreGameScreen();
         }
     }
 
@@ -280,7 +280,7 @@ public class PreGameUIManager : MonoBehaviour
     {
         if (!LifeManager.Instance.CanPlay())
         {
-            GetComponent<GameplayUIManager>().ShowNoLivesPanel();
+            UIEvents.RequestShowNoLivesOverlay();
             return;
         }
 
@@ -289,7 +289,7 @@ public class PreGameUIManager : MonoBehaviour
 
         //UIManager.Instance.HidePreGameScreen();
         UIEvents.RequestHidePreGameScreen();
-        UIManager.Instance.LoadLevelScene(_pendingSceneName);
+        UIEvents.RequestSceneTransition(_pendingSceneName);
         //PlayLevelMusic();
     }
 

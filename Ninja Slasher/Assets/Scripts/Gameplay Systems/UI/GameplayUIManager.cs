@@ -143,7 +143,7 @@ public class GameplayUIManager : MonoBehaviour
         //AudioManager.Instance.PlaySFX(SFXClip.UI_Select);
         AudioService.Instance?.PlaySFX(_audioContext.Audio.select);
 
-        UIManager.Instance.RestartLevel();
+        UIEvents.RequestRestartLevel();
         UIManager.Instance.ShowHideLifeLostCanvas();
     }
 
@@ -176,7 +176,7 @@ public class GameplayUIManager : MonoBehaviour
         if (_noLivesActive && LifeManager.Instance.GetRealLives() > 0)
         {
             _noLivesActive = false;
-            UIManager.Instance.ShowHideNoLivesCanvas();
+            UIEvents.RequestHideNoLivesOverlay();
         }
     }
 
