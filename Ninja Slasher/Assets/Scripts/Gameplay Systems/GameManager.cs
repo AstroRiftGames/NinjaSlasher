@@ -36,10 +36,10 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
 
     private void OnEnable()
     {
-        SceneManager.sceneLoaded += OnSceneLoaded;
-
+        GameEvents.OnLevelStarted += OnLevelStarted;
         GameEvents.OnLevelCompleted += OnLevelCompleted;
         GameEvents.OnLevelFailed += OnLevelFailed;
+        SceneManager.sceneLoaded += OnSceneLoaded;
     }
 
     private void OnDisable()
@@ -47,7 +47,7 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
         GameEvents.OnLevelCompleted -= OnLevelCompleted;
         GameEvents.OnLevelFailed -= OnLevelFailed;
         GameEvents.OnLivesChanged -= OnLivesChanged;
-
+        GameEvents.OnLevelStarted -= OnLevelStarted;
         SceneManager.sceneLoaded -= OnSceneLoaded;
     }
 
@@ -59,6 +59,19 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
         {
             ResetLevelState();
         }
+    }
+
+    private void OnLevelStarted()
+    {
+        if (_levelStarted)
+        {
+            return;
+        }
+
+        LifeManager.Instance.OnLevelStart();
+        _levelStarted = true;
+
+        Debug.Log("[GameManager] Nivel iniciado, vida virtual descontada");
     }
 
     private void OnLevelCompleted(LevelStats stats)
@@ -91,16 +104,6 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
 
     private IEnumerator HandleVictoryWithDelay()
     {
-        //AudioManager.Instance.PlaySFX(SFXClip.UI_Victory);
-
-        //float soundDuration = AudioManager.Instance.GetSFXDuration(SFXClip.UI_Victory);
-
-        //if (soundDuration <= 0f)
-        //{
-        //    soundDuration = 2.0f;
-        //}
-
-        //yield return new WaitForSeconds(soundDuration);
         yield return new WaitForSeconds(0.1f);
 
         UIManager.Instance.ShowHideResultsCanvas();
@@ -114,8 +117,6 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
         }
 
         _levelEnded = true;
-
-        //AudioManager.Instance.PlaySFX(SFXClip.UI_Defeat);
 
         if (_levelStarted && AnalyticsManager.Instance != null)
         {
@@ -145,14 +146,6 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
 
     private IEnumerator HandleDefeatUIWithDelay()
     {
-        //float soundDuration = AudioManager.Instance.GetSFXDuration(SFXClip.UI_Defeat);
-
-        //if (soundDuration <= 0f)
-        //{
-        //    soundDuration = 1.5f;
-        //}
-
-        //yield return new WaitForSeconds(soundDuration);
         yield return new WaitForSeconds(0.1f);
 
         int currentLives = LifeManager.Instance.GetRealLives();
@@ -163,7 +156,6 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
         }
         else if (LifeManager.Instance.CanPlay())
         {
-            //UIManager.Instance.ShowLifeLostOverlay(currentLives);
             UIEvents.RequestShowLifeLostOverlay(currentLives);
         }
         else
@@ -216,10 +208,14 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
             _levelStarted = false;
         }
 
+        if (AudioService.Instance != null)
+        {
+            AudioService.Instance.StopAllSFX();
+        }
+
         SaveManager.Instance.SaveData();
         SceneManager.sceneLoaded += HandleScreenflowLoaded;
         SceneManager.LoadScene("SplashScreen");
-        MusicEvents.OnEnterLevelSelection?.Invoke();
     }
 
     private void HandleScreenflowLoaded(Scene scene, LoadSceneMode mode)

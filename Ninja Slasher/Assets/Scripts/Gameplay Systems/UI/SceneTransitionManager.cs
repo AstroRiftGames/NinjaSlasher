@@ -40,6 +40,11 @@ public class SceneTransitionManager : MonoBehaviour
     {
         SetHUDActive(false);
 
+        if (AudioService.Instance != null)
+        {
+            AudioService.Instance.StopAllSFX();
+        }
+
         _transitionAnim.SetTrigger("Start");
         yield return new WaitForSeconds(_transitionTime);
 
@@ -48,7 +53,6 @@ public class SceneTransitionManager : MonoBehaviour
         SceneManager.LoadScene(sceneName);
 
         _transitionAnim.SetTrigger("End");
-        //AudioManager.Instance.PlaySFX(SFXClip.UI_TransitionSlash);
         AudioService.Instance?.PlaySFX(_audioContext.Audio.transitionSlash);
 
         UIManager.Instance.SetGameplayHUDEnabled(true);
@@ -83,6 +87,11 @@ public class SceneTransitionManager : MonoBehaviour
             UIManager.Instance.HideLifeLostOverlay();
         }
 
+        if (AudioService.Instance != null)
+        {
+            AudioService.Instance.StopAllSFX();
+        }
+
         _transitionAnim.SetTrigger("OpeningStart");
         yield return new WaitForSeconds(_transitionTime);
 
@@ -91,8 +100,10 @@ public class SceneTransitionManager : MonoBehaviour
         UIManager.Instance.SetGameplayHUDEnabled(false);
 
         _transitionAnim.SetTrigger("End");
-        //AudioManager.Instance.PlaySFX(SFXClip.UI_TransitionSlash);
         AudioService.Instance?.PlaySFX(_audioContext.Audio.transitionSlash);
+
+        MusicEvents.OnEnterLevelSelection?.Invoke();
+
         UIEvents.RaiseLevelSelectorReady();
     }
 
