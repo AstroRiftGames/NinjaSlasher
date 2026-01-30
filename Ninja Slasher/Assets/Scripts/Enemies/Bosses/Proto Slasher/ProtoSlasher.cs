@@ -1,6 +1,5 @@
 using System.Collections;
 using UnityEngine;
-using AstroRift.Core.Pooling;
 
 enum AttackEnum
 {
@@ -50,7 +49,7 @@ public class ProtoSlasher : BossEnemy
     bool _isVulnerable;
     [SerializeField] float _vulnerableTime;
 
-    public override void Awake()
+    protected override void Awake()
     {
         base.Awake();
 
