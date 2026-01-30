@@ -12,8 +12,12 @@ public class IAPTestButton : MonoBehaviour
     [SerializeField] private TextMeshProUGUI statusText;
     [SerializeField] private TextMeshProUGUI priceText;
 
+    [SerializeField] UIAudioContext _audioContext;
+
     private void Start()
     {
+        _audioContext = GetComponentInParent<UIAudioContext>();
+
         if (buyButton != null)
         {
             buyButton.onClick.AddListener(OnBuyClicked);
@@ -88,7 +92,8 @@ public class IAPTestButton : MonoBehaviour
             UpdateStatus($"Purchase completed: {purchasedProductId}");
             Debug.Log($"[IAPTest] Purchase completed: {purchasedProductId}");
 
-            AudioManager.Instance.PlaySFX(SFXClip.Reward_Coins);
+            //AudioManager.Instance.PlaySFX(SFXClip.Reward_Coins);
+            AudioService.Instance.PlaySFX(_audioContext.Audio.rewardCoins);
 
             // Aca se otorgaria la recompensa al jugador
             // Metodo.AddBentos(100);

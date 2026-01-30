@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 
 public class StoreModal : UIModalBase
@@ -70,7 +71,7 @@ public class StoreModal : UIModalBase
         StartCoroutine(DelayedHide());
     }
 
-    private System.Collections.IEnumerator DelayedHide()
+    private IEnumerator DelayedHide()
     {
         yield return new WaitForSecondsRealtime(_closeAnimationDuration);
         gameObject.SetActive(false);
