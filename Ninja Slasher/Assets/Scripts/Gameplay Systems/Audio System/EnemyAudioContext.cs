@@ -2,7 +2,12 @@ using UnityEngine;
 
 public class EnemyAudioContext : MonoBehaviour
 {
-    [SerializeField] private EnemyData _enemyData;
+    private EnemyAudioSet _audioSet;
 
-    public EnemyAudioSet Audio => _enemyData != null ? _enemyData.AudioSet : null;
+    public EnemyAudioSet Audio => _audioSet;
+
+    public void Initialize(EnemyAudioSet audioSet)
+    {
+        _audioSet = audioSet;
+    }
 }

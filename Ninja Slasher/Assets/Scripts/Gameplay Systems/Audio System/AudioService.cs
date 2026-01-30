@@ -88,6 +88,12 @@ public class AudioService : MonoBehaviour
     public void PlaySFXAtPosition(AudioEvent audioEvent, Vector3 position)
         => _sfxPlayer.PlayAtPosition(audioEvent, position);
 
+    public void StopSFX(AudioEvent audioEvent)
+    => _sfxPlayer.Stop(audioEvent);
+
+    public void StopAllSFX()
+        => _sfxPlayer.StopAll();
+
     public AudioSettings Settings => audioSettings;
 
     public void SaveSettings()

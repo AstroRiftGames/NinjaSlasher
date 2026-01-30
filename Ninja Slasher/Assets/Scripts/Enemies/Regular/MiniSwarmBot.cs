@@ -13,7 +13,8 @@ public class MiniSwarmBot : FlyingEnemy
     }
     public override void Die()
     {
-        AudioManager.Instance.PlaySFXAtPosition(SFXClip.E_Mini_Death, transform.position);
+        //AudioManager.Instance.PlaySFXAtPosition(SFXClip.E_Mini_Death, transform.position);
+        AudioService.Instance.PlaySFXAtPosition(_audioContext.Audio.death, transform.position);
         base.Die();
     }
 }

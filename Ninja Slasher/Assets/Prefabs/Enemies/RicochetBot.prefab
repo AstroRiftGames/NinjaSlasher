@@ -15,6 +15,7 @@ GameObject:
   - component: {fileID: 2128595956542282319}
   - component: {fileID: 2914120843064067955}
   - component: {fileID: 4795387790062924060}
+  - component: {fileID: -2539977536227453622}
   m_Layer: 9
   m_Name: RicochetBot
   m_TagString: Enemy
@@ -83,6 +84,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _data: {fileID: 11400000, guid: b929427c2f7662b4aa22a1c5febc550f, type: 2}
+  _audioContext: {fileID: 0}
   UpperCol: {fileID: 5640190212091876609}
   LowerCol: {fileID: 2426180040628522412}
   RearCol: {fileID: 259584263403014144}
@@ -95,7 +97,7 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 1024
   _animator: {fileID: 8175347605308805899}
-  _range: 1
+  _LOSRange: 0
   _cooldDown: 3.5
   _refPoint: {fileID: 8528232130383518210}
   _cannon: {fileID: 3570050696458178624}
@@ -244,6 +246,19 @@ CircleCollider2D:
   m_CompositeOrder: 0
   m_Offset: {x: 0, y: 0}
   m_Radius: 1.5155134
+--- !u!114 &-2539977536227453622
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 223295728606219981}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 167e4bd7e1f82774db0c7c14c8ae2e2a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _enemyData: {fileID: 0}
 --- !u!1 &259584263403014144
 GameObject:
   m_ObjectHideFlags: 0

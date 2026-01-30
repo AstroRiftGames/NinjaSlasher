@@ -7,7 +7,8 @@ public class NanoSwarm : FlyingEnemy
 
     public override void Die()
     {
-        AudioManager.Instance.PlaySFXAtPosition(SFXClip.E_Nano_Death, transform.position);
+        //AudioManager.Instance.PlaySFXAtPosition(SFXClip.E_Nano_Death, transform.position);
+        AudioService.Instance.PlaySFXAtPosition(_audioContext.Audio.death, transform.position);
         for (int n = 0; n < _childrenAmount; n++)
         {
             Instantiate(_miniSwarmBot, 

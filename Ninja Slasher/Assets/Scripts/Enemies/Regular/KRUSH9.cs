@@ -1,12 +1,10 @@
-using Unity.VisualScripting;
 using UnityEngine;
-using AstroRift.Core.Update;
 
 public class KRUSH9 : Enemy
 {
     [SerializeField] float _attackSpeed;
 
-    public override void Awake()
+    protected override void Awake()
     {
         base.Awake();
         _animator = GetComponent<Animator>();

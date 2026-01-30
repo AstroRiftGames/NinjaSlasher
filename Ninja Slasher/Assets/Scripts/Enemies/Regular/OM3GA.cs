@@ -20,7 +20,7 @@ public class OM3GA : RangeEnemy
     private LineRenderer _ray;
 
 
-    public override void Awake()
+    protected override void Awake()
     {
         base.Awake();
         SetPatrolTarget();

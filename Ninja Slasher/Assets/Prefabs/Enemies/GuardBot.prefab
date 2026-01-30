@@ -244,6 +244,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _data: {fileID: 11400000, guid: 4de342f2772f20f4b95da81f830b5922, type: 2}
+  _audioContext: {fileID: 0}
   UpperCol: {fileID: 3195358437396176281}
   LowerCol: {fileID: 2378410477699695626}
   RearCol: {fileID: 3146107059943538319}
@@ -299,6 +300,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4508483597818230981}
+  - component: {fileID: -2979618355887688059}
   m_Layer: 0
   m_Name: GuardBot
   m_TagString: Untagged
@@ -324,6 +326,19 @@ Transform:
   - {fileID: 3911675924608240839}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &-2979618355887688059
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3080200979743364235}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 167e4bd7e1f82774db0c7c14c8ae2e2a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _enemyData: {fileID: 0}
 --- !u!1 &3146107059943538319
 GameObject:
   m_ObjectHideFlags: 0

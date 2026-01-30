@@ -606,6 +606,7 @@ GameObject:
   - component: {fileID: -7267630552735352972}
   - component: {fileID: -7881411462117380975}
   - component: {fileID: 3158596639130508848}
+  - component: {fileID: -3289163760225232830}
   m_Layer: 9
   m_Name: MiniSwarmBot
   m_TagString: Enemy
@@ -773,10 +774,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _data: {fileID: 11400000, guid: bc637f120a4d6dd499f1abe4191930d7, type: 2}
+  _audioContext: {fileID: 0}
   UpperCol: {fileID: 5470628579322603169}
   LowerCol: {fileID: 8411165237147528024}
   RearCol: {fileID: 987884854203873857}
   FrontCol: {fileID: 7807016117712742256}
+  _deathTime: 0
   _obstaclesLayer:
     serializedVersion: 2
     m_Bits: 192
@@ -823,3 +826,16 @@ CircleCollider2D:
   m_CompositeOrder: 0
   m_Offset: {x: 0, y: 0}
   m_Radius: 0.7
+--- !u!114 &-3289163760225232830
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8624691530844727195}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 167e4bd7e1f82774db0c7c14c8ae2e2a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _enemyData: {fileID: 0}

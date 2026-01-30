@@ -3,7 +3,8 @@ using UnityEngine;
 public class Enemy : MonoBehaviour
 {
     [SerializeField] protected EnemyData _data;
-    private EnemyAudioContext _audio;
+    protected EnemyAudioContext _audioContext;
+    public EnemyAudioContext AudioContext => _audioContext;
     [SerializeField] protected GameObject UpperCol;
     [SerializeField] protected GameObject LowerCol;
     [SerializeField] protected GameObject RearCol;
@@ -35,7 +36,7 @@ public class Enemy : MonoBehaviour
             CustomUpdateManager.Instance.UnsubscribeFromUpdate(CustomUpdate);
     }
 
-    public virtual void Awake()
+    protected virtual void Awake()
     {
         TryGetComponent(out Rigidbody2D rb);
         _rb = rb;
@@ -46,7 +47,13 @@ public class Enemy : MonoBehaviour
             TryGetComponent(out Animator anim);
             _animator = anim;
         }
-        _audio = GetComponent<EnemyAudioContext>();
+        _audioContext = GetComponent<EnemyAudioContext>();
+
+        if (_audioContext != null && _data != null)
+        {
+            _audioContext.Initialize(_data.AudioSet);
+        }
+
         _player = FindAnyObjectByType<NewController>().transform;
     }
 

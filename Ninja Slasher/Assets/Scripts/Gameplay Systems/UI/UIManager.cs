@@ -1,7 +1,6 @@
 using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using AstroRift.Core.Update;
 using System;
 
 public class UIManager : MonoBehaviourSingleton<UIManager>
@@ -10,7 +9,6 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
     private ButtonManager _buttonManager;
     private GameplayUIManager _gameplayUIManager;
     private PreGameUIManager _preGameUIManager;
-    private SceneTransitionManager _sceneTransitionManager;
 
     [Header("OVERLAYS")]
     [SerializeField] private PauseOverlay _pauseOverlay;
@@ -87,7 +85,6 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
         _buttonManager = GetComponent<ButtonManager>();
         _gameplayUIManager = GetComponent<GameplayUIManager>();
         _preGameUIManager = GetComponent<PreGameUIManager>();
-        _sceneTransitionManager = GetComponent<SceneTransitionManager>();
 
         if (_dailyWheelUI == null)
         {

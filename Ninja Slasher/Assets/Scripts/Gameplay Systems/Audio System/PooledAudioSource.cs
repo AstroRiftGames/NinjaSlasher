@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 
 [RequireComponent(typeof(AudioSource))]
@@ -80,7 +81,7 @@ public class PooledAudioSource : MonoBehaviour, IPoolable
         }
     }
 
-    private System.Collections.IEnumerator AutoReleaseCoroutine(float delay)
+    private IEnumerator AutoReleaseCoroutine(float delay)
     {
         yield return new WaitForSeconds(delay);
 
@@ -90,5 +91,20 @@ public class PooledAudioSource : MonoBehaviour, IPoolable
         }
 
         _releaseCoroutine = null;
+    }
+
+    public void Stop()
+    {
+        if (_releaseCoroutine != null)
+        {
+            StopCoroutine(_releaseCoroutine);
+            _releaseCoroutine = null;
+        }
+
+        if (Source != null)
+        {
+            Source.Stop();
+            Source.clip = null;
+        }
     }
 }
