@@ -4,7 +4,7 @@ using UnityEngine;
 public class SFXPlayer
 {
     private readonly ObjectPool<PooledAudioSource> _pool;
-    private readonly AudioSettings _settings;
+    private readonly AudioSettingsSO _settings;
     private readonly Transform _parent;
 
     private readonly Dictionary<AudioEvent, PooledAudioSource> _loopingSources
@@ -12,7 +12,7 @@ public class SFXPlayer
 
     private bool isMuted = false;
 
-    public SFXPlayer(PooledAudioSource prefab, int poolSize, AudioSettings settings, Transform parent)
+    public SFXPlayer(PooledAudioSource prefab, int poolSize, AudioSettingsSO settings, Transform parent)
     {
         _settings = settings;
         _parent = parent;
@@ -95,5 +95,21 @@ public class SFXPlayer
     public void UnmuteSFX()
     {
         isMuted = false;
+    }
+
+    public void RefreshVolumes()
+    {
+        foreach (var kvp in _loopingSources)
+        {
+            var audioEvent = kvp.Key;
+            var pooled = kvp.Value;
+
+            if (pooled != null && pooled.Source != null)
+            {
+                pooled.Source.volume =
+                    audioEvent.volume *
+                    _settings.GetChannelMultiplier(audioEvent.channel);
+            }
+        }
     }
 }

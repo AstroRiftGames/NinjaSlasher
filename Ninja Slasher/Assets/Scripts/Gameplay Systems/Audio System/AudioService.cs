@@ -5,7 +5,8 @@ public class AudioService : MonoBehaviour
     public static AudioService Instance { get; private set; }
 
     [Header("Settings")]
-    [SerializeField] private AudioSettings audioSettings;
+    [SerializeField] private AudioSettingsSO audioSettings;
+    public AudioSettingsSO AudioSettings => audioSettings;
     [SerializeField] private AudioConfig audioConfig;
 
     [Header("Music")]
@@ -55,6 +56,7 @@ public class AudioService : MonoBehaviour
 
     private void InitializeSettings()
     {
+        audioSettings.Load();
         audioConfig.LoadFromPlayerPrefs();
 
         audioConfig.OnMusicEnabledChanged += OnMusicEnabledChanged;
@@ -150,5 +152,11 @@ public class AudioService : MonoBehaviour
         {
             _sfxPlayer.MuteSFX();
         }
+    }
+
+    public void RefreshVolumes()
+    {
+        _musicPlayer?.UpdateVolume();
+        _sfxPlayer?.RefreshVolumes();
     }
 }

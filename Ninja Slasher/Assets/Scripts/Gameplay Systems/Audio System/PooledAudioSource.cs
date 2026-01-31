@@ -51,7 +51,7 @@ public class PooledAudioSource : MonoBehaviour, IPoolable
 
     #endregion
 
-    public void Play(AudioEvent audioEvent, AudioSettings settings, Vector3 position, ObjectPool<PooledAudioSource> pool)
+    public void Play(AudioEvent audioEvent, AudioSettingsSO settings, Vector3 position, ObjectPool<PooledAudioSource> pool)
     {
         _pool = pool;
 

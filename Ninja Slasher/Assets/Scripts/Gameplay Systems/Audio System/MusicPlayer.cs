@@ -4,12 +4,12 @@ using UnityEngine;
 public class MusicPlayer
 {
     private readonly AudioSource _source;
-    private readonly AudioSettings _settings;
+    private readonly AudioSettingsSO _settings;
     private readonly MonoBehaviour _coroutineRunner;
     private bool isMuted = false;
     private float volumeBeforeMute = 1f;
 
-    public MusicPlayer(AudioSource source, AudioSettings settings, MonoBehaviour coroutineRunner)
+    public MusicPlayer(AudioSource source, AudioSettingsSO settings, MonoBehaviour coroutineRunner)
     {
         _source = source;
         _settings = settings;
