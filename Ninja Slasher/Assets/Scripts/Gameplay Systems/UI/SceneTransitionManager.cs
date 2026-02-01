@@ -10,6 +10,13 @@ public class SceneTransitionManager : MonoBehaviour
 
     [SerializeField] private GameObject _hudObject;
 
+    private UIAudioContext _audioContext;
+
+    private void Awake()
+    {
+        _audioContext = GetComponentInParent<UIAudioContext>();
+    }
+
     private void OnEnable()
     {
         UIEvents.OnSceneTransitionRequested += LoadLevelScene;
@@ -33,6 +40,11 @@ public class SceneTransitionManager : MonoBehaviour
     {
         SetHUDActive(false);
 
+        if (AudioService.Instance != null)
+        {
+            AudioService.Instance.StopAllSFX();
+        }
+
         _transitionAnim.SetTrigger("Start");
         yield return new WaitForSeconds(_transitionTime);
 
@@ -41,7 +53,7 @@ public class SceneTransitionManager : MonoBehaviour
         SceneManager.LoadScene(sceneName);
 
         _transitionAnim.SetTrigger("End");
-        AudioManager.Instance.PlaySFX(SFXClip.UI_TransitionSlash);
+        AudioService.Instance?.PlaySFX(_audioContext.Audio.transitionSlash);
 
         UIManager.Instance.SetGameplayHUDEnabled(true);
 
@@ -66,17 +78,31 @@ public class SceneTransitionManager : MonoBehaviour
 
         SetHUDActive(false);
 
-        UIManager.Instance.HideResultsModal();
+        UIEvents.RequestHideResultsModal();
+        UIEvents.RequestHidePauseOverlay();
+        UIEvents.RequestHideNoLivesOverlay();
+
+        if (UIManager.Instance != null)
+        {
+            UIManager.Instance.HideLifeLostOverlay();
+        }
+
+        if (AudioService.Instance != null)
+        {
+            AudioService.Instance.StopAllSFX();
+        }
 
         _transitionAnim.SetTrigger("OpeningStart");
         yield return new WaitForSeconds(_transitionTime);
 
-        UIManager.Instance.HideSplashScreen();
+        UIEvents.RequestHideSplashScreen();
         UIManager.Instance.SetLevelsScreenEnabled(true);
         UIManager.Instance.SetGameplayHUDEnabled(false);
 
         _transitionAnim.SetTrigger("End");
-        AudioManager.Instance.PlaySFX(SFXClip.UI_TransitionSlash);
+        AudioService.Instance?.PlaySFX(_audioContext.Audio.transitionSlash);
+
+        MusicEvents.OnEnterLevelSelection?.Invoke();
 
         UIEvents.RaiseLevelSelectorReady();
     }

@@ -1,6 +1,4 @@
 using UnityEngine;
-using AstroRift.Core.Update;
-using AstroRift.Core.Pooling;
 
 public class RangeEnemy : Enemy
 {
@@ -21,7 +19,7 @@ public class RangeEnemy : Enemy
     private ObjectPool<Projectile> _pool;
     protected void SetLastAttack() => _lastAttack = Time.time;
 
-    public override void Awake()
+    protected override void Awake()
     {
         base.Awake();
         _pool = new ObjectPool<Projectile>(_data.Projectile, 5, transform);

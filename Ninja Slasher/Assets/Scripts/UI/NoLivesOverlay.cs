@@ -46,6 +46,14 @@ public class NoLivesOverlay : UIOverlayBase
         UpdateButtons();
     }
 
+    protected override void OnHidden()
+    {
+        if (!LifeManager.Instance.CanPlay())
+        {
+            GameManager.Instance.GoToLevelSelection(confirmPendingDeduction: false);
+        }
+    }
+
     private void UpdateMessage()
     {
         if (_messageText == null) return;
@@ -90,6 +98,9 @@ public class NoLivesOverlay : UIOverlayBase
 
         if (_watchAdButton != null)
             _watchAdButton.gameObject.SetActive(!hasLives);
+
+        if (_closeButton != null)
+            _closeButton.gameObject.SetActive(hasLives);
     }
 
     private void OnWatchAdClicked()
@@ -106,11 +117,18 @@ public class NoLivesOverlay : UIOverlayBase
 
     private void OnClaimLifeClicked()
     {
-        Debug.Log("[NoLivesOverlay] Reclamar vida disponible");
+        // TODO: Integrar con sistema de ads
+        // AdManager.Instance?.ShowRewardedAd(() => 
+        // {
+        //     LifeManager.Instance?.AddLife();
+        //     Hide();
+        // });
 
-        if (LifeManager.Instance?.CanPlay() == true)
+        if (LifeManager.Instance != null)
         {
+            LifeManager.Instance.AddLife();
             Hide();
+            GameManager.Instance.RestartLevel();
         }
     }
 

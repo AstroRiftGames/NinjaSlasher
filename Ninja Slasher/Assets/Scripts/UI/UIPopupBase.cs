@@ -57,7 +57,8 @@ public abstract class UIPopupBase : UIPanel
 
         showSequence.SetUpdate(true);
 
-        AudioManager.Instance?.PlaySFX(SFXClip.UI_Select);
+        //AudioManager.Instance?.PlaySFX(SFXClip.UI_Select);
+        AudioService.Instance?.PlaySFX(_audioContext.Audio.select);
     }
 
     protected virtual void AnimateHide()

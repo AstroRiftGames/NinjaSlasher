@@ -84,11 +84,13 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
     [SerializeField] private Button deleteSaveButton;
 #endif
 
-    private ConfigToggles _configToggles;
+    private AudioSettingsUI _configToggles;
     private ConfigDropdown _configPanelManager;
 
     private List<Sequence> activeButtonSequences = new List<Sequence>();
     private Dictionary<int, Vector2> savedButtonPositions = new Dictionary<int, Vector2>();
+
+    private UIAudioContext _audioContext;
 
     private void OnSaveDataLoaded(GameData _) => RefreshLevelProgression();
 
@@ -100,8 +102,8 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
     public override void Awake()
     {
         base.Awake();
-
-        _configToggles = GetComponent<ConfigToggles>();
+        _audioContext = GetComponentInParent<UIAudioContext>();
+        _configToggles = GetComponent<AudioSettingsUI>();
         _configPanelManager = GetComponent<ConfigDropdown>();
 
         if (_calendarButtonImage == null && _calendarButton != null)
@@ -174,18 +176,28 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
 
     private void SetupGameplayButtons()
     {
-        _pauseButton.onClick.AddListener(UIManager.Instance.TogglePauseOverlay);
-        _resumeButton.onClick.AddListener(UIManager.Instance.TogglePauseOverlay);
+        //_pauseButton.onClick.AddListener(UIManager.Instance.TogglePauseOverlay);
+        _pauseButton.onClick.AddListener(() => UIEvents.RequestTogglePauseOverlay());
+        //_resumeButton.onClick.AddListener(UIManager.Instance.TogglePauseOverlay);
+        _resumeButton.onClick.AddListener(() => UIEvents.RequestTogglePauseOverlay());
         _restartButton.onClick.AddListener(OnRestartPressed);
 
-        _quitButton.onClick.AddListener(() => GameManager.Instance.GoToLevelSelection(confirmPendingDeduction: true));
+        //_quitButton.onClick.AddListener(() => GameManager.Instance.GoToLevelSelection(confirmPendingDeduction: true));
+        _quitButton.onClick.AddListener(() =>
+        {
+            UIEvents.RaiseQuitToMenuPressed();
+            UIEvents.RequestShowLevelSelector();
+        });
 
         _musicPausePanelButton.onClick.AddListener(_configToggles.MusicButtonPushed);
         _sfxPausePanelButton.onClick.AddListener(_configToggles.SFXButtonPushed);
 
-        _retryButton.onClick.AddListener(GetComponent<GameplayUIManager>().OnRetryPressed);
-        _backToSelectionButton.onClick.AddListener(GetComponent<GameplayUIManager>().OnBackToSelectionPressed);
-        _continueButton.onClick.AddListener(GetComponent<GameplayUIManager>().ContinueToLevelSelector);
+        //_retryButton.onClick.AddListener(GetComponent<GameplayUIManager>().OnRetryPressed);
+        //_backToSelectionButton.onClick.AddListener(GetComponent<GameplayUIManager>().OnBackToSelectionPressed);
+        //_continueButton.onClick.AddListener(GetComponent<GameplayUIManager>().ContinueToLevelSelector);
+        _retryButton.onClick.AddListener(() => UIEvents.RequestRestartLevel());
+        _backToSelectionButton.onClick.AddListener(() => UIEvents.RequestShowLevelSelector());
+        _continueButton.onClick.AddListener(() => UIEvents.RequestShowLevelSelector());
     }
 
     private void OnNicknameChanged(string newNickname)
@@ -254,7 +266,8 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
 
     public void OpenURLButtonClicked(string url)
     {
-        UIManager.Instance.OpenURL(url);
+        //UIManager.Instance.OpenURL(url);
+        Application.OpenURL(url);
     }
 
     private void SetupLevelSelectorButtons()
@@ -263,14 +276,16 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
 
         _musicButton.onClick.AddListener(_configToggles.MusicButtonPushed);
         _sfxButton.onClick.AddListener(_configToggles.SFXButtonPushed);
-        _profileButton.onClick.AddListener(UIManager.Instance.ShowHideProfileCanvas);
+        //_profileButton.onClick.AddListener(UIManager.Instance.ShowHideProfileCanvas);
+        _profileButton.onClick.AddListener(UIEvents.RequestShowProfileModal);
 
         if (_hapticButton != null)
         {
             _hapticButton.onClick.AddListener(_configToggles.HapticFeedbackPushed);
         }
 
-        _closeNoLivesPanelButton.onClick.AddListener(UIManager.Instance.HideNoLivesOverlay);
+        //_closeNoLivesPanelButton.onClick.AddListener(UIManager.Instance.HideNoLivesOverlay);
+        _closeNoLivesPanelButton.onClick.AddListener(UIEvents.RequestHideNoLivesOverlay);
 
         //_adForMoreLifeButton.onClick.AddListener(AdsManager.Instance.ShowRewardedAdForExtraLife);
 
@@ -283,9 +298,12 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
         //_userNicknameButton.onClick.AddListener(UIManager.Instance.ShowHideUserNicknameEditCanvas);
         _userNicknameButton.onClick.AddListener(ShowNicknameEditPopup);
 
-        _creditsButton.onClick.AddListener(UIManager.Instance.ShowHideCreditsCanvas);
-        _closeProfileButton.onClick.AddListener(UIManager.Instance.ShowHideProfileCanvas);
-        _closeCreditsButton.onClick.AddListener(UIManager.Instance.ShowHideCreditsCanvas);
+        //_creditsButton.onClick.AddListener(UIManager.Instance.ShowHideCreditsCanvas);
+        _creditsButton.onClick.AddListener(UIEvents.RequestShowCreditsModal);
+        //_closeProfileButton.onClick.AddListener(UIManager.Instance.ShowHideProfileCanvas);
+        _closeProfileButton.onClick.AddListener(UIEvents.RequestHideProfileModal);
+        //_closeCreditsButton.onClick.AddListener(UIManager.Instance.ShowHideCreditsCanvas);
+        _closeCreditsButton.onClick.AddListener(UIEvents.RequestHideCreditsModal);
 
         foreach (var img in _userIconButtonGroup)
         {
@@ -301,9 +319,12 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
             });
         }
 
-        _storeButton.onClick.AddListener(UIManager.Instance.ShowHideStoreCanvas);
-        _closeStoreButton.onClick.AddListener(UIManager.Instance.ShowHideStoreCanvas);
-        _calendarButton.onClick.AddListener(UIManager.Instance.ShowHideDailyRewardCanvas);
+        //_storeButton.onClick.AddListener(UIManager.Instance.ShowHideStoreCanvas);
+        _storeButton.onClick.AddListener(UIEvents.RequestShowStoreModal);
+        //_closeStoreButton.onClick.AddListener(UIManager.Instance.ShowHideStoreCanvas);
+        _closeStoreButton.onClick.AddListener(UIEvents.RequestHideStoreModal);
+        //_calendarButton.onClick.AddListener(UIManager.Instance.ShowHideDailyRewardCanvas);
+        _calendarButton.onClick.AddListener(UIEvents.RequestShowDailyRewardModal);
         _configDropdownButton.onClick.AddListener(_configPanelManager.OpenCloseConfigPanel);
 
         for (int i = 0; i < levelButtons.Length; i++)
@@ -315,7 +336,7 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
             {
                 if (IsLevelUnlocked(levelId))
                 {
-                    UIManager.Instance.ShowConfirmationPanel(sceneName);
+                    UIEvents.RequestLevelPreview(sceneName);
                 }
                 else
                 {
@@ -360,7 +381,8 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
 
             if (UIManager.Instance != null)
             {
-                UIManager.Instance.HideNoLivesOverlay();                
+                //UIManager.Instance.HideNoLivesOverlay();        
+                UIEvents.RequestHideNoLivesOverlay();
             }
         }
     }
@@ -454,8 +476,8 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
 
     private void OnRestartPressed()
     {
-        GameManager.Instance.RestartLevel();
-        UIManager.Instance.ShowHidePauseCanvas();
+        UIEvents.RequestRestartLevel();
+        UIEvents.RequestTogglePauseOverlay();
     }
 
     public void ShowConfirmation(
@@ -479,7 +501,10 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
     {
         ShowConfirmation(
             message: "Are you sure you want to exit? You will lose your progress in this level?",
-            onConfirm: () => GameManager.Instance.GoToLevelSelection(confirmPendingDeduction: true),
+            onConfirm: () => {
+                UIEvents.RaiseQuitToMenuPressed();
+                UIEvents.RequestShowLevelSelector();
+            },
             onCancel: () => Debug.Log("Cancelled"),
             title: "Exit level",
             confirmText: "Exit",
@@ -593,10 +618,7 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
                 });
         }
 
-        if (AudioManager.Instance != null)
-        {
-            AudioManager.Instance.PlaySFX(SFXClip.UI_Select);
-        }
+        AudioService.Instance?.PlaySFX(_audioContext.Audio.select);
     }
 
     public void StopAllButtonAnimations()

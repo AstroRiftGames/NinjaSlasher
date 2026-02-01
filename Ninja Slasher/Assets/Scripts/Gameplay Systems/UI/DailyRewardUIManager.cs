@@ -25,10 +25,12 @@ public class DailyRewardUIManager : MonoBehaviourSingleton<DailyRewardUIManager>
     private DailyRewardSystem dailyRewardSystem;
     private bool isInitialized = false;
 
+    private UIAudioContext _audioContext;
+
     void Start()
     {
         dailyRewardSystem = DailyRewardSystem.Instance;
-
+        _audioContext = GetComponent<UIAudioContext>();
         SubscribeToEvents();
         InitializeUI();
     }
@@ -203,9 +205,13 @@ public class DailyRewardUIManager : MonoBehaviourSingleton<DailyRewardUIManager>
 
     void OnRewardClaimed(DailyReward reward)
     {
-        //Debug.Log($"[DailyRewardUIManager] Recompensa reclamada: {reward.displayName}");
-
         ShowDailyReward();
+
+        if (_audioContext != null && _audioContext.Audio != null)
+        {
+            AudioService.Instance.PlaySFX(_audioContext.Audio.rewardPrize);
+        }
+
         StartCoroutine(ShowRewardClaimedFeedback(reward));
     }
 
@@ -254,9 +260,8 @@ public class DailyRewardUIManager : MonoBehaviourSingleton<DailyRewardUIManager>
 
     private void OnClosePressed()
     {
-        // TO DO: Usar UIEvents.RequestClosePanel("DailyReward")
-
-        UIManager.Instance.HideDailyRewardModal();
+        //UIManager.Instance.HideDailyRewardModal();
+        UIEvents.RequestHideDailyRewardModal();
     }
 
     private void OnAvailabilityChanged(bool canClaim)

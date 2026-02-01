@@ -1,7 +1,5 @@
 using System.Collections;
-using System.Threading.Tasks;
 using UnityEngine;
-using AstroRift.Core.Update;
 
 public class GuardBot : Enemy
 {
@@ -22,8 +20,7 @@ public class GuardBot : Enemy
     float _lastDetectionTime;
     [SerializeField] float _resetDelay = 5f;
 
-
-    public override void Awake()
+    protected override void Awake()
     {
         base.Awake();
         _currentSpeed = _speed;
@@ -93,11 +90,13 @@ public class GuardBot : Enemy
         _target = GetPlayerPos();
         _isPushing = true;
         _animator.SetTrigger("OnDetection");
-        AudioManager.Instance.PlaySFXAtPosition(SFXClip.E_Guard_Detection, transform.position);
+        //AudioManager.Instance.PlaySFXAtPosition(SFXClip.E_Guard_Detection, transform.position);
+        AudioService.Instance.PlaySFXAtPosition(_audioContext.Audio.detection, transform.position);
         _currentSpeed = 0;
         yield return new WaitForSeconds(1f);
         _animator.SetTrigger("OnPushStart");
-        AudioManager.Instance.PlaySFXAtPosition(SFXClip.E_Guard_Charge, transform.position);
+        //AudioManager.Instance.PlaySFXAtPosition(SFXClip.E_Guard_Charge, transform.position);
+        AudioService.Instance.PlaySFXAtPosition(_audioContext.Audio.charge, transform.position);
         _currentSpeed = _speed * _speedMultiplier;
         yield return new WaitForSeconds(2f);
         _isPushing = false;
@@ -127,7 +126,8 @@ public class GuardBot : Enemy
     public override void Die()
     {
         _currentSpeed = 0;
-        AudioManager.Instance.PlaySFXAtPosition(SFXClip.E_Guard_Death, transform.position);
+        //AudioManager.Instance.PlaySFXAtPosition(SFXClip.E_Guard_Death, transform.position);
+        AudioService.Instance.PlaySFXAtPosition(_audioContext.Audio.death, transform.position);
         FrontCol.SetActive(false);
         RearCol.SetActive(false);
         UpperCol.SetActive(false);  

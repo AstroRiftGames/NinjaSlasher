@@ -14,7 +14,15 @@ public class GameplayUIManager : MonoBehaviour
     [SerializeField] private TextMeshProUGUI _bonusTimeText;
     [SerializeField] private TextMeshProUGUI _puRemainingTime;
 
+    private UIAudioContext _audioContext;
+
     private bool _noLivesActive = false;
+
+    private void Awake()
+    {
+        _audioContext = GetComponentInParent<UIAudioContext>();
+    }
+
     private void OnDisable()
     {
         GameEvents.OnLivesChanged -= OnLivesChanged;
@@ -118,7 +126,8 @@ public class GameplayUIManager : MonoBehaviour
     public void ShowNoLivesPanel()
     {
         _noLivesActive = true;
-        UIManager.Instance.ShowNoLivesOverlay();
+        //UIManager.Instance.ShowNoLivesOverlay();
+        UIEvents.RequestShowNoLivesOverlay();
     }
 
     public void UpdateLivesUI(int lives)
@@ -131,23 +140,33 @@ public class GameplayUIManager : MonoBehaviour
 
     public void OnRetryPressed()
     {
-        AudioManager.Instance.PlaySFX(SFXClip.UI_Select);
-        UIManager.Instance.RestartLevel();
-        UIManager.Instance.ShowHideLifeLostCanvas();
+        //AudioManager.Instance.PlaySFX(SFXClip.UI_Select);
+        AudioService.Instance?.PlaySFX(_audioContext.Audio.select);
+
+        UIEvents.RequestRestartLevel();
+        //UIManager.Instance.ShowHideLifeLostCanvas();
+        UIEvents.RequestShowLifeLostPanel();
     }
 
     public void OnBackToSelectionPressed()
     {
-        UIManager.Instance.ShowHideLifeLostCanvas();
-        AudioManager.Instance.PlaySFX(SFXClip.UI_Select);
-        UIManager.Instance.HideResultsModal();
+        //UIManager.Instance.ShowHideLifeLostCanvas();
+        UIEvents.RequestShowLifeLostPanel();
+        //AudioManager.Instance.PlaySFX(SFXClip.UI_Select);
+
+        AudioService.Instance?.PlaySFX(_audioContext.Audio.select);
+
+        //UIManager.Instance.HideResultsModal();
+        UIEvents.RequestHideResultsModal();
         GameManager.Instance.GoToLevelSelection(confirmPendingDeduction: false);
     }
 
     public void ContinueToLevelSelector()
     {
-        AudioManager.Instance.PlaySFX(SFXClip.UI_Select);
-        UIManager.Instance.HideResultsModal();
+        //AudioManager.Instance.PlaySFX(SFXClip.UI_Select);
+        AudioService.Instance?.PlaySFX(_audioContext.Audio.select);
+        //UIManager.Instance.HideResultsModal();
+        UIEvents.RequestHideResultsModal();
         GameManager.Instance.GoToLevelSelection(confirmPendingDeduction: false);
     }
 
@@ -158,7 +177,7 @@ public class GameplayUIManager : MonoBehaviour
         if (_noLivesActive && LifeManager.Instance.GetRealLives() > 0)
         {
             _noLivesActive = false;
-            UIManager.Instance.ShowHideNoLivesCanvas();
+            UIEvents.RequestHideNoLivesOverlay();
         }
     }
 

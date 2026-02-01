@@ -1,5 +1,4 @@
 using UnityEngine;
-using AstroRift.Core.Update;
 
 public class ScoutBot : Enemy
 {
@@ -16,7 +15,8 @@ public class ScoutBot : Enemy
 
         if (canDetectPlayer && !_hasPlayedDetectionSFX)
         {
-            AudioManager.Instance.PlaySFXAtPosition(SFXClip.E_Scout_SendReport, transform.position);
+            //AudioManager.Instance.PlaySFXAtPosition(SFXClip.E_Scout_SendReport, transform.position);
+            AudioService.Instance.PlaySFXAtPosition(_audioContext.Audio.sendReport, transform.position);
             _hasPlayedDetectionSFX = true;
         }
 
@@ -52,7 +52,8 @@ private bool CheckLOS(Transform target)
             TutorialManager.Instance.OnEnemyKilled();
         }
 
-        AudioManager.Instance.PlaySFXAtPosition(SFXClip.E_Scout_Hit, transform.position);
+        //AudioManager.Instance.PlaySFXAtPosition(SFXClip.E_Scout_Hit, transform.position);
+        AudioService.Instance.PlaySFXAtPosition(_audioContext.Audio.hit, transform.position);
         base.Die();
     }
 }

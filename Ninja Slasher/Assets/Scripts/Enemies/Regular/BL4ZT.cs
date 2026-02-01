@@ -38,7 +38,7 @@ public class BL4ZT : RangeEnemy
         return movingRight;
     }
 
-    public override void Awake()
+    protected override void Awake()
     {
         base.Awake();
         _currentSpeed = _speed;

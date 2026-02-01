@@ -37,19 +37,7 @@ public class DailyRewardSystem : MonoBehaviourSingleton<DailyRewardSystem>
 
     private DailyRewardSaveData rewardData;
 
-    // DEPRECATED
-    //public static event Action<DailyReward> OnRewardClaimed;
-    //public static event Action<int> OnConsecutiveDaysUpdated;
-    //public static event Action<bool> OnRewardAvailabilityChanged;
-    //public static event Action OnRewardDoubled;
-
     private bool _hasDoubledToday = false;
-
-
-    public override void Awake()
-    {
-        base.Awake();
-    }
 
     void Start()
     {
@@ -79,8 +67,6 @@ public class DailyRewardSystem : MonoBehaviourSingleton<DailyRewardSystem>
         CheckDoubleRewardStatus();
 
         GameEvents.RaiseRewardAvailabilityChanged(CanClaimToday());
-        // DEPRECTATED
-        //OnRewardAvailabilityChanged?.Invoke(CanClaimToday());
     }
 
     void LoadRewardData()
@@ -98,7 +84,6 @@ public class DailyRewardSystem : MonoBehaviourSingleton<DailyRewardSystem>
             }
             catch (Exception e)
             {
-                //Debug.LogError("Error cargando datos de recompensas diarias: " + e.Message);
                 rewardData = new DailyRewardSaveData();
             }
         }
@@ -122,7 +107,6 @@ public class DailyRewardSystem : MonoBehaviourSingleton<DailyRewardSystem>
         else
         {
             SaveManager.Instance.SaveDailyRewardData(jsonData);
-            //Debug.LogWarning("[DailyRewardSystem] AutoSaveManager no encontrado");
         }
     }
 
@@ -155,10 +139,6 @@ public class DailyRewardSystem : MonoBehaviourSingleton<DailyRewardSystem>
         }
 
         bool isAvailableNow = CanClaimToday();
-
-        // DEPRECATED
-        //if (wasAvailable != isAvailableNow)
-        //    OnRewardAvailabilityChanged?.Invoke(isAvailableNow);
 
         if (wasAvailable != isAvailableNow)
             GameEvents.RaiseRewardAvailabilityChanged(isAvailableNow);
@@ -208,13 +188,6 @@ public class DailyRewardSystem : MonoBehaviourSingleton<DailyRewardSystem>
         _hasDoubledToday = true;
 
         SaveRewardData();
-
-        //Debug.Log($"Recompensa diaria duplicada: {doubledReward.powerUpType} x{doubledReward.quantity}");
-
-        //DEPRECATED
-        //OnRewardClaimed?.Invoke(doubledReward);
-        //OnRewardAvailabilityChanged?.Invoke(false);
-        //OnRewardDoubled?.Invoke();
 
         GameEvents.RaiseRewardClaimed(doubledReward);
         GameEvents.RaiseRewardAvailabilityChanged(false);
@@ -270,7 +243,6 @@ public class DailyRewardSystem : MonoBehaviourSingleton<DailyRewardSystem>
         {
             return false;
         }
-        AudioManager.Instance.PlaySFX(SFXClip.Reward_Prize);
 
         rewardData.claimedDays[rewardData.currentWeekDay] = true;
         rewardData.lastClaimDate = DateTime.Now.ToString("yyyy-MM-dd");
@@ -280,10 +252,6 @@ public class DailyRewardSystem : MonoBehaviourSingleton<DailyRewardSystem>
         AddPowerUpToInventoryViaAutoSave(claimed);
 
         SaveRewardData();
-
-        // DEPRECATED
-        //OnRewardClaimed?.Invoke(claimed);
-        //OnRewardAvailabilityChanged?.Invoke(false);
 
         GameEvents.RaiseRewardClaimed(claimed);
         GameEvents.RaiseRewardAvailabilityChanged(false);

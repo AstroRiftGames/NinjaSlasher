@@ -1,5 +1,4 @@
 using UnityEngine;
-using AstroRift.Core.Pooling;
 
 public class FloatingTextPool : MonoBehaviour
 {

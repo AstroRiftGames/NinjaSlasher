@@ -7,6 +7,7 @@ public static class UIEvents
 
     public static event Action<string> OnPanelOpenRequested;
     public static event Action<string> OnPanelCloseRequested;
+    public static event Action<string> OnPanelToggleRequested;
     public static event Action OnAllPanelsCloseRequested;
 
     public static void RequestOpenPanel(string panelName)
@@ -19,9 +20,241 @@ public static class UIEvents
         OnPanelCloseRequested?.Invoke(panelName);
     }
 
+    public static void RequestTogglePanel(string panelName)
+    {
+        OnPanelToggleRequested?.Invoke(panelName);
+    }
+
     public static void RequestCloseAllPanels()
     {
         OnAllPanelsCloseRequested?.Invoke();
+    }
+
+    #endregion
+
+    #region OVERLAY EVENTS
+
+    public static event Action OnShowPauseOverlayRequested;
+    public static event Action OnHidePauseOverlayRequested;
+    public static event Action OnTogglePauseOverlayRequested;
+
+    public static event Action OnShowNoLivesOverlayRequested;
+    public static event Action OnHideNoLivesOverlayRequested;
+
+    public static event Action<int> OnShowLifeLostOverlayRequested;
+
+    public static void RequestShowPauseOverlay()
+    {
+        OnShowPauseOverlayRequested?.Invoke();
+    }
+
+    public static void RequestHidePauseOverlay()
+    {
+        OnHidePauseOverlayRequested?.Invoke();
+    }
+
+    public static void RequestTogglePauseOverlay()
+    {
+        OnTogglePauseOverlayRequested?.Invoke();
+    }
+
+    public static void RequestShowNoLivesOverlay()
+    {
+        OnShowNoLivesOverlayRequested?.Invoke();
+    }
+
+    public static void RequestHideNoLivesOverlay()
+    {
+        OnHideNoLivesOverlayRequested?.Invoke();
+    }
+
+    public static void RequestShowLifeLostOverlay(int livesRemaining)
+    {
+        OnShowLifeLostOverlayRequested?.Invoke(livesRemaining);
+    }
+
+    #endregion
+
+    #region SCREEN EVENTS
+
+    public static event Action OnShowSplashScreenRequested;
+    public static event Action OnHideSplashScreenRequested;
+
+    public static event Action OnShowLevelsScreenRequested;
+    public static event Action OnHideLevelsScreenRequested;
+
+    public static event Action OnShowPreGameScreenRequested;
+    public static event Action OnHidePreGameScreenRequested;
+    public static event Action OnTogglePreGameScreenRequested;
+
+    public static void RequestShowSplashScreen()
+    {
+        OnShowSplashScreenRequested?.Invoke();
+    }
+
+    public static void RequestHideSplashScreen()
+    {
+        OnHideSplashScreenRequested?.Invoke();
+    }
+
+    public static void RequestShowLevelsScreen()
+    {
+        OnShowLevelsScreenRequested?.Invoke();
+    }
+
+    public static void RequestHideLevelsScreen()
+    {
+        OnHideLevelsScreenRequested?.Invoke();
+    }
+
+    public static void RequestShowPreGameScreen()
+    {
+        OnShowPreGameScreenRequested?.Invoke();
+    }
+
+    public static void RequestHidePreGameScreen()
+    {
+        OnHidePreGameScreenRequested?.Invoke();
+    }
+
+    public static void RequestTogglePreGameScreen()
+    {
+        OnTogglePreGameScreenRequested?.Invoke();
+    }
+
+    #endregion
+
+    #region MODAL EVENTS
+
+    public static event Action OnShowCreditsModalRequested;
+    public static event Action OnHideCreditsModalRequested;
+    public static event Action OnToggleCreditsModalRequested;
+
+    public static event Action OnShowProfileModalRequested;
+    public static event Action OnHideProfileModalRequested;
+    public static event Action OnToggleProfileModalRequested;
+
+    public static event Action OnShowDailyRewardModalRequested;
+    public static event Action OnHideDailyRewardModalRequested;
+    public static event Action OnToggleDailyRewardModalRequested;
+
+    public static event Action OnShowDailyWheelModalRequested;
+    public static event Action OnHideDailyWheelModalRequested;
+    public static event Action OnToggleDailyWheelModalRequested;
+
+    public static event Action OnShowStoreModalRequested;
+    public static event Action OnHideStoreModalRequested;
+    public static event Action OnToggleStoreModalRequested;
+
+    public static event Action OnShowResultsModalRequested;
+    public static event Action OnHideResultsModalRequested;
+    public static event Action OnToggleResultsModalRequested;
+
+    public static void RequestShowCreditsModal()
+    {
+        OnShowCreditsModalRequested?.Invoke();
+    }
+
+    public static void RequestHideCreditsModal()
+    {
+        OnHideCreditsModalRequested?.Invoke();
+    }
+
+    public static void RequestToggleCreditsModal()
+    {
+        OnToggleCreditsModalRequested?.Invoke();
+    }
+
+    public static void RequestShowProfileModal()
+    {
+        OnShowProfileModalRequested?.Invoke();
+    }
+
+    public static void RequestHideProfileModal()
+    {
+        OnHideProfileModalRequested?.Invoke();
+    }
+
+    public static void RequestToggleProfileModal()
+    {
+        OnToggleProfileModalRequested?.Invoke();
+    }
+
+    public static void RequestShowDailyRewardModal()
+    {
+        OnShowDailyRewardModalRequested?.Invoke();
+    }
+
+    public static void RequestHideDailyRewardModal()
+    {
+        OnHideDailyRewardModalRequested?.Invoke();
+    }
+
+    public static void RequestToggleDailyRewardModal()
+    {
+        OnToggleDailyRewardModalRequested?.Invoke();
+    }
+
+    public static void RequestShowDailyWheelModal()
+    {
+        OnShowDailyWheelModalRequested?.Invoke();
+    }
+
+    public static void RequestHideDailyWheelModal()
+    {
+        OnHideDailyWheelModalRequested?.Invoke();
+    }
+
+    public static void RequestToggleDailyWheelModal()
+    {
+        OnToggleDailyWheelModalRequested?.Invoke();
+    }
+
+    public static void RequestShowStoreModal()
+    {
+        OnShowStoreModalRequested?.Invoke();
+    }
+
+    public static void RequestHideStoreModal()
+    {
+        OnHideStoreModalRequested?.Invoke();
+    }
+
+    public static void RequestToggleStoreModal()
+    {
+        OnToggleStoreModalRequested?.Invoke();
+    }
+
+    public static void RequestShowResultsModal()
+    {
+        OnShowResultsModalRequested?.Invoke();
+    }
+
+    public static void RequestHideResultsModal()
+    {
+        OnHideResultsModalRequested?.Invoke();
+    }
+
+    public static void RequestToggleResultsModal()
+    {
+        OnToggleResultsModalRequested?.Invoke();
+    }
+
+    #endregion
+
+    #region HUD EVENTS
+
+    public static event Action OnShowGameplayHUDRequested;
+    public static event Action OnHideGameplayHUDRequested;
+
+    public static void RequestShowGameplayHUD()
+    {
+        OnShowGameplayHUDRequested?.Invoke();
+    }
+
+    public static void RequestHideGameplayHUD()
+    {
+        OnHideGameplayHUDRequested?.Invoke();
     }
 
     #endregion
@@ -52,6 +285,40 @@ public static class UIEvents
     public static void RaiseLevelSelectorReady()
     {
         OnLevelSelectorReady?.Invoke();
+    }
+
+    #endregion
+
+    #region LEVEL PREVIEW EVENTS
+
+    public static event Action<string> OnLevelPreviewRequested; // string = sceneName
+    public static event Action OnLevelPreviewCancelled;
+    public static event Action OnLevelPreviewConfirmed;
+
+    public static void RequestLevelPreview(string sceneName)
+    {
+        OnLevelPreviewRequested?.Invoke(sceneName);
+    }
+
+    public static void CancelLevelPreview()
+    {
+        OnLevelPreviewCancelled?.Invoke();
+    }
+
+    public static void ConfirmLevelPreview()
+    {
+        OnLevelPreviewConfirmed?.Invoke();
+    }
+
+    #endregion
+
+    #region LEVEL LOCKED EVENTS
+
+    public static event Action<int> OnLevelLockedMessageRequested; // int = levelId
+
+    public static void RequestShowLevelLockedMessage(int levelId)
+    {
+        OnLevelLockedMessageRequested?.Invoke(levelId);
     }
 
     #endregion
@@ -166,7 +433,65 @@ public static class UIEvents
     {
         OnPanelOpenRequested = null;
         OnPanelCloseRequested = null;
+        OnPanelToggleRequested = null;
         OnAllPanelsCloseRequested = null;
+    }
+
+    public static void ClearOverlayEvents()
+    {
+        OnShowPauseOverlayRequested = null;
+        OnHidePauseOverlayRequested = null;
+        OnTogglePauseOverlayRequested = null;
+        OnShowNoLivesOverlayRequested = null;
+        OnHideNoLivesOverlayRequested = null;
+        OnShowLifeLostOverlayRequested = null;
+    }
+
+    public static void ClearScreenEvents()
+    {
+        OnShowSplashScreenRequested = null;
+        OnHideSplashScreenRequested = null;
+        OnShowLevelsScreenRequested = null;
+        OnHideLevelsScreenRequested = null;
+        OnShowPreGameScreenRequested = null;
+        OnHidePreGameScreenRequested = null;
+        OnTogglePreGameScreenRequested = null;
+    }
+
+    public static void ClearModalEvents()
+    {
+        OnShowCreditsModalRequested = null;
+        OnHideCreditsModalRequested = null;
+        OnToggleCreditsModalRequested = null;
+        OnShowProfileModalRequested = null;
+        OnHideProfileModalRequested = null;
+        OnToggleProfileModalRequested = null;
+        OnShowDailyRewardModalRequested = null;
+        OnHideDailyRewardModalRequested = null;
+        OnToggleDailyRewardModalRequested = null;
+        OnShowDailyWheelModalRequested = null;
+        OnHideDailyWheelModalRequested = null;
+        OnToggleDailyWheelModalRequested = null;
+        OnShowStoreModalRequested = null;
+        OnHideStoreModalRequested = null;
+        OnToggleStoreModalRequested = null;
+        OnShowResultsModalRequested = null;
+        OnHideResultsModalRequested = null;
+        OnToggleResultsModalRequested = null;
+    }
+
+    public static void ClearHUDEvents()
+    {
+        OnShowGameplayHUDRequested = null;
+        OnHideGameplayHUDRequested = null;
+    }
+
+    public static void ClearLevelPreviewEvents()
+    {
+        OnLevelPreviewRequested = null;
+        OnLevelPreviewCancelled = null;
+        OnLevelPreviewConfirmed = null;
+        OnLevelLockedMessageRequested = null;
     }
 
     public static void ClearSceneTransitionEvents()
@@ -174,6 +499,7 @@ public static class UIEvents
         OnSceneTransitionRequested = null;
         OnShowLevelSelectorRequested = null;
         OnRestartLevelRequested = null;
+        OnLevelSelectorReady = null;
     }
 
     public static void ClearButtonEvents()
@@ -189,6 +515,7 @@ public static class UIEvents
         OnUILivesUpdateRequested = null;
         OnUITimerUpdateRequested = null;
         OnUIPowerUpTextUpdateRequested = null;
+        RaiseGamePaused = null;
     }
 
     public static void ClearPanelDisplayEvents()
@@ -198,6 +525,7 @@ public static class UIEvents
         OnShowLifeLostPanelRequested = null;
         OnShowDailyRewardRequested = null;
     }
+
     public static void ClearProfileEvents()
     {
         OnNicknameChanged = null;
@@ -207,6 +535,11 @@ public static class UIEvents
     public static void ClearAllUIEvents()
     {
         ClearNavigationEvents();
+        ClearOverlayEvents();
+        ClearScreenEvents();
+        ClearModalEvents();
+        ClearHUDEvents();
+        ClearLevelPreviewEvents();
         ClearSceneTransitionEvents();
         ClearButtonEvents();
         ClearUpdateEvents();

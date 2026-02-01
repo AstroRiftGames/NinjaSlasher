@@ -1,6 +1,5 @@
 using System.Collections;
 using UnityEngine;
-using AstroRift.Core.Pooling;
 
 public enum AttackType
 {
@@ -51,7 +50,7 @@ public class MultiattackDrone : BossEnemy
 
     [SerializeField] private ShootingPointContainer _shootingPointContainer;
 
-    public override void Awake()
+    protected override void Awake()
     {
         base.Awake();
         _conePool = new ObjectPool<Projectile>(_coneBullet, _coneAmount * 2, transform);

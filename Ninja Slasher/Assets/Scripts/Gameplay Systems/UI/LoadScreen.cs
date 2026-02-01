@@ -15,6 +15,13 @@ public class LoadManager : MonoBehaviour
     [SerializeField] private float _loadingDuration = 3f;
     [SerializeField] private Ease _loadingEase = Ease.OutQuart;
 
+    private UIAudioContext _audioContext;
+
+    private void Awake()
+    {
+        _audioContext = GetComponentInParent<UIAudioContext>();
+    }
+
     private void Start()
     {
         SceneLoad(SceneManager.GetActiveScene().buildIndex);
@@ -44,25 +51,37 @@ public class LoadManager : MonoBehaviour
             {
                 _text.text = "TAP TO CONTINUE";
                 _textAnim.SetTrigger("Tap");
+
                 if (Input.touchCount > 0)
                 {
                     Touch touch = Input.GetTouch(0);
                     if (touch.phase == TouchPhase.Began)
                     {
-                        AudioManager.Instance.PlaySFX(SFXClip.UI_TapSplashScreen);
-                        UIManager.Instance.ShowLevelSelector();
+                        //AudioManager.Instance.PlaySFX(SFXClip.UI_TapSplashScreen);
+                        AudioService.Instance.PlaySFX(_audioContext.Audio.tapSplash);
+
+                        //UIManager.Instance.ShowLevelSelector();
+                        UIEvents.RequestShowLevelSelector();
                         yield return new WaitForSeconds(2);
-                        AudioManager.Instance.PlaySFX(SFXClip.UI_TransitionSlash);
+                        
+                        //AudioManager.Instance.PlaySFX(SFXClip.UI_TransitionSlash);
+                        AudioService.Instance.PlaySFX(_audioContext.Audio.transitionSlash);
+
                         asyncOperation.allowSceneActivation = true;
                     }
                 }
 #if UNITY_EDITOR
                 if (Input.anyKeyDown)
                 {
-                    AudioManager.Instance.PlaySFX(SFXClip.UI_TapSplashScreen);
-                    UIManager.Instance.ShowLevelSelector();
+                    //AudioManager.Instance.PlaySFX(SFXClip.UI_TapSplashScreen);
+                    AudioService.Instance.PlaySFX(_audioContext.Audio.tapSplash);
+
+                    //UIManager.Instance.ShowLevelSelector();
+                    UIEvents.RequestShowLevelSelector();
+
                     yield return new WaitForSeconds(2);
-                    AudioManager.Instance.PlayMusic(MusicClip.MainMenu, true);
+
+                    MusicEvents.OnEnterLevelSelection?.Invoke();
                     asyncOperation.allowSceneActivation = true;
                 }
 #endif

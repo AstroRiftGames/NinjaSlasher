@@ -41,11 +41,18 @@ public class DailyWheelUI : MonoBehaviour
     private Coroutine _timerCoroutine;
 
     public event Action OnWheelProcessComplete;
+    
+    private UIAudioContext _audioContext;
 
     private readonly Color[] _ballColors = new Color[]
     {
         Color.white, new Color(0.4f, 0.7f, 1f), Color.green, new Color(1f, 0.3f, 0.3f), new Color(1f, 0.84f, 0f)
     };
+
+    private void Awake()
+    {
+        _audioContext = GetComponentInParent<UIAudioContext>();
+    }
 
     private void OnEnable()
     {
@@ -151,7 +158,7 @@ public class DailyWheelUI : MonoBehaviour
     private IEnumerator GaraponSequence(WheelReward reward)
     {
         _isSpinning = true;
-        AudioManager.Instance?.PlaySFX(SFXClip.DW_Spin);
+        AudioService.Instance?.PlaySFX(_audioContext.Audio.wheelSpin);
 
         if (wheelBody != null)
         {
@@ -162,7 +169,7 @@ public class DailyWheelUI : MonoBehaviour
 
         yield return new WaitForSeconds(crankDuration/2);
 
-        AudioManager.Instance?.PlaySFX(SFXClip.Reward_Prize);
+        AudioService.Instance?.PlaySFX(_audioContext.Audio.rewardPrize);
 
         yield return new WaitForSeconds(crankDuration/2);
 

@@ -30,10 +30,14 @@ public class ResultsUIManager : MonoBehaviourSingleton<ResultsUIManager>
 
     private Vector2[] _originalStarPositions;
 
+    private UIAudioContext _audioContext;
+
     public override void Awake()
     {
         base.Awake();
         CacheOriginalStarPositions();
+
+        _audioContext = GetComponentInParent<UIAudioContext>();
     }
 
     public void PrepareResultsIntro()
@@ -157,7 +161,10 @@ public class ResultsUIManager : MonoBehaviourSingleton<ResultsUIManager>
         seq.AppendCallback(() =>
         {
             slashImage.transform.DOPunchScale(Vector3.one * 0.1f, 0.1f, 1, 0.8f);
-            AudioManager.Instance?.PlaySFX(SFXClip.UI_TapSplashScreen);
+
+            //AudioManager.Instance?.PlaySFX(SFXClip.UI_TapSplashScreen);
+
+            AudioService.Instance?.PlaySFX(_audioContext.Audio.tapSplash);
         });
     }
 
@@ -258,7 +265,9 @@ public class ResultsUIManager : MonoBehaviourSingleton<ResultsUIManager>
             SetStarSprite(starIndex, isCompleted);
             rt.rotation = Quaternion.identity;
             rt.DOPunchScale(Vector3.one * 0.3f, 0.3f, 10, 0.5f);
-            AudioManager.Instance?.PlaySFX(SFXClip.UI_Select);
+
+            //AudioManager.Instance?.PlaySFX(SFXClip.UI_Select);
+            AudioService.Instance?.PlaySFX(_audioContext.Audio.select);
         });
     }
 

@@ -22,10 +22,12 @@ public class WheelLever : MonoBehaviour, IDragHandler, IBeginDragHandler, IEndDr
     private bool _isDragging = false;
     private float _angleOffset;
     private Canvas _parentCanvas;
+    private UIAudioContext _audioContext;
 
     private void Awake()
     {
         _parentCanvas = GetComponentInParent<Canvas>();
+        _audioContext = GetComponentInParent<UIAudioContext>();
     }
 
     private void Start()
@@ -94,7 +96,7 @@ public class WheelLever : MonoBehaviour, IDragHandler, IBeginDragHandler, IEndDr
         _leverArm.localRotation = Quaternion.Euler(0, 0, finalAngle);
         if(HasReachedNextThird(finalAngle))
         {
-            AudioManager.Instance.PlaySFX(SFXClip.DW_LeverPull);
+            AudioService.Instance.PlaySFX(_audioContext.Audio.leverPull);
         }
     }
 

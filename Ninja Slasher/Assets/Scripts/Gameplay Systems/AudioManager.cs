@@ -2,48 +2,47 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Rendering.Universal;
 
-[Serializable]
-public enum MusicClip
-{
-    Splash,
-    MainMenu,
-    Area1,
-    Area2,
-    Area3,
-    Area4,
-    Area5,
-    BossLevel,
-    Victory,
-    GameOver,
-    Credits
-}
+//[Serializable]
+//public enum MusicClip
+//{
+//    Splash,
+//    MainMenu,
+//    Area1,
+//    Area2,
+//    Area3,
+//    Area4,
+//    Area5,
+//    BossLevel,
+//    Victory,
+//    GameOver,
+//    Credits
+//}
 
 [Serializable]
 public enum SFXClip
 {
-    E_Hit,
-    E_Shoot,
-    E_Explosion,
-    P_Movement,
-    UI_TapSplashScreen,
-    UI_TransitionSlash,
-    UI_Select,
+    //E_Hit,
+    //E_Shoot,
+    //E_Explosion,
+    //P_Movement,
+    //UI_TapSplashScreen,
+    //UI_TransitionSlash,
+    //UI_Select,
     UI_PowerUp,
-    UI_Transition,
-    UI_ShowConfig,
-    UI_Claim,
-    E_Scout_Hit,
-    E_Scout_SendReport,
-    E_Blaze_Detection,
-    E_Blaze_Shoot,
-    E_Guard_Detection,
-    E_Guard_Charge,
-    E_Guard_Colision,
-    E_Guard_Death,
-    P_Attack,
-    P_ParrySwing,
+    //UI_Transition,
+    //UI_ShowConfig,
+    //UI_Claim,
+    //E_Scout_Hit,
+    //E_Scout_SendReport,
+    //E_Blaze_Detection,
+    //E_Blaze_Shoot,
+    //E_Guard_Detection,
+    //E_Guard_Charge,
+    //E_Guard_Colision,
+    //E_Guard_Death,
+    //P_Attack,
+    //P_ParrySwing,
     P_ProjectileParried,
     B_Sentinel_Intro,
     B_Sentinel_Idle,
@@ -54,40 +53,40 @@ public enum SFXClip
     B_Sentinel_Vulnerable_Idle,
     B_Sentinel_Recovered,
     B_Sentinel_Sweep,
-    P_Die,
-    UI_Victory,
-    UI_Defeat,
+    //P_Die,
+    //UI_Victory,
+    //UI_Defeat,
     B_Sentinel_Double_1,
     B_Sentinel_Double_2,
     B_Sentinel_Heavy,
     B_Sentinel_Impact,
     B_Sentinel_Woosh,
     P_Landing_General,
-    P_Landing_Ground,
-    P_Landing_Stone,
-    P_Landing_Wood,
-    P_KO_1,
-    P_KO_2,
-    P_KO_3,
-    P_KO_4,
-    P_KO_5,
-    P_KO_6,
-    P_KO_7,
-    E_Ricochet_Charge,
-    E_Ricochet_Shoot,
-    E_Ricochet_Death,
+    //P_Landing_Ground,
+    //P_Landing_Stone,
+    //P_Landing_Wood,
+    //P_KO_1,
+    //P_KO_2,
+    //P_KO_3,
+    //P_KO_4,
+    //P_KO_5,
+    //P_KO_6,
+    //P_KO_7,
+    //E_Ricochet_Charge,
+    //E_Ricochet_Shoot,
+    //E_Ricochet_Death,
     Proj_Ricochet_Bounce,
     Prop_Vase_1,
     Prop_Vase_2,
     Prop_Table,
     Prop_Gong,
     Prop_Chair,
-    E_Nano_Idle,
-    E_Nano_Chase,
-    E_Nano_Hit,
-    E_Nano_Death,
-    E_Mini_Chase,
-    E_Mini_Death,
+    //E_Nano_Idle,
+    //E_Nano_Chase,
+    //E_Nano_Hit,
+    //E_Nano_Death,
+    //E_Mini_Chase,
+    //E_Mini_Death,
     B_Drone_Idle,
     B_Drone_FlyAway,
     B_Drone_ConeAttack,
@@ -96,11 +95,11 @@ public enum SFXClip
     B_Drone_ProjectileHit,
     B_Drone_FloorHit,
     B_Drone_PlayerHit,
-    DW_Spin,
-    DW_LeverPull,
-    Reward_PrizeCoins,
-    Reward_Coins,
-    Reward_Prize,
+    //DW_Spin,
+    //DW_LeverPull,
+    //Reward_PrizeCoins,
+    //Reward_Coins,
+    //Reward_Prize,
     P_Landing_Slippery,
     P_Landing_Elastic,
     P_Landing_Breakable,
@@ -117,12 +116,12 @@ public class AudioClipData
     public float volumeMultiplier = 1f;
 }
 
-[Serializable]
-public class MusicData
-{
-    public MusicClip clipType;
-    public AudioClipData audioData;
-}
+//[Serializable]
+//public class MusicData
+//{
+//    public MusicClip clipType;
+//    public AudioClipData audioData;
+//}
 
 [Serializable]
 public class SFXData
@@ -137,8 +136,8 @@ public class AudioManager : MonoBehaviourSingleton<AudioManager>
     [SerializeField] private AudioSource musicSource;
     [SerializeField] private AudioSource sfxSource;
 
-    [Header("Music Clips")]
-    [SerializeField] private MusicData[] musicClips;
+    //[Header("Music Clips")]
+    //[SerializeField] private MusicData[] musicClips;
 
     [Header("SFX Clips")]
     [SerializeField] private SFXData[] sfxClips;
@@ -148,16 +147,15 @@ public class AudioManager : MonoBehaviourSingleton<AudioManager>
     [Range(0f, 1f)] public float musicVolume = 0.7f;
     [Range(0f, 1f)] public float sfxVolume = 0.8f;
 
-    private Dictionary<MusicClip, AudioClipData> musicDict = new Dictionary<MusicClip, AudioClipData>();
+    //private Dictionary<MusicClip, AudioClipData> musicDict = new Dictionary<MusicClip, AudioClipData>();
     private Dictionary<SFXClip, AudioClipData> sfxDict = new Dictionary<SFXClip, AudioClipData>();
 
     private Coroutine musicFadeCoroutine;
-    private MusicClip currentMusicClip;
+    //private MusicClip currentMusicClip;
 
     private void Start()
     {
         InitializeAudioManager();
-        PlayMusic(MusicClip.Splash);
     }
 
     void InitializeAudioManager()
@@ -183,11 +181,11 @@ public class AudioManager : MonoBehaviourSingleton<AudioManager>
 
     void PopulateDictionaries()
     {
-        foreach (var musicData in musicClips)
-        {
-            if (musicData.audioData.clip != null)
-                musicDict[musicData.clipType] = musicData.audioData;
-        }
+        //foreach (var musicData in musicClips)
+        //{
+        //    if (musicData.audioData.clip != null)
+        //        musicDict[musicData.clipType] = musicData.audioData;
+        //}
 
         foreach (var sfxData in sfxClips)
         {
@@ -196,29 +194,29 @@ public class AudioManager : MonoBehaviourSingleton<AudioManager>
         }
     }
 
-    public void PlayMusic(MusicClip clipType, bool fadeIn = true)
-    {
-        if (musicDict.ContainsKey(clipType))
-        {
-            var audioData = musicDict[clipType];
+    //public void PlayMusic(MusicClip clipType, bool fadeIn = true)
+    //{
+    //    if (musicDict.ContainsKey(clipType))
+    //    {
+    //        var audioData = musicDict[clipType];
 
-            if (fadeIn && musicSource.isPlaying)
-            {
-                StartCoroutine(FadeToNewMusic(audioData, clipType));
-            }
-            else
-            {
-                musicSource.clip = audioData.clip;
-                musicSource.pitch = audioData.pitch;
-                musicSource.Play();
-                currentMusicClip = clipType;
-            }
-        }
-        else
-        {
-            Debug.Log($"Clip de m�sica '{clipType}' no encontrado");
-        }
-    }
+    //        if (fadeIn && musicSource.isPlaying)
+    //        {
+    //            StartCoroutine(FadeToNewMusic(audioData, clipType));
+    //        }
+    //        else
+    //        {
+    //            musicSource.clip = audioData.clip;
+    //            musicSource.pitch = audioData.pitch;
+    //            musicSource.Play();
+    //            currentMusicClip = clipType;
+    //        }
+    //    }
+    //    else
+    //    {
+    //        Debug.Log($"Clip de m�sica '{clipType}' no encontrado");
+    //    }
+    //}
 
     public void StopMusic(bool fadeOut = true)
     {
@@ -360,30 +358,30 @@ public class AudioManager : MonoBehaviourSingleton<AudioManager>
         sfxSource.volume = sfxVolume * masterVolume;
     }
 
-    IEnumerator FadeToNewMusic(AudioClipData newAudioData, MusicClip newClipType, float fadeDuration = 1f)
-    {
-        float startVolume = musicSource.volume;
+    //IEnumerator FadeToNewMusic(AudioClipData newAudioData, MusicClip newClipType, float fadeDuration = 1f)
+    //{
+    //    float startVolume = musicSource.volume;
 
-        for (float t = 0; t < fadeDuration; t += Time.deltaTime)
-        {
-            musicSource.volume = Mathf.Lerp(startVolume, 0f, t / fadeDuration);
-            yield return null;
-        }
+    //    for (float t = 0; t < fadeDuration; t += Time.deltaTime)
+    //    {
+    //        musicSource.volume = Mathf.Lerp(startVolume, 0f, t / fadeDuration);
+    //        yield return null;
+    //    }
 
-        musicSource.clip = newAudioData.clip;
-        musicSource.pitch = newAudioData.pitch;
-        musicSource.Play();
-        currentMusicClip = newClipType;
+    //    musicSource.clip = newAudioData.clip;
+    //    musicSource.pitch = newAudioData.pitch;
+    //    musicSource.Play();
+    //    currentMusicClip = newClipType;
 
-        float targetVolume = musicVolume * masterVolume;
-        for (float t = 0; t < fadeDuration; t += Time.deltaTime)
-        {
-            musicSource.volume = Mathf.Lerp(0f, targetVolume, t / fadeDuration);
-            yield return null;
-        }
+    //    float targetVolume = musicVolume * masterVolume;
+    //    for (float t = 0; t < fadeDuration; t += Time.deltaTime)
+    //    {
+    //        musicSource.volume = Mathf.Lerp(0f, targetVolume, t / fadeDuration);
+    //        yield return null;
+    //    }
 
-        musicSource.volume = targetVolume;
-    }
+    //    musicSource.volume = targetVolume;
+    //}
 
     IEnumerator FadeOutMusic(float fadeDuration = 1f)
     {
@@ -404,28 +402,28 @@ public class AudioManager : MonoBehaviourSingleton<AudioManager>
         return musicSource.isPlaying;
     }
 
-    public MusicClip GetCurrentMusicClip()
-    {
-        return currentMusicClip;
-    }
+    //public MusicClip GetCurrentMusicClip()
+    //{
+    //    return currentMusicClip;
+    //}
 
-    public bool IsPlaying(MusicClip clipType)
-    {
-        return musicSource.isPlaying && currentMusicClip == clipType;
-    }
+    //public bool IsPlaying(MusicClip clipType)
+    //{
+    //    return musicSource.isPlaying && currentMusicClip == clipType;
+    //}
 
     public void SetMusicPitch(float pitch)
     {
         musicSource.pitch = pitch;
     }
 
-    public void ResetMusicPitch()
-    {
-        if (musicDict.ContainsKey(currentMusicClip))
-        {
-            musicSource.pitch = musicDict[currentMusicClip].pitch;
-        }
-    }
+    //public void ResetMusicPitch()
+    //{
+    //    if (musicDict.ContainsKey(currentMusicClip))
+    //    {
+    //        musicSource.pitch = musicDict[currentMusicClip].pitch;
+    //    }
+    //}
 
     public float GetSFXDuration(SFXClip clipType)
     {

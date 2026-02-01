@@ -305,9 +305,10 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8966530913566252869}
-  - component: {fileID: 6065865666971193981}
   - component: {fileID: -247081616958765323}
+  - component: {fileID: 6065865666971193981}
   - component: {fileID: 5936236687641384018}
+  - component: {fileID: -1856302355273798786}
   m_Layer: 9
   m_Name: ScoutBot
   m_TagString: Enemy
@@ -335,6 +336,34 @@ Transform:
   - {fileID: 7742109777207213145}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &-247081616958765323
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2612347689065444687}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7814a8a39eedde24680e8249cbab8028, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _data: {fileID: 11400000, guid: 41881fe07e6602a4fbbc6a2acfa791b9, type: 2}
+  _audioContext: {fileID: 0}
+  UpperCol: {fileID: 7951848965786517949}
+  LowerCol: {fileID: 1267651459293124376}
+  RearCol: {fileID: 6613156419462127088}
+  FrontCol: {fileID: 1813173533783658342}
+  _deathTime: 2.5
+  _obstaclesLayer:
+    serializedVersion: 2
+    m_Bits: 192
+  _playerLayer:
+    serializedVersion: 2
+    m_Bits: 1024
+  _animator: {fileID: 104494381890289432}
+  _detectionRange: 10
+  _resetDelay: 5
 --- !u!61 &6065865666971193981
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -381,33 +410,6 @@ BoxCollider2D:
   m_AutoTiling: 0
   m_Size: {x: 1.5957628, y: 3.431642}
   m_EdgeRadius: 0
---- !u!114 &-247081616958765323
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2612347689065444687}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7814a8a39eedde24680e8249cbab8028, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _data: {fileID: 11400000, guid: 41881fe07e6602a4fbbc6a2acfa791b9, type: 2}
-  UpperCol: {fileID: 7951848965786517949}
-  LowerCol: {fileID: 1267651459293124376}
-  RearCol: {fileID: 6613156419462127088}
-  FrontCol: {fileID: 1813173533783658342}
-  _deathTime: 2.5
-  _obstaclesLayer:
-    serializedVersion: 2
-    m_Bits: 192
-  _playerLayer:
-    serializedVersion: 2
-    m_Bits: 1024
-  _animator: {fileID: 104494381890289432}
-  _detectionRange: 10
-  _resetDelay: 5
 --- !u!50 &5936236687641384018
 Rigidbody2D:
   serializedVersion: 5
@@ -435,6 +437,19 @@ Rigidbody2D:
   m_SleepingMode: 1
   m_CollisionDetection: 0
   m_Constraints: 4
+--- !u!114 &-1856302355273798786
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2612347689065444687}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 167e4bd7e1f82774db0c7c14c8ae2e2a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _enemyData: {fileID: 0}
 --- !u!1 &6613156419462127088
 GameObject:
   m_ObjectHideFlags: 0

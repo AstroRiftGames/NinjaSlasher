@@ -1,9 +1,5 @@
 using System.Collections;
-using Unity.VisualScripting;
 using UnityEngine;
-using UnityEngine.UIElements;
-using AstroRift.Core.Pooling;
-using AstroRift.Core.Update;
 
 public enum Surface
 {
@@ -52,7 +48,7 @@ public class Arachnomadre : BossEnemy
     [SerializeField] float _vulnerabilityTime;
     private bool _isVulnerable;
 
-    public override void Awake()
+    protected override void Awake()
     {
         base.Awake();
         _pool = new ObjectPool<BlaztEgg>(_blaztEgg, _blaztEggsAmount, transform);

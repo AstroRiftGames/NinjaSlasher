@@ -32,6 +32,10 @@ public class LevelConfiguration : ScriptableObject
 
     [Header("UNLOCK REQUIREMENTS")]
     public LevelUnlockRequirements unlockRequirements;
+    
+    [Header("MUSIC")]
+    public AudioEvent gameplayMusic;
+    public AudioEvent bossMusic;
 
     private void OnValidate()
     {

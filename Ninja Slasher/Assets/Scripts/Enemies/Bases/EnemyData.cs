@@ -27,7 +27,7 @@ public class VulnerabilityValues
     public bool fromFront;
 }
 
-[CreateAssetMenu(fileName = "New Enemy Data", menuName = "Scriptable Object/Enemy Data")]
+[CreateAssetMenu(fileName = "New Enemy Data", menuName = "Enemies/Enemy Data")]
 public class EnemyData : ScriptableObject
 {
     [SerializeField] EnemyType _type;
@@ -35,8 +35,13 @@ public class EnemyData : ScriptableObject
     [SerializeField] private float _range;
     [SerializeField] VulnerabilityValues _isVulnerable;
 
+    [Header("AUDIO")]
+    [SerializeField] private EnemyAudioSet _audioSet;
+
     public EnemyType Type => _type;
     public Projectile Projectile => _projectile;
     public float Range => _range;
     public VulnerabilityValues IsVulnerable => _isVulnerable;
+
+    public EnemyAudioSet AudioSet => _audioSet;
 }
