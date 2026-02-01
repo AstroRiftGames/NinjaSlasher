@@ -48,14 +48,14 @@ public class SwipeDetection : MonoBehaviour
 
         if (direction != Vector2.zero)
         {
-            OnSwipe(direction);
+            OnSwipe?.Invoke(direction);
         }
         else
         {
             float deltaTime = currentTime - pressTime;
             if (deltaTime <= timeThreshold)
             {
-                OnTap(initialPos);
+                OnTap?.Invoke(initialPos);
             }
         }
     }

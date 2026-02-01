@@ -39,7 +39,7 @@ public class NoLivesOverlay : UIOverlayBase
 
     protected override void OnShown()
     {
-        Debug.Log("[NoLivesOverlay] Sin vidas disponibles");
+        Debug.Log("[NoLivesOverlay] No lives available");
 
         UpdateMessage();
         UpdateTimer();
@@ -61,7 +61,7 @@ public class NoLivesOverlay : UIOverlayBase
         int currentLives = LifeManager.Instance?.CurrentLives ?? 0;
         int maxLives = GameConfigManager.Config?.maxLives ?? 5;
 
-        _messageText.text = $"Sin vidas disponibles\n{currentLives}/{maxLives}";
+        _messageText.text = $"No lives available\n{currentLives}/{maxLives}";
     }
 
     private void UpdateTimer()
@@ -78,7 +78,7 @@ public class NoLivesOverlay : UIOverlayBase
 
         if (timeUntilNextLife.TotalSeconds <= 0)
         {
-            _timerText.text = "Vida disponible";
+            _timerText.text = "Available life";
             UpdateButtons();
             return;
         }
@@ -86,7 +86,7 @@ public class NoLivesOverlay : UIOverlayBase
         int minutes = timeUntilNextLife.Minutes;
         int seconds = timeUntilNextLife.Seconds;
 
-        _timerText.text = $"Próxima vida en: {minutes:00}:{seconds:00}";
+        _timerText.text = $"Next life in: {minutes:00}:{seconds:00}";
     }
 
     private void UpdateButtons()
@@ -105,7 +105,7 @@ public class NoLivesOverlay : UIOverlayBase
 
     private void OnWatchAdClicked()
     {
-        Debug.Log("[NoLivesOverlay] Ver anuncio para obtener vida");
+        Debug.Log("[NoLivesOverlay] See advertisement to obtain life");
 
         // TODO: Integrar con sistema de ads
         // AdManager.Instance?.ShowRewardedAd(() => 
