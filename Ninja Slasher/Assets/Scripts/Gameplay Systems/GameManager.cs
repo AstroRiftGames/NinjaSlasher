@@ -153,7 +153,7 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
 
         if (currentLives <= 0)
         {
-            GoToLevelSelection();
+            UIEvents.RequestShowNoLivesOverlay();
         }
         else if (LifeManager.Instance.CanPlay())
         {
@@ -161,7 +161,6 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
         }
         else
         {
-            //UIManager.Instance.ShowNoLivesPanel();
             UIEvents.RequestShowNoLivesOverlay();
         }
     }
