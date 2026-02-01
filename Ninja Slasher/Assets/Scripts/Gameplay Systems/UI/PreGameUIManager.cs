@@ -52,6 +52,25 @@ public class PreGameUIManager : MonoBehaviour
         _audioContext = GetComponentInParent<UIAudioContext>();
     }
 
+    private void OnEnable()
+    {
+        UIEvents.OnLevelPreviewRequested += ShowConfirmationPanel;
+        GameEvents.OnRewardClaimed += OnDailyRewardClaimedRefresh;
+
+        // DEPRECATED
+        //DailyRewardSystem.OnRewardClaimed += OnDailyRewardClaimedRefresh;
+    }
+
+    private void OnDisable()
+    {
+        UIEvents.OnLevelPreviewRequested -= ShowConfirmationPanel;
+        GameEvents.OnRewardClaimed -= OnDailyRewardClaimedRefresh;
+
+        // DEPRECATED
+        //DailyRewardSystem.OnRewardClaimed -= OnDailyRewardClaimedRefresh;
+        StopAllAnimations();
+    }
+
     private void SetupButtonListeners()
     {
         _playButton.onClick.AddListener(OnPlayButtonClicked);
@@ -66,7 +85,7 @@ public class PreGameUIManager : MonoBehaviour
         }
         else
         {
-            UIEvents.RequestTogglePreGameScreen();
+            UIEvents.RequestHidePreGameScreen();
         }
     }
 
@@ -78,7 +97,7 @@ public class PreGameUIManager : MonoBehaviour
         }
         else
         {
-            UIEvents.RequestTogglePreGameScreen();
+            UIEvents.RequestHidePreGameScreen();
         }
     }
 
@@ -98,7 +117,8 @@ public class PreGameUIManager : MonoBehaviour
         _pendingSceneName = sceneName;
         _isLevelSelected = true;
 
-        UIManager.Instance.ShowHidePreGameCanvas();
+        //UIManager.Instance.ShowHidePreGameCanvas();
+        UIEvents.RequestShowPreGameScreen();
 
         ShowPreGameTitle();
         SetGoals();
@@ -252,23 +272,6 @@ public class PreGameUIManager : MonoBehaviour
                 DOTween.Kill(slashImage.transform);
             }
         }
-    }
-
-    private void OnEnable()
-    {
-        GameEvents.OnRewardClaimed += OnDailyRewardClaimedRefresh;
-
-        // DEPRECATED
-        //DailyRewardSystem.OnRewardClaimed += OnDailyRewardClaimedRefresh;
-    }
-
-    private void OnDisable()
-    {
-        GameEvents.OnRewardClaimed -= OnDailyRewardClaimedRefresh;
-
-        // DEPRECATED
-        //DailyRewardSystem.OnRewardClaimed -= OnDailyRewardClaimedRefresh;
-        StopAllAnimations();
     }
 
     private void OnDailyRewardClaimedRefresh(DailyReward _)

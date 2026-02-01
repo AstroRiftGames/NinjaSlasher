@@ -60,7 +60,8 @@ public class LoadManager : MonoBehaviour
                         //AudioManager.Instance.PlaySFX(SFXClip.UI_TapSplashScreen);
                         AudioService.Instance.PlaySFX(_audioContext.Audio.tapSplash);
 
-                        UIManager.Instance.ShowLevelSelector();
+                        //UIManager.Instance.ShowLevelSelector();
+                        UIEvents.RequestShowLevelSelector();
                         yield return new WaitForSeconds(2);
                         
                         //AudioManager.Instance.PlaySFX(SFXClip.UI_TransitionSlash);
@@ -75,7 +76,8 @@ public class LoadManager : MonoBehaviour
                     //AudioManager.Instance.PlaySFX(SFXClip.UI_TapSplashScreen);
                     AudioService.Instance.PlaySFX(_audioContext.Audio.tapSplash);
 
-                    UIManager.Instance.ShowLevelSelector();
+                    //UIManager.Instance.ShowLevelSelector();
+                    UIEvents.RequestShowLevelSelector();
 
                     yield return new WaitForSeconds(2);
 

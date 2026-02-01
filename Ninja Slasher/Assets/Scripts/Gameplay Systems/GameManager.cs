@@ -106,7 +106,8 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
     {
         yield return new WaitForSeconds(0.1f);
 
-        UIManager.Instance.ShowHideResultsCanvas();
+        //UIManager.Instance.ShowHideResultsCanvas();
+        UIEvents.RequestShowResultsModal();
     }
 
     private void HandleLevelDefeat(string reason = "unknown")
@@ -160,7 +161,8 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
         }
         else
         {
-            UIManager.Instance.ShowNoLivesPanel();
+            //UIManager.Instance.ShowNoLivesPanel();
+            UIEvents.RequestShowNoLivesOverlay();
         }
     }
 
@@ -222,7 +224,8 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
     {
         if (scene.name != "SplashScreen") return;
 
-        UIManager.Instance.ShowLevelSelector();
+        //UIManager.Instance.ShowLevelSelector();
+        UIEvents.RequestShowLevelsScreen();
         SceneManager.sceneLoaded -= HandleScreenflowLoaded;
     }
 

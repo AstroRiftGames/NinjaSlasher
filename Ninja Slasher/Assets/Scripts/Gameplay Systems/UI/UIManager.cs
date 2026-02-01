@@ -467,7 +467,7 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
 
     #endregion
 
-    #region LEGACY PUBLIC METHODS - DEPRECATED
+    /*#region LEGACY PUBLIC METHODS - DEPRECATED
 
     [Obsolete("Usa UIEvents.RequestTogglePauseOverlay() en su lugar")]
     public void ShowHidePauseCanvas() => UIEvents.RequestTogglePauseOverlay();
@@ -522,5 +522,5 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
 
     public void OpenURL(string url) => Application.OpenURL(url);
 
-    #endregion
+    #endregion*/
 }

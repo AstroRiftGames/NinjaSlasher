@@ -266,7 +266,8 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
 
     public void OpenURLButtonClicked(string url)
     {
-        UIManager.Instance.OpenURL(url);
+        //UIManager.Instance.OpenURL(url);
+        Application.OpenURL(url);
     }
 
     private void SetupLevelSelectorButtons()
@@ -275,7 +276,8 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
 
         _musicButton.onClick.AddListener(_configToggles.MusicButtonPushed);
         _sfxButton.onClick.AddListener(_configToggles.SFXButtonPushed);
-        _profileButton.onClick.AddListener(UIManager.Instance.ShowHideProfileCanvas);
+        //_profileButton.onClick.AddListener(UIManager.Instance.ShowHideProfileCanvas);
+        _profileButton.onClick.AddListener(UIEvents.RequestShowProfileModal);
 
         if (_hapticButton != null)
         {
@@ -296,9 +298,12 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
         //_userNicknameButton.onClick.AddListener(UIManager.Instance.ShowHideUserNicknameEditCanvas);
         _userNicknameButton.onClick.AddListener(ShowNicknameEditPopup);
 
-        _creditsButton.onClick.AddListener(UIManager.Instance.ShowHideCreditsCanvas);
-        _closeProfileButton.onClick.AddListener(UIManager.Instance.ShowHideProfileCanvas);
-        _closeCreditsButton.onClick.AddListener(UIManager.Instance.ShowHideCreditsCanvas);
+        //_creditsButton.onClick.AddListener(UIManager.Instance.ShowHideCreditsCanvas);
+        _creditsButton.onClick.AddListener(UIEvents.RequestShowCreditsModal);
+        //_closeProfileButton.onClick.AddListener(UIManager.Instance.ShowHideProfileCanvas);
+        _closeProfileButton.onClick.AddListener(UIEvents.RequestHideProfileModal);
+        //_closeCreditsButton.onClick.AddListener(UIManager.Instance.ShowHideCreditsCanvas);
+        _closeCreditsButton.onClick.AddListener(UIEvents.RequestHideCreditsModal);
 
         foreach (var img in _userIconButtonGroup)
         {
@@ -314,9 +319,12 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
             });
         }
 
-        _storeButton.onClick.AddListener(UIManager.Instance.ShowHideStoreCanvas);
-        _closeStoreButton.onClick.AddListener(UIManager.Instance.ShowHideStoreCanvas);
-        _calendarButton.onClick.AddListener(UIManager.Instance.ShowHideDailyRewardCanvas);
+        //_storeButton.onClick.AddListener(UIManager.Instance.ShowHideStoreCanvas);
+        _storeButton.onClick.AddListener(UIEvents.RequestShowStoreModal);
+        //_closeStoreButton.onClick.AddListener(UIManager.Instance.ShowHideStoreCanvas);
+        _closeStoreButton.onClick.AddListener(UIEvents.RequestHideStoreModal);
+        //_calendarButton.onClick.AddListener(UIManager.Instance.ShowHideDailyRewardCanvas);
+        _calendarButton.onClick.AddListener(UIEvents.RequestShowDailyRewardModal);
         _configDropdownButton.onClick.AddListener(_configPanelManager.OpenCloseConfigPanel);
 
         for (int i = 0; i < levelButtons.Length; i++)
@@ -328,7 +336,7 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
             {
                 if (IsLevelUnlocked(levelId))
                 {
-                    UIManager.Instance.ShowConfirmationPanel(sceneName);
+                    UIEvents.RequestLevelPreview(sceneName);
                 }
                 else
                 {

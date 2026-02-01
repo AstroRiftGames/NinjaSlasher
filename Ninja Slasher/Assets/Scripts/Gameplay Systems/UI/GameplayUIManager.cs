@@ -144,13 +144,14 @@ public class GameplayUIManager : MonoBehaviour
         AudioService.Instance?.PlaySFX(_audioContext.Audio.select);
 
         UIEvents.RequestRestartLevel();
-        UIManager.Instance.ShowHideLifeLostCanvas();
+        //UIManager.Instance.ShowHideLifeLostCanvas();
+        UIEvents.RequestShowLifeLostPanel();
     }
 
     public void OnBackToSelectionPressed()
     {
-        UIManager.Instance.ShowHideLifeLostCanvas();
-
+        //UIManager.Instance.ShowHideLifeLostCanvas();
+        UIEvents.RequestShowLifeLostPanel();
         //AudioManager.Instance.PlaySFX(SFXClip.UI_Select);
 
         AudioService.Instance?.PlaySFX(_audioContext.Audio.select);
