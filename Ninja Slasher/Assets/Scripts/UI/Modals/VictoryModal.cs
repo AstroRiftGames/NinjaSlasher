@@ -52,6 +52,8 @@ public class VictoryModal : UIModalBase
         gameObject.SetActive(true);
         _isVisible = true;
 
+        PlayVictoryAudio();
+
         if (_canvasGroup != null)
         {
             _canvasGroup.alpha = 1f;
@@ -68,8 +70,6 @@ public class VictoryModal : UIModalBase
         {
             _panelAnimator.SetTrigger("Open");
         }
-
-        PlayVictoryAudio();
 
         if (ResultsUIManager.Instance != null)
         {
