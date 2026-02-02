@@ -157,7 +157,7 @@ public class GameplayUIManager : MonoBehaviour
         AudioService.Instance?.PlaySFX(_audioContext.Audio.select);
 
         //UIManager.Instance.HideResultsModal();
-        UIEvents.RequestHideResultsModal();
+        UIEvents.RequestHideVictoryModal();
         GameManager.Instance.GoToLevelSelection(confirmPendingDeduction: false);
     }
 
@@ -166,7 +166,7 @@ public class GameplayUIManager : MonoBehaviour
         //AudioManager.Instance.PlaySFX(SFXClip.UI_Select);
         AudioService.Instance?.PlaySFX(_audioContext.Audio.select);
         //UIManager.Instance.HideResultsModal();
-        UIEvents.RequestHideResultsModal();
+        UIEvents.RequestHideVictoryModal();
         GameManager.Instance.GoToLevelSelection(confirmPendingDeduction: false);
     }
 
