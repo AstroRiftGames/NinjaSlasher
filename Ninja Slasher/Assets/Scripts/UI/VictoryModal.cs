@@ -44,7 +44,10 @@ public class VictoryModal : UIModalBase
 
     public override void Show()
     {
-        if (_isVisible) return;
+        if (_isVisible)
+        {
+            return;
+        }
 
         gameObject.SetActive(true);
         _isVisible = true;
@@ -66,7 +69,7 @@ public class VictoryModal : UIModalBase
             _panelAnimator.SetTrigger("Open");
         }
 
-        PlayResultAudio();
+        PlayVictoryAudio();
 
         if (ResultsUIManager.Instance != null)
         {
@@ -90,7 +93,10 @@ public class VictoryModal : UIModalBase
 
     public override void Hide()
     {
-        if (!_isVisible) return;
+        if (!_isVisible)
+        {
+            return;
+        }
 
         _isVisible = false;
 
@@ -121,42 +127,14 @@ public class VictoryModal : UIModalBase
         gameObject.SetActive(false);
     }
 
-    private void PlayResultAudio()
+    private void PlayVictoryAudio()
     {
-        if (_audioContext == null)
-        {
-            Debug.LogWarning("[ResultsModal] AudioContext no está asignado");
-            return;
-        }
+        bool isVictory = GameManager.Instance != null && GameManager.Instance.IsVictory;
 
-        if (AudioService.Instance == null)
-        {
-            Debug.LogWarning("[ResultsModal] AudioService no está disponible");
-            return;
-        }
-
-        if (_isVictory)
-        {
-            if (_audioContext.Audio.victory != null)
-            {
-                AudioService.Instance.PlaySFX(_audioContext.Audio.victory);
-            }
-            else
-            {
-                Debug.LogWarning("[ResultsModal] AudioEvent de victoria no está asignado en UIAudioContext");
-            }
-        }
+        if (isVictory)
+            AudioService.Instance.PlaySFX(_audioContext.Audio.victory);
         else
-        {
-            if (_audioContext.Audio.defeat != null)
-            {
-                AudioService.Instance.PlaySFX(_audioContext.Audio.defeat);
-            }
-            else
-            {
-                Debug.LogWarning("[ResultsModal] AudioEvent de derrota no está asignado en UIAudioContext");
-            }
-        }
+            AudioService.Instance.PlaySFX(_audioContext.Audio.defeat);
     }
 
     public void ShowVictory()

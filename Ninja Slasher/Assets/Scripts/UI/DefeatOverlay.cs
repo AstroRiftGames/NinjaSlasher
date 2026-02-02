@@ -4,7 +4,7 @@ using TMPro;
 
 public class DefeatOverlay : UIOverlayBase
 {
-    [Header("Life Lost UI")]
+    [Header("Defeat UI")]
     [SerializeField] private TextMeshProUGUI _titleText;
     [SerializeField] private TextMeshProUGUI _livesRemainingText;
     [SerializeField] private Button _continueButton;
@@ -31,10 +31,14 @@ public class DefeatOverlay : UIOverlayBase
         Show();
     }
 
+    public override void Show()
+    {
+        base.Show();
+        PlayDefeatAudio();
+    }
+
     protected override void OnShown()
     {
-        Debug.Log("[LifeLostOverlay] Vida perdida");
-
         Time.timeScale = 0f;
 
         UIEvents.RaisePause(true);
@@ -42,8 +46,6 @@ public class DefeatOverlay : UIOverlayBase
 
     protected override void OnHidden()
     {
-        Debug.Log("[LifeLostOverlay] Continuando juego");
-
         Time.timeScale = 1f;
 
         UIEvents.RaisePause(false);
@@ -82,6 +84,24 @@ public class DefeatOverlay : UIOverlayBase
     {
         Time.timeScale = 1f;
         UIEvents.RaiseQuitToMenuPressed();
+    }
+
+    private void PlayDefeatAudio()
+    {
+        if (_audioContext == null)
+        {
+            return;
+        }
+
+        if (AudioService.Instance == null)
+        {
+            return;
+        }
+
+        if (_audioContext.Audio.defeat != null)
+        {
+            AudioService.Instance.PlaySFX(_audioContext.Audio.defeat);
+        }
     }
 
     private void OnDestroy()

@@ -14,6 +14,9 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
 
     public bool PlayerHasDied => _playerHasDied;
 
+    private bool _isVictory = false;
+    public bool IsVictory => _isVictory;
+
     public override void Awake()
     {
         base.Awake();
@@ -70,12 +73,12 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
 
         LifeManager.Instance.OnLevelStart();
         _levelStarted = true;
-
-        Debug.Log("[GameManager] Nivel iniciado, vida virtual descontada");
     }
 
     private void OnLevelCompleted(LevelStats stats)
     {
+        _isVictory = true;
+
         if (IsTestingScene()) return;
 
         GameEvents.RaiseLevelEndedConsumePowerUps();
@@ -106,12 +109,13 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
     {
         yield return new WaitForSeconds(0.1f);
 
-        //UIManager.Instance.ShowHideResultsCanvas();
         UIEvents.RequestShowVictoryModal();
     }
 
     private void HandleLevelDefeat(string reason = "unknown")
     {
+        _isVictory = false;
+
         if (_levelEnded)
         {
             return;
@@ -191,7 +195,7 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
     {
         if (newLives > 0)
         {
-            Debug.Log($"[LevelManager] Vidas actualizadas: {newLives}");
+            Debug.Log($"[LevelManager] lives updated: {newLives}");
         }
     }
 
@@ -223,7 +227,6 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
     {
         if (scene.name != "SplashScreen") return;
 
-        //UIManager.Instance.ShowLevelSelector();
         UIEvents.RequestShowLevelsScreen();
         SceneManager.sceneLoaded -= HandleScreenflowLoaded;
     }
