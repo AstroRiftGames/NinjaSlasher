@@ -265,9 +265,6 @@ public class ResultsUIManager : MonoBehaviourSingleton<ResultsUIManager>
             SetStarSprite(starIndex, isCompleted);
             rt.rotation = Quaternion.identity;
             rt.DOPunchScale(Vector3.one * 0.3f, 0.3f, 10, 0.5f);
-
-            //AudioManager.Instance?.PlaySFX(SFXClip.UI_Select);
-            AudioService.Instance?.PlaySFX(_audioContext.Audio.select);
         });
     }
 
