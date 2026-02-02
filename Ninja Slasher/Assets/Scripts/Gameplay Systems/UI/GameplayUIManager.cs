@@ -126,7 +126,6 @@ public class GameplayUIManager : MonoBehaviour
     public void ShowNoLivesPanel()
     {
         _noLivesActive = true;
-        //UIManager.Instance.ShowNoLivesOverlay();
         UIEvents.RequestShowNoLivesOverlay();
     }
 
@@ -140,32 +139,19 @@ public class GameplayUIManager : MonoBehaviour
 
     public void OnRetryPressed()
     {
-        //AudioManager.Instance.PlaySFX(SFXClip.UI_Select);
-        AudioService.Instance?.PlaySFX(_audioContext.Audio.select);
-
         UIEvents.RequestRestartLevel();
-        //UIManager.Instance.ShowHideLifeLostCanvas();
         UIEvents.RequestShowLifeLostPanel();
     }
 
     public void OnBackToSelectionPressed()
     {
-        //UIManager.Instance.ShowHideLifeLostCanvas();
         UIEvents.RequestShowLifeLostPanel();
-        //AudioManager.Instance.PlaySFX(SFXClip.UI_Select);
-
-        AudioService.Instance?.PlaySFX(_audioContext.Audio.select);
-
-        //UIManager.Instance.HideResultsModal();
         UIEvents.RequestHideVictoryModal();
         GameManager.Instance.GoToLevelSelection(confirmPendingDeduction: false);
     }
 
     public void ContinueToLevelSelector()
     {
-        //AudioManager.Instance.PlaySFX(SFXClip.UI_Select);
-        AudioService.Instance?.PlaySFX(_audioContext.Audio.select);
-        //UIManager.Instance.HideResultsModal();
         UIEvents.RequestHideVictoryModal();
         GameManager.Instance.GoToLevelSelection(confirmPendingDeduction: false);
     }

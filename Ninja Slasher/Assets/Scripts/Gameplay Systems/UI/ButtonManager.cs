@@ -618,7 +618,10 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
                 });
         }
 
-        AudioService.Instance?.PlaySFX(_audioContext.Audio.select);
+        if (button.interactable && _audioContext != null && _audioContext.Audio != null)
+        {
+            AudioService.Instance?.PlaySFX(_audioContext.Audio.select);
+        }
     }
 
     public void StopAllButtonAnimations()
