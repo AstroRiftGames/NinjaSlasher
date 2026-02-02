@@ -107,7 +107,7 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
         yield return new WaitForSeconds(0.1f);
 
         //UIManager.Instance.ShowHideResultsCanvas();
-        UIEvents.RequestShowResultsModal();
+        UIEvents.RequestShowVictoryModal();
     }
 
     private void HandleLevelDefeat(string reason = "unknown")
@@ -157,7 +157,7 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
         }
         else if (LifeManager.Instance.CanPlay())
         {
-            UIEvents.RequestShowLifeLostOverlay(currentLives);
+            UIEvents.RequestShowDefeatOverlay(currentLives);
         }
         else
         {

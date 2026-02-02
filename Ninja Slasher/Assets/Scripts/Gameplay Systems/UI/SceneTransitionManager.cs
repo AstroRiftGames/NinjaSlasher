@@ -78,13 +78,13 @@ public class SceneTransitionManager : MonoBehaviour
 
         SetHUDActive(false);
 
-        UIEvents.RequestHideResultsModal();
+        UIEvents.RequestHideVictoryModal();
         UIEvents.RequestHidePauseOverlay();
         UIEvents.RequestHideNoLivesOverlay();
 
         if (UIManager.Instance != null)
         {
-            UIManager.Instance.HideLifeLostOverlay();
+            UIManager.Instance.HideDefeatOverlay();
         }
 
         if (AudioService.Instance != null)

@@ -13,7 +13,7 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
     [Header("OVERLAYS")]
     [SerializeField] private PauseOverlay _pauseOverlay;
     [SerializeField] private NoLivesOverlay _noLivesOverlay;
-    [SerializeField] private DefeatOverlay _lifeLostOverlay;
+    [SerializeField] private DefeatOverlay _defeatOverlay;
 
     [Header("SCREENS")]
     [SerializeField] private SplashScreen _splashScreen;
@@ -26,7 +26,7 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
     [SerializeField] private DailyRewardModal _dailyRewardModal;
     [SerializeField] private DailyWheelModal _dailyWheelModal;
     [SerializeField] private StoreModal _storeModal;
-    [SerializeField] private VictoryModal _resultsModal;
+    [SerializeField] private VictoryModal _victoryModal;
 
     [Header("HUD")]
     [SerializeField] private GameplayHUD _gameplayHUD;
@@ -156,7 +156,7 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
         UIEvents.OnShowNoLivesOverlayRequested += ShowNoLivesOverlay;
         UIEvents.OnHideNoLivesOverlayRequested += HideNoLivesOverlay;
 
-        UIEvents.OnShowLifeLostOverlayRequested += ShowLifeLostOverlay;
+        UIEvents.OnShowDefeatOverlayRequested += ShowDefeatOverlay;
 
         UIEvents.OnShowSplashScreenRequested += ShowSplashScreen;
         UIEvents.OnHideSplashScreenRequested += HideSplashScreen;
@@ -188,9 +188,9 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
         UIEvents.OnHideStoreModalRequested += HideStoreModal;
         UIEvents.OnToggleStoreModalRequested += ToggleStoreModal;
 
-        UIEvents.OnShowResultsModalRequested += ShowResultsModal;
-        UIEvents.OnHideResultsModalRequested += HideResultsModal;
-        UIEvents.OnToggleResultsModalRequested += ToggleResultsModal;
+        UIEvents.OnShowVictoryModalRequested += ShowVictoryModal;
+        UIEvents.OnHideVictoryModalRequested += HideVictoryModal;
+        UIEvents.OnToggleVictoryModalRequested += ToggleVictoryModal;
 
         UIEvents.OnShowGameplayHUDRequested += ShowGameplayHUD;
         UIEvents.OnHideGameplayHUDRequested += HideGameplayHUD;
@@ -214,7 +214,7 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
         UIEvents.OnShowNoLivesOverlayRequested -= ShowNoLivesOverlay;
         UIEvents.OnHideNoLivesOverlayRequested -= HideNoLivesOverlay;
 
-        UIEvents.OnShowLifeLostOverlayRequested -= ShowLifeLostOverlay;
+        UIEvents.OnShowDefeatOverlayRequested -= ShowDefeatOverlay;
 
         UIEvents.OnShowSplashScreenRequested -= ShowSplashScreen;
         UIEvents.OnHideSplashScreenRequested -= HideSplashScreen;
@@ -246,9 +246,9 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
         UIEvents.OnHideStoreModalRequested -= HideStoreModal;
         UIEvents.OnToggleStoreModalRequested -= ToggleStoreModal;
 
-        UIEvents.OnShowResultsModalRequested -= ShowResultsModal;
-        UIEvents.OnHideResultsModalRequested -= HideResultsModal;
-        UIEvents.OnToggleResultsModalRequested -= ToggleResultsModal;
+        UIEvents.OnShowVictoryModalRequested -= ShowVictoryModal;
+        UIEvents.OnHideVictoryModalRequested -= HideVictoryModal;
+        UIEvents.OnToggleVictoryModalRequested -= ToggleVictoryModal;
 
         UIEvents.OnShowGameplayHUDRequested -= ShowGameplayHUD;
         UIEvents.OnHideGameplayHUDRequested -= HideGameplayHUD;
@@ -339,16 +339,16 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
     private void ShowNoLivesOverlay() => ShowPanel(_noLivesOverlay);
     private void HideNoLivesOverlay() => HidePanel(_noLivesOverlay);
 
-    private void ShowLifeLostOverlay(int livesRemaining)
+    private void ShowDefeatOverlay(int livesRemaining)
     {
-        if (_lifeLostOverlay != null)
-            _lifeLostOverlay.ShowLifeLost(livesRemaining);
+        if (_defeatOverlay != null)
+            _defeatOverlay.ShowLifeLost(livesRemaining);
     }
 
-    public void HideLifeLostOverlay()
+    public void HideDefeatOverlay()
     {
-        if (_lifeLostOverlay != null)
-            _lifeLostOverlay.Hide();
+        if (_defeatOverlay != null)
+            _defeatOverlay.Hide();
     }
 
     #endregion
@@ -404,9 +404,9 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
     private void HideStoreModal() => HidePanel(_storeModal);
     private void ToggleStoreModal() => TogglePanel(_storeModal);
 
-    private void ShowResultsModal() => ShowPanel(_resultsModal);
-    private void HideResultsModal() => HidePanel(_resultsModal);
-    private void ToggleResultsModal() => TogglePanel(_resultsModal);
+    private void ShowVictoryModal() => ShowPanel(_victoryModal);
+    private void HideVictoryModal() => HidePanel(_victoryModal);
+    private void ToggleVictoryModal() => TogglePanel(_victoryModal);
 
     #endregion
 

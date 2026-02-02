@@ -41,7 +41,7 @@ public static class UIEvents
     public static event Action OnShowNoLivesOverlayRequested;
     public static event Action OnHideNoLivesOverlayRequested;
 
-    public static event Action<int> OnShowLifeLostOverlayRequested;
+    public static event Action<int> OnShowDefeatOverlayRequested;
 
     public static void RequestShowPauseOverlay()
     {
@@ -68,9 +68,9 @@ public static class UIEvents
         OnHideNoLivesOverlayRequested?.Invoke();
     }
 
-    public static void RequestShowLifeLostOverlay(int livesRemaining)
+    public static void RequestShowDefeatOverlay(int livesRemaining)
     {
-        OnShowLifeLostOverlayRequested?.Invoke(livesRemaining);
+        OnShowDefeatOverlayRequested?.Invoke(livesRemaining);
     }
 
     #endregion
@@ -146,9 +146,9 @@ public static class UIEvents
     public static event Action OnHideStoreModalRequested;
     public static event Action OnToggleStoreModalRequested;
 
-    public static event Action OnShowResultsModalRequested;
-    public static event Action OnHideResultsModalRequested;
-    public static event Action OnToggleResultsModalRequested;
+    public static event Action OnShowVictoryModalRequested;
+    public static event Action OnHideVictoryModalRequested;
+    public static event Action OnToggleVictoryModalRequested;
 
     public static void RequestShowCreditsModal()
     {
@@ -225,19 +225,19 @@ public static class UIEvents
         OnToggleStoreModalRequested?.Invoke();
     }
 
-    public static void RequestShowResultsModal()
+    public static void RequestShowVictoryModal()
     {
-        OnShowResultsModalRequested?.Invoke();
+        OnShowVictoryModalRequested?.Invoke();
     }
 
-    public static void RequestHideResultsModal()
+    public static void RequestHideVictoryModal()
     {
-        OnHideResultsModalRequested?.Invoke();
+        OnHideVictoryModalRequested?.Invoke();
     }
 
-    public static void RequestToggleResultsModal()
+    public static void RequestToggleVictoryModal()
     {
-        OnToggleResultsModalRequested?.Invoke();
+        OnToggleVictoryModalRequested?.Invoke();
     }
 
     #endregion
@@ -383,14 +383,14 @@ public static class UIEvents
 
     #region RESULTS AND REWARDS EVENTS
 
-    public static event Action OnShowResultsPanelRequested;
+    public static event Action OnShowVictoryPanelRequested;
     public static event Action OnShowNoLivesPanelRequested;
-    public static event Action OnShowLifeLostPanelRequested;
+    public static event Action OnShowDefeatPanelRequested;
     public static event Action OnShowDailyRewardRequested;
 
-    public static void RequestShowResultsPanel()
+    public static void RequestShowVictoryPanel()
     {
-        OnShowResultsPanelRequested?.Invoke();
+        OnShowVictoryPanelRequested?.Invoke();
     }
 
     public static void RequestShowNoLivesPanel()
@@ -400,7 +400,7 @@ public static class UIEvents
 
     public static void RequestShowLifeLostPanel()
     {
-        OnShowLifeLostPanelRequested?.Invoke();
+        OnShowDefeatPanelRequested?.Invoke();
     }
 
     public static void RequestShowDailyReward()
@@ -444,7 +444,7 @@ public static class UIEvents
         OnTogglePauseOverlayRequested = null;
         OnShowNoLivesOverlayRequested = null;
         OnHideNoLivesOverlayRequested = null;
-        OnShowLifeLostOverlayRequested = null;
+        OnShowDefeatOverlayRequested = null;
     }
 
     public static void ClearScreenEvents()
@@ -475,9 +475,9 @@ public static class UIEvents
         OnShowStoreModalRequested = null;
         OnHideStoreModalRequested = null;
         OnToggleStoreModalRequested = null;
-        OnShowResultsModalRequested = null;
-        OnHideResultsModalRequested = null;
-        OnToggleResultsModalRequested = null;
+        OnShowVictoryModalRequested = null;
+        OnHideVictoryModalRequested = null;
+        OnToggleVictoryModalRequested = null;
     }
 
     public static void ClearHUDEvents()
@@ -520,9 +520,9 @@ public static class UIEvents
 
     public static void ClearPanelDisplayEvents()
     {
-        OnShowResultsPanelRequested = null;
+        OnShowVictoryPanelRequested = null;
         OnShowNoLivesPanelRequested = null;
-        OnShowLifeLostPanelRequested = null;
+        OnShowDefeatPanelRequested = null;
         OnShowDailyRewardRequested = null;
     }
 
