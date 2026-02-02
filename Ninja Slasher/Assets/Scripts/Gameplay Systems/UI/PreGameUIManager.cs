@@ -158,13 +158,6 @@ public class PreGameUIManager : MonoBehaviour
         _title.DOColor(originalColor, flashDuration * 0.5f);
         _title.transform.DOPunchScale(Vector3.one * 0.2f, flashDuration, 1, 0.8f);
 
-        //if (AudioManager.Instance != null)
-        //{
-        //    AudioManager.Instance.PlaySFX(SFXClip.UI_Select);
-        //}
-
-        AudioService.Instance?.PlaySFX(_audioContext.Audio.select);
-
         yield return new WaitForSeconds(flashDuration);
     }
 
@@ -197,13 +190,6 @@ public class PreGameUIManager : MonoBehaviour
 
         objectiveText.DOColor(objectiveText.color, flashDuration * 0.5f);
         objectiveText.transform.DOPunchScale(Vector3.one * 0.15f, flashDuration, 1, 0.5f);
-
-        //if (AudioManager.Instance != null)
-        //{
-        //    AudioManager.Instance.PlaySFX(SFXClip.UI_Select);
-        //}
-
-        AudioService.Instance?.PlaySFX(_audioContext.Audio.select);
     }
 
     private void AnimateSlashEffect(Image slashImage)
