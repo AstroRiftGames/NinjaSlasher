@@ -13,7 +13,7 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
     [Header("OVERLAYS")]
     [SerializeField] private PauseOverlay _pauseOverlay;
     [SerializeField] private NoLivesOverlay _noLivesOverlay;
-    [SerializeField] private LifeLostOverlay _lifeLostOverlay;
+    [SerializeField] private DefeatOverlay _lifeLostOverlay;
 
     [Header("SCREENS")]
     [SerializeField] private SplashScreen _splashScreen;
@@ -26,7 +26,7 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
     [SerializeField] private DailyRewardModal _dailyRewardModal;
     [SerializeField] private DailyWheelModal _dailyWheelModal;
     [SerializeField] private StoreModal _storeModal;
-    [SerializeField] private ResultsModal _resultsModal;
+    [SerializeField] private VictoryModal _resultsModal;
 
     [Header("HUD")]
     [SerializeField] private GameplayHUD _gameplayHUD;
@@ -466,61 +466,4 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
     }
 
     #endregion
-
-    /*#region LEGACY PUBLIC METHODS - DEPRECATED
-
-    [Obsolete("Usa UIEvents.RequestTogglePauseOverlay() en su lugar")]
-    public void ShowHidePauseCanvas() => UIEvents.RequestTogglePauseOverlay();
-
-    [Obsolete("Usa UIEvents.RequestTogglePreGameScreen() en su lugar")]
-    public void ShowHidePreGameCanvas() => UIEvents.RequestTogglePreGameScreen();
-
-    [Obsolete("Usa UIEvents.RequestToggleCreditsModal() en su lugar")]
-    public void ShowHideCreditsCanvas() => UIEvents.RequestToggleCreditsModal();
-
-    [Obsolete("Usa UIEvents.RequestToggleProfileModal() en su lugar")]
-    public void ShowHideProfileCanvas() => UIEvents.RequestToggleProfileModal();
-
-    [Obsolete("Usa UIEvents.RequestToggleResultsModal() en su lugar")]
-    public void ShowHideResultsCanvas() => UIEvents.RequestToggleResultsModal();
-
-    [Obsolete("Usa UIEvents.RequestToggleStoreModal() en su lugar")]
-    public void ShowHideStoreCanvas() => UIEvents.RequestToggleStoreModal();
-
-    [Obsolete("Usa UIEvents.RequestToggleDailyWheelModal() en su lugar")]
-    public void ShowHideDailyWheelCanvas() => UIEvents.RequestToggleDailyWheelModal();
-
-    [Obsolete("Usa UIEvents.RequestShowDailyRewardModal() en su lugar")]
-    public void ShowHideDailyRewardCanvas() => UIEvents.RequestShowDailyRewardModal();
-
-    [Obsolete("Usa UIEvents.RequestShowNoLivesOverlay() en su lugar")]
-    public void ShowHideNoLivesCanvas() => UIEvents.RequestShowNoLivesOverlay();
-
-    [Obsolete("Usa UIEvents.RequestShowLifeLostOverlay(lives) en su lugar")]
-    public void ShowHideLifeLostCanvas() => UIEvents.RequestShowLifeLostOverlay(LifeManager.Instance?.CurrentLives ?? 0);
-
-    [Obsolete("Usa UIEvents.RequestLevelPreview(sceneName) en su lugar")]
-    public void ShowConfirmationPanel(string sceneName) => UIEvents.RequestLevelPreview(sceneName);
-
-    [Obsolete("Usa UIEvents.RequestUpdateLivesUI(lives) en su lugar")]
-    public void UpdateLivesUI(int lives) => UIEvents.RequestUpdateLivesUI(lives);
-
-    [Obsolete("Usa UIEvents.RequestShowNoLivesPanel() en su lugar")]
-    public void ShowNoLivesPanel() => UIEvents.RequestShowNoLivesPanel();
-
-    [Obsolete("Llama directamente a SwitchHapticFeedback()")]
-    public void SwitchHapticFeedback() => _isHapticFeedbackActive = !_isHapticFeedbackActive;
-
-    [Obsolete("Usa UIEvents.RequestShowLevelSelector() en su lugar")]
-    public void ShowLevelSelector() => UIEvents.RequestShowLevelSelector();
-
-    [Obsolete("Usa UIEvents.RequestSceneTransition(sceneName) en su lugar")]
-    public void LoadLevelScene(string sceneName) => UIEvents.RequestSceneTransition(sceneName);
-
-    [Obsolete("Usa UIEvents.RequestRestartLevel() en su lugar")]
-    public void RestartLevel() => UIEvents.RequestRestartLevel();
-
-    public void OpenURL(string url) => Application.OpenURL(url);
-
-    #endregion*/
 }

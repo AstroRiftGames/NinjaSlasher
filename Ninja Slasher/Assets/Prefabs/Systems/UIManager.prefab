@@ -23,6 +23,7 @@ GameObject:
   - component: {fileID: 6745091640480951052}
   - component: {fileID: 6146392794090672321}
   - component: {fileID: 7256938055722210256}
+  - component: {fileID: 3561158381078976361}
   m_Layer: 0
   m_Name: UIManager
   m_TagString: Untagged
@@ -542,6 +543,20 @@ MonoBehaviour:
   _hapticTurnOffIcon: {fileID: 21300000, guid: b213cf2268330064cb01dcfaf7dbdfc6, type: 3}
   _hapticImage: {fileID: 2281808778251055062}
   _isHapticOn: 0
+--- !u!114 &3561158381078976361
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 52824968843742465}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f51dc87cbd23a3a48a41fd9a104ed192, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  countdownTickEvent: {fileID: 11400000, guid: ed270baf067db404fa425143cf4af4a5, type: 2}
+  countdownThreshold: 5
 --- !u!1 &281887844316290728
 GameObject:
   m_ObjectHideFlags: 0

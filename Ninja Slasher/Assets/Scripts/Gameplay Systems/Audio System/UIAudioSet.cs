@@ -26,4 +26,7 @@ public class UIAudioSet : ScriptableObject
     public AudioEvent rewardCoins;
     public AudioEvent rewardPrizeCoins;
     public AudioEvent rewardPrize;
+
+    [Header("Panels")]
+    public AudioEvent panelOpen;
 }

@@ -1,9 +1,8 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
-using System.Collections;
 
-public class LifeLostOverlay : UIOverlayBase
+public class DefeatOverlay : UIOverlayBase
 {
     [Header("Life Lost UI")]
     [SerializeField] private TextMeshProUGUI _titleText;
