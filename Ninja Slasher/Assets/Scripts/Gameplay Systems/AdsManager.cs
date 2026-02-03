@@ -135,7 +135,7 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
 
     private void OnRewardedAdLoaded(LevelPlayAdInfo adInfo)
     {
-        Debug.Log($"Rewarded Ad loaded. Network: {adInfo.adNetwork}");
+        Debug.Log($"Rewarded Ad loaded. Network: {adInfo.AdNetwork}");
     }
 
     private void OnRewardedAdLoadFailed(LevelPlayAdError error)
@@ -149,9 +149,9 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
         Debug.Log("Rewarded Ad showed");
     }
 
-    private void OnRewardedAdDisplayFailed(LevelPlayAdDisplayInfoError error)
+    private void OnRewardedAdDisplayFailed(LevelPlayAdInfo adInfo, LevelPlayAdError error)
     {
-        Debug.LogError($"Error showing Rewarded Ad: {error.LevelPlayError.ErrorMessage}");
+        Debug.LogError($"Error showing Rewarded Ad: {error.ErrorMessage}");
     }
 
     private void OnRewardedAdRewarded(LevelPlayAdInfo adInfo, LevelPlayReward reward)
@@ -175,7 +175,7 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
 
     private void OnInterstitialAdLoaded(LevelPlayAdInfo adInfo)
     {
-        Debug.Log($"Interstitial Ad loaded. Network: {adInfo.adNetwork}");
+        Debug.Log($"Interstitial Ad loaded. Network: {adInfo.AdNetwork}");
     }
 
     private void OnInterstitialAdLoadFailed(LevelPlayAdError error)
@@ -189,9 +189,9 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
         Debug.Log("Interstitial Ad showed");
     }
 
-    private void OnInterstitialAdDisplayFailed(LevelPlayAdDisplayInfoError error)
+    private void OnInterstitialAdDisplayFailed(LevelPlayAdInfo adInfo, LevelPlayAdError error)
     {
-        Debug.LogError($"Error showing Interstitial Ad: {error.LevelPlayError.ErrorMessage}");
+        Debug.LogError($"Error showing Interstitial Ad: {error.ErrorMessage}");
     }
 
     private void OnInterstitialAdClosed(LevelPlayAdInfo adInfo)
