@@ -9,6 +9,11 @@ public class BreakableProp : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
+        Break();
+    }
+
+    public void Break()
+    {
         _whole.SetActive(false);
         _col.enabled = false;
         _broken.SetActive(true);
