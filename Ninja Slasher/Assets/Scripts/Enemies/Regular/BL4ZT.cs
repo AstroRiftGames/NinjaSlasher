@@ -1,8 +1,9 @@
 using System;
+using System.Collections;
 using Unity.VisualScripting;
 using UnityEngine;
 
-public class BL4ZT : RangeEnemy
+public class BL4ZT : Enemy
 {
     private Arachnomadre _arachnomadre;
     public void SetArachnomadre(Arachnomadre boss) => _arachnomadre = boss;
@@ -24,8 +25,6 @@ public class BL4ZT : RangeEnemy
     {
         Vector2 currentPos = transform.position;
 
-        Debug.DrawLine(currentPos, _destination);
-
         bool movingRight = _currentSurface switch
         {
             Surface.Ceiling => _destination.x < currentPos.x,
@@ -34,7 +33,6 @@ public class BL4ZT : RangeEnemy
             Surface.Left_Wall => _destination.y < currentPos.y,
             _ => throw new IndexOutOfRangeException($"Surface: {_currentSurface}"),
         };
-        Debug.DrawRay(currentPos, transform.right * (movingRight ? 1 : -1));
         return movingRight;
     }
 
@@ -42,31 +40,47 @@ public class BL4ZT : RangeEnemy
     {
         base.Awake();
         _currentSpeed = _speed;
-        SetPatrolTarget();
+        StartCoroutine(SetPatrolTarget());
     }
     public override void CustomUpdate()
     {
-        UpdateTarget();
-        if(!_isActive)
+        if (!_isActive)
         {
-            if (!_hasLOS)
+            if (HasLOS())
             {
-                if (!CheckTarget(_destination)) Move();
+                Activate();
+            }
+            else
+            {
+                if (!CheckTarget(_destination))
+                {
+                    Move();
+                }
                 else
                 {
-                    _animator.SetBool("IsMoving", false);
-                    SetPatrolTarget();
+                    StartCoroutine(SetPatrolTarget());
                 }
             }
-            else Activate();
         }
         else
         {
-            if(!CheckExplosionTime())
+            if (!CheckExplosionTime())
             {
-                if(CheckCooldown(_rayCD, _lastRay)) _destination = GetClosestPoint(_player.transform.position);
-                if(!CheckTarget(_destination)) Move();
-                else _animator.SetBool("IsMoving", false);
+                if (CheckCooldown(_rayCD, _lastRay))
+                {
+                    _destination = GetClosestPoint(_player.transform.position);
+                }
+
+                if (!CheckTarget(_destination))
+                {
+                    _animator.SetBool("IsMoving", true);
+                    Move();
+                }
+                else
+                {
+                    _rb.linearVelocityX = 0;
+                    _animator.SetBool("IsMoving", false);
+                }
             }
             else Explode();
         }
@@ -76,19 +90,16 @@ public class BL4ZT : RangeEnemy
     private void Move()
     {
         bool thereIsWall = Physics2D.Raycast(transform.position + transform.right * .5f * (MovingRight() ? 1 : -1), transform.right * (MovingRight() ? 1 : -1), .25f, _obstaclesLayer);
-        Debug.DrawRay(transform.position + transform.right * .5f * (MovingRight() ? 1 : -1), transform.right * .25f * (MovingRight() ? 1 : -1));
         if (thereIsWall)
         {
             Rotate();
         }
 
-        bool thereIsFloor = Physics2D.Raycast(transform.position + transform.right * .4f * (MovingRight() ? 1:-1) + transform.up * -1f, transform.up * -1, .5f, _obstaclesLayer);
-        Debug.DrawRay(transform.position + transform.right * .4f * (MovingRight() ? 1 : -1) + transform.up * -1f, transform.up * -1 *.5f);
+        bool thereIsFloor = Physics2D.Raycast(transform.position + transform.right * .4f * (MovingRight() ? 1 : -1) + transform.up * -1f, transform.up * -1, .5f, _obstaclesLayer);
         if (thereIsFloor)
         {
             transform.position += transform.right * (MovingRight() ? 1 : -1) * _currentSpeed * Time.deltaTime;
         }
-        _animator.SetBool("IsMoving", true);
 
     }
     private void Rotate()
@@ -102,7 +113,6 @@ public class BL4ZT : RangeEnemy
             _ => throw new IndexOutOfRangeException($"Surface: {_currentSurface}. Direction: {MovingRight()}")
         };
         transform.Rotate(new Vector3(0, 0, 90 * (MovingRight() ? 1 : -1)));
-        _animator.SetTrigger($"OnRotation{(MovingRight() ? "Right" : "Left")}");
     }
     private void Explode()
     {
@@ -113,6 +123,14 @@ public class BL4ZT : RangeEnemy
             {
                 col.TryGetComponent(out NewController player);
                 player.Die();
+            }
+            else if(col.CompareTag("Enemy") && col.TryGetComponent(out Enemy enemy))
+            {
+                enemy.Die();
+            }
+            else if(col.TryGetComponent(out BreakableProp prop))
+            {
+                prop.Break();
             }
             else if (_arachnomadre != null && col.CompareTag("Boss"))
             {
@@ -128,13 +146,25 @@ public class BL4ZT : RangeEnemy
         {
             _arachnomadre.DecreaseEggsAmount();
         }
+        _animator.SetTrigger("OnHit");
         base.Die();
-        Destroy(transform.parent.gameObject,.5f);
+        Destroy(transform.parent.gameObject, .6f);
+    }
+
+    private bool HasLOS()
+    {
+        Vector2 dirToPlayer = (_player.transform.position - transform.position).normalized;
+        RaycastHit2D hit = Physics2D.Raycast(transform.position, dirToPlayer, _data.Range, _playerLayer);
+        Debug.DrawRay(transform.position, dirToPlayer * _data.Range, Color.green);
+        return hit;
+
     }
 
     private bool CheckTarget(Vector3 target)
     {
-        return Vector3.Distance(target, transform.localToWorldMatrix.GetPosition()) <= _explosionRadius/2;
+        bool hasReachedTarget = Vector3.Distance(target, transform.position) <= _explosionRadius / 2;
+        _animator.SetBool("IsMoving", !hasReachedTarget);
+        return hasReachedTarget;
     }
 
     private bool CheckExplosionTime()
@@ -148,11 +178,14 @@ public class BL4ZT : RangeEnemy
         _activationTime = Time.time;
         if(CheckCooldown(_rayCD, _lastRay)) _destination = GetClosestPoint(_player.transform.position);
         _currentSpeed *= _speedMultiplier;
+        _animator.SetTrigger("OnActivated");
+        _animator.SetBool("IsActive", true);
     }
 
-    private void SetPatrolTarget()
+    private IEnumerator SetPatrolTarget()
     {
         _rb.linearVelocityX = 0;
+        _animator.SetBool("IsMoving", false);
         if (_destination == (Vector2)_nodes[0].localToWorldMatrix.GetPosition())
         {
             _destination = _nodes[1].localToWorldMatrix.GetPosition();
@@ -161,6 +194,8 @@ public class BL4ZT : RangeEnemy
         {
             _destination = _nodes[0].localToWorldMatrix.GetPosition();
         }
+        yield return new WaitForSeconds(.5f);
+        _animator.SetBool("IsMoving", true);
     }
 
     private Vector2 GetClosestPoint(Vector2 origin)
@@ -201,18 +236,12 @@ public class BL4ZT : RangeEnemy
     private bool CheckCooldown(float cd, float last) => Time.time >= cd + last;
 
 #if UNITY_EDITOR
-    private void OnDrawGizmosSelected()
+    private void OnDrawGizmos()
     {
         Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(transform.position, _explosionRadius);
-        Gizmos.color = Color.yellow;
-        Gizmos.DrawWireSphere(transform.position, 5);
+        Gizmos.color = Color.blue;
+        Gizmos.DrawWireSphere(transform.position, _data.Range);
     }
 #endif
-
-    private void OnDrawGizmos()
-    {
-        Gizmos.color = Color.green;
-        Gizmos.DrawRay(transform.position, transform.up);
-    }
 }
