@@ -7,6 +7,7 @@ public enum PlatformTypes
     Slippery,
     Elastic,
     Breakable,
+    Geyser,
 }
 public abstract class PlatformBase : MonoBehaviour, IPlatform
 {
