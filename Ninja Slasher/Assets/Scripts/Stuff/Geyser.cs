@@ -16,17 +16,17 @@ public class Geyser : MonoBehaviour
 
     private void OnEnable()
     {
-        //CustomUpdateManager.Instance.SubscribeToFixedUpdate(CustomUpdate);
+        CustomUpdateManager.Instance.SubscribeToFixedUpdate(CustomUpdate);
         _player = FindFirstObjectByType<NewController>();
         _lastActivation = Time.time;
     }
 
     private void OnDisable()
     {
-        //CustomUpdateManager.Instance.UnsubscribeFromFixedUpdate(CustomUpdate);
+        CustomUpdateManager.Instance.UnsubscribeFromFixedUpdate(CustomUpdate);
     }
 
-    public void Update()
+    public void CustomUpdate()
     {
         if (!_isActive)
         {

@@ -19,6 +19,16 @@ public abstract class PlatformBase : MonoBehaviour, IPlatform
     public SFXClip Clip => _clip;
     private SFXClip _clip = SFXClip.P_Landing_General;
 
+    private void OnEnable()
+    {
+        CustomUpdateManager.Instance.SubscribeToUpdate(CustomUpdate);
+    }
+    private void OnDisable()
+    {
+        CustomUpdateManager.Instance.UnsubscribeFromUpdate(CustomUpdate);
+
+    }
+
     protected virtual void Start()
     {
         InitializePlatform();
@@ -34,7 +44,7 @@ public abstract class PlatformBase : MonoBehaviour, IPlatform
 
     protected virtual void InitializePlatform() { }
 
-    protected virtual void Update()
+    protected virtual void CustomUpdate()
     {
         if (!isActive) return;
         OnPlatformUpdate();
