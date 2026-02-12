@@ -43,7 +43,6 @@ public class Geyser : MonoBehaviour
 
     private void Activate()
     {
-        Debug.Log("Geyser activated!");
         _lastActivation = Time.time;
         _isActive = true;
         StartCoroutine(MovePlatform());
@@ -52,7 +51,6 @@ public class Geyser : MonoBehaviour
 
     private void Deactivate()
     {
-        Debug.Log("Geyser deactivated!");
         _isActive = false;
         _particles.Stop();
         _platform.SetValues(true);
