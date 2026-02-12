@@ -36,6 +36,7 @@ public class SwipeDetection : MonoBehaviour
         position = _controls.PC.Position;
         press = _controls.PC.Press;
         _controls.PC.Enable();
+#else
         position = _controls.Mobile.Position;
         press = _controls.Mobile.Press;
         _controls.Mobile.Enable();
