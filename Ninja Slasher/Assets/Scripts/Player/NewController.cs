@@ -278,8 +278,7 @@ public class NewController : MonoBehaviour
                 projectile.ReflectBackwards(transform, dirToParry);
                 HapticFeedback.LightFeedback();
                 AudioService.Instance.PlaySFXAtPosition(_audio.projectileParried, transform.position);
-
-                return;
+                break;
             }
         }
         _isParrying = false;
