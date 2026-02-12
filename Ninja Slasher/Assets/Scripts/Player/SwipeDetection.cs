@@ -1,3 +1,4 @@
+using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -9,25 +10,58 @@ public class SwipeDetection : MonoBehaviour
     public delegate void Tap(Vector2 position);
     public event Tap OnTap;
 
-    public bool IsPressing => press.IsInProgress();
+    public bool IsPressing => press != null && press.IsPressed();
     [HideInInspector] public Vector2 Direction = Vector2.zero;
 
-    [SerializeField] private InputAction position, press;
+    private InputActions _controls;
+    private InputAction position;
+    private InputAction press;
 
+    private Vector2 currentPos => position.ReadValue<Vector2>();
     [SerializeField] private float swipeResistance = 100f;
     private Vector2 initialPos;
-    private Vector2 currentPos => position.ReadValue<Vector2>();
 
+    private float currentTime => Time.time;
     [SerializeField] private float timeThreshold = .2f;
     private float pressTime;
-    private float currentTime => Time.time;
 
     private void Awake()
     {
-        position.Enable();
-        press.Enable();
-        press.performed += _ => { initialPos = currentPos; pressTime = currentTime; };
-        press.canceled += _ => DetectInput();
+        _controls = new InputActions();
+    }
+
+    private void OnEnable()
+    {
+#if UNITY_EDITOR
+        position = _controls.PC.Position;
+        press = _controls.PC.Press;
+        _controls.PC.Enable();
+        position = _controls.Mobile.Position;
+        press = _controls.Mobile.Press;
+        _controls.Mobile.Enable();
+#endif
+
+        press.performed += OnPressStarted;
+        press.canceled += OnPressCanceled;
+    }
+
+    private void OnDisable()
+    {
+        press.performed -= OnPressStarted;
+        press.canceled -= OnPressCanceled;
+
+        _controls.Disable();
+    }
+
+    private void OnPressStarted(InputAction.CallbackContext _)
+    {
+        initialPos = currentPos;
+        pressTime = Time.time;
+    }
+
+    private void OnPressCanceled(InputAction.CallbackContext _)
+    {
+        DetectInput();
     }
 
     private void Update()
