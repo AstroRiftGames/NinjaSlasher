@@ -2,6 +2,7 @@ using UnityEngine;
 
 public class NewBL4ZT : MonoBehaviour
 {
+    #region VARIABLES
     [Header("Detection")]
     [SerializeField] private float groundCheckDistance = 0.2f;
     [SerializeField] private float groundOffset = 0.15f;
@@ -21,9 +22,9 @@ public class NewBL4ZT : MonoBehaviour
     private Vector2 pivotPoint;
 
     private Vector2 currentNormal = Vector2.up;
+    #endregion
 
-    // ----------------------------------------------------
-
+    #region SURFACE DETECTION
     private bool DetectGround(float offset, out RaycastHit2D hit)
     {
         Vector2 origin =
@@ -50,8 +51,9 @@ public class NewBL4ZT : MonoBehaviour
         return hit.collider != null;
     }
 
-    // ----------------------------------------------------
+    #endregion
 
+    #region MOVEMENT & ALIGNMENT
     private void AlignToSurface(Vector2 normal)
     {
         currentNormal = normal;
@@ -69,6 +71,7 @@ public class NewBL4ZT : MonoBehaviour
     {
         transform.position += transform.right * speed * Time.deltaTime;
     }
+
     private void SnapToSurface()
     {
         Vector2 origin = transform.position;
@@ -86,7 +89,9 @@ public class NewBL4ZT : MonoBehaviour
 
         transform.position -= (Vector3)transform.up * delta;
     }
+    #endregion
 
+    #region TURNING
     private void StartTurn(Vector2 newNormal)
     {
         isTurning = true;
@@ -96,7 +101,6 @@ public class NewBL4ZT : MonoBehaviour
 
         targetAngle = angle;
 
-        // pivote en la base del enemigo
         pivotPoint =
             (Vector2)transform.position
             - (Vector2)transform.up * pivotDistance;
@@ -113,18 +117,17 @@ public class NewBL4ZT : MonoBehaviour
 
         transform.RotateAround(pivotPoint, Vector3.forward, delta);
 
-        // avanzar mientras gira
         transform.position += transform.right * speed * Time.deltaTime;
 
         if (Mathf.Abs(Mathf.DeltaAngle(next, targetAngle)) < 0.5f)
         {
             isTurning = false;
-            SnapToSurface();   // 🔥 CLAVE
+            SnapToSurface();
         }
     }
+    #endregion
 
-    // ----------------------------------------------------
-
+    #region MAGIC METHODS
     private void Update()
     {
         if (isTurning)
@@ -137,22 +140,17 @@ public class NewBL4ZT : MonoBehaviour
         bool groundBack = DetectGround(-groundOffset, out RaycastHit2D backHit);
         bool wallAhead = DetectWall(out RaycastHit2D wallHit);
 
-        // Si no hay nada debajo, no hacemos lógica
         if (!groundFront && !groundBack)
             return;
 
-        // Usamos la mejor normal disponible
         if (groundFront)
             AlignToSurface(frontHit.normal);
         else
             AlignToSurface(backHit.normal);
 
-        // ------------------------------------------------
-        // CASO 1 — ESQUINA CERRADA
-        // ------------------------------------------------
+        // CLOSE CORNER
         if (wallAhead && groundFront && groundBack)
         {
-            // Rotar normal actual 90° antihorario
             Vector2 newNormal =
                 new Vector2(-currentNormal.y, currentNormal.x);
 
@@ -160,9 +158,7 @@ public class NewBL4ZT : MonoBehaviour
             return;
         }
 
-        // ------------------------------------------------
-        // CASO 2 — ESQUINA ABIERTA
-        // ------------------------------------------------
+        // OPEN CORNER
         if (!wallAhead && groundBack && !groundFront)
         {
             Vector2 newNormal =
@@ -172,10 +168,9 @@ public class NewBL4ZT : MonoBehaviour
             return;
         }
 
-        // ------------------------------------------------
-        // Movimiento normal
-        // ------------------------------------------------
+        //MOVEMENT
         MoveAlongSurface();
         SnapToSurface();
     }
+    #endregion
 }
