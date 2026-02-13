@@ -1,3 +1,4 @@
+using UnityEditor.EditorTools;
 using UnityEngine;
 
 public class NewBL4ZT : MonoBehaviour
@@ -10,13 +11,15 @@ public class NewBL4ZT : MonoBehaviour
     [SerializeField] private LayerMask surfaceMask;
 
     [Header("Movement")]
-    [SerializeField] private float speed = 2f;
+    [SerializeField] private float speed;
     [SerializeField] private float wallCheckDistance = 0.2f;
+    [SerializeField] private bool _goingRight = true;
 
     [Header("Rotation")]
-    [SerializeField] private float rotationSpeed = 360f;
+    [SerializeField] private float rotationSpeed;
     [SerializeField] private float pivotDistance = 0.5f;
 
+    private float turnSign;
     private bool isTurning;
     private float targetAngle;
     private Vector2 pivotPoint;
@@ -29,13 +32,12 @@ public class NewBL4ZT : MonoBehaviour
     {
         Vector2 origin =
             (Vector2)transform.position +
-            (Vector2)transform.right * offset -
+            (Vector2)GetMovementDir() * offset -
             (Vector2)transform.up/2;
 
         Vector2 direction = -transform.up;
 
         hit = Physics2D.Raycast(origin, direction, groundCheckDistance, surfaceMask);
-        Debug.DrawRay(origin, direction * groundCheckDistance, Color.yellow);
 
         return hit.collider != null;
     }
@@ -43,10 +45,9 @@ public class NewBL4ZT : MonoBehaviour
     private bool DetectWall(out RaycastHit2D hit)
     {
         Vector2 origin = transform.position;
-        Vector2 direction = transform.right;
+        Vector2 direction = GetMovementDir();
 
         hit = Physics2D.Raycast(origin, direction, wallCheckDistance, surfaceMask);
-        Debug.DrawRay(origin, direction * wallCheckDistance, Color.red);
 
         return hit.collider != null;
     }
@@ -69,7 +70,7 @@ public class NewBL4ZT : MonoBehaviour
 
     private void MoveAlongSurface()
     {
-        transform.position += transform.right * speed * Time.deltaTime;
+        transform.position += GetMovementDir() * speed * Time.deltaTime;
     }
 
     private void SnapToSurface()
@@ -92,39 +93,50 @@ public class NewBL4ZT : MonoBehaviour
     #endregion
 
     #region TURNING
-    private void StartTurn(Vector2 newNormal)
+    private void StartTurn(Vector2 newNormal, bool isClosedCorner)
     {
         isTurning = true;
+        currentNormal = newNormal;
 
-        Vector2 tangent = new Vector2(newNormal.y, -newNormal.x);
-        float angle = Mathf.Atan2(tangent.y, tangent.x) * Mathf.Rad2Deg;
+        turnSign = _goingRight ? (isClosedCorner ? 1f : -1f) : (isClosedCorner ? -1f : 1f);
 
-        targetAngle = angle;
+        Vector2 tangent = _goingRight
+            ? new Vector2(newNormal.y, -newNormal.x)
+            : new Vector2(-newNormal.y, newNormal.x);
 
-        pivotPoint =
-            (Vector2)transform.position
-            - (Vector2)transform.up * pivotDistance;
+        targetAngle = Mathf.Atan2(tangent.y, tangent.x) * Mathf.Rad2Deg;
+
+        pivotPoint = (Vector2)transform.position - (Vector2)transform.up * pivotDistance;
     }
+
     private void UpdateTurn()
     {
         float current = transform.eulerAngles.z;
-        float next = Mathf.MoveTowardsAngle(
-            current,
-            targetAngle,
-            rotationSpeed * Time.deltaTime);
 
-        float delta = next - current;
+        float diff = Mathf.DeltaAngle(current, targetAngle);
 
-        transform.RotateAround(pivotPoint, Vector3.forward, delta);
+        float step = rotationSpeed * Time.deltaTime * turnSign;
 
-        transform.position += transform.right * speed * Time.deltaTime;
-
-        if (Mathf.Abs(Mathf.DeltaAngle(next, targetAngle)) < 0.5f)
+        if (Mathf.Sign(diff) != Mathf.Sign(step) || Mathf.Abs(step) >= Mathf.Abs(diff))
         {
+            step = diff;
             isTurning = false;
+        }
+
+        transform.RotateAround(pivotPoint, Vector3.forward, step);
+
+        transform.position += GetMovementDir() * speed * Time.deltaTime;
+
+        if (!isTurning)
+        {
             SnapToSurface();
         }
     }
+    #endregion
+
+    #region UTILS
+    public void ChangeMovementDir() => _goingRight = !_goingRight;
+    private Vector3 GetMovementDir() => _goingRight ? transform.right : -transform.right;
     #endregion
 
     #region MAGIC METHODS
@@ -154,7 +166,7 @@ public class NewBL4ZT : MonoBehaviour
             Vector2 newNormal =
                 new Vector2(-currentNormal.y, currentNormal.x);
 
-            StartTurn(newNormal);
+            StartTurn(newNormal, true);
             return;
         }
 
@@ -164,7 +176,7 @@ public class NewBL4ZT : MonoBehaviour
             Vector2 newNormal =
                 new Vector2(currentNormal.y, -currentNormal.x);
 
-            StartTurn(newNormal);
+            StartTurn(newNormal, false);
             return;
         }
 
