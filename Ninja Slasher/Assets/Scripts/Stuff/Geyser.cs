@@ -8,7 +8,7 @@ public class Geyser : MonoBehaviour
     [SerializeField] private float _force;
     [SerializeField] private GeyserPlatform _platform;
     [SerializeField] private ParticleSystem _particles;
-    [SerializeField] private float _maxHeight;
+    private float _maxHeight;
     
     private float _lastActivation;
     private bool _isActive;
@@ -19,6 +19,8 @@ public class Geyser : MonoBehaviour
         CustomUpdateManager.Instance.SubscribeToFixedUpdate(CustomUpdate);
         _player = FindFirstObjectByType<NewController>();
         _lastActivation = Time.time;
+        _maxHeight = _platform.transform.localPosition.y;
+        _platform.transform.localPosition = Vector2.zero;
     }
 
     private void OnDisable()
