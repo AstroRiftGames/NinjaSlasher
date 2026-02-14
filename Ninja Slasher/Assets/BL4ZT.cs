@@ -7,7 +7,8 @@ public class BL4ZT : Enemy
     public void SetArachnomadre(Arachnomadre boss) => _arachnomadre = boss;
 
     #region VARIABLES
-    //DETECTION
+    //EXTRAS
+    [SerializeField] Transform _spriteContainer;
     private float groundCheckDistance = 0.05f;
     private float groundCheckOffset = 0.15f;
 
@@ -204,7 +205,7 @@ public class BL4ZT : Enemy
     private bool CheckTarget(Vector3 target)
     {
         bool hasReachedTarget = Vector3.Distance(target, transform.position) <= _explosionRadius / 2;
-        //_animator.SetBool("IsMoving", !hasReachedTarget);
+        _animator.SetBool("IsMoving", !hasReachedTarget);
         return hasReachedTarget;
     }
 
@@ -218,13 +219,16 @@ public class BL4ZT : Enemy
         {
             _goingRight = localTargetPos.x > 0;
         }
+        Vector3 newScale = _spriteContainer.localScale;
+        newScale.x = _goingRight ? -Mathf.Abs(newScale.x) : Mathf.Abs(newScale.x);
+        _spriteContainer.localScale = newScale;
     }
 
     private IEnumerator SetPatrolTarget()
     {
         _isWaiting = true;
         _rb.linearVelocityX = 0;
-        //_animator.SetBool("IsMoving", false);
+        _animator.SetBool("IsMoving", false);
 
         yield return new WaitForSeconds(0.5f);
         IncreaseNodeIndex();
@@ -234,7 +238,7 @@ public class BL4ZT : Enemy
         SetDirToTarget();
 
         yield return new WaitForSeconds(.5f);
-        //_animator.SetBool("IsMoving", true);
+        _animator.SetBool("IsMoving", true);
         _isWaiting = false;
     }
 
@@ -268,8 +272,8 @@ public class BL4ZT : Enemy
         _activationTime = Time.time;
         if (CheckCooldown(_rayCD, _lastRay)) _destination = GetClosestPoint(_player.transform.position);
         _currentSpeed *= _speedMultiplier;
-        //_animator.SetTrigger("OnActivated");
-        //_animator.SetBool("IsActive", true);
+        _animator.SetTrigger("OnActivated");
+        _animator.SetBool("IsActive", true);
     }
     private void Explode()
     {
@@ -308,7 +312,7 @@ public class BL4ZT : Enemy
         {
             _arachnomadre.DecreaseEggsAmount();
         }
-        //_animator.SetTrigger("OnHit");
+        _animator.SetTrigger("OnHit");
         base.Die();
         Destroy(transform.parent.gameObject, .6f);
     }
@@ -397,7 +401,7 @@ public class BL4ZT : Enemy
 
                 if (!CheckTarget(_destination))
                 {
-                    //_animator.SetBool("IsMoving", true);
+                    _animator.SetBool("IsMoving", true);
 
                     if (HandleMovement(groundFront, frontHit, groundBack, backHit, wallAhead))
                     {
@@ -407,7 +411,7 @@ public class BL4ZT : Enemy
                 else
                 {
                     _rb.linearVelocityX = 0;
-                    //_animator.SetBool("IsMoving", false);
+                    _animator.SetBool("IsMoving", false);
                 }
             }
             else Explode();
