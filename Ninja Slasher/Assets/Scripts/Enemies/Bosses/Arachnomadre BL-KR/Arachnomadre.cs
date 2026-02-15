@@ -74,7 +74,7 @@ public class Arachnomadre : BossEnemy
 
     private bool DetectWall(out RaycastHit2D hit)
     {
-        Vector3 origin = transform.position + transform.up + transform.right * _horizontalOffset;
+        Vector3 origin = transform.position + transform.up + GetMovementDir() * _horizontalOffset;
         Vector2 direction = GetMovementDir();
 
         hit = Physics2D.Raycast(origin, direction, wallCheckDistance, _obstaclesLayer);
