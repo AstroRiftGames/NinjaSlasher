@@ -19,7 +19,6 @@ public class Arachnomadre : BossEnemy
     [SerializeField] private Surface _currentSurface = Surface.None;
 
     [SerializeField] private GameObject _sprites;
-    [SerializeField] private Transform _body;
 
     [Header("Movement Parameters")]
     [SerializeField] private float _speed;
@@ -261,9 +260,11 @@ public class Arachnomadre : BossEnemy
     {
         SetVulnerability(true);
         Debug.Log("Is now vulnerable");
+        _animator.SetTrigger("OnHit");
         yield return new WaitForSeconds(_vulnerabilityTime);
         SetVulnerability(false);
         Debug.Log("Is no longer vulnerable");
+        _animator.SetTrigger("OnRecovery");
     }
     #endregion
 
