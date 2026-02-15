@@ -158,7 +158,7 @@ GameObject:
   m_Component:
   - component: {fileID: 426085442660417656}
   - component: {fileID: 7533180818288356987}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: Container
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -174,7 +174,7 @@ Transform:
   m_GameObject: {fileID: 461175451019896703}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: -1.5, z: 0}
+  m_LocalPosition: {x: 0.29, y: -1.63, z: 0}
   m_LocalScale: {x: 0.28981, y: 0.28981, z: 0.28981}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -366,7 +366,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2781609905433316813}
   - component: {fileID: 2815975810826410968}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: BackLeg_L_03
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -453,7 +453,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2113325215808954116}
   - component: {fileID: 9078358262137359119}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: FrontChelicerae_R
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -542,10 +542,9 @@ GameObject:
   - component: {fileID: 2644904494445540815}
   - component: {fileID: 1879487421047669195}
   - component: {fileID: 8925272795294588456}
-  - component: {fileID: 832798159143595196}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: Arachnomadre BL-KR
-  m_TagString: Untagged
+  m_TagString: Boss
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -574,7 +573,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1615651938846995947}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4e16054835196e6449acaa94ebaeb81d, type: 3}
   m_Name: 
@@ -592,17 +591,17 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 1024
   _animator: {fileID: 7533180818288356987}
-  _currentSurface: 2
-  _sprites: {fileID: 461175451019896703}
-  _speed: 1
+  _spriteContainer: {fileID: 426085442660417656}
+  _speed: 4
   _dirChangeChance: 0.65
-  _minAttackCD: 3
+  rotationSpeed: 270
   _maxAttackCD: 6
+  _minAttackCD: 3
   _launchingBaseForce: 5
   _timeBetweenEggs: 0.3
-  _spawnAttackChance: 0.75
+  _spawnAttackChance: 1
   _blaztEgg: {fileID: 2826766254130383319, guid: 518b958d325789940a6a62a67f9b61d7, type: 3}
-  _blaztEggsAmount: 3
+  _blaztEggsAmount: 1
   _hidingTime: 1.5
   _vulnerabilityTime: 5
 --- !u!50 &1879487421047669195
@@ -678,39 +677,6 @@ BoxCollider2D:
   m_AutoTiling: 0
   m_Size: {x: 2.25, y: 2.5}
   m_EdgeRadius: 0
---- !u!114 &832798159143595196
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1615651938846995947}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 42bb2fcbe7e0570419b5fe2e743de4e0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _data: {fileID: 11400000, guid: c6d0384a285008c4ca6646b718975e89, type: 2}
-  UpperCol: {fileID: 664456956173886056}
-  LowerCol: {fileID: 406121950573898374}
-  RearCol: {fileID: 8993415156242230956}
-  FrontCol: {fileID: 5037763088508461185}
-  _deathTime: 0.5
-  _obstaclesLayer:
-    serializedVersion: 2
-    m_Bits: 192
-  _playerLayer:
-    serializedVersion: 2
-    m_Bits: 1024
-  _animator: {fileID: 7533180818288356987}
-  _spriteContainer: {fileID: 426085442660417656}
-  _verticalOffset: 1.3
-  _horizontalOffset: 1.1
-  groundCheckOffset: 1.25
-  groundCheckDistance: 0.15
-  wallCheckDistance: 0.15
-  _speed: 5
-  rotationSpeed: 270
 --- !u!1 &1726494061292498662
 GameObject:
   m_ObjectHideFlags: 0
@@ -721,7 +687,7 @@ GameObject:
   m_Component:
   - component: {fileID: 7467409149541790155}
   - component: {fileID: 925100510456827745}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: FrontLeg_L_01
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -809,7 +775,7 @@ GameObject:
   m_Component:
   - component: {fileID: 7303108328702748974}
   - component: {fileID: 2153223927267089986}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: FrontChelicerae_L
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -896,7 +862,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4989300323181028119}
   - component: {fileID: 8481356170625705213}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: FrontLeg_L_03
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -983,7 +949,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3161033436452346356}
   - component: {fileID: 6263670347985620954}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: FrontLeg_L_02
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1071,7 +1037,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5366652216108644563}
   - component: {fileID: 7141255720798130415}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: BackLeg_R_03
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1158,7 +1124,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4409039803103845884}
   - component: {fileID: 7365080454840242010}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: BackLeg_L_01
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1246,7 +1212,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4802030978065043620}
   - component: {fileID: 8574255355194118774}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: BackLeg_R_01
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1334,7 +1300,7 @@ GameObject:
   m_Component:
   - component: {fileID: 7370315096061702940}
   - component: {fileID: 8942445029724882800}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: Light_06
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1421,7 +1387,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1541948871135461775}
   - component: {fileID: 5181249283475969850}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: Light_07
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1507,7 +1473,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2745221451740529507}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: Chelicerae
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1542,7 +1508,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4258821273546675213}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: FrontLeg_L
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1575,7 +1541,7 @@ GameObject:
   m_Component:
   - component: {fileID: 7882900556382183980}
   - component: {fileID: 1901578522507144668}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: BackChelicerae_L
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1662,7 +1628,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4571704718451652522}
   - component: {fileID: 5707185699822719576}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: BackChelicerae_R
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1749,7 +1715,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5382941327623844964}
   - component: {fileID: 7252357472000792221}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: Light_01
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1984,7 +1950,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6305241499961809560}
   - component: {fileID: 7047524744564876600}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: BackLeg_R_02
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2071,7 +2037,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8150067980477155730}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: BackLeg_R
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2104,7 +2070,7 @@ GameObject:
   m_Component:
   - component: {fileID: 8355988758229478024}
   - component: {fileID: 9022098967309736044}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: FrontLeg_R_02
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2192,7 +2158,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6078054360516183828}
   - component: {fileID: 8002057017642588549}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: Light_02
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2279,7 +2245,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4933434873091140529}
   - component: {fileID: 1489374947854988502}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: Light_05
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2366,7 +2332,7 @@ GameObject:
   m_Component:
   - component: {fileID: 8602320194499318538}
   - component: {fileID: 3866208982699824162}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: BackLeg_L_02
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2454,7 +2420,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3187800910232986170}
   - component: {fileID: 3484219954943643616}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: Light_03
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2541,7 +2507,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6271045366744787438}
   - component: {fileID: 3827414315484667787}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: Abdomen
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2629,7 +2595,7 @@ GameObject:
   m_Component:
   - component: {fileID: 7187644840813191196}
   - component: {fileID: 2695149070606131557}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: Thorax
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2724,7 +2690,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2745263223686571980}
   - component: {fileID: 3549279144564969572}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: FrontLeg_R_03
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2810,7 +2776,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3672389157379373396}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: BackLeg_L
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2843,7 +2809,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4380665512868827276}
   - component: {fileID: 5308169626445134821}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: FrontLeg_R_01
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2931,7 +2897,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5111032247680982766}
   - component: {fileID: 4991532959390392500}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: Light_08
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3052,7 +3018,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3200407173153347408}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: FrontLeg_R
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3085,7 +3051,7 @@ GameObject:
   m_Component:
   - component: {fileID: 638164572956899576}
   - component: {fileID: 1237463613148802745}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: Light_04
   m_TagString: Untagged
   m_Icon: {fileID: 0}

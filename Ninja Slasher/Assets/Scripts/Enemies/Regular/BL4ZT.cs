@@ -35,6 +35,7 @@ public class BL4ZT : Enemy
     private Vector2 currentNormal = Vector2.up;
     private bool _isWaiting = false;
     private int _currentNodeIndex = 0;
+    private bool _isRoaming = false;
 
     [Header("Explostion")]
     [SerializeField] float _timeToExplode;
@@ -270,7 +271,11 @@ public class BL4ZT : Enemy
     {
         _isActive = true;
         _activationTime = Time.time;
-        if (CheckCooldown(_rayCD, _lastRay)) _destination = GetClosestPoint(_player.transform.position);
+        if (CheckCooldown(_rayCD, _lastRay))
+        {
+            _destination = GetClosestPoint(_player.transform.position);
+        }
+        SetRoaming(false);
         _currentSpeed *= _speedMultiplier;
         _animator.SetTrigger("OnActivated");
         _animator.SetBool("IsActive", true);
@@ -319,8 +324,20 @@ public class BL4ZT : Enemy
     #endregion
 
     #region UTILS
-    public void ChangeMovementDir() => _goingRight = !_goingRight;
+    public void SetRoaming(bool newValue)
+    {
+        _isRoaming = newValue;
+        if(newValue)
+        {
+            SetRandomDirection();
+        }
+    }
     private Vector3 GetMovementDir() => _goingRight ? transform.right : -transform.right;
+
+    private void SetRandomDirection()
+    {
+        _goingRight = Random.value > 0.5f;
+    }
     private Vector2 GetDirectionByIndex(int index)
     {
         return index switch
@@ -349,7 +366,14 @@ public class BL4ZT : Enemy
     {
         base.Awake();
         _currentSpeed = _baseSpeed;
-        StartCoroutine(SetPatrolTarget());
+        if(!_isRoaming)
+        {
+            StartCoroutine(SetPatrolTarget());
+        }
+        else
+        {
+            SetRandomDirection();
+        }
     }
     private void Update()
     {
@@ -376,7 +400,7 @@ public class BL4ZT : Enemy
             }
             else
             {
-                if (!CheckTarget(_destination))
+                if (!CheckTarget(_destination) || _isRoaming)
                 {
                     if (HandleMovement(groundFront, frontHit, groundBack, backHit, wallAhead))
                     {
@@ -385,7 +409,10 @@ public class BL4ZT : Enemy
                 }
                 else if(!_isWaiting)
                 {
-                    StartCoroutine(SetPatrolTarget());
+                    if(!_isRoaming)
+                    {
+                        StartCoroutine(SetPatrolTarget());
+                    }
                 }
             }
         }

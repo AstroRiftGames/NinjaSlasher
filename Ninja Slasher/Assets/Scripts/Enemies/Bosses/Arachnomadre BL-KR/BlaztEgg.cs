@@ -17,6 +17,7 @@ public class BlaztEgg : MonoBehaviour, IPoolable
     public void OnSpawn()
     {
         _hatched = false;
+        transform.parent = null;
     }
 
     public void OnDespawn()
@@ -32,9 +33,11 @@ public class BlaztEgg : MonoBehaviour, IPoolable
 
             BL4ZT newEnemy = Instantiate(
                 BlaztPrefab,
-                transform.position + Vector3.up * .5f,
+                transform.position - Vector3.up*.5f,
                 Quaternion.identity
             ).GetComponentInChildren<BL4ZT>();
+
+            newEnemy.SetRoaming(true);
 
             newEnemy.SetArachnomadre(_arachnomadre);
             _arachnomadre.IncreaseEggsAmount();
