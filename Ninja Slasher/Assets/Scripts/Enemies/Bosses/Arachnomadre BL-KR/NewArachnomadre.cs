@@ -7,14 +7,14 @@ public class NewArachnomadre : BossEnemy
     #region VARIABLES
     //EXTRAS
     [SerializeField] Transform _spriteContainer;
-    [SerializeField] private float _verticalOffset = 1f;
-    [SerializeField] private float _horizontalOffset = 1f;
-    [SerializeField] private float groundCheckOffset = 0.15f;
-    [SerializeField] private float groundCheckDistance = 0.05f;
+    private float _verticalOffset = 1.3f;
+    private float _horizontalOffset = 1.1f;
+    private float groundCheckOffset = 1.25f;
+    private float groundCheckDistance = 0.15f;
 
     [Header("Movement")]
-    [SerializeField] private float wallCheckDistance = 0.2f;
     [SerializeField] private float _speed;
+     private float wallCheckDistance = 0.15f;
     private bool _goingRight = true;
 
     [Header("Rotation")]
@@ -63,6 +63,7 @@ public class NewArachnomadre : BossEnemy
     {
         //ALIGNMENT
         AlignToSurface(groundFront ? frontHit.normal : backHit.normal);
+        SetDirToTarget();
 
         //ROTATION
         if (CheckCorner(groundFront, groundBack, wallAhead))
@@ -310,7 +311,20 @@ public class NewArachnomadre : BossEnemy
     #region UTILS
     private Vector3 GetMovementDir() => _goingRight ? transform.right : -transform.right;
     
-    private bool CheckCooldown(float cd, float last) => Time.time >= cd + last;
+    private void SetDirToTarget()
+    {
+        Vector3 localTargetPos = transform.InverseTransformPoint(_player.position);
+
+        float threshold = 0.05f;
+        if (Mathf.Abs(localTargetPos.x) > threshold)
+        {
+            bool lookingRight = localTargetPos.x > 0;
+
+            Vector3 newScale = _spriteContainer.localScale;
+            newScale.x = lookingRight ? -Mathf.Abs(newScale.x) : Mathf.Abs(newScale.x);
+            _spriteContainer.localScale = newScale;
+        }
+    }
     #endregion
 
     #region MAGIC METHODS
@@ -326,10 +340,7 @@ public class NewArachnomadre : BossEnemy
         bool groundBack = DetectGround(-groundCheckOffset, out RaycastHit2D backHit);
         bool wallAhead = DetectWall(out RaycastHit2D wallHit);
 
-        Debug.Log("Ground Front: " + groundFront);
-        Debug.Log("Ground Back: " + groundBack);
-
-        if (!groundFront && !groundBack)
+        if(!groundFront && !groundBack)
         {
             _animator.SetBool("IsMoving", false);
             return;
@@ -338,7 +349,6 @@ public class NewArachnomadre : BossEnemy
         {
             _animator.SetBool("IsMoving", true);
         }
-
 
         //CHANGE
         HandleMovement(groundFront, frontHit, groundBack, backHit, wallAhead);
