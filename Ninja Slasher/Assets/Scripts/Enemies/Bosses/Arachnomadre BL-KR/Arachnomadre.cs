@@ -1,5 +1,6 @@
 using System.Collections;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 public class Arachnomadre : BossEnemy
 {
@@ -175,7 +176,7 @@ public class Arachnomadre : BossEnemy
 
         RaycastHit2D hit =
             Physics2D.Raycast(origin, direction, groundCheckDistance, _obstaclesLayer);
-        Debug.DrawRay(origin, direction * groundCheckDistance, Color.blue);
+        Debug.DrawRay(origin, direction * groundCheckDistance, Color.white, 2f);
 
         if (!hit.collider)
             return;
@@ -189,6 +190,7 @@ public class Arachnomadre : BossEnemy
     #region ROTATION
     private void StartTurn(Vector2 newNormal, bool isClosedCorner)
     {
+        Debug.Log("Turn started");
         isTurning = true;
         currentNormal = newNormal;
 
@@ -232,10 +234,10 @@ public class Arachnomadre : BossEnemy
     private void PrepareAttack()
     {
         _isAttacking = true;
-        _lastAttack = Time.time;
         SetCD();
         SetMovementDirection();
         Attack();
+        _lastAttack = Time.time;
     }
 
     private void SetMovementDirection()
@@ -313,74 +315,51 @@ public class Arachnomadre : BossEnemy
         #region FURTIVE ATTACK
     private IEnumerator FurtiveAttack()
     {
-        _col.enabled = false;
         _animator.SetTrigger("OnSubmerge");
-        yield return new WaitForSeconds(.25f);
+        _col.enabled = false;
+        yield return new WaitForSeconds(1f);
+        
+        //GET CLOSEST POINT TO PLAYER
+        RaycastHit2D hit = GetClosestPoint(_player.position);
 
-        _spriteContainer.gameObject.SetActive(false);
-        Vector2 closestPoint = GetClosestPoint(_player.position);
-        //Turn(closestPoint);
-        transform.position = closestPoint + (Vector2)transform.up * .5f;
+        //SET NEW ROTATION
+        float angle = Mathf.Atan2(hit.normal.y, hit.normal.x) * Mathf.Rad2Deg - 90;
+        transform.rotation = Quaternion.Euler(0, 0, angle);
+
+        //SET NEW POSITION
+        transform.position = hit.point + (Vector2)transform.up * (_verticalOffset + groundCheckDistance);
+        SnapToSurface();
 
         yield return new WaitForSeconds(_hidingTime - 1);
 
-        _spriteContainer.gameObject.SetActive(true);
-        _animator.SetTrigger("OnEmerge");
         _col.enabled = true;
+        _animator.SetTrigger("OnEmerge");
 
-        yield return new WaitForSeconds(.75f);
+        yield return new WaitForSeconds(.5f);
+
         _isAttacking = false;
     }
-
-    //private void Turn(Vector2 point)
-    //{
-    //    if (point.x < _player.transform.position.x)
-    //    {
-    //        transform.rotation = Quaternion.Euler(0, 0, -90);
-    //        _currentSurface = Surface.Left_Wall;
-    //    }
-    //    else if (point.x > _player.transform.position.x)
-    //    {
-    //        transform.rotation = Quaternion.Euler(0, 0, 90);
-    //        _currentSurface = Surface.Right_Wall;
-    //    }
-    //    else
-    //    {
-    //        if (point.y < _player.transform.position.y)
-    //        {
-    //            transform.rotation = Quaternion.Euler(0, 0, 0);
-    //            _currentSurface = Surface.Floor;
-    //        }
-    //        else if (point.y > _player.transform.position.y)
-    //        {
-    //            transform.rotation = Quaternion.Euler(0, 0, 180);
-    //            _currentSurface = Surface.Ceiling;
-    //        }
-    //    }
-    //}
     #endregion
     #endregion
 
     #region UTILS
-    private Vector2 GetClosestPoint(Vector2 origin)
+    private RaycastHit2D GetClosestPoint(Vector2 origin)
     {
-        Vector2 closestPoint = origin;
         float disToClosestSurface = float.MaxValue;
-
+        RaycastHit2D hit = new RaycastHit2D();
         for (int n = 0; n < 4; n++)
         {
             Vector2 dirToCast = GetDirectionByIndex(n);
-            RaycastHit2D hit = Physics2D.Raycast(origin, dirToCast, 15, _obstaclesLayer);
-            if (hit != false) Debug.DrawLine(origin, hit.point, Color.red, 1f);
-            float disToCurrent = Vector2.Distance(origin, hit.point);
+            RaycastHit2D currentHit = Physics2D.Raycast(origin, dirToCast, 15, _obstaclesLayer);
+            float disToCurrent = Vector2.Distance(origin, currentHit.point);
 
             if (disToClosestSurface == 0 || disToClosestSurface > disToCurrent)
             {
                 disToClosestSurface = disToCurrent;
-                closestPoint = hit.point;
+                hit = currentHit;
             }
         }
-        return closestPoint;
+        return hit;
     }
 
     private Vector2 GetDirectionByIndex(int index)
@@ -410,6 +389,15 @@ public class Arachnomadre : BossEnemy
             _spriteContainer.localScale = newScale;
         }
     }
+    private IEnumerator Activate()
+    {
+        //PLAY INTRO FEEDBACK
+        _isWaiting = true;
+        yield return new WaitForSeconds(_waitTime);
+        _isWaiting = false;
+
+
+    }
     private bool CheckCD(float cd, float last) => Time.time >= cd + last;
     private void SetCD() => _attackCD = Random.Range(_minAttackCD, _maxAttackCD);
     public void DecreaseEggsAmount() => _blaztsAmount--;
@@ -437,13 +425,15 @@ public class Arachnomadre : BossEnemy
     {
         base.Awake();
         _pool = new ObjectPool<BlaztEgg>(_blaztEgg, _blaztEggsAmount, transform);
+        StartCoroutine(Activate());
     }
-    private void Update()
+    public override void CustomUpdate()
     {
-        if (!_isVulnerable)
+        if (!_isVulnerable && !_isWaiting)
         {
             if (isTurning)
             {
+                Debug.Log("Turn updating");
                 UpdateTurn();
                 return;
             }
@@ -457,7 +447,7 @@ public class Arachnomadre : BossEnemy
                 return;
             }
 
-            if (CheckCD(_attackCD, _lastAttack))
+            if (CheckCD(_attackCD, _lastAttack) && !_isAttacking)
             {
                 PrepareAttack();
                 _animator.SetBool("IsMoving", false);

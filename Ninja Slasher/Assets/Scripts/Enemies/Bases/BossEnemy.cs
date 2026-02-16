@@ -3,6 +3,8 @@ using UnityEngine;
 
 public class BossEnemy : Enemy
 {
+    [SerializeField] protected float _waitTime;
+    protected bool _isWaiting = false;
     public override void OnEnable()
     {
         base.OnEnable();

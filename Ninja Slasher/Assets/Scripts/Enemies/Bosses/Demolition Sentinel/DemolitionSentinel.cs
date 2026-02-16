@@ -59,7 +59,6 @@ public class DemolitionSentinel : BossEnemy
     public DemolitionBall[] Balls => _balls;
     [SerializeField] Chain _rightChain;
     [SerializeField] Chain _leftChain;
-    [SerializeField] float _waitTime;
 
     [Header("Double Attack")]
     public float TimeBetweenAttacks => _timeBetweenAttacks;

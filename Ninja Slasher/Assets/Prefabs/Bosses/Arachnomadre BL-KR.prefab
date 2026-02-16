@@ -174,7 +174,7 @@ Transform:
   m_GameObject: {fileID: 461175451019896703}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0.29, y: -1.63, z: 0}
+  m_LocalPosition: {x: 0.29, y: -1.6, z: 0}
   m_LocalScale: {x: 0.28981, y: 0.28981, z: 0.28981}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -591,18 +591,19 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 1024
   _animator: {fileID: 7533180818288356987}
+  _waitTime: 1
   _spriteContainer: {fileID: 426085442660417656}
   _speed: 4
   _dirChangeChance: 0.65
   rotationSpeed: 270
-  _maxAttackCD: 6
-  _minAttackCD: 3
+  _maxAttackCD: 7
+  _minAttackCD: 4
   _launchingBaseForce: 5
   _timeBetweenEggs: 0.3
-  _spawnAttackChance: 1
+  _spawnAttackChance: 0.75
   _blaztEgg: {fileID: 2826766254130383319, guid: 518b958d325789940a6a62a67f9b61d7, type: 3}
-  _blaztEggsAmount: 1
-  _hidingTime: 1.5
+  _blaztEggsAmount: 3
+  _hidingTime: 3
   _vulnerabilityTime: 5
 --- !u!50 &1879487421047669195
 Rigidbody2D:

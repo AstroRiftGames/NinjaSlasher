@@ -375,7 +375,7 @@ public class BL4ZT : Enemy
             SetRandomDirection();
         }
     }
-    private void Update()
+    public override void CustomUpdate()
     {
         if (isTurning)
         {
