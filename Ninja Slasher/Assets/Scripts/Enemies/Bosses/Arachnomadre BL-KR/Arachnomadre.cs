@@ -10,7 +10,7 @@ public class Arachnomadre : BossEnemy
     [SerializeField] Transform _spriteContainer;
     private float _verticalOffset = 1.3f;
     private float _horizontalOffset = 1.1f;
-    private float groundCheckOffset = 1.25f;
+    private float groundCheckOffset = .15f;
     private float groundCheckDistance = 0.15f;
 
     [Header("Movement")]
@@ -68,7 +68,6 @@ public class Arachnomadre : BossEnemy
         Vector2 direction = -transform.up;
 
         hit = Physics2D.Raycast(origin, direction, groundCheckDistance, _obstaclesLayer);
-        Debug.DrawRay(origin, direction * groundCheckDistance, Color.red);
 
         return hit.collider != null;
     }
@@ -79,7 +78,6 @@ public class Arachnomadre : BossEnemy
         Vector2 direction = GetMovementDir();
 
         hit = Physics2D.Raycast(origin, direction, wallCheckDistance, _obstaclesLayer);
-        Debug.DrawRay(origin, direction * wallCheckDistance, Color.red);
 
         return hit.collider != null;
     }
@@ -174,9 +172,7 @@ public class Arachnomadre : BossEnemy
 
         Vector2 direction = -transform.up;
 
-        RaycastHit2D hit =
-            Physics2D.Raycast(origin, direction, groundCheckDistance, _obstaclesLayer);
-        Debug.DrawRay(origin, direction * groundCheckDistance, Color.white, 2f);
+        RaycastHit2D hit = Physics2D.Raycast(origin, direction, groundCheckDistance, _obstaclesLayer);
 
         if (!hit.collider)
             return;
@@ -190,7 +186,6 @@ public class Arachnomadre : BossEnemy
     #region ROTATION
     private void StartTurn(Vector2 newNormal, bool isClosedCorner)
     {
-        Debug.Log("Turn started");
         isTurning = true;
         currentNormal = newNormal;
 
@@ -410,11 +405,9 @@ public class Arachnomadre : BossEnemy
     public IEnumerator GetVulnerable()
     {
         SetVulnerability(true);
-        Debug.Log("Is now vulnerable");
         _animator.SetTrigger("OnHit");
         yield return new WaitForSeconds(_vulnerabilityTime);
         SetVulnerability(false);
-        Debug.Log("Is no longer vulnerable");
         _animator.SetTrigger("OnRecovery");
     }
     #endregion
@@ -433,7 +426,6 @@ public class Arachnomadre : BossEnemy
         {
             if (isTurning)
             {
-                Debug.Log("Turn updating");
                 UpdateTurn();
                 return;
             }

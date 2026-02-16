@@ -86,7 +86,6 @@ public class BL4ZT : Enemy
 
         //MOVEMENT
 
-        //TODO: SET DIRECTION
         MoveAlongSurface();
         SnapToSurface();
         return false;
