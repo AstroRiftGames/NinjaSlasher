@@ -6,13 +6,22 @@ public class MagneticPlatform : PlatformBase
     [SerializeField] private float attractionRadius;
     [SerializeField] private float attractionForce;
     [SerializeField] private LayerMask playerLayer;
+    private bool _isAttracting = true;
 
-    private void FixedUpdate()
+
+    protected override void CustomUpdate()
     {
-        if (!isActive) return;
-        OnPlatformUpdate();
+        if (Input.GetKeyDown(KeyCode.F)) SwitchAttraction();
+        base.CustomUpdate();
     }
 
+    public void SwitchAttraction()
+    {
+        _isAttracting = !_isAttracting;
+        attractionForce = -attractionForce;
+        _animator.SetTrigger("OnSwtich");
+        //TODO: Add SFX for switching
+    }
     public override void OnPlatformUpdate()
     {
         Collider2D[] hits = Physics2D.OverlapCircleAll(transform.position, attractionRadius, playerLayer);
