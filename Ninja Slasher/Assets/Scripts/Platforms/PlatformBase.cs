@@ -18,6 +18,7 @@ public abstract class PlatformBase : MonoBehaviour, IPlatform
 
     public SFXClip Clip => _clip;
     private SFXClip _clip = SFXClip.P_Landing_General;
+    [SerializeField] protected Animator _animator;
 
     private void OnEnable()
     {

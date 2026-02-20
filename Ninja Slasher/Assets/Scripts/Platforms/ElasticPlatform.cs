@@ -29,6 +29,7 @@ public class ElasticPlatform : PlatformBase
             return;
 
         AudioManager.Instance.PlaySFXAtPosition(Clip, player.transform.position);
+        _animator.SetTrigger("OnBounce");
         StartCoroutine(ApplyBounceAfterCollision(rb, lastDashDir.normalized, controller));
     }
 
