@@ -20,7 +20,7 @@ public abstract class PlatformBase : MonoBehaviour, IPlatform
     public SFXClip Clip => _clip;   //TODO: Play Landing SFX from AudioSet
     private SFXClip _clip = SFXClip.P_Landing_General;
 
-    [SerializeField] protected AudioSet _audioSet;
+    [SerializeField] protected PlatformAudioSet _audioSet;
     [SerializeField] protected Animator _animator;
 
     private void OnEnable()
