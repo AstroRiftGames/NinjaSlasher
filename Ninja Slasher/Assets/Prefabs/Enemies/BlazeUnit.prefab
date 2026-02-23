@@ -543,12 +543,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _data: {fileID: 11400000, guid: bad0d84ee7b456a4da339263e5f4c7e9, type: 2}
-  _audioContext: {fileID: 0}
   UpperCol: {fileID: 6120467684769324508}
   LowerCol: {fileID: 2535009860223324723}
   RearCol: {fileID: 7303501576323455743}
   FrontCol: {fileID: 9199736153777109068}
-  _deathTime: 1
+  _deathTime: 1.5
   _obstaclesLayer:
     serializedVersion: 2
     m_Bits: 192
@@ -600,7 +599,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 167e4bd7e1f82774db0c7c14c8ae2e2a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _enemyData: {fileID: 0}
 --- !u!1 &9199736153777109068
 GameObject:
   m_ObjectHideFlags: 0
@@ -797,6 +795,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 4005040457553334242, guid: a97839ef56c70274c8dc7b92f3981653, type: 3}
+      propertyPath: _enemy
+      value: 
+      objectReference: {fileID: 2755309931617532940}
     - target: {fileID: 4398768504097168759, guid: a97839ef56c70274c8dc7b92f3981653, type: 3}
       propertyPath: m_Name
       value: Container
