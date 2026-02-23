@@ -37,6 +37,7 @@ public class NewController : MonoBehaviour
     private Vector2 _lastDashDirection;
     private float _lastDash;
     private Vector2 _lastNormal;
+    private PlatformBase _currentPlatform;
 
     [SerializeField] private LayerMask _proyectilesLayer;
 
@@ -155,6 +156,12 @@ public class NewController : MonoBehaviour
         Vector2 dashDir = direction;
 
         float angle = Mathf.Atan2(dashDir.y, dashDir.x) * Mathf.Rad2Deg - Mathf.Atan2(_lastNormal.y, _lastNormal.x) * Mathf.Rad2Deg;
+
+        if(_currentPlatform != null)
+        {
+            _currentPlatform.OnPlayerExit(gameObject, true);
+            _currentPlatform = null;
+        }
 
         switch (_lastNormal)
         {
@@ -355,6 +362,7 @@ public class NewController : MonoBehaviour
             }
             else if(platform.Type != PlatformTypes.Elastic)
             {
+                _currentPlatform = platform;
                 Grab(collision.GetContact(0).normal);
             }
         }
