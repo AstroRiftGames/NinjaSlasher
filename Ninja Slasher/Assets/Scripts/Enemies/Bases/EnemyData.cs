@@ -36,12 +36,11 @@ public class EnemyData : ScriptableObject
     [SerializeField] VulnerabilityValues _isVulnerable;
 
     [Header("AUDIO")]
-    [SerializeField] private EnemyAudioSet _audioSet;
+    [SerializeField] private AudioSet _audioSet;
+    public AudioSet AudioSet => _audioSet;
 
     public EnemyType Type => _type;
     public Projectile Projectile => _projectile;
     public float Range => _range;
     public VulnerabilityValues IsVulnerable => _isVulnerable;
-
-    public EnemyAudioSet AudioSet => _audioSet;
 }

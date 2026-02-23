@@ -4,6 +4,7 @@ public class SentinelIdleState<SentinelStates> : State<SentinelStates>
 {
     DemolitionSentinel _sentinel;
     float _enterTime;
+
     public SentinelIdleState(DemolitionSentinel sentinel)
     {
         _sentinel = sentinel;
@@ -12,8 +13,9 @@ public class SentinelIdleState<SentinelStates> : State<SentinelStates>
     public override void Enter()
     {
         _enterTime = Time.time;
-        AudioManager.Instance.PlayLoopedSFXAtPosition(SFXClip.B_Sentinel_Idle, _sentinel.transform.position);
+        _sentinel.SentinelAudio.StartIdle();
     }
+
     public override void Execute()
     {
         if (Time.time >= _enterTime + _sentinel.Cooldown)
@@ -25,6 +27,6 @@ public class SentinelIdleState<SentinelStates> : State<SentinelStates>
     public override void Sleep()
     {
         base.Sleep();
-        AudioManager.Instance.StopSFX(SFXClip.B_Sentinel_Idle);
+        _sentinel.SentinelAudio.StopIdle();
     }
 }

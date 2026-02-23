@@ -1,7 +1,7 @@
 using UnityEngine;
 
 [CreateAssetMenu(menuName = "Game/Audio/Sets/Enemy Audio Set")]
-public class EnemyAudioSet : ScriptableObject
+public class EnemyAudioSet : AudioSet
 {
     public AudioEvent spawn;
     public AudioEvent idle;

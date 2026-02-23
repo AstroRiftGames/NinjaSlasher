@@ -39,16 +39,8 @@ public class SentinelCore : MonoBehaviour
         if (collision.CompareTag("Player"))
         {
             _sentinel.Animator.SetTrigger("onHit");
-            StartCoroutine(PlayFeedback(3f));
+            StartCoroutine(_sentinel.SentinelAudio.DefeatedFeedbackSequence(3f));
             KillSentinel();
         }
-    }
-
-    IEnumerator PlayFeedback(float time)
-    {
-
-        AudioManager.Instance.PlaySFXAtPosition(SFXClip.B_Sentinel_Defeated, _sentinel.transform.position);
-        yield return new WaitForSeconds(time);
-        AudioManager.Instance.PlayLoopedSFXAtPosition(SFXClip.B_Sentinel_Defeated_Idle, _sentinel.transform.position);
     }
 }
