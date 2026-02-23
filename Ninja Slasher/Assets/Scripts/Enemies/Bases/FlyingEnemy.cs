@@ -24,10 +24,12 @@ public class FlyingEnemy : Enemy
 
         if (CheckDistance())
         {
+            AudioService.Instance.PlaySFXAtPosition(_audioContext.Audio.move, transform.position);
             _rb.linearVelocity = _dirToTarget.normalized * _speed;
         }
         else
         {
+            AudioService.Instance.PlaySFXAtPosition(_audioContext.Audio.idle, transform.position);
             _animator.SetTrigger("OnStop");
             _rb.linearVelocity = Vector2.zero;
         }
