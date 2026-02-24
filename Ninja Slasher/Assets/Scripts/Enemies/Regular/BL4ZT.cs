@@ -277,6 +277,9 @@ public class BL4ZT : Enemy
         SetRoaming(false);
         _currentSpeed *= _speedMultiplier;
         _animator.SetTrigger("OnActivated");
+        AudioService.Instance.StopSFX(_audioContext.Audio.idle);
+        AudioService.Instance.StopSFX(_audioContext.Audio.move);
+        AudioService.Instance.PlaySFXAtPosition(_audioContext.Audio.detection, transform.position);
         _animator.SetBool("IsActive", true);
     }
     private void Explode()
@@ -317,6 +320,8 @@ public class BL4ZT : Enemy
             _arachnomadre.DecreaseEggsAmount();
         }
         _animator.SetTrigger("OnHit");
+        AudioService.Instance.StopSFX(_audioContext.Audio.charge);
+        AudioService.Instance.StopSFX(_audioContext.Audio.idle);
         base.Die();
         Destroy(transform.parent.gameObject, .6f);
     }
@@ -401,6 +406,8 @@ public class BL4ZT : Enemy
             {
                 if (!CheckTarget(_destination) || _isRoaming)
                 {
+                    AudioService.Instance.StopSFX(_audioContext.Audio.idle);
+                    AudioService.Instance.PlaySFXAtPosition(_audioContext.Audio.move, transform.position);
                     if (HandleMovement(groundFront, frontHit, groundBack, backHit, wallAhead))
                     {
                         return;
@@ -408,10 +415,12 @@ public class BL4ZT : Enemy
                 }
                 else if(!_isWaiting)
                 {
-                    if(!_isRoaming)
+                    AudioService.Instance.StopSFX(_audioContext.Audio.move);
+                    AudioService.Instance.PlaySFXAtPosition(_audioContext.Audio.idle, transform.position);
+                    if (!_isRoaming)
                     {
                         StartCoroutine(SetPatrolTarget());
-                    }
+                    }   
                 }
             }
         }
@@ -428,7 +437,8 @@ public class BL4ZT : Enemy
                 if (!CheckTarget(_destination))
                 {
                     _animator.SetBool("IsMoving", true);
-
+                    AudioService.Instance.StopSFX(_audioContext.Audio.idle);
+                    AudioService.Instance.PlaySFXAtPosition(_audioContext.Audio.charge, transform.position);
                     if (HandleMovement(groundFront, frontHit, groundBack, backHit, wallAhead))
                     {
                         return;
@@ -436,6 +446,8 @@ public class BL4ZT : Enemy
                 }
                 else
                 {
+                    AudioService.Instance.StopSFX(_audioContext.Audio.charge);
+                    AudioService.Instance.PlaySFXAtPosition(_audioContext.Audio.idle, transform.position);
                     _rb.linearVelocityX = 0;
                     _animator.SetBool("IsMoving", false);
                 }
