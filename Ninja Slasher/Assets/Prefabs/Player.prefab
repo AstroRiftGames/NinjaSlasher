@@ -93,7 +93,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 967886d4fb1b5534ab1cf4391b9d9087, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _dashForce: 500
+  _dashForce: 750
   _dashCD: 0.25
   _dashDuration: 0.5
   _parryRange: 2
@@ -112,56 +112,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Direction: {x: 0, y: 0}
-  position:
-    m_Name: Position
-    m_Type: 0
-    m_ExpectedControlType: Vector2
-    m_Id: c2c47782-9b12-4562-bc8c-fb2b95364eb3
-    m_Processors: 
-    m_Interactions: 
-    m_SingletonActionBindings:
-    - m_Name: 
-      m_Id: 399e086a-a088-42af-9446-d072cbd672c5
-      m_Path: <Touchscreen>/touch0/position
-      m_Interactions: 
-      m_Processors: 
-      m_Groups: 
-      m_Action: Position
-      m_Flags: 0
-    - m_Name: 
-      m_Id: ad6cd838-9832-4ff3-b95b-a3c7d91793ee
-      m_Path: <Mouse>/position
-      m_Interactions: 
-      m_Processors: 
-      m_Groups: 
-      m_Action: Position
-      m_Flags: 0
-    m_Flags: 0
-  press:
-    m_Name: Press
-    m_Type: 1
-    m_ExpectedControlType: Button
-    m_Id: 2f219c69-323e-48f1-90d8-652a39d6e2c5
-    m_Processors: 
-    m_Interactions: Press
-    m_SingletonActionBindings:
-    - m_Name: 
-      m_Id: 303dc8ff-d48f-4ad0-be0e-88ad07f1da07
-      m_Path: <Touchscreen>/Press
-      m_Interactions: 
-      m_Processors: 
-      m_Groups: 
-      m_Action: Press
-      m_Flags: 0
-    - m_Name: 
-      m_Id: da8cdf24-22e6-4a78-b470-d37dcddb5fe2
-      m_Path: <Mouse>/leftButton
-      m_Interactions: 
-      m_Processors: 
-      m_Groups: 
-      m_Action: Press
-      m_Flags: 0
-    m_Flags: 0
   swipeResistance: 100
   timeThreshold: 0.2
 --- !u!50 &2870901090016681095
