@@ -1,8 +1,6 @@
 using System;
 using System.Collections;
-using System.Linq;
 using UnityEngine;
-
 
 public enum SentinelStates
 {
@@ -20,6 +18,7 @@ public enum SentinelAttacks
     Double,
     Sweep,
 }
+
 public class DemolitionSentinel : BossEnemy
 { 
     FSM<SentinelStates> _fsm;
@@ -77,7 +76,8 @@ public class DemolitionSentinel : BossEnemy
     [SerializeField] float _sweepDuration;
     [HideInInspector] public bool _isSweepAttacking;
 
-
+    private SentinelAudioContext _sentinelAudio;
+    public SentinelAudioContext SentinelAudio => _sentinelAudio;
 
     #region MAGIC METHODS
     public override void Start()
@@ -92,7 +92,7 @@ public class DemolitionSentinel : BossEnemy
 
     public IEnumerator Activate()
     {
-        AudioManager.Instance.PlaySFXAtPosition(SFXClip.B_Sentinel_Intro, transform.position);
+        _sentinelAudio.PlayIntro();
         SetTargetDirection(Vector2.down);
         AimArm(_balls[0].PivotPoint);
         AimArm(_balls[1].PivotPoint);
@@ -114,7 +114,13 @@ public class DemolitionSentinel : BossEnemy
 
     #endregion
 
-        #region RESOURCES
+    #region RESOURCES
+
+    protected override void InitializeAudioContext()
+    {
+        _sentinelAudio = GetComponent<SentinelAudioContext>();
+        _sentinelAudio?.Initialize(_data.AudioSet);
+    }
 
     void CheckVulnerableTime()
     {

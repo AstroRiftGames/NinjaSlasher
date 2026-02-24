@@ -637,6 +637,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3856965128980042809}
   - component: {fileID: 773903575255482265}
+  - component: {fileID: 5240504371955392178}
   m_Layer: 0
   m_Name: DemolitionSentinel
   m_TagString: Boss
@@ -686,6 +687,7 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 1024
   _animator: {fileID: 3929794176408473965}
+  _waitTime: 6
   _core: {fileID: 7886404028668971026}
   _vulnerableTime: 10
   _cooldown: 3
@@ -694,7 +696,6 @@ MonoBehaviour:
   - {fileID: 6096350469832772809}
   _rightChain: {fileID: 7347648028879714563}
   _leftChain: {fileID: 6087152098203019737}
-  _waitTime: 6
   _timeBetweenAttacks: 0.75
   _amountOfAttacks: 2
   _isDoubleAttacking: 0
@@ -702,6 +703,18 @@ MonoBehaviour:
   _isHeavyAttacking: 0
   _sweepDuration: 1
   _isSweepAttacking: 0
+--- !u!114 &5240504371955392178
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4518937105060677725}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2ba4a3c4c5bb9414fb6af46b46f42056, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1001 &5998652930933999831
 PrefabInstance:
   m_ObjectHideFlags: 0

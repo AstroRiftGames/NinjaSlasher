@@ -44,23 +44,27 @@ public enum SFXClip
     //P_Attack,
     //P_ParrySwing,
     P_ProjectileParried,
-    B_Sentinel_Intro,
-    B_Sentinel_Idle,
-    B_Sentinel_Damaged,
-    B_Sentinel_Defeated,
-    B_Sentinel_Defeated_Idle,
-    B_Sentinel_Vulnerable,
-    B_Sentinel_Vulnerable_Idle,
-    B_Sentinel_Recovered,
-    B_Sentinel_Sweep,
+
+    //B_Sentinel_Intro,
+    //B_Sentinel_Idle,
+    //B_Sentinel_Damaged,
+    //B_Sentinel_Defeated,
+    //B_Sentinel_Defeated_Idle,
+    //B_Sentinel_Vulnerable,
+    //B_Sentinel_Vulnerable_Idle,
+    //B_Sentinel_Recovered,
+    //B_Sentinel_Sweep,
+
     //P_Die,
     //UI_Victory,
     //UI_Defeat,
-    B_Sentinel_Double_1,
-    B_Sentinel_Double_2,
-    B_Sentinel_Heavy,
-    B_Sentinel_Impact,
-    B_Sentinel_Woosh,
+
+    //B_Sentinel_Double_1,
+    //B_Sentinel_Double_2,
+    //B_Sentinel_Heavy,
+    //B_Sentinel_Impact,
+    //B_Sentinel_Woosh,
+
     P_Landing_General,
     //P_Landing_Ground,
     //P_Landing_Stone,
@@ -104,7 +108,6 @@ public enum SFXClip
     P_Landing_Elastic,
     P_Landing_Breakable,
     Plat_Breakable,
-
 }
 
 [Serializable]

@@ -3,8 +3,10 @@ using UnityEngine;
 public class Enemy : MonoBehaviour
 {
     [SerializeField] protected EnemyData _data;
+
     protected EnemyAudioContext _audioContext;
     public EnemyAudioContext AudioContext => _audioContext;
+
     [SerializeField] protected GameObject UpperCol;
     [SerializeField] protected GameObject LowerCol;
     [SerializeField] protected GameObject RearCol;
@@ -17,6 +19,7 @@ public class Enemy : MonoBehaviour
     protected Transform _player;
     protected Rigidbody2D _rb;
     protected Collider2D _col;
+
     [SerializeField] protected Animator _animator;
     public Animator Animator => _animator;
 
@@ -47,12 +50,8 @@ public class Enemy : MonoBehaviour
             TryGetComponent(out Animator anim);
             _animator = anim;
         }
-        _audioContext = GetComponent<EnemyAudioContext>();
 
-        if (_audioContext != null && _data != null)
-        {
-            _audioContext.Initialize(_data.AudioSet);
-        }
+        InitializeAudioContext();
 
         _player = FindAnyObjectByType<NewController>().transform;
     }
@@ -63,6 +62,13 @@ public class Enemy : MonoBehaviour
     }
 
     public virtual void CustomUpdate() { }
+
+    protected virtual void InitializeAudioContext()
+    {
+        _audioContext = GetComponent<EnemyAudioContext>();
+        if (_audioContext != null && _data != null)
+            _audioContext.Initialize(_data.AudioSet);
+    }
 
     protected void DetectCollision(Direction dir)
     {

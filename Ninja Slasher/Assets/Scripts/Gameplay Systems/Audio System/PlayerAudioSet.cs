@@ -1,7 +1,7 @@
 using UnityEngine;
 
 [CreateAssetMenu(menuName = "Game/Audio/Sets/Player Audio Set")]
-public class PlayerAudioSet : ScriptableObject
+public class PlayerAudioSet : AudioSet
 {
     [Header("Movement")]
     public AudioEvent movementLoop;

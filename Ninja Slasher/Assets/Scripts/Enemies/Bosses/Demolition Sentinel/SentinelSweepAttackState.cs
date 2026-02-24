@@ -21,7 +21,7 @@ public class SentinelSweepAttackState<SentinelStates> : State<SentinelStates>
     private IEnumerator SweepAttack()
     {
         _sentinel.Animator.SetTrigger("onSweep");
-        AudioManager.Instance.PlaySFXAtPosition(SFXClip.B_Sentinel_Sweep, _sentinel.transform.position);
+        _sentinel.SentinelAudio.PlaySweep();
         _sentinel.SetTargetDirection(Vector2.down);
 
         yield return new WaitForSeconds(1.5f);

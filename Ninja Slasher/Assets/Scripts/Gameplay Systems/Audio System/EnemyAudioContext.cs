@@ -6,8 +6,8 @@ public class EnemyAudioContext : MonoBehaviour
 
     public EnemyAudioSet Audio => _audioSet;
 
-    public void Initialize(EnemyAudioSet audioSet)
+    public void Initialize(AudioSet audioSet)
     {
-        _audioSet = audioSet;
+        _audioSet = audioSet as EnemyAudioSet;
     }
 }

@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 
 public class MagneticPlatform : PlatformBase
@@ -6,42 +7,57 @@ public class MagneticPlatform : PlatformBase
     [SerializeField] private float attractionRadius;
     [SerializeField] private float attractionForce;
     [SerializeField] private LayerMask playerLayer;
+    private bool _isAttracting = true;
 
-    private void FixedUpdate()
+
+    protected override void CustomUpdate()
     {
-        if (!isActive) return;
-        OnPlatformUpdate();
+        if (Input.GetKeyDown(KeyCode.F)) SwitchAttraction();
+        base.CustomUpdate();
     }
 
+    public void SwitchAttraction()
+    {
+        _isAttracting = !_isAttracting;
+        attractionForce = -attractionForce;
+        _animator.SetTrigger("OnSwtich");
+        //TODO: Add SFX for switching
+    }
     public override void OnPlatformUpdate()
     {
-        Collider2D[] hits = Physics2D.OverlapCircleAll(transform.position, attractionRadius, playerLayer);
-
-        foreach (var hit in hits)
+        if (_isAttracting)
         {
-            NewController playerController = hit.GetComponent<NewController>();
-            if (playerController == null || !playerController.IsDashing || playerController.IsParrying)
-                continue;
+            Collider2D[] hits = Physics2D.OverlapCircleAll(transform.position, attractionRadius, playerLayer);
 
-            View playerView = hit.GetComponent<View>();
-            if (playerView == null) continue;
+            foreach (var hit in hits)
+            {
+                NewController playerController = hit.GetComponent<NewController>();
+                if (playerController == null || !playerController.IsDashing || playerController.IsParrying)
+                    continue;
 
-            Rigidbody2D rb = playerView.RB;
-            if (rb == null) continue;
+                View playerView = hit.GetComponent<View>();
+                if (playerView == null) continue;
 
-            Vector2 direction = ((Vector2)transform.position - rb.position).normalized;
-            rb.AddForce(direction * attractionForce, ForceMode2D.Force);
+                Rigidbody2D rb = playerView.RB;
+                if (rb == null) continue;
 
-            Debug.DrawRay(rb.position, direction * 2f, Color.red);
+                Vector2 direction = ((Vector2)transform.position - rb.position).normalized;
+                rb.AddForce(direction * attractionForce, ForceMode2D.Force);
+            }
         }
     }
 
     public override void OnPlayerEnter(GameObject player) { }
-    public override void OnPlayerExit(GameObject player, bool isForced = false) { }
-
-    private void OnDrawGizmos()
+    public override void OnPlayerExit(GameObject player, bool isForced = false) 
     {
-        Gizmos.color = Color.cyan;
-        Gizmos.DrawWireSphere(transform.position, attractionRadius);
+        StartCoroutine(ReleasePlayer());
+    }
+
+    private IEnumerator ReleasePlayer()
+    {
+        _isAttracting = false;
+        yield return new WaitForSeconds(.75f);
+        _isAttracting = true;
+        
     }
 }

@@ -23,7 +23,7 @@ public class SlipperyPlatform : PlatformBase
         if (playerRb == null) return;
 
         Vector2 tangent = new Vector2(transform.up.y, -transform.up.x);
-        Vector2 incomingDir = playerController.LastDashDirection;
+        Vector2 incomingDir = playerController.View.RB.linearVelocity.normalized;
         float sign = Mathf.Sign(Vector2.Dot(incomingDir, tangent));
         slideDirection = tangent * sign;
 

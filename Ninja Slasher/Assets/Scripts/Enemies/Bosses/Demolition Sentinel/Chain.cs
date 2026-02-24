@@ -68,10 +68,10 @@ public class Chain : RezisableObject
 
     public void DetectCollision()
     {
-            BreakChain();
-            ReleaseBall();
-            AudioManager.Instance.PlaySFXAtPosition(SFXClip.B_Sentinel_Damaged, _sentinel.transform.position);
-            _sentinel.StopAttack();
+        BreakChain();
+        ReleaseBall();
+        _sentinel.SentinelAudio.PlayChainDamaged();
+        _sentinel.StopAttack();
     }
 
     public void BreakChain()
