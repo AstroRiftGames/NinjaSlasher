@@ -160,6 +160,7 @@ GameObject:
   - component: {fileID: 2627596273765977337}
   - component: {fileID: 7156778702020303295}
   - component: {fileID: 3651571147723751412}
+  - component: {fileID: 7843367027121799668}
   m_Layer: 9
   m_Name: Bot
   m_TagString: Enemy
@@ -244,12 +245,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _data: {fileID: 11400000, guid: 4de342f2772f20f4b95da81f830b5922, type: 2}
-  _audioContext: {fileID: 0}
   UpperCol: {fileID: 3195358437396176281}
   LowerCol: {fileID: 2378410477699695626}
   RearCol: {fileID: 3146107059943538319}
   FrontCol: {fileID: 4131579640607883895}
-  _deathTime: 1.5
+  _deathTime: 2.5
   _obstaclesLayer:
     serializedVersion: 2
     m_Bits: 192
@@ -272,7 +272,7 @@ Rigidbody2D:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3017298618046401831}
-  m_BodyType: 0
+  m_BodyType: 1
   m_Simulated: 1
   m_UseFullKinematicContacts: 0
   m_UseAutoMass: 0
@@ -291,6 +291,18 @@ Rigidbody2D:
   m_SleepingMode: 1
   m_CollisionDetection: 0
   m_Constraints: 4
+--- !u!114 &7843367027121799668
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3017298618046401831}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 167e4bd7e1f82774db0c7c14c8ae2e2a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &3080200979743364235
 GameObject:
   m_ObjectHideFlags: 0
@@ -300,7 +312,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4508483597818230981}
-  - component: {fileID: -2979618355887688059}
   m_Layer: 0
   m_Name: GuardBot
   m_TagString: Untagged
@@ -326,19 +337,6 @@ Transform:
   - {fileID: 3911675924608240839}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &-2979618355887688059
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3080200979743364235}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 167e4bd7e1f82774db0c7c14c8ae2e2a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _enemyData: {fileID: 0}
 --- !u!1 &3146107059943538319
 GameObject:
   m_ObjectHideFlags: 0
@@ -919,6 +917,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 7026821284739904287}
     m_Modifications:
+    - target: {fileID: 2733204570633966335, guid: 0ce97407acc47004086c528989cbc8d6, type: 3}
+      propertyPath: _enemy
+      value: 
+      objectReference: {fileID: 7156778702020303295}
     - target: {fileID: 3876585119918661335, guid: 0ce97407acc47004086c528989cbc8d6, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -961,7 +963,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6746929624248773081, guid: 0ce97407acc47004086c528989cbc8d6, type: 3}
       propertyPath: m_Name
-      value: GuardBot
+      value: Container
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

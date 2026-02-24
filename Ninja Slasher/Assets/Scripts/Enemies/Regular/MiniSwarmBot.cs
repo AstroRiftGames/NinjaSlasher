@@ -5,16 +5,26 @@ using UnityEngine;
 public class MiniSwarmBot : FlyingEnemy
 {
     [SerializeField] float _deploymentTime;
+    private bool _isDying = false;
 
     public IEnumerator Initialize()
     {
         yield return new WaitForSeconds(_deploymentTime);
         _col.enabled = true;
     }
+
     public override void Die()
     {
-        //AudioManager.Instance.PlaySFXAtPosition(SFXClip.E_Mini_Death, transform.position);
-        //AudioService.Instance.PlaySFXAtPosition(_audioContext.Audio.death, transform.position);
+        _isDying = true;
+        _rb.linearVelocity = Vector2.zero;
         base.Die();
+    }
+
+    public override void CustomUpdate()
+    {
+        if (!_isDying)
+        {
+            base.CustomUpdate();
+        }
     }
 }

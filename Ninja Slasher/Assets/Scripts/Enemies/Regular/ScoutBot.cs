@@ -15,7 +15,6 @@ public class ScoutBot : Enemy
 
         if (canDetectPlayer && !_hasPlayedDetectionSFX)
         {
-            //AudioManager.Instance.PlaySFXAtPosition(SFXClip.E_Scout_SendReport, transform.position);
             AudioService.Instance.PlaySFXAtPosition(_audioContext.Audio.sendReport, transform.position);
             _hasPlayedDetectionSFX = true;
         }
@@ -34,7 +33,7 @@ public class ScoutBot : Enemy
     }
 
 
-private bool CheckLOS(Transform target)
+    private bool CheckLOS(Transform target)
     {
         Vector2 dirToTarget = (target.position - transform.position).normalized;
         float disToTarget = Vector2.Distance(transform.position, target.position);
@@ -51,9 +50,6 @@ private bool CheckLOS(Transform target)
         {
             TutorialManager.Instance.OnEnemyKilled();
         }
-
-        //AudioManager.Instance.PlaySFXAtPosition(SFXClip.E_Scout_Hit, transform.position);
-        AudioService.Instance.PlaySFXAtPosition(_audioContext.Audio.hit, transform.position);
         base.Die();
     }
 }

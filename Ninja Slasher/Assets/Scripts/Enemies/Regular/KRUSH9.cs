@@ -5,11 +5,13 @@ public class KRUSH9 : Enemy
     [SerializeField] float _attackSpeed;
     [SerializeField] float _attackCD;
     float _lastAttack;
+    KRUSH9_Weapon _weapon;
 
     protected override void Awake()
     {
         base.Awake();
         _animator = GetComponent<Animator>();
+        _weapon = GetComponentInChildren<KRUSH9_Weapon>();
     }
 
     public override void Start()
@@ -33,6 +35,11 @@ public class KRUSH9 : Enemy
         _lastAttack = Time.time;
     }
 
+    public void PlayDeathSFX()
+    {
+        AudioService.Instance.PlaySFXAtPosition(_audioContext.Audio.death, transform.position);
+    }
+
     private bool TargetClose()
     {
         return Vector2.Distance(transform.position, _player.position) < _data.Range;
@@ -41,6 +48,12 @@ public class KRUSH9 : Enemy
     private bool CanAttack()
     {
         return Time.time > _lastAttack + _attackCD;
+    }
+
+    public override void Die()
+    {
+        _weapon.Col.enabled = false;
+        base.Die();
     }
 
     private void OnDrawGizmos()

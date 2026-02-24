@@ -13,6 +13,7 @@ public class Geyser : MonoBehaviour
     private float _lastActivation;
     private bool _isActive;
     private NewController _player;
+    [SerializeField] private ElementAudioSet _audioSet;
 
     private void OnEnable()
     {
@@ -39,6 +40,7 @@ public class Geyser : MonoBehaviour
         }
         else if(TimeCheck())
         {
+            //AudioService.Instance.PlaySFXAtPosition(_audioSet.Loop, transform.position);
             Deactivate();
         }
     }
@@ -48,12 +50,14 @@ public class Geyser : MonoBehaviour
         _lastActivation = Time.time;
         _isActive = true;
         StartCoroutine(MovePlatform());
+        //AudioService.Instance.PlaySFXAtPosition(_audioSet.Start, transform.position);
         _particles.Play();
     }
 
     private void Deactivate()
     {
         _isActive = false;
+        //AudioService.Instance.PlaySFXAtPosition(_audioSet.End, transform.position);
         _particles.Stop();
         _platform.SetValues(true);
     }

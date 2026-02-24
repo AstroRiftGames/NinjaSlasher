@@ -14,10 +14,6 @@ public class GuardBot : Enemy
     private Vector2 _target;
 
     private float _direction => transform.localScale.x > 0 ? 1 : -1;
-
-    bool _isAlert;
-    bool _hasPlayedDetectionSFX;
-    float _lastDetectionTime;
     [SerializeField] float _resetDelay = 5f;
 
     protected override void Awake()
@@ -90,12 +86,10 @@ public class GuardBot : Enemy
         _target = GetPlayerPos();
         _isPushing = true;
         _animator.SetTrigger("OnDetection");
-        //AudioManager.Instance.PlaySFXAtPosition(SFXClip.E_Guard_Detection, transform.position);
         AudioService.Instance.PlaySFXAtPosition(_audioContext.Audio.detection, transform.position);
         _currentSpeed = 0;
         yield return new WaitForSeconds(1f);
         _animator.SetTrigger("OnPushStart");
-        //AudioManager.Instance.PlaySFXAtPosition(SFXClip.E_Guard_Charge, transform.position);
         AudioService.Instance.PlaySFXAtPosition(_audioContext.Audio.charge, transform.position);
         _currentSpeed = _speed * _speedMultiplier;
         yield return new WaitForSeconds(2f);
@@ -125,24 +119,9 @@ public class GuardBot : Enemy
 
     public override void Die()
     {
+        StopAllCoroutines();
         _currentSpeed = 0;
-        //AudioManager.Instance.PlaySFXAtPosition(SFXClip.E_Guard_Death, transform.position);
-        AudioService.Instance.PlaySFXAtPosition(_audioContext.Audio.death, transform.position);
         FrontCol.SetActive(false);
-        RearCol.SetActive(false);
-        UpperCol.SetActive(false);  
-        LowerCol.SetActive(false);
         base.Die();
-    }
-
-    private void OnDrawGizmos()
-    {
-        Gizmos.color = Color.red;
-        Gizmos.DrawLine(_refPoint.position, _refPoint.position + transform.right * _data.Range * _direction);
-        Gizmos.color = Color.yellow;
-        Gizmos.DrawRay(transform.position + transform.right * -_direction + transform.up*.5f, Vector2.down *.5f);
-        Gizmos.color = Color.blue;
-        Gizmos.DrawLine(_refPoint.position, _target);
-        Gizmos.color = Color.green;
     }
 }

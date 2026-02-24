@@ -106,11 +106,9 @@ public class RangeEnemy : Enemy
         _pool.Release(projectile);
     }
 
-#if UNITY_EDITOR
-    private void OnDrawGizmos()
+    public override void Die()
     {
-        Gizmos.color = Color.yellow;
-        Gizmos.DrawWireSphere(transform.position, _LOSRange);
+        _target = null;
+        base.Die();
     }
-#endif
 }

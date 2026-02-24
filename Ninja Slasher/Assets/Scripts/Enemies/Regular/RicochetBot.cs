@@ -39,14 +39,12 @@ public class RicochetBot : RangeEnemy
 
     public void PlayShootSFX()
     {
-        //AudioManager.Instance.PlaySFXAtPosition(SFXClip.E_Ricochet_Shoot, transform.position);
-        //AudioService.Instance.PlaySFXAtPosition(_audioContext.Audio.shoot, transform.position);
+        AudioService.Instance.PlaySFXAtPosition(_audioContext.Audio.shoot, transform.position);
     }
 
     public void PlayChargeSFX()
     {
-        //AudioManager.Instance.PlaySFXAtPosition(SFXClip.E_Ricochet_Charge, transform.position);
-        //AudioService.Instance.PlaySFXAtPosition(_audioContext.Audio.charge, transform.position);
+        AudioService.Instance.PlaySFXAtPosition(_audioContext.Audio.charge, transform.position);
     }
 
     private IEnumerator Aim()
@@ -63,12 +61,5 @@ public class RicochetBot : RangeEnemy
             yield return null;
         }
         _isShooting = false;
-    }
-
-    public override void Die()
-    {
-        //AudioService.Instance.PlaySFXAtPosition(_audioContext.Audio.death, transform.position);
-        //AudioManager.Instance.PlaySFXAtPosition(SFXClip.E_Ricochet_Death, transform.position);
-        base.Die();
     }
 }
