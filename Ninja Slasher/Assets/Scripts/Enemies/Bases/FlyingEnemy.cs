@@ -24,10 +24,12 @@ public class FlyingEnemy : Enemy
 
         if (CheckDistance())
         {
+            AudioService.Instance.PlaySFXAtPosition(_audioContext.Audio.move, transform.position);
             _rb.linearVelocity = _dirToTarget.normalized * _speed;
         }
         else
         {
+            AudioService.Instance.PlaySFXAtPosition(_audioContext.Audio.idle, transform.position);
             _animator.SetTrigger("OnStop");
             _rb.linearVelocity = Vector2.zero;
         }
@@ -60,5 +62,12 @@ public class FlyingEnemy : Enemy
     {
         _target = target;
         _dirToTarget = target - (Vector2)transform.localToWorldMatrix.GetPosition();
+    }
+
+    public override void Die()
+    {
+        AudioService.Instance.StopSFX(_audioContext.Audio.move);
+        AudioService.Instance.PlaySFXAtPosition(_audioContext.Audio.death, transform.position);
+        base.Die();
     }
 }

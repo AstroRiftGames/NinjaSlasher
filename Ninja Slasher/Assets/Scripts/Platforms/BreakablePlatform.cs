@@ -47,8 +47,8 @@ public class BreakablePlatform : PlatformBase
 
         remainingUses--;
         Debug.Log("Playing SFX");
-        AudioManager.Instance.PlaySFXAtPosition(Clip, player.transform.position);
-
+        //AudioManager.Instance.PlaySFXAtPosition(Clip, player.transform.position);
+        AudioService.Instance.PlaySFXAtPosition(_audioSet.Interaction, transform.position);
         if (remainingUses <= 0)
         {
             Break();
@@ -61,7 +61,8 @@ public class BreakablePlatform : PlatformBase
     {
         isActive = false;
 
-        AudioManager.Instance.PlaySFXAtPosition(SFXClip.Plat_Breakable, transform.position);
+        //AudioManager.Instance.PlaySFXAtPosition(SFXClip.Plat_Breakable, transform.position);
+        AudioService.Instance.PlaySFXAtPosition(_audioSet.DestroyPlatform, transform.position);
         DeactivateWhole();
         GeneratePieces();
         StartCoroutine(DestroyNextFrame());

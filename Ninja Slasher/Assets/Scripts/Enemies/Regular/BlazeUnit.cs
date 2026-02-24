@@ -15,7 +15,6 @@ public class BlazeUnit : RangeEnemy
 
         if (canDetectPlayer && !_hasPlayedDetectionSFX)
         {
-            //AudioManager.Instance.PlaySFXAtPosition(SFXClip.E_Blaze_Detection, transform.position);
             AudioService.Instance.PlaySFXAtPosition(_audioContext.Audio.detection, transform.position);
             _hasPlayedDetectionSFX = true;
         }
@@ -44,7 +43,6 @@ public class BlazeUnit : RangeEnemy
 
     public override void Attack()
     {
-        //AudioManager.Instance.PlaySFXAtPosition(SFXClip.E_Blaze_Shoot, transform.position);
         AudioService.Instance.PlaySFXAtPosition(_audioContext.Audio.shoot, transform.position);
         base.Attack();
     }

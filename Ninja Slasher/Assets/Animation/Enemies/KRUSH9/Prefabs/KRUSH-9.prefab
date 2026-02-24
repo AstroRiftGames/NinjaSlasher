@@ -411,6 +411,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ccd632551c92857409808d03589bc26c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _bot: {fileID: 1606848483671669504}
+  _col: {fileID: 4532507302465533610}
 --- !u!1 &7936277686074051228
 GameObject:
   m_ObjectHideFlags: 0
@@ -424,6 +426,7 @@ GameObject:
   - component: {fileID: 6328146395133479410}
   - component: {fileID: 1606848483671669504}
   - component: {fileID: 1026622389023272114}
+  - component: {fileID: 5884073873577884551}
   m_Layer: 9
   m_Name: KRUSH-9
   m_TagString: Enemy
@@ -539,14 +542,14 @@ MonoBehaviour:
   LowerCol: {fileID: 1267651459293124376, guid: 9b83fd6fbb07f684f8340267874f6340, type: 3}
   RearCol: {fileID: 6613156419462127088, guid: 9b83fd6fbb07f684f8340267874f6340, type: 3}
   FrontCol: {fileID: 1813173533783658342, guid: 9b83fd6fbb07f684f8340267874f6340, type: 3}
-  _deathTime: 0
+  _deathTime: 1.5
   _obstaclesLayer:
     serializedVersion: 2
     m_Bits: 192
   _playerLayer:
     serializedVersion: 2
     m_Bits: 1024
-  _animator: {fileID: 0}
+  _animator: {fileID: 1026622389023272114}
   _attackSpeed: 1
   _attackCD: 1.5
 --- !u!95 &1026622389023272114
@@ -571,6 +574,18 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!114 &5884073873577884551
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7936277686074051228}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 167e4bd7e1f82774db0c7c14c8ae2e2a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &9031216296915153054
 GameObject:
   m_ObjectHideFlags: 0

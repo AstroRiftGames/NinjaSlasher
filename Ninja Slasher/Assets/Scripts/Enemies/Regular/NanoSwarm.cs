@@ -4,11 +4,10 @@ public class NanoSwarm : FlyingEnemy
 {
     [SerializeField] int _childrenAmount;
     [SerializeField] GameObject _miniSwarmBot;
+    private bool _isDying = false;
 
     public override void Die()
     {
-        //AudioManager.Instance.PlaySFXAtPosition(SFXClip.E_Nano_Death, transform.position);
-        AudioService.Instance.PlaySFXAtPosition(_audioContext.Audio.death, transform.position);
         for (int n = 0; n < _childrenAmount; n++)
         {
             Instantiate(_miniSwarmBot, 
@@ -16,6 +15,16 @@ public class NanoSwarm : FlyingEnemy
                         Quaternion.identity).TryGetComponent(out MiniSwarmBot bot);
             bot.StartCoroutine(bot.Initialize());
         }
+        _isDying = true;
+        _rb.linearVelocity = Vector2.zero;
         base.Die();
+    }
+
+    public override void CustomUpdate()
+    {
+        if(!_isDying)
+        {
+            base.CustomUpdate();
+        }
     }
 }
