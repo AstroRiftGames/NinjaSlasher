@@ -84,12 +84,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _data: {fileID: 11400000, guid: b929427c2f7662b4aa22a1c5febc550f, type: 2}
-  _audioContext: {fileID: 0}
   UpperCol: {fileID: 5640190212091876609}
   LowerCol: {fileID: 2426180040628522412}
   RearCol: {fileID: 259584263403014144}
   FrontCol: {fileID: 6680087933382526307}
-  _deathTime: 0.5
+  _deathTime: 1.3
   _obstaclesLayer:
     serializedVersion: 2
     m_Bits: 192
@@ -258,7 +257,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 167e4bd7e1f82774db0c7c14c8ae2e2a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _enemyData: {fileID: 0}
 --- !u!1 &259584263403014144
 GameObject:
   m_ObjectHideFlags: 0
@@ -1784,7 +1782,7 @@ SpriteRenderer:
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
-  m_Size: {x: 2.08, y: 2.09}
+  m_Size: {x: 1.67, y: 2.5}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
