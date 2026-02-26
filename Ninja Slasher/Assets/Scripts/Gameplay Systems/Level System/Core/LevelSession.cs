@@ -85,7 +85,6 @@ public class LevelSession
         }
 
         isComplete = true;
-        CurrentStats.timeTaken = Time.time - sessionStartTime;
         ChangeState(LevelSessionState.Completed);
     }
 
@@ -97,7 +96,6 @@ public class LevelSession
         }
 
         isFailed = true;
-        CurrentStats.timeTaken = Time.time - sessionStartTime;
         ChangeState(LevelSessionState.Failed);
     }
 

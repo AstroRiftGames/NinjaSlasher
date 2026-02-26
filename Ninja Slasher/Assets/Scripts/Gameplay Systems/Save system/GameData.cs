@@ -6,7 +6,7 @@ using static UnityEngine.UIElements.UxmlAttributeDescription;
 [Serializable]
 public class GameData
 {
-    // Progresión de Niveles
+    // Progresion de Niveles
     public int highestUnlockedLevel = 1;
     public int highestUnlockedArea = 1;
     public int currentArea = 1;
@@ -36,7 +36,7 @@ public class GameData
     public float musicVolume = 1f;
     public float sfxVolume = 1f;
 
-    // Estadísticas y Metricas
+    // Estadisticas y Metricas
     public int totalGamesPlayed = 0;
     public int totalEnemiesKilled = 0;
     public int bestCombo = 0;
@@ -86,7 +86,7 @@ public class GameData
 
         foreach (var objective in result.completedObjectives)
         {
-            string objectiveId = objective.name;
+            string objectiveId = objective.StableId;
             if (!progress.completedObjectiveIds.Contains(objectiveId))
             {
                 progress.completedObjectiveIds.Add(objectiveId);

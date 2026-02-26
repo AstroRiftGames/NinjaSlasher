@@ -562,7 +562,8 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
     {
         var data = GetGameData();
         if (data == null || objective == null) return false;
-        return data.IsObjectiveCompleted(levelId, objective.name);
+        return data.IsObjectiveCompleted(levelId, objective.StableId)
+            || data.IsObjectiveCompleted(levelId, objective.name);
     }
 
     public void UnlockArea(int areaId)
@@ -693,10 +694,10 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
         Debug.Log($"[SaveManager] ESTADO ACTUAL:\n" +
                   $"- Usuario: {currentUserId}\n" +
                   $"- Autenticado: {IsUserAuthenticated()}\n" +
-                  $"- Nivel más alto: {data.highestUnlockedLevel}\n" +
-                  $"- Área más alta: {data.highestUnlockedArea}\n" +
+                  $"- Nivel mï¿½s alto: {data.highestUnlockedLevel}\n" +
+                  $"- ï¿½rea mï¿½s alta: {data.highestUnlockedArea}\n" +
                   $"- Estrellas totales: {data.totalStars}\n" +
-                  $"- Áreas desbloqueadas: [{string.Join(", ", data.unlockedAreas)}]");
+                  $"- ï¿½reas desbloqueadas: [{string.Join(", ", data.unlockedAreas)}]");
     }
 
     public void DeleteSaveData()

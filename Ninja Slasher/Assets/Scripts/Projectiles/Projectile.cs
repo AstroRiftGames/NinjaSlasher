@@ -27,6 +27,8 @@ public class Projectile : MonoBehaviour, IPoolable
     private HashSet<Enemy> _hitEnemies = new HashSet<Enemy>();
     private Collider2D _projectileCollider;
 
+    public bool WasReflected { get; private set; }
+
     public event Action<Projectile> OnRequestDespawn;
 
     public void Initialize(Vector2 direction, Transform owner)
@@ -53,6 +55,7 @@ public class Projectile : MonoBehaviour, IPoolable
         _isEnhancedParry = false;
         _bouncesRemaining = 0;
         _velocityRetention = 1f;
+        WasReflected = false;
 
         _rb.linearVelocity = Vector2.zero;
     }
@@ -200,8 +203,10 @@ public class Projectile : MonoBehaviour, IPoolable
 
     protected void DamageEnemy(GameObject enemy)
     {
-        ParryKillTracker.RegisterParryKill();
-        Debug.Log("Parry kill registrada.");
+        if (WasReflected)
+        {
+            ParryKillTracker.RegisterParryKill();
+        }
 
         enemy.TryGetComponent(out Enemy script);
 
@@ -225,6 +230,7 @@ public class Projectile : MonoBehaviour, IPoolable
 
     public virtual void ReflectBackwards(Transform newShooter, Vector2 newDir)
     {
+        WasReflected = true;
         _animator.SetTrigger("OnParried");
         SetOwner(newShooter);
         _rb.linearVelocity = Vector2.zero;

@@ -10,6 +10,26 @@ public abstract class ObjectiveData : ScriptableObject
     public bool isSecondary = true;
     public int starValue = 1;
 
+    [Header("STABLE ID")]
+    [SerializeField] private string _stableId;
+    public string StableId => _stableId;
+
+#if UNITY_EDITOR
+    private void OnValidate()
+    {
+        if (string.IsNullOrEmpty(_stableId))
+        {
+            GenerateNewId();
+        }
+    }
+
+    private void GenerateNewId()
+    {
+        _stableId = System.Guid.NewGuid().ToString();
+        UnityEditor.EditorUtility.SetDirty(this);
+    }
+#endif
+
     public abstract bool IsCompleted(LevelStats stats, LevelContext context);
 
     public virtual bool CanBeEvaluated(LevelStats stats, LevelContext context)
@@ -27,7 +47,7 @@ public abstract class ObjectiveData : ScriptableObject
 public class LevelContext
 {
     [Header("LEVEL CONFIGURATION")]
-    [Tooltip("Se calcula automáticamente al inicio del nivel")]
+    [Tooltip("Se calcula automï¿½ticamente al inicio del nivel")]
     public int totalEnemiesInLevel;
     [Header("LEVEL MECHANICS")]
     [Tooltip("Indica si el nivel incluye enemigos que disparan proyectiles")]
