@@ -115,6 +115,7 @@ public class LevelSession
     public void RegisterParryKill()
     {
         CurrentStats.parryKillDone = true;
+        CurrentStats.reflectedProjectileKills++;
         NotifyStatsUpdated();
     }
 

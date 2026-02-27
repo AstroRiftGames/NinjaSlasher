@@ -203,6 +203,13 @@ public class LevelSessionManager : MonoBehaviourSingleton<LevelSessionManager>
         }
 
         var stats = currentSession.CurrentStats;
+
+        if (ComboManager.Instance != null)
+        {
+            stats.maxComboActiveDuration = ComboManager.Instance.MaxComboDuration;
+            stats.maxComboLevelReached   = ComboManager.Instance.MaxComboLevelReached;
+        }
+
         var result = objectiveService.Evaluate(stats);
 
         stats.starsEarned = result.starsEarned;
@@ -309,7 +316,6 @@ public class LevelSessionManager : MonoBehaviourSingleton<LevelSessionManager>
             AudioService.Instance.PlayMusic(music);
         }
     }
-
 
     private void OnDestroy()
     {

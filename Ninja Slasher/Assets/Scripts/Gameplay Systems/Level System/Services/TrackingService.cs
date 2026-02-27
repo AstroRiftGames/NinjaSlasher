@@ -82,11 +82,8 @@ public class TrackingService
     {
         if (!isActive) return;
 
-        if (!parryKillRegistered)
-        {
-            parryKillRegistered = true;
-            session.RegisterParryKill();
-        }
+        parryKillRegistered = true;
+        session.RegisterParryKill();
     }
 
     public void RegisterEnemyKilled(Enemy enemy)

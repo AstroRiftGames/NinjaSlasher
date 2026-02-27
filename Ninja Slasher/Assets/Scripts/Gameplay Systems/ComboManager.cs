@@ -20,6 +20,19 @@ public class ComboManager : MonoBehaviourSingleton<ComboManager>
     private bool comboActive = false;
     private Vector3 lastEnemyPosition;
 
+    private float _currentComboDuration = 0f;
+    private float _maxComboDuration = 0f;
+    private int _maxComboLevelReached = 0;
+
+    public float MaxComboDuration
+    {
+        get
+        {
+            return comboActive ? Mathf.Max(_maxComboDuration, _currentComboDuration) : _maxComboDuration;
+        }
+    }
+    public int MaxComboLevelReached => _maxComboLevelReached;
+
     public override void Awake()
     {
         base.Awake();
@@ -30,6 +43,7 @@ public class ComboManager : MonoBehaviourSingleton<ComboManager>
         if (!comboActive) return;
 
         comboTimer -= Time.deltaTime;
+        _currentComboDuration += Time.deltaTime;
 
         if (comboTimer <= 0f)
         {
@@ -40,8 +54,15 @@ public class ComboManager : MonoBehaviourSingleton<ComboManager>
     public void RegisterKill(Vector3 enemyPosition)
     {
         lastEnemyPosition = enemyPosition;
+
+        if (!comboActive)
+            _currentComboDuration = 0f;
+
         killCount++;
         int level = Mathf.Clamp(killCount, 1, 5);
+
+        if (level > _maxComboLevelReached)
+            _maxComboLevelReached = level;
 
         comboTimer = level switch
         {
@@ -63,13 +84,9 @@ public class ComboManager : MonoBehaviourSingleton<ComboManager>
                 TutorialManager.Instance.OnComboPerformed();
             }
 
-            //Debug.Log($"[ComboManager] Combo x{level} activado en posición {lastEnemyPosition}");
+            //Debug.Log($"[ComboManager] Combo x{level} activado en posiciï¿½n {lastEnemyPosition}");
 
             GameEvents.RaiseComboUpdated(level, lastEnemyPosition);
-
-            // DEPRECATED
-            //OnComboUpdated?.Invoke(level);
-            //OnComboUpdatedWithPosition?.Invoke(level, lastEnemyPosition);
         }
     }
 
@@ -110,13 +127,14 @@ public class ComboManager : MonoBehaviourSingleton<ComboManager>
             //Debug.Log($"[ComboManager] Combo x{killCount} terminado");
         }
 
+        if (_currentComboDuration > _maxComboDuration)
+            _maxComboDuration = _currentComboDuration;
+
+        _currentComboDuration = 0f;
         killCount = 0;
         comboActive = false;
 
         GameEvents.RaiseComboReset();
-
-        // DEPRECATED
-        //OnComboEnded?.Invoke();
     }
 
     public Vector3 GetLastEnemyPosition()

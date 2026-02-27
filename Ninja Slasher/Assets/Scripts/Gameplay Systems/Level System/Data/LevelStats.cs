@@ -9,4 +9,9 @@ public class LevelStats
     public int movesUsed;
     public bool parryKillDone;
     public int starsEarned;
+
+    // Nuevos objetivos
+    public float maxComboActiveDuration;
+    public int reflectedProjectileKills;
+    public int maxComboLevelReached;
 }
