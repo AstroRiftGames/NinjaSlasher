@@ -144,6 +144,28 @@ public static class GameEvents
         OnEnemyDefeated?.Invoke(enemyCount);
     }
 
+    public static event Action<int> OnBL4ZTExplosionKills;
+    public static void RaiseBL4ZTExplosionKills(int killCount)
+    {
+        OnBL4ZTExplosionKills?.Invoke(killCount);
+    }
+
+    public static event Action OnBreakablePlatformBroken;
+    public static void RaiseBreakablePlatformBroken()
+    {
+        OnBreakablePlatformBroken?.Invoke();
+    }
+
+    #endregion
+
+    #region PLAYER EVENTS
+
+    public static event Action OnDashStarted;
+    public static void RaiseDashStarted() => OnDashStarted?.Invoke();
+
+    public static event Action OnDashEnded;
+    public static void RaiseDashEnded() => OnDashEnded?.Invoke();
+
     #endregion
 
     #region PROGRESSION EVENTS

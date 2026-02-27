@@ -13,6 +13,9 @@ public class TrackingService
     private int movesCount;
     private bool parryKillRegistered;
 
+    private bool _isDashActive = false;
+    private int _currentDashKills = 0;
+
     private bool isActive;
 
     public TrackingService(LevelSession levelSession)
@@ -25,6 +28,7 @@ public class TrackingService
     public void Initialize()
     {
         RegisterEnemies();
+        RegisterBreakablePlatforms();
 
         movesCount = 0;
         parryKillRegistered = false;
@@ -60,14 +64,34 @@ public class TrackingService
         }
     }
 
+    private void RegisterBreakablePlatforms()
+    {
+        BreakablePlatform[] platforms = Object.FindObjectsOfType<BreakablePlatform>();
+        int count = 0;
+        foreach (BreakablePlatform platform in platforms)
+        {
+            if (platform != null && platform.gameObject.activeInHierarchy)
+                count++;
+        }
+        session.UpdateTotalPlatforms(count);
+    }
+
     private void SubscribeToEvents()
     {
         GameEvents.OnEnemyDefeated += OnEnemyDefeated;
+        GameEvents.OnBL4ZTExplosionKills += OnBL4ZTExplosionKills;
+        GameEvents.OnBreakablePlatformBroken += OnBreakablePlatformBroken;
+        GameEvents.OnDashStarted += OnDashStarted;
+        GameEvents.OnDashEnded += OnDashEnded;
     }
 
     private void UnsubscribeFromEvents()
     {
         GameEvents.OnEnemyDefeated -= OnEnemyDefeated;
+        GameEvents.OnBL4ZTExplosionKills -= OnBL4ZTExplosionKills;
+        GameEvents.OnBreakablePlatformBroken -= OnBreakablePlatformBroken;
+        GameEvents.OnDashStarted -= OnDashStarted;
+        GameEvents.OnDashEnded -= OnDashEnded;
     }
 
     public void RegisterMove()
@@ -94,8 +118,13 @@ public class TrackingService
         {
             activeEnemies.Remove(enemy);
 
-            int defeated = totalEnemiesAtStart - activeEnemies.Count;
             UpdateSessionStats();
+
+            if (_isDashActive)
+            {
+                _currentDashKills++;
+                session.UpdateMaxSingleAttackKills(_currentDashKills);
+            }
 
             if (activeEnemies.Count == 0)
             {
@@ -108,6 +137,34 @@ public class TrackingService
     {
         int defeated = totalEnemiesAtStart - activeEnemies.Count;
         UpdateSessionStats();
+    }
+
+    private void OnBL4ZTExplosionKills(int count)
+    {
+        if (!isActive) return;
+        session.AddBL4ZTKills(count);
+    }
+
+    private void OnBreakablePlatformBroken()
+    {
+        if (!isActive) return;
+        session.AddPlatformBroken();
+    }
+
+    private void OnDashStarted()
+    {
+        _isDashActive = true;
+        _currentDashKills = 0;
+    }
+
+    private void OnDashEnded()
+    {
+        if (_isDashActive)
+        {
+            session.UpdateMaxSingleAttackKills(_currentDashKills);
+            _isDashActive = false;
+            _currentDashKills = 0;
+        }
     }
 
     private void OnAllEnemiesDefeated()
@@ -133,6 +190,8 @@ public class TrackingService
         totalEnemiesAtStart = 0;
         movesCount = 0;
         parryKillRegistered = false;
+        _isDashActive = false;
+        _currentDashKills = 0;
         isActive = false;
     }
 

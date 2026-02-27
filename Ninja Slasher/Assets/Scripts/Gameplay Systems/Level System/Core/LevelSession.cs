@@ -125,6 +125,32 @@ public class LevelSession
         NotifyStatsUpdated();
     }
 
+    public void UpdateMaxSingleAttackKills(int count)
+    {
+        if (count > CurrentStats.maxEnemiesKilledInSingleAttack)
+        {
+            CurrentStats.maxEnemiesKilledInSingleAttack = count;
+            NotifyStatsUpdated();
+        }
+    }
+
+    public void AddBL4ZTKills(int count)
+    {
+        CurrentStats.bl4ztExplosionKills += count;
+        NotifyStatsUpdated();
+    }
+
+    public void UpdateTotalPlatforms(int total)
+    {
+        CurrentStats.totalBreakablePlatforms = total;
+    }
+
+    public void AddPlatformBroken()
+    {
+        CurrentStats.platformsBroken++;
+        NotifyStatsUpdated();
+    }
+
     public bool IsRunning => State == LevelSessionState.Running;
     public bool IsComplete => isComplete;
     public bool IsFailed => isFailed;

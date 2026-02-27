@@ -61,6 +61,8 @@ public class BreakablePlatform : PlatformBase
     {
         isActive = false;
 
+        GameEvents.RaiseBreakablePlatformBroken();
+
         //AudioManager.Instance.PlaySFXAtPosition(SFXClip.Plat_Breakable, transform.position);
         AudioService.Instance.PlaySFXAtPosition(_audioSet.DestroyPlatform, transform.position);
         DeactivateWhole();

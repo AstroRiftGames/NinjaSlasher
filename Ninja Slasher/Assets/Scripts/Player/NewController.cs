@@ -214,6 +214,7 @@ public class NewController : MonoBehaviour
         AudioService.Instance.PlaySFXAtPosition(_audio.movementLoop, transform.position);
         _isDashing = true;
         _lastDash = Time.time;
+        GameEvents.RaiseDashStarted();
         _view.Animator.SetBool("IsGrounded", false);
         _view.TrailRendererComponent.emitting = true;
         RotateSprites(direction);
@@ -301,6 +302,8 @@ public class NewController : MonoBehaviour
 
     private void Grab(Vector2 normal)
     {
+        if (_isDashing)
+            GameEvents.RaiseDashEnded();
         _isDashing = false;
         _lastNormal = normal;
         _view.Animator.SetBool("IsGrounded", true);

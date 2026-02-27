@@ -285,6 +285,8 @@ public class BL4ZT : Enemy
     private void Explode()
     {
         Collider2D[] cols = Physics2D.OverlapCircleAll(transform.position, _explosionRadius);
+        int bl4ztKills = 0;
+
         foreach (Collider2D col in cols)
         {
             if (col.CompareTag("Player"))
@@ -292,9 +294,10 @@ public class BL4ZT : Enemy
                 col.TryGetComponent(out NewController player);
                 player.Die();
             }
-            else if (col.CompareTag("Enemy") && col.TryGetComponent(out Enemy enemy))
+            else if (col.CompareTag("Enemy") && col.TryGetComponent(out Enemy enemy) && enemy != this)
             {
                 enemy.Die();
+                bl4ztKills++;
             }
             else if (col.TryGetComponent(out BreakableProp prop))
             {
@@ -305,6 +308,12 @@ public class BL4ZT : Enemy
                 _arachnomadre.StartCoroutine(_arachnomadre.GetVulnerable());
             }
         }
+
+        if (bl4ztKills > 0)
+        {
+            GameEvents.RaiseBL4ZTExplosionKills(bl4ztKills);
+        }
+
         Die();
     }
 

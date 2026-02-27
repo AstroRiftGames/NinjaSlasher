@@ -14,4 +14,10 @@ public class LevelStats
     public float maxComboActiveDuration;
     public int reflectedProjectileKills;
     public int maxComboLevelReached;
+
+    // Objetivos de área y plataformas
+    public int maxEnemiesKilledInSingleAttack;
+    public int bl4ztExplosionKills;
+    public int platformsBroken;
+    public int totalBreakablePlatforms;
 }
