@@ -13,7 +13,9 @@ public class Geyser : MonoBehaviour
     private float _lastActivation;
     private bool _isActive;
     private NewController _player;
-    [SerializeField] private ElementAudioSet _audioSet;
+    [SerializeField] private AudioSet _audioSet;
+
+    protected ElementAudioContext _audioContext;
 
     private void OnEnable()
     {
@@ -29,6 +31,11 @@ public class Geyser : MonoBehaviour
         CustomUpdateManager.Instance.UnsubscribeFromFixedUpdate(CustomUpdate);
     }
 
+    public void Awake()
+    {
+        InitializeAudioContext();
+    }
+
     public void CustomUpdate()
     {
         if (!_isActive)
@@ -40,7 +47,7 @@ public class Geyser : MonoBehaviour
         }
         else if(TimeCheck())
         {
-            //AudioService.Instance.PlaySFXAtPosition(_audioSet.Loop, transform.position);
+            AudioService.Instance.PlaySFXAtPosition(_audioContext.Audio.Loop, transform.position);
             Deactivate();
         }
     }
@@ -50,14 +57,14 @@ public class Geyser : MonoBehaviour
         _lastActivation = Time.time;
         _isActive = true;
         StartCoroutine(MovePlatform());
-        //AudioService.Instance.PlaySFXAtPosition(_audioSet.Start, transform.position);
+        AudioService.Instance.PlaySFXAtPosition(_audioContext.Audio.Start, transform.position);
         _particles.Play();
     }
 
     private void Deactivate()
     {
         _isActive = false;
-        //AudioService.Instance.PlaySFXAtPosition(_audioSet.End, transform.position);
+        AudioService.Instance.PlaySFXAtPosition(_audioContext.Audio.End, transform.position);
         _particles.Stop();
         _platform.SetValues(true);
     }
@@ -83,5 +90,12 @@ public class Geyser : MonoBehaviour
     private bool TimeCheck()
     {
         return Time.time >= _lastActivation + _activeTime;
+    }
+
+    protected virtual void InitializeAudioContext()
+    {
+        _audioContext = GetComponent<ElementAudioContext>();
+        if (_audioContext != null && _audioSet != null)
+            _audioContext.Initialize(_audioSet);
     }
 }

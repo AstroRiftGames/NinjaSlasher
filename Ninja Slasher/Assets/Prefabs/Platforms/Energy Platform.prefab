@@ -251,6 +251,7 @@ GameObject:
   - component: {fileID: 5518251915474095614}
   - component: {fileID: 2390619925568157686}
   - component: {fileID: 7650640316050715731}
+  - component: {fileID: 5943855483997723112}
   m_Layer: 6
   m_Name: Energy Platform
   m_TagString: Obstacle
@@ -415,9 +416,24 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isActive: 1
+  _type: 0
+  _audioSet: {fileID: 0}
+  _animator: {fileID: 0}
   onDuration: 5
   offDuration: 3
   platformCollider: {fileID: 5518251915474095614}
   platformRenderer: {fileID: 684347388138070737}
   onAlpha: 1
   offAlpha: 0.3
+--- !u!114 &5943855483997723112
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8185888665938275328}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 99e517ef5aee8534ba180ebd39cdccc0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
