@@ -35,7 +35,7 @@ public abstract class PlatformBase : MonoBehaviour, IPlatform
 
     }
 
-    public void Awake()
+    public virtual void Awake()
     {
         InitializeAudioContext();
     }

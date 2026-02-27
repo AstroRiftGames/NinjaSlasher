@@ -24,10 +24,11 @@ public class BreakablePlatform : PlatformBase
     [SerializeField] GameObject[] _piecesPrefabs;
     [SerializeField] float _explosionForce;
 
-    private void Awake()
+    public override void Awake()
     {
         _tilemap.TryGetComponent(out TilemapCollider2D renderer);
         _tilemapCol = renderer;
+        base.Awake();
     }
 
 
@@ -46,8 +47,6 @@ public class BreakablePlatform : PlatformBase
 
 
         remainingUses--;
-        Debug.Log("Playing SFX");
-        //AudioManager.Instance.PlaySFXAtPosition(Clip, player.transform.position);
         AudioService.Instance.PlaySFXAtPosition(_audioContext.Audio.Interaction, transform.position);
         if (remainingUses <= 0)
         {

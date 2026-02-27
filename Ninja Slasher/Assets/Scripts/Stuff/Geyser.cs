@@ -47,8 +47,11 @@ public class Geyser : MonoBehaviour
         }
         else if(TimeCheck())
         {
-            AudioService.Instance.PlaySFXAtPosition(_audioContext.Audio.Loop, transform.position);
             Deactivate();
+        }
+        else
+        {
+            AudioService.Instance.PlaySFXAtPosition(_audioContext.Audio.Loop, transform.position);
         }
     }
 
@@ -64,6 +67,7 @@ public class Geyser : MonoBehaviour
     private void Deactivate()
     {
         _isActive = false;
+        AudioService.Instance.StopSFX(_audioContext.Audio.Loop);
         AudioService.Instance.PlaySFXAtPosition(_audioContext.Audio.End, transform.position);
         _particles.Stop();
         _platform.SetValues(true);

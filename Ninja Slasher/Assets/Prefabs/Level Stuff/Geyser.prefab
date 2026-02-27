@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3285286780154140255}
   - component: {fileID: 5285317175145131926}
+  - component: {fileID: 1836092275759932472}
   m_Layer: 0
   m_Name: Geyser
   m_TagString: Untagged
@@ -52,7 +53,19 @@ MonoBehaviour:
   _force: 2
   _platform: {fileID: 8696204211054836234}
   _particles: {fileID: 3384054391622598390}
-  _maxHeight: 5
+  _audioSet: {fileID: 11400000, guid: 0b5d01db802283c48aa7251d7a761931, type: 2}
+--- !u!114 &1836092275759932472
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2945267855130541853}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 112d4289b2934b24e8f487f74eeb125b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &6695044151021106971
 GameObject:
   m_ObjectHideFlags: 0
@@ -230,6 +243,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isActive: 1
   _type: 4
+  _animator: {fileID: 0}
+  _audioSet: {fileID: 0}
   _geyser: {fileID: 6718209777722472676}
 --- !u!1 &6718209777722472676
 GameObject:
