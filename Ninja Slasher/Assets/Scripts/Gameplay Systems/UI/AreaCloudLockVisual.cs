@@ -12,11 +12,8 @@ public class AreaCloudLockVisual : MonoBehaviour
     [SerializeField] private Vector2 cloudBaseSize = new Vector2(220f, 160f);
 
     [Header("Grid")]
-
     [SerializeField, Range(0.1f, 0.65f)] private float overlapFactor = 0.35f;
-
     [SerializeField, Range(0f, 0.45f)] private float jitterFactor = 0.25f;
-
     [SerializeField, Range(0f, 1f)] private float edgeExtendFactor = 0.5f;
 
     [Header("Cloud Transform")]
@@ -47,6 +44,7 @@ public class AreaCloudLockVisual : MonoBehaviour
     private CanvasGroup   _canvasGroup;
     private RectTransform _rectTransform;
     private CloudData[]   _clouds;
+    private int           _gridRows;
     private bool          _started;
     private bool          _dispersing;
 
@@ -126,7 +124,8 @@ public class AreaCloudLockVisual : MonoBehaviour
         float maxJitterX = stepX * jitterFactor;
         float maxJitterY = stepY * jitterFactor;
 
-        _clouds = new CloudData[cols * rows];
+        _gridRows = rows;
+        _clouds   = new CloudData[cols * rows];
         int index = 0;
 
         for (int col = 0; col < cols; col++)
@@ -231,7 +230,9 @@ public class AreaCloudLockVisual : MonoBehaviour
                 ? _clouds[i].Rect.anchoredPosition
                 : _clouds[i].Origin;
 
-            float sign = _clouds[i].Origin.x >= 0f ? 1f : -1f;
+            int   col  = i / _gridRows;
+            int   row  = i % _gridRows;
+            float sign = ((col + row) % 2 == 0) ? 1f : -1f;
             targets[i] = new Vector2(_clouds[i].Origin.x + sign * disperseDistance,
                                      _clouds[i].Origin.y);
         }
