@@ -1,4 +1,6 @@
+using System.Collections;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class AreaSectionController : MonoBehaviour
 {
@@ -8,6 +10,10 @@ public class AreaSectionController : MonoBehaviour
     [Header("REFERENCES")]
     [SerializeField] private AreaCloudLockVisual _lockOverlay;
     [SerializeField] private CanvasGroup _levelButtonsGroup;
+    [SerializeField] private ScrollRect _scrollRect;
+
+    private bool _lockStateInitialized;
+    private bool _lastKnownLockState = true;
 
     private void OnEnable()
     {
@@ -31,8 +37,78 @@ public class AreaSectionController : MonoBehaviour
             return;
         }
 
-        bool unlocked = IsAreaUnlocked();
-        SetLocked(!unlocked);
+        bool locked = !IsAreaUnlocked();
+
+        if (!_lockStateInitialized)
+        {
+            SetLockOverlay(locked);
+            SetButtonsInteractable(!locked);
+            _lastKnownLockState  = locked;
+            _lockStateInitialized = true;
+            return;
+        }
+
+        if (locked == _lastKnownLockState) return;
+
+        _lastKnownLockState = locked;
+
+        if (!locked)
+            PlayUnlock();
+        else
+            SetLocked(true);
+    }
+
+    private void PlayUnlock()
+    {
+        StartCoroutine(UnlockSequence());
+    }
+
+    private IEnumerator UnlockSequence()
+    {
+        if (_scrollRect != null)
+            yield return StartCoroutine(ScrollToArea());
+
+        if (_lockOverlay != null)
+            _lockOverlay.PlayUnlockAnimation(onComplete: () => SetButtonsInteractable(true));
+        else
+            SetButtonsInteractable(true);
+    }
+
+    private IEnumerator ScrollToArea(float duration = 0.7f)
+    {
+        float start  = _scrollRect.horizontalNormalizedPosition;
+        float target = GetTargetNormalizedX();
+
+        if (Mathf.Approximately(start, target)) yield break;
+
+        float elapsed = 0f;
+        while (elapsed < duration)
+        {
+            float t = Mathf.SmoothStep(0f, 1f, elapsed / duration);
+            _scrollRect.horizontalNormalizedPosition = Mathf.Lerp(start, target, t);
+            elapsed += Time.deltaTime;
+            yield return null;
+        }
+
+        _scrollRect.horizontalNormalizedPosition = target;
+    }
+
+    private float GetTargetNormalizedX()
+    {
+        RectTransform content  = _scrollRect.content;
+        RectTransform viewport = _scrollRect.viewport != null
+            ? _scrollRect.viewport
+            : (RectTransform)_scrollRect.transform;
+        RectTransform self = GetComponent<RectTransform>();
+
+        Vector3 worldCenter = self.TransformPoint(self.rect.center);
+        float   areaLocalX  = content.InverseTransformPoint(worldCenter).x;
+
+        float scrollRange = content.rect.width - viewport.rect.width;
+        if (scrollRange <= 0f) return 0f;
+
+        float normalized = (areaLocalX - viewport.rect.width * 0.5f) / scrollRange;
+        return Mathf.Clamp01(normalized);
     }
 
     private bool IsAreaUnlocked()

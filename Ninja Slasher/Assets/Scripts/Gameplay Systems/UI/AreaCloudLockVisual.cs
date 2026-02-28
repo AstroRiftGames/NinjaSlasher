@@ -5,10 +5,10 @@ using UnityEngine.UI;
 public class AreaCloudLockVisual : MonoBehaviour
 {
     [Header("Cloud Sprites")]
-    [Tooltip("Arrastra aquí los sprites de nube")]
+    [Tooltip("Sprites de nube")]
     [SerializeField] private Sprite[] cloudSprites;
 
-    [Tooltip("Tamaño base de cada nube en unidades de canvas.")]
+    [Tooltip("Tamaño base de cada nube")]
     [SerializeField] private Vector2 cloudBaseSize = new Vector2(220f, 160f);
 
     [Header("Grid")]
@@ -26,13 +26,12 @@ public class AreaCloudLockVisual : MonoBehaviour
     [SerializeField] private float maxRotation =  5f;
 
     [Header("Movement")]
-    [Tooltip("Frecuencia angular de la deriva (rad/s).")]
     [SerializeField] private float driftSpeed = 0.25f;
 
-    [Tooltip("Distancia máxima de deriva en píxeles de canvas.")]
+    [Tooltip("Distancia máxima de deriva en píxeles")]
     [SerializeField] private float driftAmplitude = 15f;
 
-    [Tooltip("Amplitud de oscilación vertical adicional.")]
+    [Tooltip("Amplitud de oscilación vertical")]
     [SerializeField] private float oscillationAmplitude = 8f;
 
     private struct CloudData
@@ -49,6 +48,7 @@ public class AreaCloudLockVisual : MonoBehaviour
     private RectTransform _rectTransform;
     private CloudData[]   _clouds;
     private bool          _started;
+    private bool          _dispersing;
 
     private void Awake()
     {
@@ -64,7 +64,7 @@ public class AreaCloudLockVisual : MonoBehaviour
 
     private void Update()
     {
-        if (_clouds == null) return;
+        if (_clouds == null || _dispersing) return;
 
         float t = Time.time;
 
@@ -206,6 +206,60 @@ public class AreaCloudLockVisual : MonoBehaviour
     {
         if (!_started) return;
         BuildClouds();
+    }
+
+    public void PlayUnlockAnimation(System.Action onComplete = null)
+    {
+        if (!_started) { gameObject.SetActive(false); onComplete?.Invoke(); return; }
+        StartCoroutine(DispersionAndFade(onComplete));
+    }
+
+    private System.Collections.IEnumerator DispersionAndFade(System.Action onComplete, float duration = 2.5f)
+    {
+        if (_clouds == null) { gameObject.SetActive(false); onComplete?.Invoke(); yield break; }
+
+        _dispersing = true;
+
+        var startPositions = new Vector2[_clouds.Length];
+        var targets        = new Vector2[_clouds.Length];
+
+        float disperseDistance = _rectTransform.rect.width * 0.75f;
+
+        for (int i = 0; i < _clouds.Length; i++)
+        {
+            startPositions[i] = _clouds[i].Rect != null
+                ? _clouds[i].Rect.anchoredPosition
+                : _clouds[i].Origin;
+
+            float sign = _clouds[i].Origin.x >= 0f ? 1f : -1f;
+            targets[i] = new Vector2(_clouds[i].Origin.x + sign * disperseDistance,
+                                     _clouds[i].Origin.y);
+        }
+
+        float elapsed = 0f;
+
+        while (elapsed < duration)
+        {
+            float t     = elapsed / duration;
+            float eased = Mathf.SmoothStep(0f, 1f, t);
+
+            for (int i = 0; i < _clouds.Length; i++)
+            {
+                if (_clouds[i].Rect == null) continue;
+                _clouds[i].Rect.anchoredPosition = Vector2.Lerp(startPositions[i], targets[i], eased);
+            }
+
+            _canvasGroup.alpha = 1f - t;
+
+            elapsed += Time.deltaTime;
+            yield return null;
+        }
+
+        _canvasGroup.alpha = 1f;
+        _dispersing        = false;
+
+        onComplete?.Invoke();
+        gameObject.SetActive(false);
     }
 
 #if UNITY_EDITOR
