@@ -103,11 +103,33 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
 
     private bool TryLoadFromCurrentPath()
     {
-        if (!File.Exists(saveFilePath)) return false;
+        string backupPath = saveFilePath + ".bak";
+
+        // Intentar cargar el save principal; si falla o no existe, intentar el backup.
+        if (TryLoadFromFile(saveFilePath)) return true;
+
+        if (File.Exists(backupPath))
+        {
+            Debug.LogWarning("[SaveManager] Save principal no disponible o corrupto. Recuperando desde backup.");
+            if (TryLoadFromFile(backupPath))
+            {
+                // Restaurar el backup como save principal para que las próximas
+                // escrituras vuelvan al flujo normal.
+                try { File.Copy(backupPath, saveFilePath, overwrite: true); } catch { /* no crítico */ }
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private bool TryLoadFromFile(string path)
+    {
+        if (!File.Exists(path)) return false;
 
         try
         {
-            string json = File.ReadAllText(saveFilePath);
+            string json = File.ReadAllText(path);
 
             bool loadedWithDto = false;
             try
@@ -119,7 +141,7 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
                     loadedWithDto = true;
                 }
             }
-            catch { /* ignorar */ }
+            catch { /* ignorar, intentar path legacy */ }
 
             if (!loadedWithDto)
             {
@@ -131,7 +153,7 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
         }
         catch (Exception e)
         {
-            //Debug.LogError($"[SaveManager] Failed to load save file: {e.Message}");
+            Debug.LogError($"[SaveManager] Failed to load '{path}': {e.Message}");
             return false;
         }
     }
@@ -263,6 +285,62 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
         catch { /* si falla parse, dejamos el existente */ }
 
         if (source.lastPlayDate > target.lastPlayDate) target.lastPlayDate = source.lastPlayDate;
+
+        // --- Campos que faltaban en la merge original ---
+
+        // levelObjectives: unión de objetivos completados por nivel.
+        if (source.levelObjectives != null)
+        {
+            if (target.levelObjectives == null) target.levelObjectives = new Dictionary<int, List<int>>();
+            foreach (var kv in source.levelObjectives)
+            {
+                if (!target.levelObjectives.ContainsKey(kv.Key))
+                    target.levelObjectives[kv.Key] = new List<int>(kv.Value);
+                else
+                    foreach (var id in kv.Value)
+                        if (!target.levelObjectives[kv.Key].Contains(id))
+                            target.levelObjectives[kv.Key].Add(id);
+            }
+        }
+
+        // levelProgressData: por nivel, tomar el mejor resultado entre las dos fuentes.
+        if (source.levelProgressData != null)
+        {
+            if (target.levelProgressData == null) target.levelProgressData = new Dictionary<int, LevelProgressData>();
+            foreach (var kv in source.levelProgressData)
+            {
+                if (!target.levelProgressData.ContainsKey(kv.Key))
+                {
+                    target.levelProgressData[kv.Key] = kv.Value;
+                }
+                else
+                {
+                    var dst = target.levelProgressData[kv.Key];
+                    var s   = kv.Value;
+                    if (s.maxStarsEarned > dst.maxStarsEarned) dst.maxStarsEarned = s.maxStarsEarned;
+                    if (s.isCompleted) dst.isCompleted = true;
+                    if (s.firstCompletedDate != DateTime.MinValue &&
+                        (dst.firstCompletedDate == DateTime.MinValue || s.firstCompletedDate < dst.firstCompletedDate))
+                        dst.firstCompletedDate = s.firstCompletedDate;
+                    if (s.bestTimeSeconds < dst.bestTimeSeconds) dst.bestTimeSeconds = s.bestTimeSeconds;
+                    if (s.bestMoves < dst.bestMoves) dst.bestMoves = s.bestMoves;
+                    if (s.parryKillAchieved) dst.parryKillAchieved = true;
+                    foreach (var objId in s.completedObjectiveIds)
+                        if (!dst.completedObjectiveIds.Contains(objId))
+                            dst.completedObjectiveIds.Add(objId);
+                }
+            }
+        }
+
+        // Estadísticas: acumulativas para totales, máximo para récords.
+        target.totalGamesPlayed  += source.totalGamesPlayed;
+        target.totalEnemiesKilled += source.totalEnemiesKilled;
+        target.totalPlayTime     += source.totalPlayTime;
+        target.bestCombo          = Mathf.Max(target.bestCombo, source.bestCombo);
+
+        // Progresión de sesión: tomar el valor más avanzado.
+        target.consecutiveLevelWins = Mathf.Max(target.consecutiveLevelWins, source.consecutiveLevelWins);
+        target.lastCompletedLevel   = Mathf.Max(target.lastCompletedLevel, source.lastCompletedLevel);
     }
 
     #endregion
@@ -334,10 +412,11 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
             var dto = GameDataMapper.ToDto(gameData);
             string json = JsonUtility.ToJson(dto, true);
 
-            File.WriteAllText(saveFilePath, json);
+            string tempPath   = saveFilePath + ".tmp";
+            string backupPath = saveFilePath + ".bak";
 
-            //if (debugMode)
-            //    Debug.Log($"[SaveManager] Data saved successfully to: {saveFilePath}");
+            File.WriteAllText(tempPath, json);
+            File.Replace(tempPath, saveFilePath, backupPath);
 
             OnDataSaved?.Invoke(gameData);
         }
@@ -490,6 +569,14 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
     {
         var data = GetGameData();
         data.sfxVolume = Mathf.Clamp01(volume);
+        SaveData();
+    }
+
+    public void SetAudioSettings(float musicVolume, float sfxVolume)
+    {
+        var data = GetGameData();
+        data.musicVolume = Mathf.Clamp01(musicVolume);
+        data.sfxVolume   = Mathf.Clamp01(sfxVolume);
         SaveData();
     }
 

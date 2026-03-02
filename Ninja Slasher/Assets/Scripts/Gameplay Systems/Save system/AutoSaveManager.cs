@@ -54,7 +54,7 @@ public class AutoSaveManager : MonoBehaviourSingleton<AutoSaveManager>
 
     void OnApplicationFocusChanged(bool hasFocus)
     {
-        if (!hasFocus)
+        if (!hasFocus && !_isSuspended)
         {
             ShowSaveIndicator("SAVING...");
             saveManager?.SaveOnApplicationEvent();
@@ -69,7 +69,7 @@ public class AutoSaveManager : MonoBehaviourSingleton<AutoSaveManager>
 
     void OnApplicationPause(bool pauseStatus)
     {
-        if (pauseStatus)
+        if (pauseStatus && !_isSuspended)
         {
             ShowSaveIndicator("SAVING...");
             saveManager?.SaveOnApplicationEvent();
@@ -151,8 +151,7 @@ public class AutoSaveManager : MonoBehaviourSingleton<AutoSaveManager>
         if (!CheckSaveManager()) return;
 
         ShowSaveIndicator("SAVING...", 1f);
-        saveManager.SetMusicVolume(musicVolume);
-        saveManager.SetSFXVolume(sfxVolume);
+        saveManager.SetAudioSettings(musicVolume, sfxVolume);
     }
 
     public void OnPowerUpDeactivated(PowerUpType powerUpType)

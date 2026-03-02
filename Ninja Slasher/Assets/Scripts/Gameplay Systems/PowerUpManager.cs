@@ -45,13 +45,6 @@ public class PowerUpManager : MonoBehaviourSingleton<PowerUpManager>
     void Start()
     {
         LoadActivePowerUpsFromGameData();
-
-        foreach (var pu in activePowerUps)
-        {
-            pu.Activate(context);
-            _activeUsages.Add((pu, pu.maxUses));
-            UpdateContextRemainingUses(GetPowerUpType(pu), pu.maxUses);
-        }
     }
 
     void OnEnable()
@@ -246,6 +239,8 @@ public class PowerUpManager : MonoBehaviourSingleton<PowerUpManager>
         if (powerUp == powerUpTrajectoryGuide) return PowerUpType.HawkVision;
         if (powerUp == powerUpEnhancedParry) return PowerUpType.EnhancedParry;
 
+        Debug.LogError($"[PowerUpManager] GetPowerUpType: power-up no registrado '{powerUp?.name}'. " +
+                       "Verificar que esté asignado en el Inspector y que GetPowerUpType esté actualizado.");
         return PowerUpType.ExtraTime;
     }
 

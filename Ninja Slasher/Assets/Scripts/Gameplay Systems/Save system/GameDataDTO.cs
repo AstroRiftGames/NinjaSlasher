@@ -5,6 +5,8 @@ using UnityEngine;
 [Serializable]
 public class GameDataDTO
 {
+    public int saveVersion = 1;
+
     public int highestUnlockedLevel;
     public int highestUnlockedArea;
     public int currentArea;
@@ -86,7 +88,6 @@ public static class GameDataMapper
             consecutiveLevelWins = d.consecutiveLevelWins,
             lastCompletedLevel = d.lastCompletedLevel,
 
-            // Emergency Bundles (Fase 1)
             emergencyBundleUsesToday = d.emergencyBundleUsesToday,
             emergencyBundleLastActivationUtc = d.emergencyBundleLastActivationUtc,
             consecutiveBossLosses = d.consecutiveBossLosses,
