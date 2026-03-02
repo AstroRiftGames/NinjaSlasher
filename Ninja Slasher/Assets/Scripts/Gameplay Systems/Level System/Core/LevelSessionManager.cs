@@ -187,7 +187,16 @@ public class LevelSessionManager : MonoBehaviourSingleton<LevelSessionManager>
         timerService.Stop();
         currentSession.Fail(reason);
 
-        GameEvents.RaiseLevelFailed(reason);
+        var context = new LevelFailedContext
+        {
+            Reason            = reason,
+            LevelId           = currentSession.LevelId,
+            IsBossLevel       = currentSession.Configuration?.unlockRequirements.isBossLevel ?? false,
+            ConsecutiveLosses = (LifeManager.Instance != null ? LifeManager.Instance.ConsecutiveLosses : 0) + 1,
+            LivesRemaining    = LifeManager.Instance != null ? LifeManager.Instance.GetRealLives() : 0,
+        };
+
+        GameEvents.RaiseLevelFailed(context);
     }
 
     private void EvaluateAndSave()

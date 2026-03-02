@@ -176,12 +176,13 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
 
     public void OnLevelFailed()
     {
-        OnLevelFailed("timeExpired");
+        HandleLevelDefeat("timeExpired");
+        GameEvents.RaiseLevelEndedConsumePowerUps();
     }
 
-    private void OnLevelFailed(string reason)
+    private void OnLevelFailed(LevelFailedContext ctx)
     {
-        HandleLevelDefeat(reason);
+        HandleLevelDefeat(ctx.Reason);
         GameEvents.RaiseLevelEndedConsumePowerUps();
     }
 

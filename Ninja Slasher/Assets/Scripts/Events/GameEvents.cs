@@ -31,7 +31,7 @@ public static class GameEvents
 
     public static event Action OnLevelStarted;
     public static event Action<LevelStats> OnLevelCompleted;
-    public static event Action<string> OnLevelFailed;
+    public static event Action<LevelFailedContext> OnLevelFailed;
     public static event Action<float> OnLevelTimeChanged;
     public static event Action OnLevelTimeExpired;
 
@@ -45,9 +45,9 @@ public static class GameEvents
         OnLevelCompleted?.Invoke(stats);
     }
 
-    public static void RaiseLevelFailed(string reason)
+    public static void RaiseLevelFailed(LevelFailedContext context)
     {
-        OnLevelFailed?.Invoke(reason);
+        OnLevelFailed?.Invoke(context);
     }
 
     public static void RaiseLevelTimeChanged(float currentTime)

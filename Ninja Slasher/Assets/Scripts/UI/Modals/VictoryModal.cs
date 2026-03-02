@@ -37,7 +37,7 @@ public class VictoryModal : UIModalBase
         _isVictory = true;
     }
 
-    private void OnLevelFailed(string reason)
+    private void OnLevelFailed(LevelFailedContext ctx)
     {
         _isVictory = false;
     }

@@ -43,6 +43,23 @@ public class GameData
     public float totalPlayTime = 0f;
     public DateTime lastPlayDate = DateTime.Now;
 
+    /// <summary>Número de veces que se activó un Emergency Bundle el día actual (UTC).</summary>
+    public int emergencyBundleUsesToday = 0;
+
+    /// <summary>
+    /// Timestamp UTC (Unix epoch en segundos) de la última activación de Emergency Bundle.
+    /// 0 indica que nunca se ha activado.
+    /// Se almacena como long para evitar depender del parsing de strings de fecha.
+    /// </summary>
+    public long emergencyBundleLastActivationUtc = 0L;
+
+    /// <summary>
+    /// Derrotas consecutivas específicamente en niveles boss.
+    /// Contador independiente de currentConsecutiveLosses en LifeManager,
+    /// que no distingue entre niveles normales y boss.
+    /// </summary>
+    public int consecutiveBossLosses = 0;
+
     public GameData()
     {
         unlockedAreas.Add(1); // area 1 desbloqueada

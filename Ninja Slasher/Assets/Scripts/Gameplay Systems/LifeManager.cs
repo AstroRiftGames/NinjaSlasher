@@ -5,6 +5,9 @@ using UnityEngine;
 public class LifeManager : MonoBehaviourSingleton<LifeManager>
 {
     public int CurrentLives { get; private set; }
+
+    public int ConsecutiveLosses => currentConsecutiveLosses;
+
     private DateTime _lastLifeUsedUtc;
 
     [Header("VIRTUAL LIFE DEDUCTION")]

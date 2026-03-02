@@ -36,6 +36,15 @@ public class GameDataDTO
     public int bestCombo;
     public float totalPlayTime;
     public string lastPlayDate; // ISO 8601
+
+    /// <summary>Número de usos de Emergency Bundle en el día UTC actual.</summary>
+    public int emergencyBundleUsesToday;
+
+    /// <summary>Unix epoch (segundos UTC) de la última activación. 0 = nunca activado.</summary>
+    public long emergencyBundleLastActivationUtc;
+
+    /// <summary>Derrotas consecutivas acumuladas en niveles boss.</summary>
+    public int consecutiveBossLosses;
 }
 
 [Serializable] public struct IntIntKV { public int key; public int value; }
@@ -76,6 +85,11 @@ public static class GameDataMapper
 
             consecutiveLevelWins = d.consecutiveLevelWins,
             lastCompletedLevel = d.lastCompletedLevel,
+
+            // Emergency Bundles (Fase 1)
+            emergencyBundleUsesToday = d.emergencyBundleUsesToday,
+            emergencyBundleLastActivationUtc = d.emergencyBundleLastActivationUtc,
+            consecutiveBossLosses = d.consecutiveBossLosses,
         };
 
         if (d.levelStars != null)
@@ -124,6 +138,10 @@ public static class GameDataMapper
 
             consecutiveLevelWins = dto.consecutiveLevelWins,
             lastCompletedLevel = dto.lastCompletedLevel,
+
+            emergencyBundleUsesToday = dto.emergencyBundleUsesToday,
+            emergencyBundleLastActivationUtc = dto.emergencyBundleLastActivationUtc,
+            consecutiveBossLosses = dto.consecutiveBossLosses,
         };
 
         if (DateTime.TryParse(dto.lastPlayDate, null,
