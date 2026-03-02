@@ -1,5 +1,6 @@
 using System.Collections;
 using UnityEngine;
+using UnityEngine.Rendering.UI;
 
 public class Geyser : MonoBehaviour
 {
@@ -8,6 +9,7 @@ public class Geyser : MonoBehaviour
     [SerializeField] private float _force;
     [SerializeField] private GeyserPlatform _platform;
     [SerializeField] private ParticleSystem _particles;
+    [SerializeField] private LayerMask _playerLayer;
     private float _maxHeight;
     
     private float _lastActivation;
@@ -17,11 +19,14 @@ public class Geyser : MonoBehaviour
 
     protected ElementAudioContext _audioContext;
 
+    [SerializeField] private Animator _animator;
+    public Animator Animator => _animator;
+
     private void OnEnable()
     {
         CustomUpdateManager.Instance.SubscribeToFixedUpdate(CustomUpdate);
         _player = FindFirstObjectByType<NewController>();
-        _lastActivation = Time.time;
+        _lastActivation = Time.time - _cooldown/2 - _activeTime;
         _maxHeight = _platform.transform.localPosition.y;
         _platform.transform.localPosition = Vector2.zero;
     }
@@ -52,16 +57,19 @@ public class Geyser : MonoBehaviour
         else
         {
             AudioService.Instance.PlaySFXAtPosition(_audioContext.Audio.Loop, transform.position);
+            CheckPlayer();
         }
     }
 
-    private void Activate()
+    public void Activate()
     {
         _lastActivation = Time.time;
         _isActive = true;
-        StartCoroutine(MovePlatform());
+
         AudioService.Instance.PlaySFXAtPosition(_audioContext.Audio.Start, transform.position);
+        _animator.SetTrigger("OnActivation");
         _particles.Play();
+        StartCoroutine(MovePlatform());
     }
 
     private void Deactivate()
@@ -69,6 +77,7 @@ public class Geyser : MonoBehaviour
         _isActive = false;
         AudioService.Instance.StopSFX(_audioContext.Audio.Loop);
         AudioService.Instance.PlaySFXAtPosition(_audioContext.Audio.End, transform.position);
+        _animator.SetTrigger("OnDeactivation");
         _particles.Stop();
         _platform.SetValues(true);
     }
@@ -83,6 +92,16 @@ public class Geyser : MonoBehaviour
             newPos.y = currentHeight;
             _platform.transform.localPosition = newPos;
             yield return null;
+        }
+        _animator.SetTrigger("OnTopReached");
+    }
+
+    private void CheckPlayer()
+    {
+        RaycastHit2D hit = Physics2D.Raycast(transform.position, transform.up, Vector2.Distance(transform.position, _platform.transform.position) - _platform.Renderer.size.y * _platform.transform.localScale.y, _playerLayer);
+        if(hit)
+        {
+            _player.Die();
         }
     }
 

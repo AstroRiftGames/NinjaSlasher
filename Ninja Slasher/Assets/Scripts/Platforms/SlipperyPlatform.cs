@@ -31,7 +31,7 @@ public class SlipperyPlatform : PlatformBase
         playerRb.linearVelocity = Vector2.zero;
         _isSliding = true;
 
-        AudioManager.Instance.PlaySFXAtPosition(Clip, player.transform.position);
+        AudioService.Instance.PlaySFXAtPosition(_audioContext.Audio.Interaction, player.transform.position);
     }
 
     public override void OnPlayerExit(GameObject player, bool isForced = false)
