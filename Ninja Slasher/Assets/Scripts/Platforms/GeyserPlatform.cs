@@ -27,11 +27,9 @@ public class GeyserPlatform : PlatformBase
 
     public override void OnPlayerExit(GameObject player, bool isForced = false)
     {
-        Debug.Log(_playerRB);
         _playerIsOn = false;
-        _playerRB.gravityScale = 0;
+        if(!isForced) _playerRB.gravityScale = 1;
         _playerRB = null;
-        Debug.Log("Player exited geyser platform");
     }
 
     public override void OnPlatformUpdate()
