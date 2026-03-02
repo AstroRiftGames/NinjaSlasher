@@ -1,5 +1,4 @@
 using System;
-using UnityEditor.U2D;
 using UnityEngine;
 
 [CreateAssetMenu(menuName = "Game/Audio/Audio Settings")]
