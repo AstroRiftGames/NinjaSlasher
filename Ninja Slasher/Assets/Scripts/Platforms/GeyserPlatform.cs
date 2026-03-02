@@ -6,7 +6,10 @@ public class GeyserPlatform : PlatformBase
     private bool _playerIsOn = false;
     private Rigidbody2D _playerRB;
     private Rigidbody2D _rb;
-    [SerializeField] private GameObject _geyser;
+    [SerializeField] private Geyser _geyser;
+    [SerializeField] private GameObject _crater;
+    public SpriteRenderer Renderer => _renderer;
+    [SerializeField] private SpriteRenderer _renderer;
 
     protected override void InitializePlatform()
     {
@@ -25,7 +28,7 @@ public class GeyserPlatform : PlatformBase
     public override void OnPlayerExit(GameObject player, bool isForced = false)
     {
         _playerIsOn = false;
-        _playerRB.gravityScale = 0;
+        if(!isForced) _playerRB.gravityScale = 1;
         _playerRB = null;
     }
 
@@ -47,8 +50,10 @@ public class GeyserPlatform : PlatformBase
     protected override void OnCollisionEnter2D(Collision2D collision)
     {
         base.OnCollisionEnter2D(collision);
-        if (collision.gameObject == _geyser)
+        if (collision.gameObject == _crater)
         {
+            Debug.Log("Geyser Platform landed");
+            _geyser.Animator.SetTrigger("OnLanding");
             SetValues(false);
         }
     }

@@ -20,8 +20,10 @@ public abstract class PlatformBase : MonoBehaviour, IPlatform
     public SFXClip Clip => _clip;   //TODO: Play Landing SFX from AudioSet
     private SFXClip _clip = SFXClip.P_Landing_General;
 
-    [SerializeField] protected PlatformAudioSet _audioSet;
     [SerializeField] protected Animator _animator;
+    public PlatformAudioContext AudioContext => _audioContext;
+    protected PlatformAudioContext _audioContext;
+    [SerializeField] protected AudioSet _audioSet;
 
     private void OnEnable()
     {
@@ -31,6 +33,11 @@ public abstract class PlatformBase : MonoBehaviour, IPlatform
     {
         CustomUpdateManager.Instance.UnsubscribeFromUpdate(CustomUpdate);
 
+    }
+
+    public virtual void Awake()
+    {
+        InitializeAudioContext();
     }
 
     protected virtual void Start()
@@ -47,6 +54,14 @@ public abstract class PlatformBase : MonoBehaviour, IPlatform
     }
 
     protected virtual void InitializePlatform() { }
+
+
+    protected virtual void InitializeAudioContext()
+    {
+        _audioContext = GetComponent<PlatformAudioContext>();
+        if (_audioContext != null && _audioSet != null)
+            _audioContext.Initialize(_audioSet);
+    }
 
     protected virtual void CustomUpdate()
     {
