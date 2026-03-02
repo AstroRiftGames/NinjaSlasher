@@ -41,7 +41,7 @@ public class NewController : MonoBehaviour
 
     [SerializeField] private LayerMask _proyectilesLayer;
 
-    private string[] colMatrix = { "Obstacle", "Scenario", };
+    private string[] colMatrix = { "Obstacle", "Scenario", "Floor"};
     private string[] deadlyMatrix = { "Enemy", "Projectile", "Spikes", "EnemyShield", };
 
     private void SetFlipped(float angle)
