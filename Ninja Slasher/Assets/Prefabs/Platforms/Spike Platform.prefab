@@ -14,6 +14,7 @@ GameObject:
   - component: {fileID: 8441468580083680687}
   - component: {fileID: 6394240371346018564}
   - component: {fileID: 7933351071269616822}
+  - component: {fileID: -7537998830368347084}
   m_Layer: 6
   m_Name: Spike Platform
   m_TagString: Obstacle
@@ -179,6 +180,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isActive: 1
+  _type: 0
+  _audioSet: {fileID: 0}
+  _animator: {fileID: 0}
   activationDelay: 2
   spikeObject: {fileID: 4428301640489023089}
 --- !u!95 &7933351071269616822
@@ -203,6 +207,18 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!114 &-7537998830368347084
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1351297069389476805}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 99e517ef5aee8534ba180ebd39cdccc0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &4428301640489023089
 GameObject:
   m_ObjectHideFlags: 0

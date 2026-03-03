@@ -7,6 +7,8 @@ public class Arachnomadre : BossEnemy
 
     #region VARIABLES
     //EXTRAS
+    [SerializeField] private ArachnomadreAudioContext _arachnomadreAudioContext;
+    [SerializeField] ArachnomadreAudioSet _audioSet;
     [SerializeField] Transform _spriteContainer;
     private float _verticalOffset = 1.3f;
     private float _horizontalOffset = 1.1f;
@@ -44,12 +46,17 @@ public class Arachnomadre : BossEnemy
     [SerializeField][Range(0f, 1f)] private float _spawnAttackChance;
     [SerializeField] private BlaztEgg _blaztEgg;
     [SerializeField] private int _blaztEggsAmount;
+    [SerializeField] private Transform _spawnRefPoint;
     private ObjectPool<BlaztEgg> _pool;
     public ObjectPool<BlaztEgg> Pool => _pool;
     private int _blaztsAmount;
     [Space]
     [Header("   Furtive")]
     [SerializeField] private float _hidingTime;
+    [SerializeField] private float _submergingTime;
+    [SerializeField] private float _emergingTime;
+    [SerializeField] private float _biteRadius;
+    [SerializeField] private Transform _biteRefPoint;
     [Space]
     [Header("Vulnerability")]
     [SerializeField] float _vulnerabilityTime;
@@ -248,28 +255,35 @@ public class Arachnomadre : BossEnemy
         if (r <= chance) StartCoroutine(SpawnAttack());
         else StartCoroutine(FurtiveAttack());
     }
-        #region SPAWN ATTACK
+    #region SPAWN ATTACK
     private IEnumerator SpawnAttack()
     {
+        _animator.SetTrigger("OnEggSpawn");
+        yield return new WaitForSeconds(1.25f);
         for (int n = 0; n < _blaztEggsAmount; n++)
         {
             BlaztEgg newEgg = _pool.Get();
 
+
             newEgg.transform.SetPositionAndRotation(
-                transform.position + transform.up,
+                _spawnRefPoint.position + transform.up,
                 Quaternion.identity
             );
 
             newEgg.TryGetComponent(out Rigidbody2D eggRB);
             eggRB.AddForce(SetDirection(n), ForceMode2D.Impulse);
 
-            newEgg.SetArachnomadre(this); 
+
+
+            newEgg.SetArachnomadre(this);
+
 
             newEgg.OnRequestDespawn -= HandleEggDespawn;
             newEgg.OnRequestDespawn += HandleEggDespawn;
 
             yield return new WaitForSeconds(_timeBetweenEggs);
         }
+        yield return new WaitForSeconds(1.35f);
         _isAttacking = false;
     }
 
@@ -312,11 +326,11 @@ public class Arachnomadre : BossEnemy
     {
         _animator.SetTrigger("OnSubmerge");
         _col.enabled = false;
-        yield return new WaitForSeconds(1f);
-        
+        yield return new WaitForSeconds(_submergingTime + _hidingTime / 2);
+
         //GET CLOSEST POINT TO PLAYER
         RaycastHit2D hit = GetClosestPoint(_player.position);
-
+        
         //SET NEW ROTATION
         float angle = Mathf.Atan2(hit.normal.y, hit.normal.x) * Mathf.Rad2Deg - 90;
         transform.rotation = Quaternion.Euler(0, 0, angle);
@@ -325,15 +339,23 @@ public class Arachnomadre : BossEnemy
         transform.position = hit.point + (Vector2)transform.up * (_verticalOffset + groundCheckDistance);
         SnapToSurface();
 
-        yield return new WaitForSeconds(_hidingTime - 1);
+        yield return new WaitForSeconds(_hidingTime/2);
 
-        _col.enabled = true;
         _animator.SetTrigger("OnEmerge");
 
-        yield return new WaitForSeconds(.5f);
+        yield return new WaitForSeconds(_emergingTime);
 
+        _col.enabled = true;
         _isAttacking = false;
     }
+
+    public void Bite()
+    {
+        Collider2D playerCol = Physics2D.OverlapCircle(_biteRefPoint.position, _biteRadius, _playerLayer);
+        playerCol.TryGetComponent(out NewController controller);
+        controller.Die();
+    }
+
     #endregion
     #endregion
 
@@ -354,6 +376,7 @@ public class Arachnomadre : BossEnemy
                 hit = currentHit;
             }
         }
+        Debug.DrawLine(origin, hit.point, Color.red, 2f);
         return hit;
     }
 
@@ -386,13 +409,17 @@ public class Arachnomadre : BossEnemy
     }
     private IEnumerator Activate()
     {
-        //PLAY INTRO FEEDBACK
         _isWaiting = true;
         yield return new WaitForSeconds(_waitTime);
         _isWaiting = false;
-
-
     }
+
+    protected override void InitializeAudioContext()
+    {
+        if (_arachnomadreAudioContext != null)
+            _arachnomadreAudioContext.Initialize(_audioSet);
+    }
+
     private bool CheckCD(float cd, float last) => Time.time >= cd + last;
     private void SetCD() => _attackCD = Random.Range(_minAttackCD, _maxAttackCD);
     public void DecreaseEggsAmount() => _blaztsAmount--;
@@ -417,6 +444,7 @@ public class Arachnomadre : BossEnemy
     protected override void Awake()
     {
         base.Awake();
+        InitializeAudioContext();
         _pool = new ObjectPool<BlaztEgg>(_blaztEgg, _blaztEggsAmount, transform);
         StartCoroutine(Activate());
     }
@@ -452,5 +480,11 @@ public class Arachnomadre : BossEnemy
         }
     }
     #endregion
+
+    private void OnDrawGizmos()
+    {
+        Gizmos.color = Color.yellow;
+        Gizmos.DrawWireSphere(_biteRefPoint.position, _biteRadius);
+    }
 }
 

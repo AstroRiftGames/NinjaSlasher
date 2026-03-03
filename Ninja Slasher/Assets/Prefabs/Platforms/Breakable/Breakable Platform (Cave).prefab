@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 8043765140912883545}
   - component: {fileID: 9109519955852529699}
+  - component: {fileID: -6464027400242568950}
   m_Layer: 6
   m_Name: Breakable Platform (Cave)
   m_TagString: Obstacle
@@ -47,6 +48,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isActive: 1
   _type: 3
+  _animator: {fileID: 0}
+  _audioSet: {fileID: 11400000, guid: 2a7bf8f0b1cebd048b7cf946356eaf7e, type: 2}
   maxUses: 3
   falloffVelocity: 15
   _columns: 3
@@ -89,6 +92,18 @@ MonoBehaviour:
   - {fileID: 244744762316534587, guid: 2b957c840dd6c6447b3c12e3c59aa635, type: 3}
   - {fileID: 2275321413628290941, guid: 548ac2239a1715d4b977149e14321504, type: 3}
   _explosionForce: 5
+--- !u!114 &-6464027400242568950
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1421278646262923655}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 99e517ef5aee8534ba180ebd39cdccc0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &6041704371113665715
 GameObject:
   m_ObjectHideFlags: 0
