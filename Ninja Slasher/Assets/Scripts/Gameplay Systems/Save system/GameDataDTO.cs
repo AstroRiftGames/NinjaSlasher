@@ -50,6 +50,9 @@ public class GameDataDTO
 
     /// <summary>Derrotas consecutivas generales. Migrado desde PlayerPrefs.</summary>
     public int consecutiveLosses;
+
+    /// <summary>Product ID de compra IAP pendiente de entrega de recompensa.</summary>
+    public string pendingPurchaseProductId;
 }
 
 [Serializable] public struct IntIntKV { public int key; public int value; }
@@ -95,6 +98,7 @@ public static class GameDataMapper
             emergencyBundleLastActivationUtc = d.emergencyBundleLastActivationUtc,
             consecutiveBossLosses = d.consecutiveBossLosses,
             consecutiveLosses = d.consecutiveLosses,
+            pendingPurchaseProductId = d.pendingPurchaseProductId,
         };
 
         if (d.levelStars != null)
@@ -148,6 +152,7 @@ public static class GameDataMapper
             emergencyBundleLastActivationUtc = dto.emergencyBundleLastActivationUtc,
             consecutiveBossLosses = dto.consecutiveBossLosses,
             consecutiveLosses = dto.consecutiveLosses,
+            pendingPurchaseProductId = dto.pendingPurchaseProductId ?? "",
         };
 
         if (DateTime.TryParse(dto.lastPlayDate, null,

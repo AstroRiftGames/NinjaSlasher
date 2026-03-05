@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using Unity.Services.Core;
 using UnityEngine.Purchasing;
+using System.Threading.Tasks;
 
 public class IAPManager : MonoBehaviourSingleton<IAPManager>, IDetailedStoreListener
 {
@@ -26,19 +27,19 @@ public class IAPManager : MonoBehaviourSingleton<IAPManager>, IDetailedStoreList
         InitializeIAP();
     }
 
-    private async System.Threading.Tasks.Task InitializeUnityServices()
+    private async Task InitializeUnityServices()
     {
         try
         {
-            if (UnityServices.State == ServicesInitializationState.Uninitialized)
-            {
-                await UnityServices.InitializeAsync();
-                Debug.Log("[IAPManager] Unity Services inicialized.");
-            }
+            Debug.Log($"[IAPManager] UnityServices state BEFORE: {UnityServices.State}");
+
+            await UnityServicesInitializer.EnsureInitializedAsync();
+
+            Debug.Log($"[IAPManager] UnityServices state AFTER: {UnityServices.State}");
         }
         catch (Exception e)
         {
-            Debug.LogError($"[IAPManager] Error initializing Unity Services: {e.Message}");
+            Debug.LogError($"[IAPManager] Error initializing Unity Services: {e}");
             OnIAPInitializationFailed?.Invoke(e.Message);
         }
     }
@@ -92,6 +93,14 @@ public class IAPManager : MonoBehaviourSingleton<IAPManager>, IDetailedStoreList
         var productId = product.definition.id;
 
         Debug.Log($"[IAPManager] Purchase completed: {productId}");
+
+        // Persist before firing so rewards survive a crash between payment confirmation and delivery.
+        if (SaveManager.Instance != null)
+        {
+            SaveManager.Instance.GetGameData().pendingPurchaseProductId = productId;
+            SaveManager.Instance.SaveData();
+        }
+
         OnPurchaseCompleted?.Invoke(productId);
 
         return PurchaseProcessingResult.Complete;

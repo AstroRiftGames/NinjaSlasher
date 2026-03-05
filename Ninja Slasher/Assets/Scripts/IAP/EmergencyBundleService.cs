@@ -37,6 +37,24 @@ public class EmergencyBundleService : MonoBehaviourSingleton<EmergencyBundleServ
     {
         if (IAPManager.Instance != null)
             IAPManager.Instance.OnPurchaseCompleted += OnPurchaseCompleted;
+
+        RecoverPendingPurchase();
+    }
+
+    private void RecoverPendingPurchase()
+    {
+        if (_config == null || SaveManager.Instance == null) return;
+
+        var data = SaveManager.Instance.GetGameData();
+        if (string.IsNullOrEmpty(data.pendingPurchaseProductId)) return;
+
+        var reward = _config.GetRewardByProductId(data.pendingPurchaseProductId);
+        if (reward == null) return;
+
+        Debug.Log($"[EBS] Recovering pending purchase: {data.pendingPurchaseProductId}");
+        GrantRewards(reward);
+        data.pendingPurchaseProductId = "";
+        SaveManager.Instance.SaveData();
     }
 
     private void OnDestroy()
@@ -102,6 +120,8 @@ public class EmergencyBundleService : MonoBehaviourSingleton<EmergencyBundleServ
 
     private void ShowOffer(LevelFailedContext ctx, GameData data)
     {
+        if (_offerActive) return;
+
         BundleTier tier         = FrustrationEvaluator.SelectTier(ctx, _config, data);
         string productId        = _config.GetProductId(tier);
         BundleRewardData reward = _config.GetReward(tier);

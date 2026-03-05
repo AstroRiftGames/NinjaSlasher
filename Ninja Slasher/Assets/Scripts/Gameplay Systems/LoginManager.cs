@@ -18,7 +18,9 @@ public class LoginManager : MonoBehaviourSingleton<LoginManager>
     public static event Action<string> OnSignInCompleted;
     public static event Action<string> OnSignInFailed;
 
-    public bool IsSignedIn => AuthenticationService.Instance.IsSignedIn;
+    public bool IsSignedIn =>
+        UnityServices.State == ServicesInitializationState.Initialized &&
+        AuthenticationService.Instance.IsSignedIn;
     public string PlayerId => IsSignedIn ? AuthenticationService.Instance.PlayerId : "";
     public string PlayerName { get; private set; } = "";
 
@@ -52,20 +54,12 @@ public class LoginManager : MonoBehaviourSingleton<LoginManager>
 
         try
         {
-            if (!UnityServices.State.Equals(ServicesInitializationState.Initialized))
-            {
-                await UnityServices.InitializeAsync();
-
-                if (debugMode)
-                    Debug.Log("[LoginManager] Unity Gaming Services initialized");
-            }
-            else
-            {
-                if (debugMode)
-                    Debug.Log("[LoginManager] Unity Gaming Services already initialized");
-            }
+            await UnityServicesInitializer.EnsureInitializedAsync();
 
             PlayGamesPlatform.Activate();
+
+            if (debugMode)
+                Debug.Log("[LoginManager] Unity Gaming Services initialized");
 
             isInitialized = true;
             isInitializing = false;

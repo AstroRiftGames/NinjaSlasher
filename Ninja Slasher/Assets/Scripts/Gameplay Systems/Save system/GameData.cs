@@ -1,7 +1,5 @@
 using System;
 using System.Collections.Generic;
-using UnityEngine;
-using static UnityEngine.UIElements.UxmlAttributeDescription;
 
 [Serializable]
 public class GameData
@@ -65,6 +63,13 @@ public class GameData
     /// que no distingue entre niveles normales y boss.
     /// </summary>
     public int consecutiveBossLosses = 0;
+
+    /// <summary>
+    /// Product ID de una compra IAP confirmada por la tienda pero cuyas recompensas
+    /// aún no han sido entregadas. Permite recuperar recompensas tras un crash post-pago.
+    /// Se limpia inmediatamente después de otorgar las recompensas.
+    /// </summary>
+    public string pendingPurchaseProductId = "";
 
     public GameData()
     {

@@ -28,10 +28,14 @@ public class IAPTestButton : MonoBehaviour
 
         if (IAPManager.Instance != null)
         {
-            IAPManager.Instance.OnIAPInitialized += OnIAPReady;
             IAPManager.Instance.OnIAPInitializationFailed += OnIAPFailed;
             IAPManager.Instance.OnPurchaseCompleted += OnPurchaseSuccess;
             IAPManager.Instance.OnPurchaseFailedEvent += OnPurchaseFailed;
+
+            if (IAPManager.Instance.IsInitialized)
+                OnIAPReady();
+            else
+                IAPManager.Instance.OnIAPInitialized += OnIAPReady;
         }
         else
         {

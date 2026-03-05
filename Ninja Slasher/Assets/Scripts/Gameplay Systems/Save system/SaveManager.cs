@@ -300,7 +300,6 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
             }
         }
 
-        // levelProgressData: por nivel, tomar el mejor resultado entre las dos fuentes.
         if (source.levelProgressData != null)
         {
             if (target.levelProgressData == null) target.levelProgressData = new Dictionary<int, LevelProgressData>();
@@ -329,13 +328,11 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
             }
         }
 
-        // Estadísticas: acumulativas para totales, máximo para récords.
         target.totalGamesPlayed  += source.totalGamesPlayed;
         target.totalEnemiesKilled += source.totalEnemiesKilled;
         target.totalPlayTime     += source.totalPlayTime;
         target.bestCombo          = Mathf.Max(target.bestCombo, source.bestCombo);
 
-        // Progresión de sesión: tomar el valor más avanzado.
         target.consecutiveLevelWins = Mathf.Max(target.consecutiveLevelWins, source.consecutiveLevelWins);
         target.lastCompletedLevel   = Mathf.Max(target.lastCompletedLevel, source.lastCompletedLevel);
     }
@@ -702,7 +699,6 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
 
     public void ActivatePowerUp(PowerUpType powerUpType, int uses)
     {
-        // Mutate both inventory and active list before the single SaveData() call.
         var data = GetGameData();
 
         var inventoryItem = data.powerUpInventory.Find(item => item.type == powerUpType);
@@ -752,7 +748,6 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
         }
     }
 
-
     public void UpdateGameStats(int enemiesKilled = 0, int combo = 0, float playTime = 0f, bool gameCompleted = false)
     {
         var data = GetGameData();
@@ -780,10 +775,6 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
         SaveData();
     }
 
-    /// <summary>
-    /// Records a successful Emergency Bundle activation: increments the daily counter
-    /// (resetting it when the UTC day has changed) and stamps the activation timestamp.
-    /// </summary>
     public void RecordEmergencyBundleActivation()
     {
         var data = GetGameData();
@@ -796,7 +787,7 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
                                         : data.emergencyBundleUsesToday + 1;
 
         data.emergencyBundleLastActivationUtc = nowUtc;
-        SaveData();
+        data.pendingPurchaseProductId = "";
     }
 
     public void SaveOnApplicationEvent()

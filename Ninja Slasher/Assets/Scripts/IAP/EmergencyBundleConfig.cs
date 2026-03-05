@@ -115,4 +115,12 @@ public class EmergencyBundleConfig : ScriptableObject
         BundleTier.Large  => largeBundleDisplay,
         _                 => smallBundleDisplay,
     };
+
+    public BundleRewardData GetRewardByProductId(string productId)
+    {
+        if (!string.IsNullOrEmpty(smallBundleProductId)  && productId == smallBundleProductId)  return smallBundleReward;
+        if (!string.IsNullOrEmpty(mediumBundleProductId) && productId == mediumBundleProductId) return mediumBundleReward;
+        if (!string.IsNullOrEmpty(largeBundleProductId)  && productId == largeBundleProductId)  return largeBundleReward;
+        return null;
+    }
 }
