@@ -20,7 +20,7 @@ public class Model : MonoBehaviour
     [SerializeField] private float _parryCD = 1f;
     public float ParryCD => _parryCD;
 
-    [SerializeField] private float slashEffectDuration;
-    public float SlashEffectDuration => slashEffectDuration;
+    [SerializeField] private float dashEffectDuration;
+    public float DashEffectDuration => dashEffectDuration;
 
 }

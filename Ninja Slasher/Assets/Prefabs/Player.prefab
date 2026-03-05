@@ -146,6 +146,7 @@ MonoBehaviour:
   _model: {fileID: 6905579431728325560}
   _swipeDetection: {fileID: 340358578149418589}
   _trajectoryRenderer: {fileID: 3827957799280484405}
+  _slashVFX: {fileID: 6223650219946851022, guid: 628cf0bc6b8bae24e98e2e2f87671efc, type: 3}
   _audio: {fileID: 11400000, guid: 4032d9d64165d6c4ab7b8746366dc31c, type: 2}
   _proyectilesLayer:
     serializedVersion: 2
@@ -167,7 +168,7 @@ MonoBehaviour:
   _triggerCol: {fileID: 2435951141245640258}
   _anim: {fileID: 4934869676011792912}
   _spriteContainer: {fileID: 3737365468586709411}
-  _slashTrailRenderer: {fileID: 6294109103735827813}
+  _dashTrailRenderer: {fileID: 0}
 --- !u!114 &6905579431728325560
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -186,7 +187,7 @@ MonoBehaviour:
   _parryRange: 2
   _parryIndicationTime: 0.5
   _parryCD: 1
-  slashEffectDuration: 0.5
+  dashEffectDuration: 0
 --- !u!114 &340358578149418589
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -945,7 +946,7 @@ TrailRenderer:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2521921869987584289}
-  m_Enabled: 1
+  m_Enabled: 0
   m_CastShadows: 1
   m_ReceiveShadows: 1
   m_DynamicOccludee: 1
