@@ -53,6 +53,12 @@ public class GameDataDTO
 
     /// <summary>Product ID de compra IAP pendiente de entrega de recompensa.</summary>
     public string pendingPurchaseProductId;
+
+    /// <summary>Unix epoch (segundos UTC) en que expiran las vidas ilimitadas. 0 = inactivo.</summary>
+    public long unlimitedLivesEndUtc;
+
+    /// <summary>Monedas del jugador.</summary>
+    public int coins;
 }
 
 [Serializable] public struct IntIntKV { public int key; public int value; }
@@ -99,6 +105,8 @@ public static class GameDataMapper
             consecutiveBossLosses = d.consecutiveBossLosses,
             consecutiveLosses = d.consecutiveLosses,
             pendingPurchaseProductId = d.pendingPurchaseProductId,
+            unlimitedLivesEndUtc = d.unlimitedLivesEndUtc,
+            coins = d.coins,
         };
 
         if (d.levelStars != null)
@@ -153,6 +161,8 @@ public static class GameDataMapper
             consecutiveBossLosses = dto.consecutiveBossLosses,
             consecutiveLosses = dto.consecutiveLosses,
             pendingPurchaseProductId = dto.pendingPurchaseProductId ?? "",
+            unlimitedLivesEndUtc = dto.unlimitedLivesEndUtc,
+            coins = dto.coins,
         };
 
         if (DateTime.TryParse(dto.lastPlayDate, null,

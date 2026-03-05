@@ -214,6 +214,9 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
             _lastLifeUsedUtc = DateTime.SpecifyKind(lastRegenUtc, DateTimeKind.Utc);
         }
 
+        if (data != null && data.unlimitedLivesEndUtc > 0)
+            _unlimitedLivesEndUtc = DateTimeOffset.FromUnixTimeSeconds(data.unlimitedLivesEndUtc).UtcDateTime;
+
         CheckOfflineRegeneration();
         _virtualLives = CurrentLives;
     }
@@ -361,7 +364,26 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
     {
         DateTime baseTime = HasTimedUnlimitedLives ? _unlimitedLivesEndUtc : DateTime.UtcNow;
         _unlimitedLivesEndUtc = baseTime.AddMinutes(durationMinutes);
+
+        if (SaveManager.Instance != null)
+        {
+            SaveManager.Instance.GetGameData().unlimitedLivesEndUtc =
+                new DateTimeOffset(_unlimitedLivesEndUtc).ToUnixTimeSeconds();
+            SaveManager.Instance.SaveData();
+        }
+
+        Debug.Log($"[LifeManager] ActivateUnlimitedLives: {durationMinutes} min | " +
+                  $"EndUtc={_unlimitedLivesEndUtc:O} | " +
+                  $"HasTimedUnlimitedLives={HasTimedUnlimitedLives} | " +
+                  $"SaveManager={(SaveManager.Instance != null ? "OK" : "NULL")}");
+
         EmitDisplayLivesChanged();
+    }
+
+    public TimeSpan GetUnlimitedLivesRemainingTime()
+    {
+        if (!HasTimedUnlimitedLives) return TimeSpan.Zero;
+        return _unlimitedLivesEndUtc - DateTime.UtcNow;
     }
 
     public bool CanPlay()
@@ -380,7 +402,7 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
     {
         _hasVirtualDeduction = false;
 
-        if (CurrentLives > 0)
+        if (!HasTimedUnlimitedLives && CurrentLives > 0)
         {
             _virtualLives = Mathf.Max(0, CurrentLives - 1);
             _hasVirtualDeduction = true;
@@ -401,6 +423,7 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
 
         if (HasTimedUnlimitedLives)
         {
+            Debug.Log($"[LifeManager] UseLife BLOCKED — unlimited lives active. Remaining={GetUnlimitedLivesRemainingTime():mm\\:ss}");
             EmitDisplayLivesChanged();
             return;
         }
@@ -471,14 +494,25 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
     {
         if (_hasVirtualDeduction)
         {
-            CurrentLives = Mathf.Clamp(_virtualLives, 0, MaxLives);
-            _lastLifeUsedUtc = DateTime.UtcNow;
+            if (HasTimedUnlimitedLives)
+            {
+                // No deduct — cancel virtual deduction silently.
+                _virtualLives = CurrentLives;
+                _hasVirtualDeduction = false;
+                _levelInProgress = false;
+                EmitDisplayLivesChanged();
+            }
+            else
+            {
+                CurrentLives = Mathf.Clamp(_virtualLives, 0, MaxLives);
+                _lastLifeUsedUtc = DateTime.UtcNow;
 
-            _hasVirtualDeduction = false;
-            _levelInProgress = false;
+                _hasVirtualDeduction = false;
+                _levelInProgress = false;
 
-            Persist("Vida perdida por abandono");
-            EmitDisplayLivesChanged();
+                Persist("Vida perdida por abandono");
+                EmitDisplayLivesChanged();
+            }
         }
     }
 
@@ -659,6 +693,28 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
         currentConsecutiveLosses = 0;
         SaveAdsProgress();
     }
+
+    #endregion
+
+    #region DEBUG
+
+    [ContextMenu("Diagnose Unlimited Lives")]
+    private void DiagnoseUnlimitedLives()
+    {
+        Debug.Log("=== [LifeManager] Unlimited Lives Diagnose ===");
+        Debug.Log($"  HasTimedUnlimitedLives : {HasTimedUnlimitedLives}");
+        Debug.Log($"  _unlimitedLivesEndUtc  : {_unlimitedLivesEndUtc:O}");
+        Debug.Log($"  DateTime.UtcNow        : {DateTime.UtcNow:O}");
+        Debug.Log($"  Remaining              : {GetUnlimitedLivesRemainingTime():mm\\:ss}");
+        Debug.Log($"  CurrentLives           : {CurrentLives}");
+        Debug.Log($"  CanPlay()              : {CanPlay()}");
+        var saved = SaveManager.Instance?.GetGameData().unlimitedLivesEndUtc ?? 0;
+        Debug.Log($"  Saved epoch (GameData) : {saved} => {(saved > 0 ? DateTimeOffset.FromUnixTimeSeconds(saved).UtcDateTime.ToString("O") : "none")}");
+        Debug.Log("==============================================");
+    }
+
+    [ContextMenu("Debug: Activate 5min Unlimited Lives")]
+    private void DebugActivateUnlimitedLives() => ActivateUnlimitedLives(5f);
 
     #endregion
 }

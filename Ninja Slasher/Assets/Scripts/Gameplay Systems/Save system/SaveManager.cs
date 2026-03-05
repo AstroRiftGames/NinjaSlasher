@@ -665,6 +665,33 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
         SaveData();
     }
 
+    public int GetPowerUpCount(PowerUpType powerUpType)
+    {
+        var item = GetGameData().powerUpInventory.Find(i => i.type == powerUpType);
+        return item?.quantity ?? 0;
+    }
+
+    public bool ConsumePowerUp(PowerUpType powerUpType, int quantity = 1)
+    {
+        var data = GetGameData();
+        var item = data.powerUpInventory.Find(i => i.type == powerUpType);
+        if (item == null || item.quantity < quantity) return false;
+        item.quantity -= quantity;
+        item.lastUpdated = DateTime.Now;
+        if (item.quantity == 0) data.powerUpInventory.Remove(item);
+        SaveData();
+        return true;
+    }
+
+    public void AddCoins(int amount)
+    {
+        if (amount <= 0) return;
+        GetGameData().coins += amount;
+        SaveData();
+    }
+
+    public int GetCoins() => GetGameData().coins;
+
     public void AddPowerUpToInventory(PowerUpType powerUpType, int quantity = 1)
     {
         var data = GetGameData();
@@ -788,6 +815,7 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
 
         data.emergencyBundleLastActivationUtc = nowUtc;
         data.pendingPurchaseProductId = "";
+        SaveData();
     }
 
     public void SaveOnApplicationEvent()

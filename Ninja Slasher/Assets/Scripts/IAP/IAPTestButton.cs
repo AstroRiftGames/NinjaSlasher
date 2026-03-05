@@ -96,11 +96,7 @@ public class IAPTestButton : MonoBehaviour
             UpdateStatus($"Purchase completed: {purchasedProductId}");
             Debug.Log($"[IAPTest] Purchase completed: {purchasedProductId}");
 
-            //AudioManager.Instance.PlaySFX(SFXClip.Reward_Coins);
             AudioService.Instance.PlaySFX(_audioContext.Audio.rewardCoins);
-
-            // Aca se otorgaria la recompensa al jugador
-            // Metodo.AddBentos(100);
         }
 
         buyButton.interactable = true;
@@ -123,7 +119,6 @@ public class IAPTestButton : MonoBehaviour
         {
             statusText.text = message;
         }
-        //Debug.Log($"[IAPTest] {message}");
     }
 
     private void OnDestroy()

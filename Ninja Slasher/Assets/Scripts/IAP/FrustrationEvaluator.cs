@@ -3,7 +3,7 @@ using System;
 public static class FrustrationEvaluator
 {
     public static bool ShouldOffer(LevelFailedContext ctx,
-                                   EmergencyBundleConfig config,
+                                   StoreConfig config,
                                    GameData data)
     {
         if (config == null || data == null) return false;
@@ -34,7 +34,7 @@ public static class FrustrationEvaluator
     }
 
     public static BundleTier SelectTier(LevelFailedContext ctx,
-                                        EmergencyBundleConfig config,
+                                        StoreConfig config,
                                         GameData data)
     {
         if (config.largeBundleOnBossWithNoLives

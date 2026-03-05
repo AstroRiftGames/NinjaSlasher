@@ -71,6 +71,15 @@ public class GameData
     /// </summary>
     public string pendingPurchaseProductId = "";
 
+    /// <summary>
+    /// Unix epoch (segundos UTC) en que expiran las vidas ilimitadas.
+    /// 0 = sin vidas ilimitadas activas.
+    /// </summary>
+    public long unlimitedLivesEndUtc = 0L;
+
+    /// <summary>Monedas del jugador.</summary>
+    public int coins = 0;
+
     public GameData()
     {
         unlockedAreas.Add(1); // area 1 desbloqueada

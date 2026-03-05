@@ -4,7 +4,7 @@ using UnityEngine.Purchasing;
 public class EmergencyBundleService : MonoBehaviourSingleton<EmergencyBundleService>
 {
     [Header("Configuration")]
-    [SerializeField] private EmergencyBundleConfig _config;
+    [SerializeField] private StoreConfig _config;
 
     private string _activeProductId;
     private BundleRewardData _activeReward;
@@ -163,23 +163,44 @@ public class EmergencyBundleService : MonoBehaviourSingleton<EmergencyBundleServ
 
     private void OnBundlePurchased(PurchaseEventArgs args)
     {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        Debug.Log($"[EBS] Purchase confirmed: productId='{args.purchasedProduct.definition.id}' | Granting rewards...");
+#endif
         GrantRewards(_activeReward);
         AutoSaveManager.Instance?.OnEmergencyBundleActivated();
         CloseOffer(purchased: true);
     }
 
-    private void GrantRewards(BundleRewardData reward)
+    public void GrantRewards(BundleRewardData reward)
     {
-        if (reward == null) return;
+        if (reward == null)
+        {
+            Debug.LogWarning("[EBS] GrantRewards: reward is NULL — nothing granted.");
+            return;
+        }
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        Debug.Log($"[EBS] GrantRewards | unlimitedLives={reward.unlimitedLives} " +
+                  $"duration={reward.unlimitedLivesDurationMinutes}min " +
+                  $"regularLives={reward.regularLivesCount} " +
+                  $"coins={reward.coins} " +
+                  $"LifeManager={(LifeManager.Instance != null ? "OK" : "NULL")}");
+#endif
 
         if (reward.unlimitedLives && reward.unlimitedLivesDurationMinutes > 0f)
         {
             LifeManager.Instance?.ActivateUnlimitedLives(reward.unlimitedLivesDurationMinutes);
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            Debug.Log($"[EBS] Reward granted: UNLIMITED LIVES for {reward.unlimitedLivesDurationMinutes} min");
+#endif
         }
         else if (reward.regularLivesCount > 0)
         {
             for (int i = 0; i < reward.regularLivesCount; i++)
                 LifeManager.Instance?.AddLife();
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            Debug.Log($"[EBS] Reward granted: +{reward.regularLivesCount} lives | New total={LifeManager.Instance?.GetRealLives()}");
+#endif
         }
 
         if (reward.powerUps != null)
@@ -187,9 +208,26 @@ public class EmergencyBundleService : MonoBehaviourSingleton<EmergencyBundleServ
             foreach (var entry in reward.powerUps)
             {
                 if (entry.quantity > 0)
+                {
                     AutoSaveManager.Instance?.OnPowerUpObtained(entry.type, entry.quantity);
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                    Debug.Log($"[EBS] Reward granted: +{entry.quantity}x {entry.type} (inventory: {SaveManager.Instance?.GetPowerUpCount(entry.type)})");
+#endif
+                }
             }
         }
+
+        if (reward.coins > 0)
+        {
+            SaveManager.Instance?.AddCoins(reward.coins);
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            Debug.Log($"[EBS] Reward granted: +{reward.coins} coins | Wallet={SaveManager.Instance?.GetCoins()}");
+#endif
+        }
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        Debug.Log("[EBS] All rewards granted successfully.");
+#endif
     }
 
     private void CloseOffer(bool purchased = false)
@@ -201,17 +239,15 @@ public class EmergencyBundleService : MonoBehaviourSingleton<EmergencyBundleServ
         _activeProductId = null;
         UIEvents.RequestHideEmergencyBundleOverlay();
 
-        if (!purchased)
-            ShowFallbackDefeatUI();
+        ShowDefeatUI();
     }
 
-    private void ShowFallbackDefeatUI()
+    private void ShowDefeatUI()
     {
-        int lives = LifeManager.Instance != null ? LifeManager.Instance.GetRealLives() : 0;
-        if (lives <= 0 || (LifeManager.Instance != null && !LifeManager.Instance.CanPlay()))
+        if (LifeManager.Instance == null || !LifeManager.Instance.CanPlay())
             UIEvents.RequestShowNoLivesOverlay();
         else
-            UIEvents.RequestShowDefeatOverlay(lives);
+            UIEvents.RequestShowDefeatOverlay(LifeManager.Instance.GetRealLives());
     }
 
     #endregion
@@ -231,7 +267,9 @@ public class EmergencyBundleService : MonoBehaviourSingleton<EmergencyBundleServ
         {
             Debug.Log($"  consecutiveLossThreshold: {_config.consecutiveLossThreshold}");
             Debug.Log($"  dailyCap: {_config.dailyCap}  cooldownHours: {_config.cooldownHours}");
-            Debug.Log($"  smallBundleProductId: '{_config.smallBundleProductId}'");
+            Debug.Log($"  small primary productId:  '{_config.smallBundle?.PrimaryProductId}'");
+            Debug.Log($"  medium primary productId: '{_config.mediumBundle?.PrimaryProductId}'");
+            Debug.Log($"  large primary productId:  '{_config.largeBundle?.PrimaryProductId}'");
         }
         Debug.Log("[EBS] =================================");
     }

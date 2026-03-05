@@ -28,7 +28,7 @@ public class BundleRewardData
     public List<PowerUpRewardEntry> powerUps = new();
 
     [Header("Currency")]
-    [Tooltip("Monedas a otorgar. Requiere un CurrencyManager en el proyecto.")]
+    [Tooltip("Monedas a otorgar.")]
     [Min(0)] public int coins;
 }
 
@@ -42,13 +42,31 @@ public class BundleDisplayData
     public Sprite icon;
 }
 
+[Serializable]
+public class BundleDefinition
+{
+    [Tooltip("All IAP product IDs that resolve to this bundle.\n" +
+             "Index 0 = primary (used by the emergency overlay).\n" +
+             "Additional entries = store or alternative SKUs.")]
+    public string[] productIds = new string[0];
+
+    public BundleDisplayData display;
+    public BundleRewardData  reward;
+
+    public string PrimaryProductId
+        => productIds != null && productIds.Length > 0 ? productIds[0] : string.Empty;
+
+    public bool MatchesProductId(string id)
+        => productIds != null && Array.Exists(productIds, pid => pid == id);
+}
+
 public enum BundleTier { Small, Medium, Large }
 
 [CreateAssetMenu(
     fileName = "EmergencyBundleConfig",
     menuName = "Bundles/Emergency Bundles/Config",
     order = 0)]
-public class EmergencyBundleConfig : ScriptableObject
+public class StoreConfig : ScriptableObject
 {
     [Header("Activation Thresholds")]
 
@@ -80,47 +98,37 @@ public class EmergencyBundleConfig : ScriptableObject
     [Tooltip("Minutos que permanece visible la oferta antes de descartarse.")]
     [Min(0.5f)] public float offerDurationMinutes = 5f;
 
-    [Header("Small Bundle")]
-    public string smallBundleProductId = "";
-    public BundleDisplayData smallBundleDisplay;
-    public BundleRewardData smallBundleReward;
-
-    [Header("Medium Bundle")]
-    public string mediumBundleProductId = "";
-    public BundleDisplayData mediumBundleDisplay;
-    public BundleRewardData mediumBundleReward;
-
-    [Header("Large Bundle")]
-    public string largeBundleProductId = "";
-    public BundleDisplayData largeBundleDisplay;
-    public BundleRewardData largeBundleReward;
+    [Header("Bundle Definitions")]
+    public BundleDefinition smallBundle;
+    public BundleDefinition mediumBundle;
+    public BundleDefinition largeBundle;
 
     public string GetProductId(BundleTier tier) => tier switch
     {
-        BundleTier.Medium => mediumBundleProductId,
-        BundleTier.Large  => largeBundleProductId,
-        _                 => smallBundleProductId,
+        BundleTier.Medium => mediumBundle.PrimaryProductId,
+        BundleTier.Large  => largeBundle.PrimaryProductId,
+        _                 => smallBundle.PrimaryProductId,
     };
 
     public BundleRewardData GetReward(BundleTier tier) => tier switch
     {
-        BundleTier.Medium => mediumBundleReward,
-        BundleTier.Large  => largeBundleReward,
-        _                 => smallBundleReward,
+        BundleTier.Medium => mediumBundle.reward,
+        BundleTier.Large  => largeBundle.reward,
+        _                 => smallBundle.reward,
     };
 
     public BundleDisplayData GetDisplay(BundleTier tier) => tier switch
     {
-        BundleTier.Medium => mediumBundleDisplay,
-        BundleTier.Large  => largeBundleDisplay,
-        _                 => smallBundleDisplay,
+        BundleTier.Medium => mediumBundle.display,
+        BundleTier.Large  => largeBundle.display,
+        _                 => smallBundle.display,
     };
 
     public BundleRewardData GetRewardByProductId(string productId)
     {
-        if (!string.IsNullOrEmpty(smallBundleProductId)  && productId == smallBundleProductId)  return smallBundleReward;
-        if (!string.IsNullOrEmpty(mediumBundleProductId) && productId == mediumBundleProductId) return mediumBundleReward;
-        if (!string.IsNullOrEmpty(largeBundleProductId)  && productId == largeBundleProductId)  return largeBundleReward;
+        if (smallBundle.MatchesProductId(productId))  return smallBundle.reward;
+        if (mediumBundle.MatchesProductId(productId)) return mediumBundle.reward;
+        if (largeBundle.MatchesProductId(productId))  return largeBundle.reward;
         return null;
     }
 }

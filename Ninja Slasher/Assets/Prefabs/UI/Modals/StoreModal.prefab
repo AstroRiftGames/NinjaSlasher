@@ -2344,7 +2344,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5b4a377a1147dca4d948cd9f23c00f79, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  productId: Large Bundle
+  productId: bento_large
   buyButton: {fileID: 384197627206913524}
   statusText: {fileID: 338655761324550559}
   priceText: {fileID: 3738483320171232433}
@@ -2695,7 +2695,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5b4a377a1147dca4d948cd9f23c00f79, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  productId: Small Bundle
+  productId: bento_small
   buyButton: {fileID: 3696856940598532721}
   statusText: {fileID: 338655761324550559}
   priceText: {fileID: 3519484856819396910}
@@ -3243,7 +3243,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5b4a377a1147dca4d948cd9f23c00f79, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  productId: Medium Bundle
+  productId: bento_medium
   buyButton: {fileID: 2198158985156271907}
   statusText: {fileID: 338655761324550559}
   priceText: {fileID: 5877273853171405038}
@@ -3774,6 +3774,7 @@ GameObject:
   - component: {fileID: 8759048417270330005}
   - component: {fileID: 8834916633519854806}
   - component: {fileID: 5486440181603656900}
+  - component: {fileID: 3151506175489897319}
   m_Layer: 0
   m_Name: StoreModal
   m_TagString: Untagged
@@ -3840,6 +3841,22 @@ CanvasGroup:
   m_Interactable: 1
   m_BlocksRaycasts: 1
   m_IgnoreParentGroups: 0
+--- !u!114 &3151506175489897319
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9013924366456138119}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c1e80cd4a28aa694590b4e746a753d8b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _smallProductId: bento_small
+  _mediumProductId: bento_medium
+  _largeProductId: bento_large
+  _config: {fileID: 11400000, guid: 74279b14b31338d468f57d4ff087a4f6, type: 2}
 --- !u!1 &9204011793414983601
 GameObject:
   m_ObjectHideFlags: 0
