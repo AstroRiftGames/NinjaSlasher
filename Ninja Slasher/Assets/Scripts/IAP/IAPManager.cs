@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using Unity.Services.Core;
 using UnityEngine.Purchasing;
+using UnityEngine.Purchasing.Security;
 using System.Threading.Tasks;
 
 public class IAPManager : MonoBehaviourSingleton<IAPManager>, IDetailedStoreListener
@@ -10,6 +11,10 @@ public class IAPManager : MonoBehaviourSingleton<IAPManager>, IDetailedStoreList
     [Header("Configuration")]
     [SerializeField] private List<IAPProductData> availableProducts;
 
+    /// <summary>
+    /// Broadcast fired for purchases that have no registered handler.
+    /// Kept for backward compatibility — prefer RegisterPurchaseHandler for new code.
+    /// </summary>
     public event Action<string> OnPurchaseCompleted;
     public event Action<string, string> OnPurchaseFailedEvent;
     public event Action OnIAPInitialized;
@@ -18,6 +23,10 @@ public class IAPManager : MonoBehaviourSingleton<IAPManager>, IDetailedStoreList
     private IStoreController _storeController;
     private IExtensionProvider _extensionProvider;
     private bool _isInitialized = false;
+
+    // Per-product handlers. When a productId is registered here, ProcessPurchase
+    // routes directly to its handler instead of broadcasting OnPurchaseCompleted.
+    private readonly Dictionary<string, Action<PurchaseEventArgs>> _purchaseHandlers = new();
 
     public bool IsInitialized => _isInitialized;
 
@@ -31,11 +40,13 @@ public class IAPManager : MonoBehaviourSingleton<IAPManager>, IDetailedStoreList
     {
         try
         {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
             Debug.Log($"[IAPManager] UnityServices state BEFORE: {UnityServices.State}");
-
+#endif
             await UnityServicesInitializer.EnsureInitializedAsync();
-
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
             Debug.Log($"[IAPManager] UnityServices state AFTER: {UnityServices.State}");
+#endif
         }
         catch (Exception e)
         {
@@ -51,11 +62,11 @@ public class IAPManager : MonoBehaviourSingleton<IAPManager>, IDetailedStoreList
             var builder = ConfigurationBuilder.Instance(StandardPurchasingModule.Instance());
 
             foreach (var product in availableProducts)
-            {
                 builder.AddProduct(product.ProductId, product.ProductType);
-            }
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
             Debug.Log("[IAPManager] Starting IAP initialization...");
+#endif
             UnityPurchasing.Initialize(this, builder);
         }
         catch (Exception e)
@@ -71,46 +82,103 @@ public class IAPManager : MonoBehaviourSingleton<IAPManager>, IDetailedStoreList
         _extensionProvider = extensions;
         _isInitialized = true;
 
-        Debug.Log("[IAPManager] IAP inicialized");
+        Debug.Log("[IAPManager] IAP initialized");
         OnIAPInitialized?.Invoke();
     }
 
-    public void OnInitializeFailed(InitializationFailureReason error)
-    {
-        OnInitializeFailed(error, null);
-    }
+    public void OnInitializeFailed(InitializationFailureReason error) => OnInitializeFailed(error, null);
 
     public void OnInitializeFailed(InitializationFailureReason error, string message)
     {
-        var errorMessage = $"{error}" + (string.IsNullOrEmpty(message) ? "" : $": {message}");
-        Debug.LogError($"[IAPManager] Inicialization failed: {errorMessage}");
-        OnIAPInitializationFailed?.Invoke(errorMessage);
+        var msg = $"{error}" + (string.IsNullOrEmpty(message) ? "" : $": {message}");
+        Debug.LogError($"[IAPManager] Initialization failed: {msg}");
+        OnIAPInitializationFailed?.Invoke(msg);
+    }
+
+    // -------------------------------------------------------------------------
+    // Purchase routing
+    // -------------------------------------------------------------------------
+
+    /// <summary>
+    /// Registers a handler called when <paramref name="productId"/> is successfully purchased.
+    /// The handler receives the full PurchaseEventArgs (useful for receipt access).
+    /// One handler per productId; calling again replaces the previous entry.
+    /// </summary>
+    public void RegisterPurchaseHandler(string productId, Action<PurchaseEventArgs> handler)
+    {
+        _purchaseHandlers[productId] = handler;
+    }
+
+    /// <summary>Removes the handler for <paramref name="productId"/> if one is registered.</summary>
+    public void UnregisterPurchaseHandler(string productId)
+    {
+        _purchaseHandlers.Remove(productId);
     }
 
     public PurchaseProcessingResult ProcessPurchase(PurchaseEventArgs purchaseEvent)
     {
-        var product = purchaseEvent.purchasedProduct;
+        var product   = purchaseEvent.purchasedProduct;
         var productId = product.definition.id;
 
-        Debug.Log($"[IAPManager] Purchase completed: {productId}");
+        // Receipt validation — Android device only (editor uses fake receipts).
+#if UNITY_ANDROID && !UNITY_EDITOR
+        if (!ValidateReceipt(purchaseEvent))
+        {
+            Debug.LogError($"[IAPManager] Receipt validation failed for '{productId}'. Rewards not granted.");
+            return PurchaseProcessingResult.Complete;
+        }
+#endif
 
-        // Persist before firing so rewards survive a crash between payment confirmation and delivery.
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        Debug.Log($"[IAPManager] Purchase completed: {productId}");
+#endif
+
+        // Persist before dispatching so rewards survive a crash mid-delivery.
         if (SaveManager.Instance != null)
         {
             SaveManager.Instance.GetGameData().pendingPurchaseProductId = productId;
             SaveManager.Instance.SaveData();
         }
 
-        OnPurchaseCompleted?.Invoke(productId);
+        // Route to a registered handler if available; otherwise broadcast for backward compat.
+        if (_purchaseHandlers.TryGetValue(productId, out var handler))
+            handler.Invoke(purchaseEvent);
+        else
+            OnPurchaseCompleted?.Invoke(productId);
 
         return PurchaseProcessingResult.Complete;
     }
 
+    // -------------------------------------------------------------------------
+    // Receipt validation (Android device builds only)
+    // IMPORTANT: GooglePlayTangle and AppleTangle must be generated first via
+    //            Window → Unity IAP → Receipt Validation Obfuscator.
+    // -------------------------------------------------------------------------
+#if UNITY_ANDROID && !UNITY_EDITOR
+    private bool ValidateReceipt(PurchaseEventArgs purchaseEvent)
+    {
+        try
+        {
+            var validator = new CrossPlatformValidator(
+                GooglePlayTangle.Data(),
+                AppleTangle.Data(),
+                Application.identifier);
+
+            validator.Validate(purchaseEvent.purchasedProduct.receipt);
+            return true;
+        }
+        catch (IAPSecurityException ex)
+        {
+            Debug.LogError($"[IAPManager] Receipt validation failed: {ex.Message}");
+            return false;
+        }
+    }
+#endif
+
     public void OnPurchaseFailed(Product product, PurchaseFailureReason failureReason)
     {
-        var productId = product.definition.id;
-        Debug.LogError($"[IAPManager] Purchase failed: {productId}, reason: {failureReason}");
-        OnPurchaseFailedEvent?.Invoke(productId, failureReason.ToString());
+        Debug.LogError($"[IAPManager] Purchase failed: {product.definition.id}, reason: {failureReason}");
+        OnPurchaseFailedEvent?.Invoke(product.definition.id, failureReason.ToString());
     }
 
     public void OnPurchaseFailed(Product product, PurchaseFailureDescription failureDescription)
@@ -133,7 +201,9 @@ public class IAPManager : MonoBehaviourSingleton<IAPManager>, IDetailedStoreList
 
             if (product != null && product.availableToPurchase)
             {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
                 Debug.Log($"[IAPManager] Starting purchase for: {productId}");
+#endif
                 _storeController.InitiatePurchase(product);
             }
             else
@@ -170,33 +240,32 @@ public class IAPManager : MonoBehaviourSingleton<IAPManager>, IDetailedStoreList
     {
         if (!_isInitialized)
         {
-            Debug.LogError("[IAPManager] Cannot be restored. IAP is not initialized.");
+            Debug.LogError("[IAPManager] Cannot restore. IAP is not initialized.");
             callback?.Invoke(false, "IAP not initialized");
             return;
         }
 
         try
         {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
             Debug.Log("[IAPManager] Restoring purchases");
-
-            // Para iOS
+#endif
 #if UNITY_IOS
             var appleExtensions = _extensionProvider.GetExtension<IAppleExtensions>();
-            appleExtensions.RestoreTransactions((success) =>
+            appleExtensions.RestoreTransactions(success =>
             {
                 if (success)
                 {
-                    Debug.Log("[IAPManager] Compras restauradas exitosamente.");
+                    Debug.Log("[IAPManager] Purchases restored successfully.");
                     callback?.Invoke(true, null);
                 }
                 else
                 {
-                    Debug.LogError("[IAPManager] Error al restaurar compras.");
+                    Debug.LogError("[IAPManager] Error restoring purchases.");
                     callback?.Invoke(false, "Restore failed");
                 }
             });
 #else
-            Debug.Log("[IAPManager] Restore is not necessary on this platform.");
             callback?.Invoke(true, null);
 #endif
         }

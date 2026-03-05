@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Purchasing;
 
 public class EmergencyBundleService : MonoBehaviourSingleton<EmergencyBundleService>
 {
@@ -35,9 +36,6 @@ public class EmergencyBundleService : MonoBehaviourSingleton<EmergencyBundleServ
 
     private void Start()
     {
-        if (IAPManager.Instance != null)
-            IAPManager.Instance.OnPurchaseCompleted += OnPurchaseCompleted;
-
         RecoverPendingPurchase();
     }
 
@@ -51,7 +49,9 @@ public class EmergencyBundleService : MonoBehaviourSingleton<EmergencyBundleServ
         var reward = _config.GetRewardByProductId(data.pendingPurchaseProductId);
         if (reward == null) return;
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
         Debug.Log($"[EBS] Recovering pending purchase: {data.pendingPurchaseProductId}");
+#endif
         GrantRewards(reward);
         data.pendingPurchaseProductId = "";
         SaveManager.Instance.SaveData();
@@ -59,8 +59,8 @@ public class EmergencyBundleService : MonoBehaviourSingleton<EmergencyBundleServ
 
     private void OnDestroy()
     {
-        if (IAPManager.Instance != null)
-            IAPManager.Instance.OnPurchaseCompleted -= OnPurchaseCompleted;
+        if (_offerActive && !string.IsNullOrEmpty(_activeProductId))
+            IAPManager.Instance?.UnregisterPurchaseHandler(_activeProductId);
     }
 
     #endregion
@@ -69,7 +69,9 @@ public class EmergencyBundleService : MonoBehaviourSingleton<EmergencyBundleServ
 
     private void OnLevelFailed(LevelFailedContext ctx)
     {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
         Debug.Log($"[EBS] OnLevelFailed | IsBoss={ctx.IsBossLevel}, config={_config != null}, save={SaveManager.Instance != null}");
+#endif
 
         if (_config == null || SaveManager.Instance == null) return;
 
@@ -89,7 +91,10 @@ public class EmergencyBundleService : MonoBehaviourSingleton<EmergencyBundleServ
         evalCtx.ConsecutiveLosses = _normalLossStreak;
 
         bool shouldOffer = FrustrationEvaluator.ShouldOffer(evalCtx, _config, data);
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
         Debug.Log($"[EBS] streak={_normalLossStreak} threshold={_config.consecutiveLossThreshold} | ShouldOffer={shouldOffer}");
+#endif
 
         if (!shouldOffer) return;
 
@@ -143,7 +148,11 @@ public class EmergencyBundleService : MonoBehaviourSingleton<EmergencyBundleServ
         _activeReward    = reward;
         _offerActive     = true;
 
+        IAPManager.Instance?.RegisterPurchaseHandler(productId, OnBundlePurchased);
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
         Debug.Log($"[EBS] RequestShowEmergencyBundleOverlay | tier={tier} | productId='{productId}'");
+#endif
 
         UIEvents.RequestShowEmergencyBundleOverlay(offer);
     }
@@ -152,10 +161,8 @@ public class EmergencyBundleService : MonoBehaviourSingleton<EmergencyBundleServ
 
     #region IAP CALLBACKS
 
-    private void OnPurchaseCompleted(string productId)
+    private void OnBundlePurchased(PurchaseEventArgs args)
     {
-        if (!_offerActive || productId != _activeProductId) return;
-
         GrantRewards(_activeReward);
         AutoSaveManager.Instance?.OnEmergencyBundleActivated();
         CloseOffer(purchased: true);
@@ -183,11 +190,13 @@ public class EmergencyBundleService : MonoBehaviourSingleton<EmergencyBundleServ
                     AutoSaveManager.Instance?.OnPowerUpObtained(entry.type, entry.quantity);
             }
         }
-
     }
 
     private void CloseOffer(bool purchased = false)
     {
+        if (!string.IsNullOrEmpty(_activeProductId))
+            IAPManager.Instance?.UnregisterPurchaseHandler(_activeProductId);
+
         _offerActive     = false;
         _activeProductId = null;
         UIEvents.RequestHideEmergencyBundleOverlay();
