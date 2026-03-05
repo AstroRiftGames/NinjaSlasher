@@ -1,61 +1,118 @@
+using System;
+using System.Collections.Generic;
 using UnityEngine;
+
+[Serializable]
+public struct PowerUpRewardEntry
+{
+    public PowerUpType type;
+    [Min(1)] public int quantity;
+}
+
+[Serializable]
+public class BundleRewardData
+{
+    [Header("Lives")]
+    [Tooltip("Si true, se activan vidas ilimitadas por unlimitedLivesDurationMinutes. " +
+             "Si false, se suman regularLivesCount vidas normales.")]
+    public bool unlimitedLives;
+
+    [Tooltip("Duración en minutos de las vidas ilimitadas (solo si unlimitedLives = true).")]
+    [Min(0.5f)] public float unlimitedLivesDurationMinutes = 5f;
+
+    [Tooltip("Vidas regulares a añadir (solo si unlimitedLives = false).")]
+    [Min(0)] public int regularLivesCount;
+
+    [Header("Power-ups")]
+    [Tooltip("Lista de power-ups que se añaden al inventario del jugador.")]
+    public List<PowerUpRewardEntry> powerUps = new();
+
+    [Header("Currency")]
+    [Tooltip("Monedas a otorgar. Requiere un CurrencyManager en el proyecto.")]
+    [Min(0)] public int coins;
+}
+
+[Serializable]
+public class BundleDisplayData
+{
+    [Tooltip("Nombre visible del bundle en el overlay (ej. 'Pack Rescate', 'Pack Élite').")]
+    public string bundleName;
+
+    [Tooltip("Ícono del bundle que se muestra en EmergencyBundleOverlay.")]
+    public Sprite icon;
+}
+
+public enum BundleTier { Small, Medium, Large }
 
 [CreateAssetMenu(
     fileName = "EmergencyBundleConfig",
-    menuName = "NinjaSlasher/Emergency Bundles/Config",
+    menuName = "Bundles/Emergency Bundles/Config",
     order = 0)]
 public class EmergencyBundleConfig : ScriptableObject
 {
-    // ACTIVATION THRESHOLDS
-    // Cuántas derrotas se necesitan para que el sistema evalúe mostrar la oferta
-
     [Header("Activation Thresholds")]
 
-    [Tooltip("Número de derrotas consecutivas en niveles normales que activan la evaluación " +
-             "del Emergency Bundle. Debe ser >= 1.")]
-    [Min(1)]
-    public int consecutiveLossThreshold = 3;
+    [Tooltip("Derrotas consecutivas en niveles normales para activar la evaluación.")]
+    [Min(1)] public int consecutiveLossThreshold = 3;
 
-    [Tooltip("Número de derrotas consecutivas en niveles boss que activan la evaluación. " +
-             "Umbral independiente porque los boss levels tienen mayor frustración percibida.")]
-    [Min(1)]
-    public int bossFailureThreshold = 2;
+    [Tooltip("Derrotas consecutivas en boss levels para activar la evaluación.")]
+    [Min(1)] public int bossFailureThreshold = 2;
 
-    // DAILY LIMITS & TIMING
-    // Controlan con qué frecuencia puede aparecer la oferta para evitar fatiga.
+    [Header("Tier Selection")]
+
+    [Tooltip("Pérdidas mínimas para mostrar LARGE. 0 = nunca escalar a Large por contador.")]
+    [Min(0)] public int largeTierLossThreshold = 7;
+
+    [Tooltip("Pérdidas mínimas para mostrar MEDIUM. 0 = nunca escalar a Medium por contador.")]
+    [Min(0)] public int mediumTierLossThreshold = 5;
+
+    [Tooltip("Forzar LARGE cuando el jugador está en boss level Y se quedó sin vidas.")]
+    public bool largeBundleOnBossWithNoLives = true;
 
     [Header("Daily Limits & Timing")]
 
-    [Tooltip("Número máximo de veces que se puede mostrar (y activar) el Emergency Bundle " +
-             "en un mismo día UTC. 0 = sin límite (no recomendado en producción).")]
-    [Min(0)]
-    public int dailyCap = 2;
+    [Tooltip("Máximo de activaciones por día UTC. 0 = sin límite.")]
+    [Min(0)] public int dailyCap = 2;
 
-    [Tooltip("Horas de cooldown entre activaciones consecutivas del Emergency Bundle. " +
-             "Evita mostrar la oferta repetidamente si el jugador rechazó la anterior.")]
-    [Min(0f)]
-    public float cooldownHours = 4f;
+    [Tooltip("Horas de cooldown entre activaciones consecutivas.")]
+    [Min(0f)] public float cooldownHours = 4f;
 
-    [Tooltip("Minutos que permanece visible la oferta antes de descartarse automáticamente. " +
-             "El timer lo gestiona EmergencyBundleService; este campo solo define la duración.")]
-    [Min(0.5f)]
-    public float offerDurationMinutes = 5f;
+    [Tooltip("Minutos que permanece visible la oferta antes de descartarse.")]
+    [Min(0.5f)] public float offerDurationMinutes = 5f;
 
-    // IAP PRODUCT IDs
-    // IDs de producto registrados en Unity IAP / App Store / Google Play.
-    // Deben coincidir exactamente con los IDs en IAPManager.
-
-    [Header("IAP Product IDs")]
-
-    [Tooltip("Product ID del bundle pequeño (p. ej. pack de vidas básico). " +
-             "Debe estar registrado en IAPManager y en el portal de la tienda.")]
+    [Header("Small Bundle")]
     public string smallBundleProductId = "";
+    public BundleDisplayData smallBundleDisplay;
+    public BundleRewardData smallBundleReward;
 
-    [Tooltip("Product ID del bundle mediano (p. ej. pack de vidas + power-up). " +
-             "Debe estar registrado en IAPManager y en el portal de la tienda.")]
+    [Header("Medium Bundle")]
     public string mediumBundleProductId = "";
+    public BundleDisplayData mediumBundleDisplay;
+    public BundleRewardData mediumBundleReward;
 
-    [Tooltip("Product ID del bundle grande (p. ej. pack premium con todas las ventajas). " +
-             "Debe estar registrado en IAPManager y en el portal de la tienda.")]
+    [Header("Large Bundle")]
     public string largeBundleProductId = "";
+    public BundleDisplayData largeBundleDisplay;
+    public BundleRewardData largeBundleReward;
+
+    public string GetProductId(BundleTier tier) => tier switch
+    {
+        BundleTier.Medium => mediumBundleProductId,
+        BundleTier.Large  => largeBundleProductId,
+        _                 => smallBundleProductId,
+    };
+
+    public BundleRewardData GetReward(BundleTier tier) => tier switch
+    {
+        BundleTier.Medium => mediumBundleReward,
+        BundleTier.Large  => largeBundleReward,
+        _                 => smallBundleReward,
+    };
+
+    public BundleDisplayData GetDisplay(BundleTier tier) => tier switch
+    {
+        BundleTier.Medium => mediumBundleDisplay,
+        BundleTier.Large  => largeBundleDisplay,
+        _                 => smallBundleDisplay,
+    };
 }

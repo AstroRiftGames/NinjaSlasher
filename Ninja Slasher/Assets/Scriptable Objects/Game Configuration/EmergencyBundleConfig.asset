@@ -1,0 +1,60 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a82ec8a36fdb1744a89d12b59382d61f, type: 3}
+  m_Name: EmergencyBundleConfig
+  m_EditorClassIdentifier: 
+  consecutiveLossThreshold: 1
+  bossFailureThreshold: 2
+  largeTierLossThreshold: 7
+  mediumTierLossThreshold: 5
+  largeBundleOnBossWithNoLives: 1
+  dailyCap: 2
+  cooldownHours: 4
+  offerDurationMinutes: 5
+  smallBundleProductId: 
+  smallBundleDisplay:
+    bundleName: "Small \u201CRefreshing\u201D Bento"
+    icon: {fileID: 21300000, guid: e05193f52054e3541bf87e6c44119376, type: 3}
+  smallBundleReward:
+    unlimitedLives: 1
+    unlimitedLivesDurationMinutes: 5
+    regularLivesCount: 0
+    powerUps:
+    - type: 1
+      quantity: 1
+    coins: 50
+  mediumBundleProductId: 
+  mediumBundleDisplay:
+    bundleName: " Medium \u201CEnergizing\u201D Bento"
+    icon: {fileID: 21300000, guid: 3cdedb69a9d71ed4e85b9ab3c9ae4bdc, type: 3}
+  mediumBundleReward:
+    unlimitedLives: 1
+    unlimitedLivesDurationMinutes: 15
+    regularLivesCount: 0
+    powerUps:
+    - type: 0
+      quantity: 1
+    - type: 1
+      quantity: 1
+    coins: 150
+  largeBundleProductId: 
+  largeBundleDisplay:
+    bundleName: "Large Bento Box \u201CNinja Banquet\u201D"
+    icon: {fileID: 21300000, guid: 6433ed1b7f759e74a8680823fc2259a3, type: 3}
+  largeBundleReward:
+    unlimitedLives: 1
+    unlimitedLivesDurationMinutes: 60
+    regularLivesCount: 0
+    powerUps:
+    - type: 5
+      quantity: 1
+    coins: 300

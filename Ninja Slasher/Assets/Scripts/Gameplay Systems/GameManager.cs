@@ -142,6 +142,8 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
 
         if (_levelStarted)
         {
+            Debug.Log($"[GM] HandleLevelDefeat | reason={reason} | LSM.Instance={LevelSessionManager.Instance != null} | HasActiveSession={LevelSessionManager.Instance?.HasActiveSession}");
+            LevelSessionManager.Instance?.FailLevel(reason);
             LifeManager.Instance.UseLife();
             _levelStarted = false;
         }
@@ -152,6 +154,10 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
     private IEnumerator HandleDefeatUIWithDelay()
     {
         yield return new WaitForSeconds(0.1f);
+
+        // Si el Emergency Bundle está activo, él reemplaza la pantalla de derrota.
+        if (EmergencyBundleService.Instance != null && EmergencyBundleService.Instance.HasActiveOffer)
+            yield break;
 
         int currentLives = LifeManager.Instance.GetRealLives();
 

@@ -47,6 +47,9 @@ public class GameDataDTO
 
     /// <summary>Derrotas consecutivas acumuladas en niveles boss.</summary>
     public int consecutiveBossLosses;
+
+    /// <summary>Derrotas consecutivas generales. Migrado desde PlayerPrefs.</summary>
+    public int consecutiveLosses;
 }
 
 [Serializable] public struct IntIntKV { public int key; public int value; }
@@ -91,6 +94,7 @@ public static class GameDataMapper
             emergencyBundleUsesToday = d.emergencyBundleUsesToday,
             emergencyBundleLastActivationUtc = d.emergencyBundleLastActivationUtc,
             consecutiveBossLosses = d.consecutiveBossLosses,
+            consecutiveLosses = d.consecutiveLosses,
         };
 
         if (d.levelStars != null)
@@ -143,6 +147,7 @@ public static class GameDataMapper
             emergencyBundleUsesToday = dto.emergencyBundleUsesToday,
             emergencyBundleLastActivationUtc = dto.emergencyBundleLastActivationUtc,
             consecutiveBossLosses = dto.consecutiveBossLosses,
+            consecutiveLosses = dto.consecutiveLosses,
         };
 
         if (DateTime.TryParse(dto.lastPlayDate, null,

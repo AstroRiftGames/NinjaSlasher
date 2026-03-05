@@ -14,6 +14,7 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
     [SerializeField] private PauseOverlay _pauseOverlay;
     [SerializeField] private NoLivesOverlay _noLivesOverlay;
     [SerializeField] private DefeatOverlay _defeatOverlay;
+    [SerializeField] private EmergencyBundleOverlay _emergencyBundleOverlay;
 
     [Header("SCREENS")]
     [SerializeField] private SplashScreen _splashScreen;
@@ -158,6 +159,9 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
 
         UIEvents.OnShowDefeatOverlayRequested += ShowDefeatOverlay;
 
+        UIEvents.OnShowEmergencyBundleOverlayRequested += ShowEmergencyBundleOverlay;
+        UIEvents.OnHideEmergencyBundleOverlayRequested += HideEmergencyBundleOverlay;
+
         UIEvents.OnShowSplashScreenRequested += ShowSplashScreen;
         UIEvents.OnHideSplashScreenRequested += HideSplashScreen;
 
@@ -215,6 +219,9 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
         UIEvents.OnHideNoLivesOverlayRequested -= HideNoLivesOverlay;
 
         UIEvents.OnShowDefeatOverlayRequested -= ShowDefeatOverlay;
+
+        UIEvents.OnShowEmergencyBundleOverlayRequested -= ShowEmergencyBundleOverlay;
+        UIEvents.OnHideEmergencyBundleOverlayRequested -= HideEmergencyBundleOverlay;
 
         UIEvents.OnShowSplashScreenRequested -= ShowSplashScreen;
         UIEvents.OnHideSplashScreenRequested -= HideSplashScreen;
@@ -349,6 +356,18 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
     {
         if (_defeatOverlay != null)
             _defeatOverlay.Hide();
+    }
+
+    private void ShowEmergencyBundleOverlay(EmergencyBundleOffer offer)
+    {
+        Debug.Log($"[UIManager] ShowEmergencyBundleOverlay | overlay assigned={_emergencyBundleOverlay != null}");
+        if (_emergencyBundleOverlay != null)
+            _emergencyBundleOverlay.ShowWithOffer(offer);
+    }
+
+    private void HideEmergencyBundleOverlay()
+    {
+        HidePanel(_emergencyBundleOverlay);
     }
 
     #endregion

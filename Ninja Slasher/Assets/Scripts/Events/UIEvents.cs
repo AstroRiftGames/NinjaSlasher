@@ -43,6 +43,18 @@ public static class UIEvents
 
     public static event Action<int> OnShowDefeatOverlayRequested;
 
+    public static event Action<EmergencyBundleOffer> OnShowEmergencyBundleOverlayRequested;
+    public static event Action OnHideEmergencyBundleOverlayRequested;
+
+    public static void RequestShowEmergencyBundleOverlay(EmergencyBundleOffer offer)
+        => OnShowEmergencyBundleOverlayRequested?.Invoke(offer);
+
+    public static void RequestHideEmergencyBundleOverlay()
+        => OnHideEmergencyBundleOverlayRequested?.Invoke();
+
+    public static bool HasEmergencyBundleOverlayListener()
+        => OnShowEmergencyBundleOverlayRequested != null;
+
     public static void RequestShowPauseOverlay()
     {
         OnShowPauseOverlayRequested?.Invoke();
@@ -445,6 +457,8 @@ public static class UIEvents
         OnShowNoLivesOverlayRequested = null;
         OnHideNoLivesOverlayRequested = null;
         OnShowDefeatOverlayRequested = null;
+        OnShowEmergencyBundleOverlayRequested = null;
+        OnHideEmergencyBundleOverlayRequested = null;
     }
 
     public static void ClearScreenEvents()

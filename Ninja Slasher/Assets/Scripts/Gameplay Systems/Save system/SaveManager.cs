@@ -141,7 +141,7 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
                     loadedWithDto = true;
                 }
             }
-            catch { /* ignorar, intentar path legacy */ }
+            catch (Exception dtoEx) { Debug.LogWarning($"[SaveManager] DTO deserialization failed, falling back to legacy: {dtoEx.Message}"); }
 
             if (!loadedWithDto)
             {
@@ -286,9 +286,6 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
 
         if (source.lastPlayDate > target.lastPlayDate) target.lastPlayDate = source.lastPlayDate;
 
-        // --- Campos que faltaban en la merge original ---
-
-        // levelObjectives: unión de objetivos completados por nivel.
         if (source.levelObjectives != null)
         {
             if (target.levelObjectives == null) target.levelObjectives = new Dictionary<int, List<int>>();
@@ -416,7 +413,13 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
             string backupPath = saveFilePath + ".bak";
 
             File.WriteAllText(tempPath, json);
-            File.Replace(tempPath, saveFilePath, backupPath);
+
+            // File.Replace requires the destination to already exist.
+            // On first install (no save file yet), fall back to a simple move.
+            if (File.Exists(saveFilePath))
+                File.Replace(tempPath, saveFilePath, backupPath);
+            else
+                File.Move(tempPath, saveFilePath);
 
             OnDataSaved?.Invoke(gameData);
         }
@@ -558,6 +561,7 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
         }
     }
 
+    [Obsolete("Use SetAudioSettings(musicVolume, sfxVolume) to avoid a double disk write.")]
     public void SetMusicVolume(float volume)
     {
         var data = GetGameData();
@@ -565,6 +569,7 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
         SaveData();
     }
 
+    [Obsolete("Use SetAudioSettings(musicVolume, sfxVolume) to avoid a double disk write.")]
     public void SetSFXVolume(float volume)
     {
         var data = GetGameData();
@@ -697,18 +702,24 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
 
     public void ActivatePowerUp(PowerUpType powerUpType, int uses)
     {
-        RemovePowerUpFromInventory(powerUpType, 1);
-
+        // Mutate both inventory and active list before the single SaveData() call.
         var data = GetGameData();
+
+        var inventoryItem = data.powerUpInventory.Find(item => item.type == powerUpType);
+        if (inventoryItem != null)
+        {
+            inventoryItem.quantity = Mathf.Max(0, inventoryItem.quantity - 1);
+            inventoryItem.lastUpdated = DateTime.Now;
+            if (inventoryItem.quantity == 0)
+                data.powerUpInventory.Remove(inventoryItem);
+        }
+
         var existingActivePowerUp = data.activePowerUps.Find(p => p.type == powerUpType);
         if (existingActivePowerUp != null)
-        {
             existingActivePowerUp.usesRemaining += uses;
-        }
         else
-        {
             data.activePowerUps.Add(new PowerUpData(powerUpType, uses));
-        }
+
         SaveData();
     }
 
@@ -766,6 +777,25 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
             data.totalPlayTime += playTime;
         }
 
+        SaveData();
+    }
+
+    /// <summary>
+    /// Records a successful Emergency Bundle activation: increments the daily counter
+    /// (resetting it when the UTC day has changed) and stamps the activation timestamp.
+    /// </summary>
+    public void RecordEmergencyBundleActivation()
+    {
+        var data = GetGameData();
+        long nowUtc  = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+        long today   = nowUtc / 86400;
+        long lastDay = data.emergencyBundleLastActivationUtc / 86400;
+
+        data.emergencyBundleUsesToday = (data.emergencyBundleLastActivationUtc == 0 || today != lastDay)
+                                        ? 1
+                                        : data.emergencyBundleUsesToday + 1;
+
+        data.emergencyBundleLastActivationUtc = nowUtc;
         SaveData();
     }
 
@@ -852,6 +882,8 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
         {
             string rootFile = Path.Combine(Application.persistentDataPath, SaveFileName);
             SafeDeleteFile(rootFile);
+            SafeDeleteFile(rootFile + ".bak");
+            SafeDeleteFile(rootFile + ".tmp");
 
             string userDataRoot = Path.Combine(Application.persistentDataPath, USER_DATA_FOLDER);
             if (Directory.Exists(userDataRoot))
@@ -860,6 +892,8 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
                 {
                     string f = Path.Combine(dir, SaveFileName);
                     SafeDeleteFile(f);
+                    SafeDeleteFile(f + ".bak");
+                    SafeDeleteFile(f + ".tmp");
 
                     TryDeleteDirectoryIfEmpty(dir);
                 }

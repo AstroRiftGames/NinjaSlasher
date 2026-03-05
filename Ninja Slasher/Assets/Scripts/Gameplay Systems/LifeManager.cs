@@ -9,6 +9,7 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
     public int ConsecutiveLosses => currentConsecutiveLosses;
 
     private DateTime _lastLifeUsedUtc;
+    private DateTime _unlimitedLivesEndUtc = DateTime.MinValue;
 
     [Header("VIRTUAL LIFE DEDUCTION")]
     private int _virtualLives;
@@ -354,8 +355,19 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
 
     #region PUBLIC API
 
+    public bool HasTimedUnlimitedLives => DateTime.UtcNow < _unlimitedLivesEndUtc;
+
+    public void ActivateUnlimitedLives(float durationMinutes)
+    {
+        DateTime baseTime = HasTimedUnlimitedLives ? _unlimitedLivesEndUtc : DateTime.UtcNow;
+        _unlimitedLivesEndUtc = baseTime.AddMinutes(durationMinutes);
+        EmitDisplayLivesChanged();
+    }
+
     public bool CanPlay()
     {
+        if (HasTimedUnlimitedLives) return true;
+
         if (GameConfigManager.IsReady() && GameConfigManager.Config.infiniteLives)
         {
             return true;
@@ -382,6 +394,12 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
     {
         var context = PowerUpManager.Instance?.context;
         if (context != null && context.SecondChanceActive)
+        {
+            EmitDisplayLivesChanged();
+            return;
+        }
+
+        if (HasTimedUnlimitedLives)
         {
             EmitDisplayLivesChanged();
             return;
@@ -564,13 +582,21 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
 
     private void LoadAdsProgress()
     {
-        currentConsecutiveLosses = PlayerPrefs.GetInt("ConsecutiveLosses", 0);
+        if (SaveManager.Instance != null)
+            currentConsecutiveLosses = SaveManager.Instance.GetGameData().consecutiveLosses;
+        else
+            currentConsecutiveLosses = PlayerPrefs.GetInt("ConsecutiveLosses", 0);
     }
 
     private void SaveAdsProgress()
     {
-        PlayerPrefs.SetInt("ConsecutiveLosses", currentConsecutiveLosses);
-        PlayerPrefs.Save();
+        if (SaveManager.Instance != null)
+            SaveManager.Instance.GetGameData().consecutiveLosses = currentConsecutiveLosses;
+        else
+        {
+            PlayerPrefs.SetInt("ConsecutiveLosses", currentConsecutiveLosses);
+            PlayerPrefs.Save();
+        }
     }
 
     private void CheckLifeLossAds()

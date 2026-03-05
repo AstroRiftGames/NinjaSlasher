@@ -182,6 +182,7 @@ public class LevelSessionManager : MonoBehaviourSingleton<LevelSessionManager>
 
     public void FailLevel(string reason)
     {
+        Debug.Log($"[LSM] FailLevel | reason={reason} | HasActiveSession={HasActiveSession} | session={currentSession != null} | IsFailed={currentSession?.IsFailed} | IsComplete={currentSession?.IsComplete}");
         if (!HasActiveSession) return;
 
         timerService.Stop();
@@ -197,6 +198,8 @@ public class LevelSessionManager : MonoBehaviourSingleton<LevelSessionManager>
         };
 
         GameEvents.RaiseLevelFailed(context);
+
+        Debug.Log("[EBS] No funca");
     }
 
     private void EvaluateAndSave()

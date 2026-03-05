@@ -54,7 +54,13 @@ public class GameData
     public long emergencyBundleLastActivationUtc = 0L;
 
     /// <summary>
-    /// Derrotas consecutivas específicamente en niveles boss.
+    /// Derrotas consecutivas generales (normal + boss).
+    /// Lo gestiona LifeManager; lo usa EmergencyBundleService via LevelFailedContext.
+    /// </summary>
+    public int consecutiveLosses = 0;
+
+    /// <summary>
+    /// Derrotas consecutivas especificamente en niveles boss.
     /// Contador independiente de currentConsecutiveLosses en LifeManager,
     /// que no distingue entre niveles normales y boss.
     /// </summary>
@@ -144,19 +150,6 @@ public class PowerUpData
         this.usesRemaining = uses;
         this.activationTime = DateTime.Now;
     }
-
-    //// para verificar si el power up aun esta activo
-    //public bool IsActive()
-    //{
-    //    return (DateTime.Now - activationTime).TotalSeconds < duration;
-    //}
-
-    //// para obtener tiempo restante en segundos
-    //public float GetRemainingTime()
-    //{
-    //    float elapsed = (float)(DateTime.Now - activationTime).TotalSeconds;
-    //    return Mathf.Max(0f, duration - elapsed);
-    //}
 }
 
 [Serializable]

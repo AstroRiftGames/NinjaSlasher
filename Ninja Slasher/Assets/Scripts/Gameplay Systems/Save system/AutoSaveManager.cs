@@ -162,6 +162,14 @@ public class AutoSaveManager : MonoBehaviourSingleton<AutoSaveManager>
         saveManager.DeactivatePowerUp(powerUpType);
     }
 
+    public void OnEmergencyBundleActivated()
+    {
+        if (!CheckSaveManager()) return;
+
+        ShowSaveIndicator("SAVING...");
+        saveManager.RecordEmergencyBundleActivation();
+    }
+
     #endregion
 
     #region UTILITY_METHODS

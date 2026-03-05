@@ -12,17 +12,6 @@ public class LevelProgressionInfo
 
 public class LevelProgressionManager : MonoBehaviourSingleton<LevelProgressionManager>
 {
-    // DEPRECATED
-    //[Header("PROGRESSION SETTINGS")]
-    //[SerializeField] private int levelsPerArea = 10;
-    //[SerializeField] private int totalAreas = 5;
-    //[Header("ADS CONFIGURATION")]
-    //[SerializeField] private int levelsRequiredForAd = 3;
-    //[SerializeField] private bool enableConsecutiveLevelAds = true;
-    //[SerializeField] private bool enableAreaUnlockAds = true;
-    //[Header("BOSS REQUIREMENTS")]
-    //[SerializeField] private int[] starsRequiredPerBoss = { 5, 15, 30, 50, 75 };
-
     private int LevelsPerArea => GameConfigManager.Config.levelsPerArea;
     private int TotalAreas => GameConfigManager.Config.totalAreas;
     private int LevelsRequiredForAd => GameConfigManager.Config.levelsRequiredForAd;
@@ -45,10 +34,10 @@ public class LevelProgressionManager : MonoBehaviourSingleton<LevelProgressionMa
     {
         isInitialized = true;
 
-        //if (GameConfigManager.IsReady() && GameConfigManager.Config.unlockAllLevelsOnStart)
-        //{
-        //    UnlockAllLevelsForDebug();
-        //}
+        if (GameConfigManager.IsReady() && GameConfigManager.Config.unlockAllLevelsOnStart)
+        {
+            UnlockAllLevelsForDebug();
+        }
     }
 
     private void OnEnable()
@@ -304,259 +293,249 @@ public class LevelProgressionManager : MonoBehaviourSingleton<LevelProgressionMa
         return 0;
     }
 
-    //DEPRECATED
-    //private int GetNextBossStarRequirement(int currentArea)
-    //{
-    //    if (currentArea <= starsRequiredPerBoss.Length)
-    //    {
-    //        return starsRequiredPerBoss[currentArea - 1];
-    //    }
-    //    return 0;
-    //}
+    private void UnlockAllLevelsForDebug()
+    {
+        Debug.Log("[LevelProgressionManager] DEBUG MODE: Desbloqueando todos los niveles...");
 
-    //private void UnlockAllLevelsForDebug()
-    //{
-    //    Debug.Log("[LevelProgressionManager] DEBUG MODE: Desbloqueando todos los niveles...");
+        SimulateUnlockUpToArea(TotalAreas);
 
-    //    SimulateUnlockUpToArea(TotalAreas);
-
-    //    Debug.Log($"[LevelProgressionManager] {TotalAreas * LevelsPerArea} niveles desbloqueados");
-    //}
+        Debug.Log($"[LevelProgressionManager] {TotalAreas * LevelsPerArea} niveles desbloqueados");
+    }
 
 #if UNITY_EDITOR
-    //[ContextMenu("Debug/Simular Desbloqueo Area 1")]
-    //private void SimulateUnlockArea1() => SimulateAreaUnlock(1);
+    [ContextMenu("Debug/Simular Desbloqueo Area 1")]
+    private void SimulateUnlockArea1() => SimulateAreaUnlock(1);
 
-    //[ContextMenu("Debug/Simular Desbloqueo Area 2")]
-    //private void SimulateUnlockArea2() => SimulateAreaUnlock(2);
+    [ContextMenu("Debug/Simular Desbloqueo Area 2")]
+    private void SimulateUnlockArea2() => SimulateAreaUnlock(2);
 
-    //[ContextMenu("Debug/Simular Desbloqueo Area 3")]
-    //private void SimulateUnlockArea3() => SimulateAreaUnlock(3);
+    [ContextMenu("Debug/Simular Desbloqueo Area 3")]
+    private void SimulateUnlockArea3() => SimulateAreaUnlock(3);
 
-    //[ContextMenu("Debug/Simular Desbloqueo Area 4")]
-    //private void SimulateUnlockArea4() => SimulateAreaUnlock(4);
+    [ContextMenu("Debug/Simular Desbloqueo Area 4")]
+    private void SimulateUnlockArea4() => SimulateAreaUnlock(4);
 
-    //[ContextMenu("Debug/Simular Desbloqueo Area 5")]
-    //private void SimulateUnlockArea5() => SimulateAreaUnlock(5);
+    [ContextMenu("Debug/Simular Desbloqueo Area 5")]
+    private void SimulateUnlockArea5() => SimulateAreaUnlock(5);
 
-    //[ContextMenu("Debug/Simular Desbloqueo de TODAS las Areas")]
-    //private void SimulateUnlockAllAreas()
-    //{
-    //    for (int area = 1; area <= TotalAreas; area++)
-    //    {
-    //        SimulateAreaUnlock(area, logDetails: false);
-    //    }
+    [ContextMenu("Debug/Simular Desbloqueo de TODAS las Areas")]
+    private void SimulateUnlockAllAreas()
+    {
+        for (int area = 1; area <= TotalAreas; area++)
+        {
+            SimulateAreaUnlock(area, logDetails: false);
+        }
 
-    //    Debug.Log($"[LevelProgressionManager] TODAS LAS AREAS DESBLOQUEADAS (1-{TotalAreas})");
-    //    Debug.Log($"[LevelProgressionManager] Total de niveles desbloqueados: {TotalAreas * LevelsPerArea}");
-    //    Debug.Log($"[LevelProgressionManager] Estrellas totales simuladas: {SaveManager.Instance.GetGameData().totalStars}");
+        Debug.Log($"[LevelProgressionManager] TODAS LAS AREAS DESBLOQUEADAS (1-{TotalAreas})");
+        Debug.Log($"[LevelProgressionManager] Total de niveles desbloqueados: {TotalAreas * LevelsPerArea}");
+        Debug.Log($"[LevelProgressionManager] Estrellas totales simuladas: {SaveManager.Instance.GetGameData().totalStars}");
 
-    //    OnProgressionUpdated?.Invoke();
-    //}
+        OnProgressionUpdated?.Invoke();
+    }
 
-    //public void SimulateAreaUnlock(int areaId, bool logDetails = true)
-    //{
-    //    if (SaveManager.Instance == null)
-    //    {
-    //        return;
-    //    }
+    public void SimulateAreaUnlock(int areaId, bool logDetails = true)
+    {
+        if (SaveManager.Instance == null)
+        {
+            return;
+        }
 
-    //    if (areaId < 1 || areaId > TotalAreas)
-    //    {
-    //        return;
-    //    }
+        if (areaId < 1 || areaId > TotalAreas)
+        {
+            return;
+        }
 
-    //    var gameData = SaveManager.Instance.GetGameData();
+        var gameData = SaveManager.Instance.GetGameData();
 
-    //    int firstLevelInArea = ((areaId - 1) * LevelsPerArea) + 1;
-    //    int lastLevelInArea = areaId * LevelsPerArea;
+        int firstLevelInArea = ((areaId - 1) * LevelsPerArea) + 1;
+        int lastLevelInArea = areaId * LevelsPerArea;
 
-    //    if (logDetails)
-    //    {
-    //        Debug.Log($"[LevelProgressionManager] SIMULANDO DESBLOQUEO AREA {areaId}");
-    //        Debug.Log($"[LevelProgressionManager] Niveles: {firstLevelInArea} - {lastLevelInArea}");
-    //    }
+        if (logDetails)
+        {
+            Debug.Log($"[LevelProgressionManager] SIMULANDO DESBLOQUEO AREA {areaId}");
+            Debug.Log($"[LevelProgressionManager] Niveles: {firstLevelInArea} - {lastLevelInArea}");
+        }
 
-    //    int starsAddedThisArea = 0;
+        int starsAddedThisArea = 0;
 
-    //    for (int levelId = firstLevelInArea; levelId <= lastLevelInArea; levelId++)
-    //    {
-    //        int starsForLevel = UnityEngine.Random.Range(1, 4);
+        for (int levelId = firstLevelInArea; levelId <= lastLevelInArea; levelId++)
+        {
+            int starsForLevel = UnityEngine.Random.Range(1, 4);
 
-    //        if (gameData.levelStars.ContainsKey(levelId))
-    //        {
-    //            starsForLevel = Mathf.Max(gameData.levelStars[levelId], starsForLevel);
-    //        }
+            if (gameData.levelStars.ContainsKey(levelId))
+            {
+                starsForLevel = Mathf.Max(gameData.levelStars[levelId], starsForLevel);
+            }
 
-    //        gameData.levelStars[levelId] = starsForLevel;
-    //        starsAddedThisArea += starsForLevel;
+            gameData.levelStars[levelId] = starsForLevel;
+            starsAddedThisArea += starsForLevel;
 
-    //        if (logDetails)
-    //        {
-    //            Debug.Log($"[LevelProgressionManager] Nivel {levelId}: {starsForLevel}");
-    //        }
-    //    }
+            if (logDetails)
+            {
+                Debug.Log($"[LevelProgressionManager] Nivel {levelId}: {starsForLevel}");
+            }
+        }
 
-    //    RecalculateTotalStars(gameData);
+        RecalculateTotalStars(gameData);
 
-    //    if (!gameData.unlockedAreas.Contains(areaId))
-    //    {
-    //        gameData.unlockedAreas.Add(areaId);
-    //    }
+        if (!gameData.unlockedAreas.Contains(areaId))
+        {
+            gameData.unlockedAreas.Add(areaId);
+        }
 
-    //    if (areaId > gameData.highestUnlockedArea)
-    //    {
-    //        gameData.highestUnlockedArea = areaId;
-    //    }
+        if (areaId > gameData.highestUnlockedArea)
+        {
+            gameData.highestUnlockedArea = areaId;
+        }
 
-    //    if (lastLevelInArea > gameData.highestUnlockedLevel)
-    //    {
-    //        gameData.highestUnlockedLevel = lastLevelInArea;
-    //    }
+        if (lastLevelInArea > gameData.highestUnlockedLevel)
+        {
+            gameData.highestUnlockedLevel = lastLevelInArea;
+        }
 
-    //    SaveManager.Instance.SaveData();
+        SaveManager.Instance.SaveData();
 
-    //    if (logDetails)
-    //    {
-    //        Debug.Log($"[LevelProgressionManager] Area {areaId} desbloqueada completamente");
-    //        Debug.Log($"[LevelProgressionManager] Estrellas ganadas en area: {starsAddedThisArea}");
-    //        Debug.Log($"[LevelProgressionManager] Total de estrellas acumuladas: {gameData.totalStars}");
-    //    }
+        if (logDetails)
+        {
+            Debug.Log($"[LevelProgressionManager] Area {areaId} desbloqueada completamente");
+            Debug.Log($"[LevelProgressionManager] Estrellas ganadas en area: {starsAddedThisArea}");
+            Debug.Log($"[LevelProgressionManager] Total de estrellas acumuladas: {gameData.totalStars}");
+        }
 
-    //    OnProgressionUpdated?.Invoke();
-    //}
+        OnProgressionUpdated?.Invoke();
+    }
 
-    //public void SimulateUnlockUpToArea(int targetArea)
-    //{
-    //    if (targetArea < 1 || targetArea > TotalAreas)
-    //    {
-    //        Debug.LogError($"[LevelProgressionManager] Area objetivo invalida: {targetArea}");
-    //        return;
-    //    }
+    public void SimulateUnlockUpToArea(int targetArea)
+    {
+        if (targetArea < 1 || targetArea > TotalAreas)
+        {
+            Debug.LogError($"[LevelProgressionManager] Area objetivo invalida: {targetArea}");
+            return;
+        }
 
-    //    Debug.Log($"[LevelProgressionManager] DESBLOQUEANDO HASTA AREA {targetArea}");
+        Debug.Log($"[LevelProgressionManager] DESBLOQUEANDO HASTA AREA {targetArea}");
 
-    //    for (int area = 1; area <= targetArea; area++)
-    //    {
-    //        SimulateAreaUnlock(area, logDetails: false);
-    //    }
+        for (int area = 1; area <= targetArea; area++)
+        {
+            SimulateAreaUnlock(area, logDetails: false);
+        }
 
-    //    Debug.Log($"[LevelProgressionManager] Areas 1-{targetArea} desbloqueadas");
-    //    Debug.Log($"[LevelProgressionManager] Total estrellas: {SaveManager.Instance.GetGameData().totalStars}");
+        Debug.Log($"[LevelProgressionManager] Areas 1-{targetArea} desbloqueadas");
+        Debug.Log($"[LevelProgressionManager] Total estrellas: {SaveManager.Instance.GetGameData().totalStars}");
 
-    //    OnProgressionUpdated?.Invoke();
-    //}
+        OnProgressionUpdated?.Invoke();
+    }
 
-    //private void RecalculateTotalStars(GameData gameData)
-    //{
-    //    int total = 0;
-    //    foreach (var kvp in gameData.levelStars)
-    //    {
-    //        total += kvp.Value;
-    //    }
-    //    gameData.totalStars = total;
-    //}
+    private void RecalculateTotalStars(GameData gameData)
+    {
+        int total = 0;
+        foreach (var kvp in gameData.levelStars)
+        {
+            total += kvp.Value;
+        }
+        gameData.totalStars = total;
+    }
 
-    //[ContextMenu("Debug/Resetear Progreso Area 1")]
-    //private void ResetArea1Progress() => ResetAreaProgress(1);
+    [ContextMenu("Debug/Resetear Progreso Area 1")]
+    private void ResetArea1Progress() => ResetAreaProgress(1);
 
-    //[ContextMenu("Debug/Resetear Progreso Area 2")]
-    //private void ResetArea2Progress() => ResetAreaProgress(2);
+    [ContextMenu("Debug/Resetear Progreso Area 2")]
+    private void ResetArea2Progress() => ResetAreaProgress(2);
 
-    //public void ResetAreaProgress(int areaId)
-    //{
-    //    if (SaveManager.Instance == null)
-    //    {
-    //        Debug.LogError("[LevelProgressionManager] SaveManager no disponible");
-    //        return;
-    //    }
+    public void ResetAreaProgress(int areaId)
+    {
+        if (SaveManager.Instance == null)
+        {
+            Debug.LogError("[LevelProgressionManager] SaveManager no disponible");
+            return;
+        }
 
-    //    if (areaId < 1 || areaId > TotalAreas)
-    //    {
-    //        Debug.LogError($"[LevelProgressionManager] Area invalida: {areaId}");
-    //        return;
-    //    }
+        if (areaId < 1 || areaId > TotalAreas)
+        {
+            Debug.LogError($"[LevelProgressionManager] Area invalida: {areaId}");
+            return;
+        }
 
-    //    var gameData = SaveManager.Instance.GetGameData();
+        var gameData = SaveManager.Instance.GetGameData();
 
-    //    int firstLevelInArea = ((areaId - 1) * LevelsPerArea) + 1;
-    //    int lastLevelInArea = areaId * LevelsPerArea;
+        int firstLevelInArea = ((areaId - 1) * LevelsPerArea) + 1;
+        int lastLevelInArea = areaId * LevelsPerArea;
 
-    //    Debug.Log($"[LevelProgressionManager] Reseteando area {areaId} (niveles {firstLevelInArea}-{lastLevelInArea})");
+        Debug.Log($"[LevelProgressionManager] Reseteando area {areaId} (niveles {firstLevelInArea}-{lastLevelInArea})");
 
-    //    for (int levelId = firstLevelInArea; levelId <= lastLevelInArea; levelId++)
-    //    {
-    //        if (gameData.levelStars.ContainsKey(levelId))
-    //        {
-    //            gameData.levelStars.Remove(levelId);
-    //        }
+        for (int levelId = firstLevelInArea; levelId <= lastLevelInArea; levelId++)
+        {
+            if (gameData.levelStars.ContainsKey(levelId))
+            {
+                gameData.levelStars.Remove(levelId);
+            }
 
-    //        if (gameData.levelObjectives.ContainsKey(levelId))
-    //        {
-    //            gameData.levelObjectives.Remove(levelId);
-    //        }
+            if (gameData.levelObjectives.ContainsKey(levelId))
+            {
+                gameData.levelObjectives.Remove(levelId);
+            }
 
-    //        if (gameData.levelProgressData.ContainsKey(levelId))
-    //        {
-    //            gameData.levelProgressData.Remove(levelId);
-    //        }
-    //    }
+            if (gameData.levelProgressData.ContainsKey(levelId))
+            {
+                gameData.levelProgressData.Remove(levelId);
+            }
+        }
 
-    //    RecalculateTotalStars(gameData);
+        RecalculateTotalStars(gameData);
 
-    //    if (areaId > 1 && gameData.unlockedAreas.Contains(areaId))
-    //    {
-    //        gameData.unlockedAreas.Remove(areaId);
-    //    }
+        if (areaId > 1 && gameData.unlockedAreas.Contains(areaId))
+        {
+            gameData.unlockedAreas.Remove(areaId);
+        }
 
-    //    SaveManager.Instance.SaveData();
+        SaveManager.Instance.SaveData();
 
-    //    Debug.Log($"[LevelProgressionManager] Area {areaId} reseteada");
-    //    Debug.Log($"[LevelProgressionManager] Estrellas totales restantes: {gameData.totalStars}");
+        Debug.Log($"[LevelProgressionManager] Area {areaId} reseteada");
+        Debug.Log($"[LevelProgressionManager] Estrellas totales restantes: {gameData.totalStars}");
 
-    //    OnProgressionUpdated?.Invoke();
-    //}
+        OnProgressionUpdated?.Invoke();
+    }
 
-    //[ContextMenu("Debug/Mostrar Progreso")]
-    //private void ShowCurrentProgress()
-    //{
-    //    if (SaveManager.Instance == null)
-    //    {
-    //        Debug.LogError("[LevelProgressionManager] SaveManager no disponible");
-    //        return;
-    //    }
+    [ContextMenu("Debug/Mostrar Progreso")]
+    private void ShowCurrentProgress()
+    {
+        if (SaveManager.Instance == null)
+        {
+            Debug.LogError("[LevelProgressionManager] SaveManager no disponible");
+            return;
+        }
 
-    //    var gameData = SaveManager.Instance.GetGameData();
+        var gameData = SaveManager.Instance.GetGameData();
 
-    //    Debug.Log("[PROGRESO ACTUAL]");
-    //    Debug.Log($"Area mas alta desbloqueada: {gameData.highestUnlockedArea}");
-    //    Debug.Log($"Nivel mas alto desbloqueado: {gameData.highestUnlockedLevel}");
-    //    Debug.Log($"Total de estrellas: {gameData.totalStars}");
-    //    Debug.Log($"Areas desbloqueadas: {string.Join(", ", gameData.unlockedAreas)}");
+        Debug.Log("[PROGRESO ACTUAL]");
+        Debug.Log($"Area mas alta desbloqueada: {gameData.highestUnlockedArea}");
+        Debug.Log($"Nivel mas alto desbloqueado: {gameData.highestUnlockedLevel}");
+        Debug.Log($"Total de estrellas: {gameData.totalStars}");
+        Debug.Log($"Areas desbloqueadas: {string.Join(", ", gameData.unlockedAreas)}");
 
-    //    Debug.Log("\n Desglose por area");
-    //    for (int area = 1; area <= TotalAreas; area++)
-    //    {
-    //        int firstLevel = ((area - 1) * LevelsPerArea) + 1;
-    //        int lastLevel = area * LevelsPerArea;
-    //        int starsInArea = 0;
-    //        int levelsCompleted = 0;
+        Debug.Log("\n Desglose por area");
+        for (int area = 1; area <= TotalAreas; area++)
+        {
+            int firstLevel = ((area - 1) * LevelsPerArea) + 1;
+            int lastLevel = area * LevelsPerArea;
+            int starsInArea = 0;
+            int levelsCompleted = 0;
 
-    //        for (int levelId = firstLevel; levelId <= lastLevel; levelId++)
-    //        {
-    //            if (gameData.levelStars.TryGetValue(levelId, out int stars))
-    //            {
-    //                starsInArea += stars;
-    //                levelsCompleted++;
-    //            }
-    //        }
+            for (int levelId = firstLevel; levelId <= lastLevel; levelId++)
+            {
+                if (gameData.levelStars.TryGetValue(levelId, out int stars))
+                {
+                    starsInArea += stars;
+                    levelsCompleted++;
+                }
+            }
 
-    //        bool isUnlocked = gameData.unlockedAreas.Contains(area);
-    //        string status = isUnlocked ? "DESBLOQUEADA" : "BLOQUEADA";
+            bool isUnlocked = gameData.unlockedAreas.Contains(area);
+            string status = isUnlocked ? "DESBLOQUEADA" : "BLOQUEADA";
 
-    //        Debug.Log($"Area {area} ({status}): {levelsCompleted}/{LevelsPerArea} niveles | {starsInArea} ⭐");
-    //    }
-    //}
+            Debug.Log($"Area {area} ({status}): {levelsCompleted}/{LevelsPerArea} niveles | {starsInArea} ⭐");
+        }
+    }
 
 #endif
 }
