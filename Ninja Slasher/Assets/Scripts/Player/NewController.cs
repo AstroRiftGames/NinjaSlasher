@@ -44,6 +44,9 @@ public class NewController : MonoBehaviour
     private string[] colMatrix = { "Obstacle", "Scenario", "Floor"};
     private string[] deadlyMatrix = { "Enemy", "Projectile", "Spikes", "EnemyShield", };
 
+    public Action<bool> OnHit;
+    public Action<bool> OnParry;
+
     private void SetFlipped(float angle)
     {
         bool isFlipped = (angle > -180 && angle <= -90) || angle <= 180 && angle > 90;
@@ -287,6 +290,7 @@ public class NewController : MonoBehaviour
                 projectile.ReflectBackwards(transform, dirToParry);
                 HapticFeedback.LightFeedback();
                 AudioService.Instance.PlaySFXAtPosition(_audio.projectileParried, transform.position);
+                OnParry?.Invoke(false);
                 break;
             }
         }
@@ -331,6 +335,7 @@ public class NewController : MonoBehaviour
         Debug.Log("Player Died");
         if (_isKO) return;
         _isKO = true;
+        OnHit?.Invoke(false);
 
         _view.TriggerCol.enabled = false;
 
@@ -403,7 +408,14 @@ public class NewController : MonoBehaviour
                     Die();
                     break;
                 default:
-                    Die();
+                    BoxCollider2D[] boxCollider2Ds = GetComponents<BoxCollider2D>();
+                    foreach(var col in boxCollider2Ds)
+                    {
+                        if (col.IsTouching(collision))
+                        {
+                            Die();
+                        }
+                    }
                     break;
             }
         }
@@ -452,10 +464,10 @@ public class NewController : MonoBehaviour
     }
 
     #endregion
-#if UNIT_EDITOR
+#if UNITY_EDITOR
     private void OnDrawGizmos()
     {
-        Gizmos.color = Color.yellow;
+        Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(transform.position, _model.ParryRange);
     }
 #endif

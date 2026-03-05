@@ -14,6 +14,9 @@ public class Model : MonoBehaviour
     public float ParryRange => _parryRange;
     public void SetParryRange(float newValue) => _parryRange = newValue;
 
+    [SerializeField] private float _parryIndicationTime = 0.5f;
+    public float ParryIndicationTime => _parryIndicationTime;
+
     [SerializeField] private float _parryCD = 1f;
     public float ParryCD => _parryCD;
 
