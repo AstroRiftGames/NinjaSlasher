@@ -8,6 +8,7 @@ public class BlaztEgg : MonoBehaviour, IPoolable
     [SerializeField] GameObject BlaztPrefab;
     [SerializeField] GameObject _regularEgg;
     [SerializeField] GameObject _brokenEgg;
+    [SerializeField] AudioEvent _clip;
 
     private Arachnomadre _arachnomadre;
     public event Action<BlaztEgg> OnRequestDespawn;
@@ -44,8 +45,8 @@ public class BlaztEgg : MonoBehaviour, IPoolable
 
             newEnemy.SetRoaming(true);
 
-            newEnemy.SetArachnomadre(_arachnomadre);
-            _arachnomadre.IncreaseEggsAmount();
+            //newEnemy.SetArachnomadre(_arachnomadre);
+            //_arachnomadre.IncreaseEggsAmount();
 
             StartCoroutine(RequestDespawn());
         }
@@ -53,6 +54,7 @@ public class BlaztEgg : MonoBehaviour, IPoolable
 
     private IEnumerator RequestDespawn()
     {
+        AudioService.Instance.PlaySFXAtPosition(_clip, transform.position);
         yield return new WaitForSeconds(_despawnTime);
         OnRequestDespawn?.Invoke(this);
     }
