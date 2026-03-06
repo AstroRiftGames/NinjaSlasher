@@ -45,8 +45,8 @@ public class BlaztEgg : MonoBehaviour, IPoolable
 
             newEnemy.SetRoaming(true);
 
-            //newEnemy.SetArachnomadre(_arachnomadre);
-            //_arachnomadre.IncreaseEggsAmount();
+            newEnemy.SetArachnomadre(_arachnomadre);
+            _arachnomadre.IncreaseEggsAmount();
 
             StartCoroutine(RequestDespawn());
         }
