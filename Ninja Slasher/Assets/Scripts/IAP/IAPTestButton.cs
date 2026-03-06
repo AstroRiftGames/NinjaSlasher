@@ -5,6 +5,8 @@ using TMPro;
 public class IAPTestButton : MonoBehaviour
 {
     [Header("Configuration")]
+    [Tooltip("Use a dedicated test product ID (e.g. 'test_bento_small').\n" +
+             "Do NOT reuse store product IDs — that would trigger real reward handlers.")]
     [SerializeField] private string productId;
 
     [Header("UI References")]

@@ -163,7 +163,6 @@ GameObject:
   - component: {fileID: 5654046699766469444}
   - component: {fileID: 3231580589997665191}
   - component: {fileID: 5049482130508450752}
-  - component: {fileID: 8413761522139541896}
   m_Layer: 0
   m_Name: CloseStoreButton
   m_TagString: Untagged
@@ -285,18 +284,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6e1109dce497fb4469d625a38c86546c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!114 &8413761522139541896
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1057091938337245711}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6e1109dce497fb4469d625a38c86546c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &1447157374228596120
 GameObject:
   m_ObjectHideFlags: 0
@@ -399,7 +386,7 @@ GameObject:
   - component: {fileID: 9013270667493115229}
   - component: {fileID: 824175987619035411}
   m_Layer: 0
-  m_Name: Image
+  m_Name: BG_btn
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -475,7 +462,7 @@ GameObject:
   - component: {fileID: 408118407466838340}
   - component: {fileID: 514896442409875923}
   m_Layer: 0
-  m_Name: Image
+  m_Name: ProductIcon
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1295,7 +1282,7 @@ GameObject:
   - component: {fileID: 7054964777791125827}
   - component: {fileID: 8372225324868171995}
   m_Layer: 0
-  m_Name: Image
+  m_Name: ProductIcon
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1445,10 +1432,7 @@ GameObject:
   - component: {fileID: 3130578415460619149}
   - component: {fileID: 6708898995330901096}
   - component: {fileID: 2124014227932996068}
-  - component: {fileID: 3918094843799661589}
-  - component: {fileID: 4729157713973501025}
   - component: {fileID: 4178198923307159026}
-  - component: {fileID: 8283126243462249905}
   m_Layer: 0
   m_Name: NoAdsButton
   m_TagString: Untagged
@@ -1560,82 +1544,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
---- !u!114 &3918094843799661589
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5250361923976853333}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7b79b5624d944058bd39aad2b90fb275, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  productId: no_ads
-  buttonType: 0
-  automaticallyConfirmTransaction: 1
-  onProductFetched:
-    m_PersistentCalls:
-      m_Calls: []
-  onProductFetchFailed:
-    m_PersistentCalls:
-      m_Calls: []
-  onPurchaseFetched:
-    m_PersistentCalls:
-      m_Calls: []
-  onTransactionsRestored:
-    m_PersistentCalls:
-      m_Calls: []
-  onOrderPending:
-    m_PersistentCalls:
-      m_Calls: []
-  onOrderConfirmed:
-    m_PersistentCalls:
-      m_Calls: []
-  onPurchaseFailed:
-    m_PersistentCalls:
-      m_Calls: []
-  onOrderDeferred:
-    m_PersistentCalls:
-      m_Calls: []
-  onPurchaseCompleteLegacy:
-    m_PersistentCalls:
-      m_Calls: []
-  onPurchaseFailedLegacy:
-    m_PersistentCalls:
-      m_Calls: []
-  button: {fileID: 2124014227932996068}
---- !u!114 &4729157713973501025
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5250361923976853333}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5b4a377a1147dca4d948cd9f23c00f79, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  productId: No-Ads
-  buyButton: {fileID: 2124014227932996068}
-  statusText: {fileID: 338655761324550559}
-  priceText: {fileID: 3624697263589489974}
-  _audioContext: {fileID: 0}
 --- !u!114 &4178198923307159026
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5250361923976853333}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6e1109dce497fb4469d625a38c86546c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
---- !u!114 &8283126243462249905
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -1886,7 +1795,7 @@ GameObject:
   - component: {fileID: 6489398133545619483}
   - component: {fileID: 4224124900183430108}
   m_Layer: 0
-  m_Name: Image
+  m_Name: ProductIcon
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1961,7 +1870,7 @@ GameObject:
   - component: {fileID: 2702029194205714121}
   - component: {fileID: 4660971342709173377}
   m_Layer: 0
-  m_Name: Image
+  m_Name: BG_btn
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2173,8 +2082,6 @@ GameObject:
   - component: {fileID: 5593762670710372213}
   - component: {fileID: 3817345836887311657}
   - component: {fileID: 384197627206913524}
-  - component: {fileID: 3335970976020996672}
-  - component: {fileID: 3190021275153243107}
   - component: {fileID: 3509958564601067587}
   m_Layer: 0
   m_Name: LargeBundleButton
@@ -2286,69 +2193,6 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
---- !u!114 &3335970976020996672
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5960431024279212688}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7b79b5624d944058bd39aad2b90fb275, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  productId: bento_large
-  buttonType: 0
-  automaticallyConfirmTransaction: 1
-  onProductFetched:
-    m_PersistentCalls:
-      m_Calls: []
-  onProductFetchFailed:
-    m_PersistentCalls:
-      m_Calls: []
-  onPurchaseFetched:
-    m_PersistentCalls:
-      m_Calls: []
-  onTransactionsRestored:
-    m_PersistentCalls:
-      m_Calls: []
-  onOrderPending:
-    m_PersistentCalls:
-      m_Calls: []
-  onOrderConfirmed:
-    m_PersistentCalls:
-      m_Calls: []
-  onPurchaseFailed:
-    m_PersistentCalls:
-      m_Calls: []
-  onOrderDeferred:
-    m_PersistentCalls:
-      m_Calls: []
-  onPurchaseCompleteLegacy:
-    m_PersistentCalls:
-      m_Calls: []
-  onPurchaseFailedLegacy:
-    m_PersistentCalls:
-      m_Calls: []
-  button: {fileID: 384197627206913524}
---- !u!114 &3190021275153243107
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5960431024279212688}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5b4a377a1147dca4d948cd9f23c00f79, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  productId: bento_large
-  buyButton: {fileID: 384197627206913524}
-  statusText: {fileID: 338655761324550559}
-  priceText: {fileID: 3738483320171232433}
-  _audioContext: {fileID: 0}
 --- !u!114 &3509958564601067587
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2373,7 +2217,7 @@ GameObject:
   - component: {fileID: 7845199690198580635}
   - component: {fileID: 7413251503665107148}
   m_Layer: 0
-  m_Name: Image
+  m_Name: BG_btn
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2524,8 +2368,6 @@ GameObject:
   - component: {fileID: 7517941285273310272}
   - component: {fileID: 5663407901371669843}
   - component: {fileID: 3696856940598532721}
-  - component: {fileID: 8394289239783737039}
-  - component: {fileID: 7701045800664895714}
   - component: {fileID: 1393654289081809514}
   m_Layer: 0
   m_Name: SmallBundleButton
@@ -2637,69 +2479,6 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
---- !u!114 &8394289239783737039
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6400837561331962030}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7b79b5624d944058bd39aad2b90fb275, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  productId: bento_small
-  buttonType: 0
-  automaticallyConfirmTransaction: 1
-  onProductFetched:
-    m_PersistentCalls:
-      m_Calls: []
-  onProductFetchFailed:
-    m_PersistentCalls:
-      m_Calls: []
-  onPurchaseFetched:
-    m_PersistentCalls:
-      m_Calls: []
-  onTransactionsRestored:
-    m_PersistentCalls:
-      m_Calls: []
-  onOrderPending:
-    m_PersistentCalls:
-      m_Calls: []
-  onOrderConfirmed:
-    m_PersistentCalls:
-      m_Calls: []
-  onPurchaseFailed:
-    m_PersistentCalls:
-      m_Calls: []
-  onOrderDeferred:
-    m_PersistentCalls:
-      m_Calls: []
-  onPurchaseCompleteLegacy:
-    m_PersistentCalls:
-      m_Calls: []
-  onPurchaseFailedLegacy:
-    m_PersistentCalls:
-      m_Calls: []
-  button: {fileID: 3696856940598532721}
---- !u!114 &7701045800664895714
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6400837561331962030}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5b4a377a1147dca4d948cd9f23c00f79, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  productId: bento_small
-  buyButton: {fileID: 3696856940598532721}
-  statusText: {fileID: 338655761324550559}
-  priceText: {fileID: 3519484856819396910}
-  _audioContext: {fileID: 0}
 --- !u!114 &1393654289081809514
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3072,8 +2851,6 @@ GameObject:
   - component: {fileID: 1691944594407039666}
   - component: {fileID: 734820420050368336}
   - component: {fileID: 2198158985156271907}
-  - component: {fileID: 4676107527560041726}
-  - component: {fileID: 8846197832330605043}
   - component: {fileID: 6241879260165860052}
   m_Layer: 0
   m_Name: MediumBundleButton
@@ -3185,69 +2962,6 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
---- !u!114 &4676107527560041726
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7467589462247992573}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7b79b5624d944058bd39aad2b90fb275, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  productId: bento_medium
-  buttonType: 0
-  automaticallyConfirmTransaction: 1
-  onProductFetched:
-    m_PersistentCalls:
-      m_Calls: []
-  onProductFetchFailed:
-    m_PersistentCalls:
-      m_Calls: []
-  onPurchaseFetched:
-    m_PersistentCalls:
-      m_Calls: []
-  onTransactionsRestored:
-    m_PersistentCalls:
-      m_Calls: []
-  onOrderPending:
-    m_PersistentCalls:
-      m_Calls: []
-  onOrderConfirmed:
-    m_PersistentCalls:
-      m_Calls: []
-  onPurchaseFailed:
-    m_PersistentCalls:
-      m_Calls: []
-  onOrderDeferred:
-    m_PersistentCalls:
-      m_Calls: []
-  onPurchaseCompleteLegacy:
-    m_PersistentCalls:
-      m_Calls: []
-  onPurchaseFailedLegacy:
-    m_PersistentCalls:
-      m_Calls: []
-  button: {fileID: 2198158985156271907}
---- !u!114 &8846197832330605043
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7467589462247992573}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5b4a377a1147dca4d948cd9f23c00f79, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  productId: bento_medium
-  buyButton: {fileID: 2198158985156271907}
-  statusText: {fileID: 338655761324550559}
-  priceText: {fileID: 5877273853171405038}
-  _audioContext: {fileID: 0}
 --- !u!114 &6241879260165860052
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3408,8 +3122,6 @@ GameObject:
   - component: {fileID: 6463567570821753243}
   - component: {fileID: 5609550664955883832}
   - component: {fileID: 4822311920749736321}
-  - component: {fileID: 58250831423870288}
-  - component: {fileID: 6777198902217500757}
   - component: {fileID: 4398040686610566230}
   m_Layer: 0
   m_Name: CurrencyButton
@@ -3521,69 +3233,6 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
---- !u!114 &58250831423870288
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8451043220951601688}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7b79b5624d944058bd39aad2b90fb275, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  productId: ninja_coins
-  buttonType: 0
-  automaticallyConfirmTransaction: 1
-  onProductFetched:
-    m_PersistentCalls:
-      m_Calls: []
-  onProductFetchFailed:
-    m_PersistentCalls:
-      m_Calls: []
-  onPurchaseFetched:
-    m_PersistentCalls:
-      m_Calls: []
-  onTransactionsRestored:
-    m_PersistentCalls:
-      m_Calls: []
-  onOrderPending:
-    m_PersistentCalls:
-      m_Calls: []
-  onOrderConfirmed:
-    m_PersistentCalls:
-      m_Calls: []
-  onPurchaseFailed:
-    m_PersistentCalls:
-      m_Calls: []
-  onOrderDeferred:
-    m_PersistentCalls:
-      m_Calls: []
-  onPurchaseCompleteLegacy:
-    m_PersistentCalls:
-      m_Calls: []
-  onPurchaseFailedLegacy:
-    m_PersistentCalls:
-      m_Calls: []
-  button: {fileID: 4822311920749736321}
---- !u!114 &6777198902217500757
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8451043220951601688}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5b4a377a1147dca4d948cd9f23c00f79, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  productId: Ninja Coins
-  buyButton: {fileID: 4822311920749736321}
-  statusText: {fileID: 338655761324550559}
-  priceText: {fileID: 7110212807925787943}
-  _audioContext: {fileID: 0}
 --- !u!114 &4398040686610566230
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3775,6 +3424,7 @@ GameObject:
   - component: {fileID: 8834916633519854806}
   - component: {fileID: 5486440181603656900}
   - component: {fileID: 3151506175489897319}
+  - component: {fileID: 2740913347110879099}
   m_Layer: 0
   m_Name: StoreModal
   m_TagString: Untagged
@@ -3857,6 +3507,25 @@ MonoBehaviour:
   _mediumProductId: bento_medium
   _largeProductId: bento_large
   _config: {fileID: 11400000, guid: 74279b14b31338d468f57d4ff087a4f6, type: 2}
+--- !u!114 &2740913347110879099
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9013924366456138119}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e56983fee9c350446b1cd11082f35c9a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _handler: {fileID: 3151506175489897319}
+  _smallBtn: {fileID: 3696856940598532721}
+  _mediumBtn: {fileID: 2198158985156271907}
+  _largeBtn: {fileID: 384197627206913524}
+  _smallPriceText: {fileID: 3519484856819396910}
+  _mediumPriceText: {fileID: 5877273853171405038}
+  _largePriceText: {fileID: 3738483320171232433}
 --- !u!1 &9204011793414983601
 GameObject:
   m_ObjectHideFlags: 0

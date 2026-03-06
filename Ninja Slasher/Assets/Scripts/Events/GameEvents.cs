@@ -231,6 +231,17 @@ public static class GameEvents
 
     #endregion
 
+    #region CURRENCY EVENTS
+
+    public static event Action<int> OnCoinsChanged;
+
+    public static void RaiseCoinsChanged(int newTotal)
+    {
+        OnCoinsChanged?.Invoke(newTotal);
+    }
+
+    #endregion
+
     #region DAILY WHEEL EVENTS
 
     public static event Action<bool> OnWheelAvailabilityChanged;
@@ -303,6 +314,11 @@ public static class GameEvents
         OnRewardAvailabilityChanged = null;
     }
 
+    public static void ClearAllCurrencyEvents()
+    {
+        OnCoinsChanged = null;
+    }
+
     public static void ClearAllEvents()
     {
         ClearAllLifeEvents();
@@ -313,6 +329,7 @@ public static class GameEvents
         ClearAllProgressionEvents();
         ClearAllSaveEvents();
         ClearAllRewardEvents();
+        ClearAllCurrencyEvents();
     }
 
     #endregion

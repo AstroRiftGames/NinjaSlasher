@@ -4464,8 +4464,10 @@ GameObject:
   m_Component:
   - component: {fileID: 738966279585185943}
   - component: {fileID: 1226429381621549968}
+  - component: {fileID: 5351395851299736823}
+  - component: {fileID: 6271995020611204797}
   m_Layer: 5
-  m_Name: Coins
+  m_Name: CoinCounterUI
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -4518,6 +4520,42 @@ MonoBehaviour:
   m_ChildScaleWidth: 0
   m_ChildScaleHeight: 0
   m_ReverseArrangement: 0
+--- !u!114 &5351395851299736823
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2667910051805815639}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9c5c8300a64c9214aaf8e44b3c9d6f53, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _audio: {fileID: 0}
+--- !u!114 &6271995020611204797
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2667910051805815639}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 629adeccc0429bf40a961a0a136edf1d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _label: {fileID: 7315624145292078212}
+  _coinIcon: {fileID: 5560389747251178247}
+  _animationDuration: 0.7
+  _ease: 9
+  _punchIcon: 1
+  _iconPunch: {x: 0.35, y: 0.35, z: 0}
+  _iconPunchDuration: 0.4
+  _punchLabel: 1
+  _labelPunch: {x: 0.2, y: 0.2, z: 0}
+  _labelPunchDuration: 0.3
+  _audioContext: {fileID: 5351395851299736823}
 --- !u!1 &2702968494879460193
 GameObject:
   m_ObjectHideFlags: 0
@@ -9370,7 +9408,7 @@ GameObject:
   - component: {fileID: 4127874830426701134}
   - component: {fileID: 3137086989668937696}
   m_Layer: 5
-  m_Name: Image
+  m_Name: CoinIcon
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

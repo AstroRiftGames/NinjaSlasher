@@ -105,7 +105,6 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
     {
         string backupPath = saveFilePath + ".bak";
 
-        // Intentar cargar el save principal; si falla o no existe, intentar el backup.
         if (TryLoadFromFile(saveFilePath)) return true;
 
         if (File.Exists(backupPath))
@@ -113,8 +112,6 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
             Debug.LogWarning("[SaveManager] Save principal no disponible o corrupto. Recuperando desde backup.");
             if (TryLoadFromFile(backupPath))
             {
-                // Restaurar el backup como save principal para que las próximas
-                // escrituras vuelvan al flujo normal.
                 try { File.Copy(backupPath, saveFilePath, overwrite: true); } catch { /* no crítico */ }
                 return true;
             }
@@ -411,8 +408,6 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
 
             File.WriteAllText(tempPath, json);
 
-            // File.Replace requires the destination to already exist.
-            // On first install (no save file yet), fall back to a simple move.
             if (File.Exists(saveFilePath))
                 File.Replace(tempPath, saveFilePath, backupPath);
             else
@@ -688,6 +683,7 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
         if (amount <= 0) return;
         GetGameData().coins += amount;
         SaveData();
+        GameEvents.RaiseCoinsChanged(GetGameData().coins);
     }
 
     public int GetCoins() => GetGameData().coins;
