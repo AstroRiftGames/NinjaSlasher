@@ -20,16 +20,12 @@ public class Enemy : MonoBehaviour
 
     public virtual void OnEnable()
     {
-        VulnerabilityCheck.OnVulnerabilityCheckColision += DetectCollision;
-
         if (CustomUpdateManager.Instance != null)
             CustomUpdateManager.Instance.SubscribeToUpdate(CustomUpdate);
     }
 
     public virtual void OnDisable()
     {
-        VulnerabilityCheck.OnVulnerabilityCheckColision -= DetectCollision;
-
         if (CustomUpdateManager.Instance != null)
             CustomUpdateManager.Instance.UnsubscribeFromUpdate(CustomUpdate);
     }
