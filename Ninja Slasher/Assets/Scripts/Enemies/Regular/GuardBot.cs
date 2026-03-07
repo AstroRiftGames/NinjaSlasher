@@ -4,6 +4,7 @@ using UnityEngine;
 public class GuardBot : Enemy
 {
     [SerializeField] Transform _refPoint;
+    [SerializeField] GuardBotShield _shield;
     [SerializeField] float _speed;
     [SerializeField][Range(1, 2)] float _speedMultiplier;
     [SerializeField] Transform[] _nodes;
@@ -15,18 +16,20 @@ public class GuardBot : Enemy
     public bool IsPushing => _isPushing;
     private Vector2 _target;
 
+    private bool _isDying = false;
+
     private float _direction => transform.localScale.x > 0 ? 1 : -1;
     [SerializeField] float _resetDelay = 5f;
 
     public override void OnEnable()
     {
         base.OnEnable();
-        VulnerabilityCheck.OnVulnerabilityCheckColision += DetectCollision;
+        _shield.OnCollision += ManageCollision;
     }
     public override void OnDisable()
     {
         base.OnDisable();
-        VulnerabilityCheck.OnVulnerabilityCheckColision -= DetectCollision;
+        _shield.OnCollision -= ManageCollision;
 
     }
     protected override void Awake()
@@ -73,8 +76,8 @@ public class GuardBot : Enemy
         bool thereIsObstacleTop = Physics2D.Raycast(_refPoint.position + transform.up * .8f, transform.right * _direction, 1.5f, _obstaclesLayer);
         bool thereIsObstacleMid = Physics2D.Raycast(_refPoint.position, transform.right * _direction, 1.5f, _obstaclesLayer);
         bool thereIsObstacleBottom = Physics2D.Raycast(_refPoint.position - transform.up * .8f, transform.right * _direction, 1.5f, _obstaclesLayer);
-        
-        if (thereIsFloor && !(thereIsObstacleTop || thereIsObstacleMid ||thereIsObstacleBottom))
+
+        if (!_isDying && thereIsFloor && !(thereIsObstacleTop || thereIsObstacleMid || thereIsObstacleBottom))
         {
             _rb.linearVelocityX = _direction * _currentSpeed;
         }
@@ -85,6 +88,16 @@ public class GuardBot : Enemy
                 _animator.SetTrigger("OnFloorEnd");
             }
             _rb.linearVelocityX = 0;
+        }
+    }
+
+    private void ManageCollision(GameObject other)
+    {
+        AudioService.Instance.PlaySFXAtPosition(_audioContext.Audio.collision, transform.position);
+        if(other.tag == "Player")
+        {
+            other.TryGetComponent(out NewController controller);
+            controller.Die();
         }
     }
 
@@ -140,7 +153,7 @@ public class GuardBot : Enemy
 
     public override void Die()
     {
-        StopAllCoroutines();
+        _isDying = true;
         _currentSpeed = 0;
         FrontCol.SetActive(false);
         base.Die();

@@ -454,6 +454,7 @@ MonoBehaviour:
     m_Bits: 1024
   _animator: {fileID: 1658897760661979304}
   _refPoint: {fileID: 5312664167768289049}
+  _shield: {fileID: 6399494175244458043}
   _speed: 1.5
   _speedMultiplier: 2
   _nodes:
@@ -665,7 +666,7 @@ GameObject:
   - component: {fileID: 6399494175244458043}
   m_Layer: 9
   m_Name: VulnerabilityCheck Front
-  m_TagString: Untagged
+  m_TagString: EnemyShield
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -743,7 +744,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ada3865617e93c046923bb6fadda3948, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _direction: 3
+  _col: {fileID: 1983014986898752610}
 --- !u!1 &4237327453510615913
 GameObject:
   m_ObjectHideFlags: 0
