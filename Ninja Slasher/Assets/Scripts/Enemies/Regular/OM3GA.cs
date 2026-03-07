@@ -28,9 +28,8 @@ public class OM3GA : RangeEnemy
         _ray = ray;
     }
 
-    public override void Start()
+    public void Start()
     {
-        base.Start();
         _ray.enabled = false;
     }
     public override void CustomUpdate()

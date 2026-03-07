@@ -14,9 +14,8 @@ public class KRUSH9 : Enemy
         _weapon = GetComponentInChildren<KRUSH9_Weapon>();
     }
 
-    public override void Start()
+    public void Start()
     {
-        base.Start();
         _animator.SetFloat("AttackSpeed", _attackSpeed);
     }
 

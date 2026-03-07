@@ -10,9 +10,8 @@ public class FlyingEnemy : Enemy
     private Vector2 _dirToTarget;
     private Vector2 _target;
 
-    public override void Start()
+    public void Start()
     {
-        base.Start();
         UpdateTarget(transform.position);
     }
     public override void CustomUpdate()

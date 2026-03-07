@@ -8,6 +8,8 @@ public class GuardBot : Enemy
     [SerializeField][Range(1, 2)] float _speedMultiplier;
     [SerializeField] Transform[] _nodes;
 
+    [SerializeField] protected GameObject FrontCol;
+
     private float _currentSpeed;
     private bool _isPushing;
     public bool IsPushing => _isPushing;
