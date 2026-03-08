@@ -58,10 +58,8 @@ public class MultiattackDrone : BossEnemy
         _burstPool = new ObjectPool<Projectile>(_burstBullet, _burstAmount * 2, transform);
     }
 
-    public override void Start()
+    public void Start()
     {
-        base.Start();
-
         if (_shootingPointContainer != null && _player != null)
         {
             _shootingPointContainer.SetPlayer(_player);

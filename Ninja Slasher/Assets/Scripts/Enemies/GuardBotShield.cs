@@ -1,17 +1,14 @@
+using System;
 using UnityEngine;
 
-public class GuardBotShield : VulnerabilityCheck
+public class GuardBotShield : MonoBehaviour
 {
-    private GuardBot _bot;
+    public Action<GameObject> OnCollision;
+    public Collider2D Col => _col;
+    [SerializeField] Collider2D _col;
 
-    private void Awake()
+    private void OnCollisionEnter2D(Collision2D collision)
     {
-        _bot = GetComponentInParent<GuardBot>();
-    }
-
-    public override void ManageColision()
-    {
-        base.ManageColision();
-        AudioService.Instance.PlaySFXAtPosition(_bot.AudioContext.Audio.collision, _bot.transform.position);
+        OnCollision?.Invoke(gameObject);
     }
 }

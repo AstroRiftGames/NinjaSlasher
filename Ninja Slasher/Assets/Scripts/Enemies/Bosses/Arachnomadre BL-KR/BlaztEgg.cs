@@ -6,11 +6,15 @@ using UnityEngine;
 public class BlaztEgg : MonoBehaviour, IPoolable
 {
     [SerializeField] GameObject BlaztPrefab;
+    [SerializeField] GameObject _regularEgg;
+    [SerializeField] GameObject _brokenEgg;
+    [SerializeField] AudioEvent _clip;
 
     private Arachnomadre _arachnomadre;
     public event Action<BlaztEgg> OnRequestDespawn;
 
     bool _hatched = false;
+    [SerializeField] float _despawnTime = 2.5f;
 
     public void SetArachnomadre(Arachnomadre boss) => _arachnomadre = boss;
 
@@ -30,6 +34,8 @@ public class BlaztEgg : MonoBehaviour, IPoolable
         if (!_hatched && collision.gameObject.CompareTag("Floor"))
         {
             _hatched = true;
+            _regularEgg.SetActive(false);
+            _brokenEgg.SetActive(true);
 
             BL4ZT newEnemy = Instantiate(
                 BlaztPrefab,
@@ -42,12 +48,14 @@ public class BlaztEgg : MonoBehaviour, IPoolable
             newEnemy.SetArachnomadre(_arachnomadre);
             _arachnomadre.IncreaseEggsAmount();
 
-            RequestDespawn();
+            StartCoroutine(RequestDespawn());
         }
     }
 
-    private void RequestDespawn()
+    private IEnumerator RequestDespawn()
     {
+        AudioService.Instance.PlaySFXAtPosition(_clip, transform.position);
+        yield return new WaitForSeconds(_despawnTime);
         OnRequestDespawn?.Invoke(this);
     }
 }

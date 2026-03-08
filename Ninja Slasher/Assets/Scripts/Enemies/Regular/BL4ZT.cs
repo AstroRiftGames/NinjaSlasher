@@ -42,6 +42,7 @@ public class BL4ZT : Enemy
     [SerializeField] float _explosionRadius;
     private float _activationTime;
     private bool _isActive;
+    private bool _hasExploded = false;
     #endregion
 
     #region SURFACE DETECTION
@@ -284,6 +285,8 @@ public class BL4ZT : Enemy
     }
     private void Explode()
     {
+        _hasExploded = true;
+        _col.enabled = false;
         Collider2D[] cols = Physics2D.OverlapCircleAll(transform.position, _explosionRadius);
         int bl4ztKills = 0;
 
@@ -461,7 +464,10 @@ public class BL4ZT : Enemy
                     _animator.SetBool("IsMoving", false);
                 }
             }
-            else Explode();
+            else if(!_hasExploded)
+            {
+                Explode();
+            }
         }
     }
     #endregion

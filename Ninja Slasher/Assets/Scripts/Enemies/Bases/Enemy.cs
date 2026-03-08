@@ -6,11 +6,6 @@ public class Enemy : MonoBehaviour
 
     protected EnemyAudioContext _audioContext;
     public EnemyAudioContext AudioContext => _audioContext;
-
-    [SerializeField] protected GameObject UpperCol;
-    [SerializeField] protected GameObject LowerCol;
-    [SerializeField] protected GameObject RearCol;
-    [SerializeField] protected GameObject FrontCol;
     [SerializeField] float _deathTime;
 
     [SerializeField] protected LayerMask _obstaclesLayer;
@@ -25,16 +20,12 @@ public class Enemy : MonoBehaviour
 
     public virtual void OnEnable()
     {
-        VulnerabilityCheck.OnVulnerabilityCheckColision += DetectCollision;
-
         if (CustomUpdateManager.Instance != null)
             CustomUpdateManager.Instance.SubscribeToUpdate(CustomUpdate);
     }
 
     public virtual void OnDisable()
     {
-        VulnerabilityCheck.OnVulnerabilityCheckColision -= DetectCollision;
-
         if (CustomUpdateManager.Instance != null)
             CustomUpdateManager.Instance.UnsubscribeFromUpdate(CustomUpdate);
     }
@@ -56,11 +47,6 @@ public class Enemy : MonoBehaviour
         _player = FindAnyObjectByType<NewController>().transform;
     }
 
-    public virtual void Start()
-    {
-        CheckVulnerability();
-    }
-
     public virtual void CustomUpdate() { }
 
     protected virtual void InitializeAudioContext()
@@ -75,14 +61,6 @@ public class Enemy : MonoBehaviour
 #if UNITY_EDITOR
         Debug.Log($"Hit rejected: {dir}");
 #endif
-    }
-
-    protected void CheckVulnerability()
-    {
-        UpperCol.SetActive(!_data.IsVulnerable.fromUp);
-        LowerCol.SetActive(!_data.IsVulnerable.fromDown);
-        RearCol.SetActive(!_data.IsVulnerable.fromBehind);
-        FrontCol.SetActive(!_data.IsVulnerable.fromFront);
     }
 
     public virtual void Die()

@@ -80,9 +80,8 @@ public class DemolitionSentinel : BossEnemy
     public SentinelAudioContext SentinelAudio => _sentinelAudio;
 
     #region MAGIC METHODS
-    public override void Start()
+    public void Start()
     {
-        base.Start();
         InitializeFSM();
         InitializeTree();
         _currentBall = _balls[0];

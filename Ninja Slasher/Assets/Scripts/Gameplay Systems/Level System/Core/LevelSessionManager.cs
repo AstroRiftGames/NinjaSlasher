@@ -101,7 +101,7 @@ public class LevelSessionManager : MonoBehaviourSingleton<LevelSessionManager>
 
             if (objectiveService == null)
             {
-                Debug.LogError($"[LevelSessionManager] CRÍTICO: ObjectiveService es null después de crearlo para nivel {levelId}");
+                Debug.LogError($"[LevelSessionManager] ObjectiveService es null después de crearlo para nivel {levelId}");
             }
         }
         catch (System.Exception e)
@@ -316,16 +316,35 @@ public class LevelSessionManager : MonoBehaviourSingleton<LevelSessionManager>
     private void PlayGameplayMusic()
     {
         var config = currentSession?.Configuration;
-        if (config == null)
-            return;
+        if (config == null) return;
 
-        AudioEvent music = config.unlockRequirements.isBossLevel
-            ? config.bossMusic
-            : config.gameplayMusic;
-
-        if (music != null)
+        if (config.unlockRequirements.isBossLevel)
         {
-            AudioService.Instance.PlayMusic(music);
+            if (config.bossMusic == null)
+            {
+                Debug.LogWarning(
+                    $"[LevelSessionManager] Nivel {currentSession.LevelId} ({config.name}): " +
+                    $"isBossLevel=true pero el campo 'bossMusic' no está asignado. " +
+                    $"Asigna un AudioEvent en el LevelConfiguration SO de este nivel.",
+                    config);
+                return;
+            }
+
+            AudioService.Instance.PlayMusic(config.bossMusic);
+        }
+        else
+        {
+            if (config.gameplayMusic == null)
+            {
+                Debug.LogWarning(
+                    $"[LevelSessionManager] Nivel {currentSession.LevelId} ({config.name}): " +
+                    $"El campo 'gameplayMusic' no está asignado. " +
+                    $"Asigna un AudioEvent en el LevelConfiguration SO de este nivel.",
+                    config);
+                return;
+            }
+
+            AudioService.Instance.PlayMusic(config.gameplayMusic);
         }
     }
 
