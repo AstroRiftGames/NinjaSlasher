@@ -80,17 +80,20 @@ public class EmergencyBundleOverlay : UIOverlayBase
 
     private void PopulateUI(EmergencyBundleOffer offer)
     {
-        if (_bundleIcon != null && offer.Icon != null)
-            _bundleIcon.sprite = offer.Icon;
+        var display = offer.Product?.display;
+        var reward  = offer.Product?.bundleReward;
+
+        if (_bundleIcon != null && display?.icon != null)
+            _bundleIcon.sprite = display.icon;
 
         if (_bundleNameText != null)
-            _bundleNameText.text = offer.DisplayName;
+            _bundleNameText.text = display?.bundleName ?? string.Empty;
 
         if (_priceText != null)
             _priceText.text = offer.LocalizedPrice;
 
         if (_rewardText != null)
-            _rewardText.text = BuildRewardDescription(offer.Reward);
+            _rewardText.text = BuildRewardDescription(reward);
     }
 
     private string BuildRewardDescription(BundleRewardData reward)
@@ -166,10 +169,13 @@ public class EmergencyBundleOverlay : UIOverlayBase
 
     private void OnBuyClicked()
     {
-        if (_currentOffer == null || string.IsNullOrEmpty(_currentOffer.ProductId)) return;
+        if (_currentOffer?.Product == null) return;
+
+        string productId = _currentOffer.Product.PrimaryProductId;
+        if (string.IsNullOrEmpty(productId)) return;
 
         if (IAPManager.Instance != null)
-            IAPManager.Instance.PurchaseProduct(_currentOffer.ProductId);
+            IAPManager.Instance.PurchaseProduct(productId);
         else
             Debug.LogWarning("[EmergencyBundleOverlay] IAPManager no disponible.");
     }

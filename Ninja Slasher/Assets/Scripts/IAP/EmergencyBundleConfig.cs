@@ -3,15 +3,15 @@ using UnityEngine;
 [CreateAssetMenu(fileName = "EmergencyBundleConfig", menuName = "Store/Emergency Bundle Config")]
 public class EmergencyBundleConfig : ScriptableObject
 {
-    [Header("Emergency Bundle Product IDs")]
-    [Tooltip("Primary product ID del bundle Small")]
-    public string smallBundleProductId;
+    [Header("Bundle Products")]
+    [Tooltip("Producto IAP para el tier Small.")]
+    public StoreProductDefinition smallBundle;
 
-    [Tooltip("Primary product ID del bundle Medium")]
-    public string mediumBundleProductId;
+    [Tooltip("Producto IAP para el tier Medium.")]
+    public StoreProductDefinition mediumBundle;
 
-    [Tooltip("Primary product ID del bundle Large")]
-    public string largeBundleProductId;
+    [Tooltip("Producto IAP para el tier Large.")]
+    public StoreProductDefinition largeBundle;
 
     [Header("Activation Thresholds")]
     [Tooltip("Derrotas consecutivas en niveles normales para mostrar la oferta.")]
@@ -40,10 +40,22 @@ public class EmergencyBundleConfig : ScriptableObject
     [Tooltip("Minutos que permanece visible la oferta antes de descartarse automáticamente.")]
     [Min(0.5f)] public float offerDurationMinutes = 5f;
 
-    public string GetProductIdForTier(BundleTier tier) => tier switch
+    public StoreProductDefinition GetProductForTier(BundleTier tier) => tier switch
     {
-        BundleTier.Large  => largeBundleProductId,
-        BundleTier.Medium => mediumBundleProductId,
-        _                 => smallBundleProductId,
+        BundleTier.Large  => largeBundle,
+        BundleTier.Medium => mediumBundle,
+        _                 => smallBundle,
     };
+
+    private void OnValidate()
+    {
+        if (smallBundle == null)
+            Debug.LogWarning("EmergencyBundleConfig: smallBundle not assigned", this);
+
+        if (mediumBundle == null)
+            Debug.LogWarning("EmergencyBundleConfig: mediumBundle not assigned", this);
+
+        if (largeBundle == null)
+            Debug.LogWarning("EmergencyBundleConfig: largeBundle not assigned", this);
+    }
 }

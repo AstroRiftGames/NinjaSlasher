@@ -1,17 +1,10 @@
-using UnityEngine;
-
 public class EmergencyBundleOffer
 {
-    public BundleTier Tier;
-    public string ProductId;
+    public StoreProductDefinition Product;
+
     public string LocalizedPrice;
 
-    public string DisplayName;
-
-    public Sprite Icon;
-
-    public BundleRewardData Reward;
-
-    public float OfferDurationSeconds;
+    public BundleTier         Tier;
+    public float              OfferDurationSeconds;
     public LevelFailedContext FailContext;
 }

@@ -5,10 +5,6 @@ public class EmergencyBundleService : MonoBehaviourSingleton<EmergencyBundleServ
     [Header("Configuration")]
     [SerializeField] private EmergencyBundleConfig _config;
 
-    [Header("Catalog")]
-    [SerializeField] private StoreCatalog _catalog;
-
-    private string                 _activeProductId;
     private StoreProductDefinition _activeProduct;
     private bool                   _offerActive;
 
@@ -39,10 +35,10 @@ public class EmergencyBundleService : MonoBehaviourSingleton<EmergencyBundleServ
     private void OnLevelFailed(LevelFailedContext ctx)
     {
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-        Debug.Log($"[EBS] OnLevelFailed | IsBoss={ctx.IsBossLevel} | config={(_config != null ? "OK" : "NULL")} | catalog={(_catalog != null ? "OK" : "NULL")}");
+        Debug.Log($"[EBS] OnLevelFailed | IsBoss={ctx.IsBossLevel} | config={(_config != null ? "OK" : "NULL")}");
 #endif
 
-        if (_config == null || _catalog == null || SaveManager.Instance == null) return;
+        if (_config == null || SaveManager.Instance == null) return;
 
         var data = SaveManager.Instance.GetGameData();
 
@@ -88,12 +84,11 @@ public class EmergencyBundleService : MonoBehaviourSingleton<EmergencyBundleServ
 
     private void OnRewardGranted(StoreProductDefinition product)
     {
-        if (!_offerActive) return;
-        if (string.IsNullOrEmpty(_activeProductId)) return;
-        if (!product.MatchesProductId(_activeProductId)) return;
+        if (!_offerActive || _activeProduct == null) return;
+        if (product != _activeProduct) return;
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-        Debug.Log($"[EBS] Offer purchased: '{_activeProductId}' → recording activation");
+        Debug.Log($"[EBS] Offer purchased: '{_activeProduct.PrimaryProductId}' → recording activation");
 #endif
 
         AutoSaveManager.Instance?.OnEmergencyBundleActivated();
@@ -104,33 +99,31 @@ public class EmergencyBundleService : MonoBehaviourSingleton<EmergencyBundleServ
     {
         if (_offerActive) return;
 
-        BundleTier tier      = FrustrationEvaluator.SelectTier(ctx, _config, data);
-        string     productId = _config.GetProductIdForTier(tier);
-        var        product   = _catalog.GetByProductId(productId);
+        BundleTier tier    = FrustrationEvaluator.SelectTier(ctx, _config, data);
+        var        product = _config.GetProductForTier(tier);
 
         if (product == null)
         {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            Debug.LogWarning($"[EBS] No product assigned for tier {tier} in EmergencyBundleConfig.");
+#endif
             return;
         }
 
         var offer = new EmergencyBundleOffer
         {
             Tier                 = tier,
-            ProductId            = productId,
-            LocalizedPrice       = IAPManager.Instance?.GetProductPrice(productId) ?? "—",
-            DisplayName          = product.display?.bundleName ?? string.Empty,
-            Icon                 = product.display?.icon,
-            Reward               = product.bundleReward,
+            Product              = product,
+            LocalizedPrice       = IAPManager.Instance?.GetProductPrice(product.PrimaryProductId) ?? "—",
             OfferDurationSeconds = _config.offerDurationMinutes * 60f,
             FailContext          = ctx,
         };
 
-        _activeProductId = productId;
-        _activeProduct   = product;
-        _offerActive     = true;
+        _activeProduct = product;
+        _offerActive   = true;
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-        Debug.Log($"[EBS] Showing offer | tier={tier} | productId='{productId}'");
+        Debug.Log($"[EBS] Showing offer | tier={tier} | productId='{product.PrimaryProductId}'");
 #endif
 
         UIEvents.RequestShowEmergencyBundleOverlay(offer);
@@ -138,9 +131,8 @@ public class EmergencyBundleService : MonoBehaviourSingleton<EmergencyBundleServ
 
     private void CloseOffer(bool purchased = false)
     {
-        _offerActive     = false;
-        _activeProductId = null;
-        _activeProduct   = null;
+        _offerActive   = false;
+        _activeProduct = null;
 
         UIEvents.RequestHideEmergencyBundleOverlay();
         ShowDefeatUI();
