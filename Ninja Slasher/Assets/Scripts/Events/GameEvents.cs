@@ -242,6 +242,15 @@ public static class GameEvents
 
     #endregion
 
+    #region REWARD EVENTS
+
+    public static event Action<StoreProductDefinition> OnRewardGranted;
+
+    public static void RaiseRewardGranted(StoreProductDefinition product)
+        => OnRewardGranted?.Invoke(product);
+
+    #endregion
+
     #region DAILY WHEEL EVENTS
 
     public static event Action<bool> OnWheelAvailabilityChanged;
@@ -312,6 +321,7 @@ public static class GameEvents
     {
         OnRewardClaimed = null;
         OnRewardAvailabilityChanged = null;
+        OnRewardGranted = null;
     }
 
     public static void ClearAllCurrencyEvents()

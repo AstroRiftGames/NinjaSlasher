@@ -496,7 +496,6 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
         {
             if (HasTimedUnlimitedLives)
             {
-                // No deduct — cancel virtual deduction silently.
                 _virtualLives = CurrentLives;
                 _hasVirtualDeduction = false;
                 _levelInProgress = false;
@@ -693,28 +692,6 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
         currentConsecutiveLosses = 0;
         SaveAdsProgress();
     }
-
-    #endregion
-
-    #region DEBUG
-
-    [ContextMenu("Diagnose Unlimited Lives")]
-    private void DiagnoseUnlimitedLives()
-    {
-        Debug.Log("=== [LifeManager] Unlimited Lives Diagnose ===");
-        Debug.Log($"  HasTimedUnlimitedLives : {HasTimedUnlimitedLives}");
-        Debug.Log($"  _unlimitedLivesEndUtc  : {_unlimitedLivesEndUtc:O}");
-        Debug.Log($"  DateTime.UtcNow        : {DateTime.UtcNow:O}");
-        Debug.Log($"  Remaining              : {GetUnlimitedLivesRemainingTime():mm\\:ss}");
-        Debug.Log($"  CurrentLives           : {CurrentLives}");
-        Debug.Log($"  CanPlay()              : {CanPlay()}");
-        var saved = SaveManager.Instance?.GetGameData().unlimitedLivesEndUtc ?? 0;
-        Debug.Log($"  Saved epoch (GameData) : {saved} => {(saved > 0 ? DateTimeOffset.FromUnixTimeSeconds(saved).UtcDateTime.ToString("O") : "none")}");
-        Debug.Log("==============================================");
-    }
-
-    [ContextMenu("Debug: Activate 5min Unlimited Lives")]
-    private void DebugActivateUnlimitedLives() => ActivateUnlimitedLives(5f);
 
     #endregion
 }
