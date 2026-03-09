@@ -1,3 +1,4 @@
+using NUnit.Framework;
 using System;
 using System.Collections;
 using UnityEngine;
@@ -277,20 +278,21 @@ public class MultiattackDrone : BossEnemy
     {
         projectile.OnRequestDespawn -= HandleProjectileDespawn;
 
-        switch (projectile.name)
+
+        if (projectile.name.Contains("Cone"))
         {
-            case "ConeBullet(Clone)":
-                if (_conePool != null)
-                    _conePool.Release(projectile);
-                break;
-            case "RiccochetBullet(Clone)":
-                if (_ricochetPool != null)
-                    _ricochetPool.Release(projectile);
-                break;
-            case "BurstBullet(Clone)":
-                if (_burstPool != null)
-                    _burstPool.Release(projectile);
-                break;
+            if (_conePool != null)
+                _conePool.Release(projectile);
+        }
+        else if (projectile.name.Contains("Riccochet"))
+        {
+            if (_ricochetPool != null)
+                _ricochetPool.Release(projectile);
+        }
+        else if (projectile.name.Contains("Burst"))
+        {
+            if (_burstPool != null)
+                _burstPool.Release(projectile);
         }
     }
 
