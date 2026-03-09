@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using UnityEngine;
 
@@ -34,8 +35,6 @@ public class MultiattackDrone : BossEnemy
     [SerializeField] int _burstAmount;
     [SerializeField] int _coneAmount;
     [SerializeField] int _reboundAmount;
-    [SerializeField] float _timeBetweenShots;
-    [SerializeField] float _timeBetweenReboundShots;
     private AttackType _nextAttack;
     private ObjectPool<Projectile> _conePool;
     private ObjectPool<Projectile> _ricochetPool;
@@ -46,9 +45,10 @@ public class MultiattackDrone : BossEnemy
     private bool _isVulnerable;
 
     private bool _isActive = false;
-    [SerializeField] private float _waitTime;
 
     [SerializeField] private ShootingPointContainer _shootingPointContainer;
+    [SerializeField] private MultiAttackDroneAudioContext _droneAudioContext;
+    [SerializeField] MultiAttackDroneAudioSet _audioSet;
 
     protected override void Awake()
     {
@@ -66,6 +66,7 @@ public class MultiattackDrone : BossEnemy
         }
 
         StartCoroutine(Activate());
+        InitializeAudioContext();
     }
 
     public override void CustomUpdate()
@@ -99,6 +100,12 @@ public class MultiattackDrone : BossEnemy
         transform.localScale = localScale;
     }
 
+    protected override void InitializeAudioContext()
+    {
+        if (_droneAudioContext != null)
+            _droneAudioContext.Initialize(_audioSet);
+    }
+
     private bool CheckCooldown() => Time.time >= _lastAttack + _cooldown;
 
     #region VULNERABILITY MANAGEMENT
@@ -108,25 +115,25 @@ public class MultiattackDrone : BossEnemy
     {
         yield return new WaitForSeconds(_waitTime);
         _isActive = true;
-        AudioManager.Instance.PlayLoopedSFXAtPosition(SFXClip.B_Drone_Idle, transform.position);
     }
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
+        Debug.Log("Drone trigger enter: " + collision.gameObject.name);
         if (collision.gameObject.CompareTag("Projectile") && !_isVulnerable)
         {
+            Debug.Log("Drone hit by projectile, getting vulnerable");
             collision.TryGetComponent(out Projectile projectile);
             if (projectile.Shooter.gameObject.CompareTag("Player"))
             {
                 StopAllCoroutines();
-                AudioManager.Instance.PlaySFXAtPosition(SFXClip.B_Drone_ProjectileHit, transform.position);
                 StartCoroutine(GetVulnerable());
             }
         }
         else if (collision.gameObject.CompareTag("Player") && _isVulnerable)
         {
+            Debug.Log("Player hit vulnerable drone");
             StopAllCoroutines();
-            AudioManager.Instance.PlaySFXAtPosition(SFXClip.B_Drone_PlayerHit, transform.position);
             Die();
         }
     }
@@ -135,7 +142,7 @@ public class MultiattackDrone : BossEnemy
     {
         if(collision.gameObject.CompareTag("Scenario") && _isVulnerable)
         {
-            AudioManager.Instance.PlaySFXAtPosition(SFXClip.B_Drone_FloorHit, transform.position);
+            AudioService.Instance.PlaySFXAtPosition(_droneAudioContext.Audio.hitByGround, transform.position);
         }
     }
 
@@ -172,7 +179,7 @@ public class MultiattackDrone : BossEnemy
 
     private void ChooseAttack()
     {
-        int r = Random.Range(0, 3);
+        int r = UnityEngine.Random.Range(0, 3);
         _nextAttack = r switch
         {
             0 => AttackType.Burst,
@@ -205,37 +212,45 @@ public class MultiattackDrone : BossEnemy
     private IEnumerator ShootBurst()
     {
         _animator.SetTrigger("OnLinearBurst");
-        yield return new WaitForSeconds(.91f);
+        yield return new WaitForSeconds(.916f);
         for (int n = 0; n < _burstAmount; n++)
         {
-            Shoot(AttackType.Burst);
-            yield return new WaitForSeconds(_timeBetweenShots);
+            Shoot(AttackType.Burst, GetDirToPlayer());
+            yield return new WaitForSeconds(.165f);
         }
     }
 
     private IEnumerator ShootCone()
     {
         _animator.SetTrigger("OnConeShot");
-        yield return new WaitForSeconds(.91f);
-        for (int n = 0; n < _coneAmount; n++)
+        yield return new WaitForSeconds(.916f);
+        Vector2 direction = GetDirToPlayer();
+        for (int m = 0; m < _coneAmount; m++)
         {
-            Shoot(AttackType.Cone);
-            yield return new WaitForSeconds(_timeBetweenShots);
+            for (int n = 0; n < 3; n++)
+            {
+                float offsetAngle = n < 1 ? -15 : n == 1 ? 0 : 15;
+                direction = Quaternion.Euler(0, 0, offsetAngle) * direction;
+
+                Debug.DrawRay(_shootingPoint.position, direction * 5, Color.red, 1f);
+                Shoot(AttackType.Cone, direction);
+            }
+            yield return new WaitForSeconds(.5f);
         }
     }
 
     private IEnumerator ShootRebound()
     {
         _animator.SetTrigger("OnReboundShot");
-        yield return new WaitForSeconds(.91f);
+        yield return new WaitForSeconds(.916f);
         for (int n = 0; n < _reboundAmount; n++)
         {
-            Shoot(AttackType.Rebound);
-            yield return new WaitForSeconds(_timeBetweenReboundShots);
+            Shoot(AttackType.Rebound, GetDirToPlayer());
+            yield return new WaitForSeconds(.5f);
         }
     }
-
-    private void Shoot(AttackType type)
+    
+    private void Shoot(AttackType type, Vector2 direction)
     {
         ObjectPool<Projectile> pool = type switch
         {
@@ -255,19 +270,28 @@ public class MultiattackDrone : BossEnemy
         projectile.OnRequestDespawn -= HandleProjectileDespawn;
         projectile.OnRequestDespawn += HandleProjectileDespawn;
 
-        projectile.Initialize(GetDirToPlayer(), transform);
+        projectile.Initialize(direction, transform);
     }
 
     private void HandleProjectileDespawn(Projectile projectile)
     {
         projectile.OnRequestDespawn -= HandleProjectileDespawn;
 
-        if (_conePool != null && _conePool.AvailableCount >= 0)
-            _conePool.Release(projectile);
-        else if (_ricochetPool != null)
-            _ricochetPool.Release(projectile);
-        else
-            _burstPool.Release(projectile);
+        switch (projectile.name)
+        {
+            case "ConeBullet(Clone)":
+                if (_conePool != null)
+                    _conePool.Release(projectile);
+                break;
+            case "RiccochetBullet(Clone)":
+                if (_ricochetPool != null)
+                    _ricochetPool.Release(projectile);
+                break;
+            case "BurstBullet(Clone)":
+                if (_burstPool != null)
+                    _burstPool.Release(projectile);
+                break;
+        }
     }
 
     #endregion
@@ -308,8 +332,6 @@ public class MultiattackDrone : BossEnemy
 
     private IEnumerator FlyTowards(Vector2 targetPos)
     {
-        AudioManager.Instance.StopSFX(SFXClip.B_Drone_Idle);
-        AudioManager.Instance.PlayLoopedSFXAtPosition(SFXClip.B_Drone_FlyAway, transform.position);
         while (_flyingAway)
         {
             Vector2 dirToFly = (targetPos - (Vector2)transform.position).normalized;
@@ -323,8 +345,6 @@ public class MultiattackDrone : BossEnemy
             }
             yield return null;
         }
-        AudioManager.Instance.StopSFX(SFXClip.B_Drone_FlyAway);
-        AudioManager.Instance.PlayLoopedSFXAtPosition(SFXClip.B_Drone_Idle, transform.position);
     }
 
     #endregion
