@@ -610,33 +610,26 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
         foreach (var sequence in activeButtonSequences.ToList())
         {
             if (sequence != null && sequence.IsActive())
-            {
                 sequence.Kill(false);
-            }
         }
         activeButtonSequences.Clear();
 
-        if (levelButtons != null)
+        foreach (var kvp in savedButtonPositions)
         {
-            foreach (var button in levelButtons)
+            var btn = kvp.Key;
+            if (btn == null) continue;
+
+            var rt = btn.GetComponent<RectTransform>();
+            if (rt != null)
             {
-                if (button != null)
-                {
-                    DOTween.Kill(button.transform);
-
-                    var rectTransform = button.GetComponent<RectTransform>();
-                    if (rectTransform != null)
-                    {
-                        DOTween.Kill(rectTransform);
-                    }
-
-                    var buttonImage = button.GetComponent<Image>();
-                    if (buttonImage != null)
-                    {
-                        DOTween.Kill(buttonImage);
-                    }
-                }
+                DOTween.Kill(rt);
+                rt.anchoredPosition = kvp.Value;
+                rt.localRotation = Quaternion.identity;
             }
+
+            var img = btn.GetComponent<Image>();
+            if (img != null)
+                DOTween.Kill(img);
         }
     }
 

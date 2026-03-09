@@ -154,6 +154,10 @@ public static class UIEvents
     public static event Action OnHideDailyWheelModalRequested;
     public static event Action OnToggleDailyWheelModalRequested;
 
+    public static event Action OnWheelSequenceCompleted;
+    public static event Action OnDailyRewardModalClosed;
+    public static event Action OnStartupSequenceCompleted;
+
     public static event Action OnShowStoreModalRequested;
     public static event Action OnHideStoreModalRequested;
     public static event Action OnToggleStoreModalRequested;
@@ -220,6 +224,21 @@ public static class UIEvents
     public static void RequestToggleDailyWheelModal()
     {
         OnToggleDailyWheelModalRequested?.Invoke();
+    }
+
+    public static void RaiseWheelSequenceCompleted()
+    {
+        OnWheelSequenceCompleted?.Invoke();
+    }
+
+    public static void RaiseDailyRewardModalClosed()
+    {
+        OnDailyRewardModalClosed?.Invoke();
+    }
+
+    public static void RaiseStartupSequenceCompleted()
+    {
+        OnStartupSequenceCompleted?.Invoke();
     }
 
     public static void RequestShowStoreModal()
@@ -486,6 +505,9 @@ public static class UIEvents
         OnShowDailyWheelModalRequested = null;
         OnHideDailyWheelModalRequested = null;
         OnToggleDailyWheelModalRequested = null;
+        OnWheelSequenceCompleted = null;
+        OnDailyRewardModalClosed = null;
+        OnStartupSequenceCompleted = null;
         OnShowStoreModalRequested = null;
         OnHideStoreModalRequested = null;
         OnToggleStoreModalRequested = null;

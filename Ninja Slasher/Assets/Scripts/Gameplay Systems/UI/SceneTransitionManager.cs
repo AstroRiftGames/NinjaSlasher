@@ -11,10 +11,17 @@ public class SceneTransitionManager : MonoBehaviour
     [SerializeField] private GameObject _hudObject;
 
     private UIAudioContext _audioContext;
+    private DailyStartupSequence _dailyStartupSequence;
 
     private void Awake()
     {
         _audioContext = GetComponentInParent<UIAudioContext>();
+        _dailyStartupSequence = new DailyStartupSequence();
+    }
+
+    private void OnDestroy()
+    {
+        _dailyStartupSequence?.Dispose();
     }
 
     private void OnEnable()
@@ -103,6 +110,8 @@ public class SceneTransitionManager : MonoBehaviour
         AudioService.Instance?.PlaySFX(_audioContext.Audio.transitionSlash);
 
         MusicEvents.OnEnterLevelSelection?.Invoke();
+        UIEvents.RequestUpdateLivesUI(LifeManager.Instance.CurrentLives);
+        UIManager.Instance?.GetComponent<DebugUIManager>()?.ShowStarsDebug();
 
         UIEvents.RaiseLevelSelectorReady();
     }

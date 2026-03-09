@@ -1,7 +1,6 @@
 using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using System;
 
 public class UIManager : MonoBehaviourSingleton<UIManager>
 {
@@ -32,13 +31,11 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
     [Header("HUD")]
     [SerializeField] private GameplayHUD _gameplayHUD;
 
-    [Header("DAILY SYSTEMS")]
-    [SerializeField] private DailyWheelUI _dailyWheelUI;
-
     public bool IsHapticFeedbackActive => _isHapticFeedbackActive;
     private bool _isHapticFeedbackActive = true;
 
     private bool _isInitialized = false;
+
 
     #region INITIALIZATION
 
@@ -86,11 +83,6 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
         _buttonManager = GetComponent<ButtonManager>();
         _gameplayUIManager = GetComponent<GameplayUIManager>();
         _preGameUIManager = GetComponent<PreGameUIManager>();
-
-        if (_dailyWheelUI == null)
-        {
-            _dailyWheelUI = GetComponentInChildren<DailyWheelUI>();
-        }
 
         if (_buttonManager == null)
             Debug.LogError("[UIManager] ButtonManager no encontrado");
@@ -181,11 +173,11 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
         UIEvents.OnToggleProfileModalRequested += ToggleProfileModal;
 
         UIEvents.OnShowDailyRewardModalRequested += ShowDailyRewardModal;
-        UIEvents.OnHideDailyRewardModalRequested += HideDailyRewardModal;
+        UIEvents.OnHideDailyRewardModalRequested += OnHideDailyRewardRequested;
         UIEvents.OnToggleDailyRewardModalRequested += ToggleDailyRewardModal;
 
         UIEvents.OnShowDailyWheelModalRequested += ShowDailyWheelModal;
-        UIEvents.OnHideDailyWheelModalRequested += HideDailyWheelModal;
+        UIEvents.OnHideDailyWheelModalRequested += OnHideDailyWheelRequested;
         UIEvents.OnToggleDailyWheelModalRequested += ToggleDailyWheelModal;
 
         UIEvents.OnShowStoreModalRequested += ShowStoreModal;
@@ -200,13 +192,6 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
         UIEvents.OnHideGameplayHUDRequested += HideGameplayHUD;
 
         UIEvents.OnLevelPreviewRequested += HandleLevelPreviewRequested;
-
-        UIEvents.OnLevelSelectorReady += OnLevelSelectorReady;
-
-        if (_dailyWheelUI != null)
-        {
-            _dailyWheelUI.OnWheelProcessComplete += OnWheelCompleted;
-        }
     }
 
     private void UnsubscribeFromUIEvents()
@@ -242,11 +227,11 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
         UIEvents.OnToggleProfileModalRequested -= ToggleProfileModal;
 
         UIEvents.OnShowDailyRewardModalRequested -= ShowDailyRewardModal;
-        UIEvents.OnHideDailyRewardModalRequested -= HideDailyRewardModal;
+        UIEvents.OnHideDailyRewardModalRequested -= OnHideDailyRewardRequested;
         UIEvents.OnToggleDailyRewardModalRequested -= ToggleDailyRewardModal;
 
         UIEvents.OnShowDailyWheelModalRequested -= ShowDailyWheelModal;
-        UIEvents.OnHideDailyWheelModalRequested -= HideDailyWheelModal;
+        UIEvents.OnHideDailyWheelModalRequested -= OnHideDailyWheelRequested;
         UIEvents.OnToggleDailyWheelModalRequested -= ToggleDailyWheelModal;
 
         UIEvents.OnShowStoreModalRequested -= ShowStoreModal;
@@ -261,78 +246,6 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
         UIEvents.OnHideGameplayHUDRequested -= HideGameplayHUD;
 
         UIEvents.OnLevelPreviewRequested -= HandleLevelPreviewRequested;
-
-        UIEvents.OnLevelSelectorReady -= OnLevelSelectorReady;
-
-        if (_dailyWheelUI != null)
-        {
-            _dailyWheelUI.OnWheelProcessComplete -= OnWheelCompleted;
-        }
-    }
-
-    #endregion
-
-    #region DAILY SEQUENCE
-
-    private void OnLevelSelectorReady()
-    {
-        UIEvents.RequestUpdateLivesUI(LifeManager.Instance.CurrentLives);
-        GetComponent<DebugUIManager>()?.ShowStarsDebug();
-        StartCoroutine(CheckAndShowDailySequence());
-    }
-
-    private IEnumerator CheckAndShowDailySequence()
-    {
-        while (SaveManager.Instance == null || !SaveManager.Instance.IsDataLoaded ||
-               DailyWheelSystem.Instance == null || DailyRewardSystem.Instance == null)
-        {
-            yield return null;
-        }
-
-        yield return null;
-
-        bool canSpinWheel = DailyWheelSystem.Instance.CanSpinToday();
-        bool canClaimReward = DailyRewardSystem.Instance.CanClaimToday();
-
-        if (canSpinWheel)
-        {
-            yield return new WaitForSeconds(1f);
-            ShowDailyWheelModal();
-        }
-        else if (canClaimReward)
-        {
-            yield return new WaitForSeconds(1f);
-            ShowDailyRewardWithRefresh();
-        }
-    }
-
-    private void OnWheelCompleted()
-    {
-        HideDailyWheelModal();
-        StartCoroutine(CheckDailyRewardAfterWheel());
-    }
-
-    private IEnumerator CheckDailyRewardAfterWheel()
-    {
-        yield return new WaitForSeconds(0.5f);
-
-        bool canClaimReward = DailyRewardSystem.Instance.CanClaimToday();
-
-        if (canClaimReward)
-        {
-            yield return new WaitForSeconds(0.5f);
-            ShowDailyRewardWithRefresh();
-        }
-    }
-
-    private void ShowDailyRewardWithRefresh()
-    {
-        ShowDailyRewardModal();
-
-        if (DailyRewardUIManager.Instance != null)
-        {
-            DailyRewardUIManager.Instance.ShowDailyReward();
-        }
     }
 
     #endregion
@@ -410,14 +323,29 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
     private void HideProfileModal() => HidePanel(_profileModal);
     private void ToggleProfileModal() => TogglePanel(_profileModal);
 
-    private void ShowDailyRewardModal() => ShowPanel(_dailyRewardModal);
+    private void ShowDailyRewardModal()
+    {
+        ShowPanel(_dailyRewardModal);
+        DailyRewardUIManager.Instance?.ShowDailyReward();
+    }
     private void HideDailyRewardModal() => HidePanel(_dailyRewardModal);
     private void ToggleDailyRewardModal() => TogglePanel(_dailyRewardModal);
     public bool IsDailyRewardModalVisible() => IsPanelVisible(_dailyRewardModal);
 
+    private void OnHideDailyRewardRequested()
+    {
+        HideDailyRewardModal();
+    }
+
     private void ShowDailyWheelModal() => ShowPanel(_dailyWheelModal);
     private void HideDailyWheelModal() => HidePanel(_dailyWheelModal);
     private void ToggleDailyWheelModal() => TogglePanel(_dailyWheelModal);
+    public bool IsDailyWheelModalVisible() => IsPanelVisible(_dailyWheelModal);
+    private void OnHideDailyWheelRequested()
+    {
+        Debug.Log("[DailySequence] Wheel hide requested via UIEvents");
+        HideDailyWheelModal();
+    }
 
     private void ShowStoreModal() => ShowPanel(_storeModal);
     private void HideStoreModal() => HidePanel(_storeModal);

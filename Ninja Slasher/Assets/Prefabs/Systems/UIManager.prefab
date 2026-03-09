@@ -76,7 +76,7 @@ MonoBehaviour:
   _storeModal: {fileID: 2484459450777268518}
   _victoryModal: {fileID: 1968705447594022213}
   _gameplayHUD: {fileID: 1014807930679901359}
-  _dailyWheelUI: {fileID: 0}
+  _dailyWheelUI: {fileID: 6745091640480951052}
 --- !u!114 &8143181119019381039
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -9090,6 +9090,10 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.x
       value: 157.15869
       objectReference: {fileID: 0}
+    - target: {fileID: 4429686034672597627, guid: dd95610116c1810488fcfc2e77a62807, type: 3}
+      propertyPath: _dailyWheelUI
+      value: 
+      objectReference: {fileID: 6745091640480951052}
     - target: {fileID: 4661281191317841837, guid: dd95610116c1810488fcfc2e77a62807, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -9209,9 +9213,6 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 6303345843018173297, guid: dd95610116c1810488fcfc2e77a62807, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1491911290051804597}
-    - targetCorrespondingSourceObject: {fileID: 2622065037701941064, guid: dd95610116c1810488fcfc2e77a62807, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 6398571414550844030}
   m_SourcePrefab: {fileID: 100100000, guid: dd95610116c1810488fcfc2e77a62807, type: 3}
 --- !u!224 &449974424888993195 stripped
 RectTransform:
@@ -9332,23 +9333,6 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 2719197640235547736, guid: dd95610116c1810488fcfc2e77a62807, type: 3}
   m_PrefabInstance: {fileID: 8887622161313064488}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &6860212612584857952 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 2622065037701941064, guid: dd95610116c1810488fcfc2e77a62807, type: 3}
-  m_PrefabInstance: {fileID: 8887622161313064488}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &6398571414550844030
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6860212612584857952}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6e1109dce497fb4469d625a38c86546c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!114 &9127494583135020576 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 431345776973889544, guid: dd95610116c1810488fcfc2e77a62807, type: 3}

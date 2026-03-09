@@ -7,7 +7,7 @@ using UnityEngine.UI;
 
 public class DailyWheelUI : MonoBehaviour
 {
-    [Header("GARAPON VISUALS")]
+    [Header("WHEEL VISUALS")]
     [SerializeField] private RectTransform wheelBody;
     [SerializeField] private Image ballDisplayImage;
     [SerializeField] private Transform ballExitPoint;
@@ -40,8 +40,6 @@ public class DailyWheelUI : MonoBehaviour
     private bool _isSpinning = false;
     private Coroutine _timerCoroutine;
 
-    public event Action OnWheelProcessComplete;
-    
     private UIAudioContext _audioContext;
 
     private readonly Color[] _ballColors = new Color[]
@@ -58,20 +56,12 @@ public class DailyWheelUI : MonoBehaviour
     {
         GameEvents.OnWheelAvailabilityChanged += HandleAvailabilityChanged;
         GameEvents.OnWheelSpun += HandleRewardSpun;
-
-        // DEPRECATED
-        //DailyWheelSystem.OnWheelAvailabilityChanged += HandleAvailabilityChanged;
-        //DailyWheelSystem.OnRewardSpun += HandleRewardSpun;
     }
 
     private void OnDisable()
     {
         GameEvents.OnWheelAvailabilityChanged -= HandleAvailabilityChanged;
         GameEvents.OnWheelSpun -= HandleRewardSpun;
-
-        // DEPRECATED
-        //DailyWheelSystem.OnWheelAvailabilityChanged -= HandleAvailabilityChanged;
-        //DailyWheelSystem.OnRewardSpun -= HandleRewardSpun;
     }
 
     private void Start()
@@ -257,13 +247,13 @@ public class DailyWheelUI : MonoBehaviour
             {
                 rewardPopup.SetActive(false);
 
-                OnWheelProcessComplete?.Invoke();
+                UIEvents.RaiseWheelSequenceCompleted();
             });
     }
 
     public void SkipOrCloseWheel()
     {
-        OnWheelProcessComplete?.Invoke();
+        UIEvents.RaiseWheelSequenceCompleted();
     }
 
     private Color GetBallColorForReward(WheelReward reward)
