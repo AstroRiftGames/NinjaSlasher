@@ -41,11 +41,6 @@ public class DailyRewardModal : UIModalBase
             _panelAnimator.SetTrigger("Open");
         }
 
-        if (DailyRewardUIManager.Instance != null)
-        {
-            DailyRewardUIManager.Instance.ShowDailyReward();
-        }
-
         OnShown();
     }
 
@@ -71,6 +66,7 @@ public class DailyRewardModal : UIModalBase
             _panelAnimator.SetTrigger("Close");
         }
 
+        UIEvents.RaiseDailyRewardModalClosed();
         OnHidden();
 
         StartCoroutine(DelayedHide());

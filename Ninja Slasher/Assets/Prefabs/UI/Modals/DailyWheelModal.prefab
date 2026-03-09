@@ -261,6 +261,7 @@ GameObject:
   - component: {fileID: 3083227183001644951}
   - component: {fileID: 860467923492343772}
   - component: {fileID: 8901001240786784768}
+  - component: {fileID: 2565758249562403926}
   m_Layer: 0
   m_Name: CloseButton
   m_TagString: Untagged
@@ -372,7 +373,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 4429686034672597627}
         m_TargetAssemblyTypeName: DailyWheelModal, Assembly-CSharp
-        m_MethodName: Hide
+        m_MethodName: CloseRewardPopup
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -382,6 +383,18 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
+--- !u!114 &2565758249562403926
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2622065037701941064}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6e1109dce497fb4469d625a38c86546c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &3019213948616297786
 GameObject:
   m_ObjectHideFlags: 0
@@ -1380,6 +1393,7 @@ MonoBehaviour:
   _hasBackground: 1
   _backgroundImage: {fileID: 3266210003343377405}
   _closeAnimationDuration: 0.3
+  _dailyWheelUI: {fileID: 0}
 --- !u!225 &774510172581036882
 CanvasGroup:
   m_ObjectHideFlags: 0

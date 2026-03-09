@@ -4,10 +4,16 @@ public class DailyWheelModal : UIModalBase
 {
     [Header("Animation")]
     [SerializeField] private float _closeAnimationDuration = 0.3f;
+    [SerializeField] private DailyWheelUI _dailyWheelUI;
 
     protected override void Awake()
     {
         base.Awake();
+
+        if (_dailyWheelUI == null)
+        {
+            _dailyWheelUI = GetComponentInChildren<DailyWheelUI>(true);
+        }
     }
 
     public override void Show()
@@ -52,6 +58,17 @@ public class DailyWheelModal : UIModalBase
         OnHidden();
 
         StartCoroutine(DelayedHide());
+    }
+
+    public void CloseRewardPopup()
+    {
+        if (_dailyWheelUI != null)
+        {
+            _dailyWheelUI.CloseRewardPopup();
+            return;
+        }
+
+        Hide();
     }
 
     private System.Collections.IEnumerator DelayedHide()

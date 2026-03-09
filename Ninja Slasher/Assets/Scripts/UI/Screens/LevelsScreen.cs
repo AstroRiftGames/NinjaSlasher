@@ -9,6 +9,7 @@ public class LevelsScreen : UIScreenBase
     [SerializeField] private AreaSectionController[] _areaSections;
 
     private bool _hasAnimatedButtons = false;
+    private bool _isWaitingForStartupSequence = false;
 
     protected override void Awake()
     {
@@ -17,6 +18,8 @@ public class LevelsScreen : UIScreenBase
 
     private void OnEnable()
     {
+        UIEvents.OnStartupSequenceCompleted += OnStartupSequenceCompleted;
+
         if (_areaSections == null) return;
         foreach (var area in _areaSections)
             if (area != null) area.OnUnlocked += OnAreaUnlocked;
@@ -24,6 +27,8 @@ public class LevelsScreen : UIScreenBase
 
     private void OnDisable()
     {
+        UIEvents.OnStartupSequenceCompleted -= OnStartupSequenceCompleted;
+
         if (_areaSections == null) return;
         foreach (var area in _areaSections)
             if (area != null) area.OnUnlocked -= OnAreaUnlocked;
@@ -53,7 +58,8 @@ public class LevelsScreen : UIScreenBase
         if (!_hasAnimatedButtons)
         {
             _hasAnimatedButtons = true;
-            StartCoroutine(AnimateLevelButtonsSequence());
+            _isWaitingForStartupSequence = true;
+            HideLevelButtons();
         }
 
         OnShown();
@@ -71,26 +77,27 @@ public class LevelsScreen : UIScreenBase
             _canvasGroup.interactable = false;
         }
 
+        ButtonManager.Instance?.StopAllButtonAnimations();
+
         OnHidden();
 
         gameObject.SetActive(false);
     }
 
+    private void OnStartupSequenceCompleted()
+    {
+        if (!_isWaitingForStartupSequence || !isActiveAndEnabled)
+            return;
+
+        _isWaitingForStartupSequence = false;
+        StartCoroutine(AnimateLevelButtonsSequence());
+    }
+
     private IEnumerator AnimateLevelButtonsSequence()
     {
-        if (ButtonManager.Instance != null)
-            HideLevelButtons();
-
         yield return null;
         yield return new WaitForSeconds(_delayBeforeAnimation);
-
-        if (UIManager.Instance.IsDailyRewardModalVisible())
-        {
-            while (UIManager.Instance.IsDailyRewardModalVisible())
-                yield return new WaitForSeconds(0.1f);
-
-            yield return new WaitForSeconds(0.5f);
-        }
+        yield return new WaitForSeconds(0.5f);
 
         if (ButtonManager.Instance == null) yield break;
 
@@ -104,8 +111,6 @@ public class LevelsScreen : UIScreenBase
 
         if (_areaSections == null || _areaSections.Length == 0)
         {
-            Debug.LogWarning("[LevelsScreen] _areaSections no asignado — " +
-                             "no se puede filtrar por área. Asignar en el Inspector.");
             return result;
         }
 
@@ -139,5 +144,6 @@ public class LevelsScreen : UIScreenBase
     public void ResetAnimationFlag()
     {
         _hasAnimatedButtons = false;
+        _isWaitingForStartupSequence = false;
     }
 }
