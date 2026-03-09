@@ -88,7 +88,7 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
     private ConfigDropdown _configPanelManager;
 
     private List<Sequence> activeButtonSequences = new List<Sequence>();
-    private Dictionary<int, Vector2> savedButtonPositions = new Dictionary<int, Vector2>();
+    private Dictionary<Button, Vector2> savedButtonPositions = new Dictionary<Button, Vector2>();
 
     private UIAudioContext _audioContext;
 
@@ -176,13 +176,10 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
 
     private void SetupGameplayButtons()
     {
-        //_pauseButton.onClick.AddListener(UIManager.Instance.TogglePauseOverlay);
         _pauseButton.onClick.AddListener(() => UIEvents.RequestTogglePauseOverlay());
-        //_resumeButton.onClick.AddListener(UIManager.Instance.TogglePauseOverlay);
         _resumeButton.onClick.AddListener(() => UIEvents.RequestTogglePauseOverlay());
         _restartButton.onClick.AddListener(OnRestartPressed);
 
-        //_quitButton.onClick.AddListener(() => GameManager.Instance.GoToLevelSelection(confirmPendingDeduction: true));
         _quitButton.onClick.AddListener(() =>
         {
             UIEvents.RaiseQuitToMenuPressed();
@@ -192,9 +189,6 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
         _musicPausePanelButton.onClick.AddListener(_configToggles.MusicButtonPushed);
         _sfxPausePanelButton.onClick.AddListener(_configToggles.SFXButtonPushed);
 
-        //_retryButton.onClick.AddListener(GetComponent<GameplayUIManager>().OnRetryPressed);
-        //_backToSelectionButton.onClick.AddListener(GetComponent<GameplayUIManager>().OnBackToSelectionPressed);
-        //_continueButton.onClick.AddListener(GetComponent<GameplayUIManager>().ContinueToLevelSelector);
         _retryButton.onClick.AddListener(() => UIEvents.RequestRestartLevel());
         _backToSelectionButton.onClick.AddListener(() => UIEvents.RequestShowLevelSelector());
         _continueButton.onClick.AddListener(() => UIEvents.RequestShowLevelSelector());
@@ -254,29 +248,25 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
     private void SaveButtonPositions()
     {
         savedButtonPositions.Clear();
-        for (int i = 0; i < levelButtons.Length; i++)
+        foreach (var btn in levelButtons)
         {
-            if (levelButtons[i] != null)
+            if (btn != null)
             {
-                RectTransform rt = levelButtons[i].GetComponent<RectTransform>();
-                savedButtonPositions[i] = rt.anchoredPosition;
+                RectTransform rt = btn.GetComponent<RectTransform>();
+                savedButtonPositions[btn] = rt.anchoredPosition;
             }
         }
     }
 
     public void OpenURLButtonClicked(string url)
     {
-        //UIManager.Instance.OpenURL(url);
         Application.OpenURL(url);
     }
 
     private void SetupLevelSelectorButtons()
-    {
-        //_userIconButton.onClick.AddListener(ToggleUserIconsPanel);
-
+    {        
         _musicButton.onClick.AddListener(_configToggles.MusicButtonPushed);
         _sfxButton.onClick.AddListener(_configToggles.SFXButtonPushed);
-        //_profileButton.onClick.AddListener(UIManager.Instance.ShowHideProfileCanvas);
         _profileButton.onClick.AddListener(UIEvents.RequestShowProfileModal);
 
         if (_hapticButton != null)
@@ -284,25 +274,16 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
             _hapticButton.onClick.AddListener(_configToggles.HapticFeedbackPushed);
         }
 
-        //_closeNoLivesPanelButton.onClick.AddListener(UIManager.Instance.HideNoLivesOverlay);
         _closeNoLivesPanelButton.onClick.AddListener(UIEvents.RequestHideNoLivesOverlay);
-
-        //_adForMoreLifeButton.onClick.AddListener(AdsManager.Instance.ShowRewardedAdForExtraLife);
 
         _userIconButton.onClick.AddListener(ToggleUserIconsPanel);
 
-        //_userNicknameButtonText = LoginManager.Instance.PlayerName;
-        //_userNicknameButtonText = LoginManager.Instance.PlayerId;
         _claimButton.onClick.AddListener(OnClaimLifeButtonPressed);
 
-        //_userNicknameButton.onClick.AddListener(UIManager.Instance.ShowHideUserNicknameEditCanvas);
         _userNicknameButton.onClick.AddListener(ShowNicknameEditPopup);
 
-        //_creditsButton.onClick.AddListener(UIManager.Instance.ShowHideCreditsCanvas);
         _creditsButton.onClick.AddListener(UIEvents.RequestShowCreditsModal);
-        //_closeProfileButton.onClick.AddListener(UIManager.Instance.ShowHideProfileCanvas);
         _closeProfileButton.onClick.AddListener(UIEvents.RequestHideProfileModal);
-        //_closeCreditsButton.onClick.AddListener(UIManager.Instance.ShowHideCreditsCanvas);
         _closeCreditsButton.onClick.AddListener(UIEvents.RequestHideCreditsModal);
 
         foreach (var img in _userIconButtonGroup)
@@ -319,11 +300,8 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
             });
         }
 
-        //_storeButton.onClick.AddListener(UIManager.Instance.ShowHideStoreCanvas);
         _storeButton.onClick.AddListener(UIEvents.RequestShowStoreModal);
-        //_closeStoreButton.onClick.AddListener(UIManager.Instance.ShowHideStoreCanvas);
         _closeStoreButton.onClick.AddListener(UIEvents.RequestHideStoreModal);
-        //_calendarButton.onClick.AddListener(UIManager.Instance.ShowHideDailyRewardCanvas);
         _calendarButton.onClick.AddListener(UIEvents.RequestShowDailyRewardModal);
         _configDropdownButton.onClick.AddListener(_configPanelManager.OpenCloseConfigPanel);
 
@@ -380,8 +358,7 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
             Debug.Log("Vida reclamada exitosamente");
 
             if (UIManager.Instance != null)
-            {
-                //UIManager.Instance.HideNoLivesOverlay();        
+            {    
                 UIEvents.RequestHideNoLivesOverlay();
             }
         }
@@ -535,23 +512,29 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
         return LevelProgressionManager.Instance.IsLevelUnlocked(levelId);
     }
 
-    public void AnimateDrop()
+    public void AnimateButtons(IEnumerable<Button> buttons)
     {
-        for (int i = 0; i < levelButtons.Length; i++)
+        if (buttons == null) return;
+
+        int sequenceIndex = 0;
+        foreach (var btn in buttons)
         {
-            AnimateHeavySingleButton(i);
+            if (btn == null) continue;
+            btn.gameObject.SetActive(true);
+            btn.transform.DOKill();
+            AnimateHeavySingleButton(btn, sequenceIndex);
+            sequenceIndex++;
         }
     }
 
-    private void AnimateHeavySingleButton(int buttonIndex)
+    private void AnimateHeavySingleButton(Button button, int sequenceIndex)
     {
-        if (buttonIndex >= levelButtons.Length) return;
+        if (button == null) return;
 
-        Button button = levelButtons[buttonIndex];
         RectTransform rectTransform = button.GetComponent<RectTransform>();
 
-        Vector2 finalPosition = savedButtonPositions.ContainsKey(buttonIndex)
-            ? savedButtonPositions[buttonIndex]
+        Vector2 finalPosition = savedButtonPositions.TryGetValue(button, out var saved)
+            ? saved
             : rectTransform.anchoredPosition;
 
         rectTransform.anchoredPosition = finalPosition + Vector2.up * (fallDistance * 1.5f);
@@ -562,7 +545,7 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
             rectTransform.rotation = Quaternion.Euler(0, 0, heavyRotation);
         }
 
-        float heavyDelay = buttonIndex * (waveDelay * 3f);
+        float heavyDelay = sequenceIndex * (waveDelay * 3f);
 
         Sequence heavySequence = DOTween.Sequence();
         activeButtonSequences.Add(heavySequence);
@@ -584,9 +567,7 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
 
         heavySequence.AppendCallback(() => {
             if (button != null && button.gameObject != null)
-            {
                 CreateHeavyImpactEffect(button);
-            }
         });
 
         heavySequence.OnKill(() => {
@@ -657,25 +638,6 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
                 }
             }
         }
-    }
-
-    public void TriggerNinjaWaveAnimation()
-    {
-        if (levelButtons == null || levelButtons.Length == 0)
-        {
-            return;
-        }
-
-        foreach (var button in levelButtons)
-        {
-            if (button != null)
-            {
-                button.gameObject.SetActive(true);
-                button.transform.DOKill();
-            }
-        }
-
-        AnimateDrop();
     }
 
     public void SetWaveParameters(float distance, float delay, bool rotation, bool impact)

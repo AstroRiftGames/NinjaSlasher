@@ -1,16 +1,39 @@
-using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.UI;
 
 public class LevelsScreen : UIScreenBase
 {
-    [Header("Animation")]
     [SerializeField] private float _delayBeforeAnimation = 0.3f;
+    [SerializeField] private AreaSectionController[] _areaSections;
 
     private bool _hasAnimatedButtons = false;
 
     protected override void Awake()
     {
         base.Awake();
+    }
+
+    private void OnEnable()
+    {
+        if (_areaSections == null) return;
+        foreach (var area in _areaSections)
+            if (area != null) area.OnUnlocked += OnAreaUnlocked;
+    }
+
+    private void OnDisable()
+    {
+        if (_areaSections == null) return;
+        foreach (var area in _areaSections)
+            if (area != null) area.OnUnlocked -= OnAreaUnlocked;
+    }
+
+    private void OnAreaUnlocked(AreaSectionController area)
+    {
+        var buttons = area.GetAreaButtons();
+        if (buttons.Length > 0)
+            ButtonManager.Instance?.AnimateButtons(buttons);
     }
 
     public override void Show()
@@ -56,9 +79,7 @@ public class LevelsScreen : UIScreenBase
     private IEnumerator AnimateLevelButtonsSequence()
     {
         if (ButtonManager.Instance != null)
-        {
             HideLevelButtons();
-        }
 
         yield return null;
         yield return new WaitForSeconds(_delayBeforeAnimation);
@@ -66,16 +87,37 @@ public class LevelsScreen : UIScreenBase
         if (UIManager.Instance.IsDailyRewardModalVisible())
         {
             while (UIManager.Instance.IsDailyRewardModalVisible())
-            {
                 yield return new WaitForSeconds(0.1f);
-            }
+
             yield return new WaitForSeconds(0.5f);
         }
 
-        if (ButtonManager.Instance != null)
+        if (ButtonManager.Instance == null) yield break;
+
+        var visibleButtons = CollectUnlockedAreaButtons();
+        ButtonManager.Instance.AnimateButtons(visibleButtons);
+    }
+
+    private List<Button> CollectUnlockedAreaButtons()
+    {
+        var result = new List<Button>();
+
+        if (_areaSections == null || _areaSections.Length == 0)
         {
-            ButtonManager.Instance.TriggerNinjaWaveAnimation();
+            Debug.LogWarning("[LevelsScreen] _areaSections no asignado — " +
+                             "no se puede filtrar por área. Asignar en el Inspector.");
+            return result;
         }
+
+        foreach (var area in _areaSections)
+        {
+            if (area == null) continue;
+            if (!area.IsUnlocked()) continue;
+
+            result.AddRange(area.GetAreaButtons());
+        }
+
+        return result;
     }
 
     private void HideLevelButtons()

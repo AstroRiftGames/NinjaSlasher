@@ -1,9 +1,12 @@
+using System;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
 
 public class AreaSectionController : MonoBehaviour
 {
+    public event Action<AreaSectionController> OnUnlocked;
+
     [Header("SETTINGS")]
     [SerializeField] private AreaData _areaData;
 
@@ -69,9 +72,18 @@ public class AreaSectionController : MonoBehaviour
             yield return StartCoroutine(ScrollToArea());
 
         if (_lockOverlay != null)
-            _lockOverlay.PlayUnlockAnimation(onComplete: () => SetButtonsInteractable(true));
+        {
+            _lockOverlay.PlayUnlockAnimation(onComplete: () =>
+            {
+                SetButtonsInteractable(true);
+                OnUnlocked?.Invoke(this);
+            });
+        }
         else
+        {
             SetButtonsInteractable(true);
+            OnUnlocked?.Invoke(this);
+        }
     }
 
     private IEnumerator ScrollToArea(float duration = 0.7f)
@@ -109,6 +121,14 @@ public class AreaSectionController : MonoBehaviour
 
         float normalized = (areaLocalX - viewport.rect.width * 0.5f) / scrollRange;
         return Mathf.Clamp01(normalized);
+    }
+
+    public bool IsUnlocked() => IsAreaUnlocked();
+
+    public Button[] GetAreaButtons()
+    {
+        if (_levelButtonsGroup == null) return System.Array.Empty<Button>();
+        return _levelButtonsGroup.GetComponentsInChildren<Button>(includeInactive: true);
     }
 
     private bool IsAreaUnlocked()
