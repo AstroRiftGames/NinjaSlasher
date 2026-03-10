@@ -42,6 +42,7 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
         GameEvents.OnLevelStarted += OnLevelStarted;
         GameEvents.OnLevelCompleted += OnLevelCompleted;
         GameEvents.OnLevelFailed += OnLevelFailed;
+        UIEvents.OnRetryButtonPressed += OnRetryButtonPressed;
         UIEvents.OnQuitToMenuPressed += OnQuitToMenuPressed;
         SceneManager.sceneLoaded += OnSceneLoaded;
     }
@@ -52,6 +53,7 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
         GameEvents.OnLevelFailed -= OnLevelFailed;
         GameEvents.OnLivesChanged -= OnLivesChanged;
         GameEvents.OnLevelStarted -= OnLevelStarted;
+        UIEvents.OnRetryButtonPressed -= OnRetryButtonPressed;
         UIEvents.OnQuitToMenuPressed -= OnQuitToMenuPressed;
         SceneManager.sceneLoaded -= OnSceneLoaded;
     }
@@ -163,7 +165,7 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
 
         int currentLives = LifeManager.Instance.GetRealLives();
 
-        if (currentLives <= 0)
+        if (!LifeManager.Instance.HasTimedUnlimitedLives && currentLives <= 0)
         {
             UIEvents.RequestShowNoLivesOverlay();
         }
@@ -235,6 +237,20 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
         SaveManager.Instance.SaveData();
     }
 
+    private void OnRetryButtonPressed()
+    {
+        if (LifeManager.Instance == null)
+            return;
+
+        if (!LifeManager.Instance.HasTimedUnlimitedLives && LifeManager.Instance.GetRealLives() <= 0)
+        {
+            UIEvents.RequestShowNoLivesOverlay();
+            return;
+        }
+
+        UIEvents.RequestRestartLevel();
+    }
+
     public void RestartLevel()
     {
         if (_levelStarted || LifeManager.Instance.HasPendingDeduction())
@@ -280,6 +296,7 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
         GameEvents.OnLevelCompleted -= OnLevelCompleted;
         GameEvents.OnLevelFailed -= OnLevelFailed;
         GameEvents.OnLivesChanged -= OnLivesChanged;
+        UIEvents.OnRetryButtonPressed -= OnRetryButtonPressed;
         UIEvents.OnQuitToMenuPressed -= OnQuitToMenuPressed;
     }
 

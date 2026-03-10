@@ -183,7 +183,6 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
         _musicPausePanelButton.onClick.AddListener(_configToggles.MusicButtonPushed);
         _sfxPausePanelButton.onClick.AddListener(_configToggles.SFXButtonPushed);
 
-        _retryButton.onClick.AddListener(() => UIEvents.RequestRestartLevel());
         _backToSelectionButton.onClick.AddListener(UIEvents.RaiseQuitToMenuPressed);
         _continueButton.onClick.AddListener(UIEvents.RaiseQuitToMenuPressed);
     }
@@ -268,11 +267,7 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
             _hapticButton.onClick.AddListener(_configToggles.HapticFeedbackPushed);
         }
 
-        _closeNoLivesPanelButton.onClick.AddListener(UIEvents.RequestHideNoLivesOverlay);
-
         _userIconButton.onClick.AddListener(ToggleUserIconsPanel);
-
-        _claimButton.onClick.AddListener(OnClaimLifeButtonPressed);
 
         _userNicknameButton.onClick.AddListener(ShowNicknameEditPopup);
 
@@ -342,20 +337,6 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
 
         _userNicknameEditPanel.SetNickname(_userNicknameButtonText.text);
         _userNicknameEditPanel.Show();
-    }
-
-    public void OnClaimLifeButtonPressed()
-    {
-        if (LifeManager.Instance != null)
-        {
-            LifeManager.Instance.AddLife();
-            Debug.Log("Vida reclamada exitosamente");
-
-            if (UIManager.Instance != null)
-            {    
-                UIEvents.RequestHideNoLivesOverlay();
-            }
-        }
     }
 
     void UpdateStars(Button levelButton, int levelId)

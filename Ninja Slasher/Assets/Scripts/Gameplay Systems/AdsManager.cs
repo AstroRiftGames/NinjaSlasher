@@ -18,12 +18,6 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
     {
         GameEvents.OnAdsRemoved += OnAdsRemoved;
 
-        if (AreAdsRemoved())
-        {
-            Debug.Log("[AdsManager] Ads removed entitlement active. Skipping ads initialization.");
-            return;
-        }
-
         InitializeLevelPlay();
     }
 
@@ -80,16 +74,14 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
 
     private void LoadAds()
     {
-        if (AreAdsRemoved()) return;
-
         _rewardedAd?.LoadAd();
-        _interstitialAd?.LoadAd();
+
+        if (!AreAdsRemoved())
+            _interstitialAd?.LoadAd();
     }
 
     public void ShowRewardedAdForExtraLife()
     {
-        if (AreAdsRemoved()) return;
-
         ShowRewardedAd(() =>
         {
             LifeManager.Instance?.AddLife();
@@ -101,8 +93,6 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
 
     public void ShowRewardedAdForDoubleDailyReward()
     {
-        if (AreAdsRemoved()) return;
-
         ShowRewardedAd(() =>
         {
             DailyRewardSystem.Instance?.DoubleTodaysReward();
@@ -115,12 +105,6 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
     [ContextMenu("Show Rewarded Ad")]
     public void ShowRewardedAd()
     {
-        if (AreAdsRemoved())
-        {
-            Debug.Log("[AdsManager] Rewarded ads disabled because Remove Ads is active.");
-            return;
-        }
-
         ShowRewardedAd(onRewarded: null);
     }
 
@@ -149,7 +133,7 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
 
     public bool IsRewardedAdReady()
     {
-        return !AreAdsRemoved() && _rewardedAd != null && _rewardedAd.IsAdReady();
+        return _rewardedAd != null && _rewardedAd.IsAdReady();
     }
 
     public bool IsInterstitialAdReady()
@@ -159,12 +143,6 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
 
     private void ShowRewardedAd(System.Action onRewarded)
     {
-        if (AreAdsRemoved())
-        {
-            Debug.Log("[AdsManager] Rewarded ads disabled because Remove Ads is active.");
-            return;
-        }
-
         if (_rewardedAd != null && _rewardedAd.IsAdReady())
         {
             _pendingRewardCallback = onRewarded;
@@ -221,8 +199,7 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
         Debug.Log("[AdsManager] Rewarded ad closed");
 #endif
         _pendingRewardCallback = null;
-        if (!AreAdsRemoved())
-            _rewardedAd?.LoadAd();
+        _rewardedAd?.LoadAd();
     }
 
     private void OnRewardedAdClicked(LevelPlayAdInfo adInfo)
@@ -275,8 +252,7 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
 
     private void LoadRewardedAd()
     {
-        if (!AreAdsRemoved())
-            _rewardedAd?.LoadAd();
+        _rewardedAd?.LoadAd();
     }
 
     private void LoadInterstitialAd()
@@ -294,7 +270,6 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
     [ContextMenu("Reload All Ads")]
     public void ReloadAllAds()
     {
-        if (AreAdsRemoved()) return;
         LoadAds();
     }
 
@@ -316,10 +291,8 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
 
     private void OnAdsRemoved()
     {
-        Debug.Log("[AdsManager] Remove Ads granted. Future ads are disabled.");
-        CancelInvoke(nameof(LoadRewardedAd));
+        Debug.Log("[AdsManager] Remove Ads granted. Interstitial ads are disabled; rewarded ads remain available.");
         CancelInvoke(nameof(LoadInterstitialAd));
-        _pendingRewardCallback = null;
     }
 
     void OnDestroy()
