@@ -42,6 +42,7 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
         GameEvents.OnLevelStarted += OnLevelStarted;
         GameEvents.OnLevelCompleted += OnLevelCompleted;
         GameEvents.OnLevelFailed += OnLevelFailed;
+        UIEvents.OnQuitToMenuPressed += OnQuitToMenuPressed;
         SceneManager.sceneLoaded += OnSceneLoaded;
     }
 
@@ -51,6 +52,7 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
         GameEvents.OnLevelFailed -= OnLevelFailed;
         GameEvents.OnLivesChanged -= OnLivesChanged;
         GameEvents.OnLevelStarted -= OnLevelStarted;
+        UIEvents.OnQuitToMenuPressed -= OnQuitToMenuPressed;
         SceneManager.sceneLoaded -= OnSceneLoaded;
     }
 
@@ -208,13 +210,18 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
 
     public void GoToLevelSelection(bool confirmPendingDeduction = true)
     {
+        UIEvents.RaiseQuitToMenuPressed();
+    }
+
+    private void OnQuitToMenuPressed()
+    {
         if (AnalyticsManager.Instance != null)
         {
             string currentScene = SceneManager.GetActiveScene().name;
             AnalyticsManager.Instance.RecordScreenTransition(currentScene, "LevelSelection");
         }
 
-        if (confirmPendingDeduction && (_levelStarted || LifeManager.Instance.HasPendingDeduction()))
+        if (_levelStarted || LifeManager.Instance.HasPendingDeduction())
         {
             LifeManager.Instance.OnLevelExit();
             _levelStarted = false;
@@ -226,16 +233,6 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
         }
 
         SaveManager.Instance.SaveData();
-        SceneManager.sceneLoaded += HandleScreenflowLoaded;
-        SceneManager.LoadScene("SplashScreen");
-    }
-
-    private void HandleScreenflowLoaded(Scene scene, LoadSceneMode mode)
-    {
-        if (scene.name != "SplashScreen") return;
-
-        UIEvents.RequestShowLevelsScreen();
-        SceneManager.sceneLoaded -= HandleScreenflowLoaded;
     }
 
     public void RestartLevel()
@@ -283,6 +280,7 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
         GameEvents.OnLevelCompleted -= OnLevelCompleted;
         GameEvents.OnLevelFailed -= OnLevelFailed;
         GameEvents.OnLivesChanged -= OnLivesChanged;
+        UIEvents.OnQuitToMenuPressed -= OnQuitToMenuPressed;
     }
 
     private bool IsTestingScene()

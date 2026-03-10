@@ -50,7 +50,7 @@ public class NoLivesOverlay : UIOverlayBase
     {
         if (!LifeManager.Instance.CanPlay())
         {
-            GameManager.Instance.GoToLevelSelection(confirmPendingDeduction: false);
+            UIEvents.RaiseQuitToMenuPressed();
         }
     }
 

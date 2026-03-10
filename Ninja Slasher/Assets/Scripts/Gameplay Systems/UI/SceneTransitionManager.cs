@@ -7,11 +7,13 @@ public class SceneTransitionManager : MonoBehaviour
     [Header("SCREEN TRANSITION")]
     [SerializeField] private Animator _transitionAnim;
     [SerializeField] private float _transitionTime;
+    [SerializeField] private string _levelSelectorSceneName = "SplashScreen";
 
     [SerializeField] private GameObject _hudObject;
 
     private UIAudioContext _audioContext;
     private DailyStartupSequence _dailyStartupSequence;
+    private bool _isLoadingLevelSelectorScene;
 
     private void Awake()
     {
@@ -28,6 +30,7 @@ public class SceneTransitionManager : MonoBehaviour
     {
         UIEvents.OnSceneTransitionRequested += LoadLevelScene;
         UIEvents.OnRestartLevelRequested += RestartLevel;
+        UIEvents.OnQuitToMenuPressed += LoadLevelSelectorScene;
         UIEvents.OnShowLevelSelectorRequested += ShowLevelSelector;
     }
 
@@ -35,6 +38,7 @@ public class SceneTransitionManager : MonoBehaviour
     {
         UIEvents.OnSceneTransitionRequested -= LoadLevelScene;
         UIEvents.OnRestartLevelRequested -= RestartLevel;
+        UIEvents.OnQuitToMenuPressed -= LoadLevelSelectorScene;
         UIEvents.OnShowLevelSelectorRequested -= ShowLevelSelector;
     }
 
@@ -74,6 +78,45 @@ public class SceneTransitionManager : MonoBehaviour
         LoadLevelScene(sceneName);
     }
 
+    public void LoadLevelSelectorScene()
+    {
+        if (_isLoadingLevelSelectorScene)
+            return;
+
+        StartCoroutine(LoadLevelSelectorSceneCo());
+    }
+
+    private IEnumerator LoadLevelSelectorSceneCo()
+    {
+        _isLoadingLevelSelectorScene = true;
+        Time.timeScale = 1f;
+
+        SetHUDActive(false);
+
+        UIEvents.RequestHideVictoryModal();
+        UIEvents.RequestHidePauseOverlay();
+        UIEvents.RequestHideNoLivesOverlay();
+
+        if (UIManager.Instance != null)
+        {
+            UIManager.Instance.HideDefeatOverlay();
+            UIManager.Instance.SetGameplayHUDEnabled(false);
+            UIManager.Instance.SetLevelsScreenEnabled(false);
+            UIManager.Instance.ResetLevelsScreenAnimation();
+        }
+
+        if (AudioService.Instance != null)
+        {
+            AudioService.Instance.StopAllSFX();
+        }
+
+        _transitionAnim.SetTrigger("OpeningStart");
+        yield return new WaitForSecondsRealtime(_transitionTime);
+
+        SceneManager.sceneLoaded += OnLevelSelectorSceneLoaded;
+        SceneManager.LoadScene(_levelSelectorSceneName);
+    }
+
     public void ShowLevelSelector()
     {
         StartCoroutine(ShowLevelSelectorCo());
@@ -81,6 +124,7 @@ public class SceneTransitionManager : MonoBehaviour
 
     private IEnumerator ShowLevelSelectorCo()
     {
+        // UI-only path. This should only run when the Level Selector scene is already loaded.
         Time.timeScale = 1;
 
         SetHUDActive(false);
@@ -114,6 +158,34 @@ public class SceneTransitionManager : MonoBehaviour
         UIManager.Instance?.GetComponent<DebugUIManager>()?.ShowStarsDebug();
 
         UIEvents.RaiseLevelSelectorReady();
+    }
+
+    private void OnLevelSelectorSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        if (scene.name != _levelSelectorSceneName)
+            return;
+
+        SceneManager.sceneLoaded -= OnLevelSelectorSceneLoaded;
+        StartCoroutine(FinalizeLevelSelectorAfterSceneLoad());
+    }
+
+    private IEnumerator FinalizeLevelSelectorAfterSceneLoad()
+    {
+        yield return null;
+
+        UIEvents.RequestHideSplashScreen();
+        UIManager.Instance?.SetLevelsScreenEnabled(true);
+        UIManager.Instance?.SetGameplayHUDEnabled(false);
+
+        _transitionAnim.SetTrigger("End");
+        AudioService.Instance?.PlaySFX(_audioContext.Audio.transitionSlash);
+
+        MusicEvents.OnEnterLevelSelection?.Invoke();
+        UIEvents.RequestUpdateLivesUI(LifeManager.Instance.CurrentLives);
+        UIManager.Instance?.GetComponent<DebugUIManager>()?.ShowStarsDebug();
+
+        UIEvents.RaiseLevelSelectorReady();
+        _isLoadingLevelSelectorScene = false;
     }
 
     private void SetHUDActive(bool active)
