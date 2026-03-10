@@ -308,7 +308,7 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
     public void ResetLevelsScreenAnimation()
     {
         if (_levelsScreen != null)
-            _levelsScreen.ResetAnimationFlag();
+            _levelsScreen.ResetAnimationStateForScreenReturn();
     }
 
     #endregion

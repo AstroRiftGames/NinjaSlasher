@@ -520,6 +520,34 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
         }
     }
 
+    public void ShowButtonsInstantly(IEnumerable<Button> buttons)
+    {
+        if (buttons == null) return;
+
+        foreach (var btn in buttons)
+        {
+            if (btn == null) continue;
+
+            btn.gameObject.SetActive(true);
+
+            var rt = btn.GetComponent<RectTransform>();
+            if (rt != null)
+            {
+                DOTween.Kill(rt);
+
+                if (savedButtonPositions.TryGetValue(btn, out var saved))
+                    rt.anchoredPosition = saved;
+
+                rt.localRotation = Quaternion.identity;
+                rt.localScale = Vector3.one;
+            }
+
+            var img = btn.GetComponent<Image>();
+            if (img != null)
+                DOTween.Kill(img);
+        }
+    }
+
     private void AnimateHeavySingleButton(Button button, int sequenceIndex)
     {
         if (button == null) return;
