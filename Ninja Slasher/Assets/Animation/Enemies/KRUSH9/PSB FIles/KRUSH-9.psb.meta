@@ -95,6 +95,50 @@ ScriptedImporter:
     spritePosition: {x: 0, y: 0}
   multiSpriteImportData: []
   layeredSpriteImportData:
+  - name: KRUSH-9_Cut_Top
+    originalName: 
+    pivot: {x: 0.5, y: 0.5}
+    alignment: 0
+    border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
+    rect:
+      serializedVersion: 2
+      x: 4
+      y: 4
+      width: 351
+      height: 417
+    spriteID: a0d09aa2e382a6c46a214ad749dc64d4
+    spriteBone: []
+    spriteOutline: []
+    vertices: []
+    spritePhysicsOutline: []
+    indices: 
+    edges: []
+    tessellationDetail: 0
+    uvTransform: {x: 4, y: 4}
+    spritePosition: {x: 37, y: 336}
+  - name: KRUSH-9_Cut_Bottom
+    originalName: 
+    pivot: {x: 0.5, y: 0.5}
+    alignment: 0
+    border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
+    rect:
+      serializedVersion: 2
+      x: 363
+      y: 4
+      width: 425
+      height: 344
+    spriteID: d58be38b5518bd2459d8dd99e59d0e3d
+    spriteBone: []
+    spriteOutline: []
+    vertices: []
+    spritePhysicsOutline: []
+    indices: 
+    edges: []
+    tessellationDetail: 0
+    uvTransform: {x: 363, y: 4}
+    spritePosition: {x: 0, y: 0}
   - name: Light_01
     originalName: 
     pivot: {x: 0.5, y: 0.5}
@@ -103,8 +147,8 @@ ScriptedImporter:
     customData: 
     rect:
       serializedVersion: 2
-      x: 437
-      y: 359
+      x: 796
+      y: 356
       width: 43
       height: 79
     spriteID: af4d9b33978c66e42912b414f0452ba5
@@ -115,7 +159,7 @@ ScriptedImporter:
     indices: 
     edges: []
     tessellationDetail: 0
-    uvTransform: {x: 437, y: 359}
+    uvTransform: {x: 796, y: 356}
     spritePosition: {x: 236, y: 335}
   - name: Body
     originalName: 
@@ -126,7 +170,7 @@ ScriptedImporter:
     rect:
       serializedVersion: 2
       x: 4
-      y: 4
+      y: 429
       width: 347
       height: 347
     spriteID: ed647b3d7e7e4ca45b72eb91e5232d8b
@@ -137,7 +181,7 @@ ScriptedImporter:
     indices: 
     edges: []
     tessellationDetail: 0
-    uvTransform: {x: 4, y: 4}
+    uvTransform: {x: 4, y: 429}
     spritePosition: {x: 39, y: 168}
   - name: Light_02
     originalName: 
@@ -148,7 +192,7 @@ ScriptedImporter:
     rect:
       serializedVersion: 2
       x: 4
-      y: 901
+      y: 784
       width: 302
       height: 105
     spriteID: be1bbf807abf60d44887af27aabad631
@@ -159,7 +203,7 @@ ScriptedImporter:
     indices: 
     edges: []
     tessellationDetail: 0
-    uvTransform: {x: 4, y: 901}
+    uvTransform: {x: 4, y: 784}
     spritePosition: {x: 62, y: 648}
   - name: Hammer
     originalName: 
@@ -169,8 +213,8 @@ ScriptedImporter:
     customData: 
     rect:
       serializedVersion: 2
-      x: 4
-      y: 586
+      x: 363
+      y: 583
       width: 302
       height: 307
     spriteID: a772669077adec947a00de86ffc90310
@@ -181,7 +225,7 @@ ScriptedImporter:
     indices: 
     edges: []
     tessellationDetail: 0
-    uvTransform: {x: 4, y: 586}
+    uvTransform: {x: 363, y: 583}
     spritePosition: {x: 62, y: 446}
   - name: Support
     originalName: 
@@ -191,8 +235,8 @@ ScriptedImporter:
     customData: 
     rect:
       serializedVersion: 2
-      x: 4
-      y: 359
+      x: 363
+      y: 356
       width: 425
       height: 219
     spriteID: cd5cffebc7ddf334194723652e8cc599
@@ -203,7 +247,7 @@ ScriptedImporter:
     indices: 
     edges: []
     tessellationDetail: 0
-    uvTransform: {x: 4, y: 359}
+    uvTransform: {x: 363, y: 356}
     spritePosition: {x: 0, y: 0}
   spriteImportData: []
   rigSpriteImportData: []
@@ -302,6 +346,26 @@ ScriptedImporter:
     flatten: 0
     isImported: 0
     isVisible: 1
+  - name: KRUSH-9_Cut_Top
+    spriteName: KRUSH-9_Cut_Top
+    isGroup: 0
+    parentIndex: 0
+    spriteID: a0d09aa2e382a6c46a214ad749dc64d4
+    layerID: 44
+    mosaicPosition: {x: 4, y: 4}
+    flatten: 0
+    isImported: 1
+    isVisible: 1
+  - name: KRUSH-9_Cut_Bottom
+    spriteName: KRUSH-9_Cut_Bottom
+    isGroup: 0
+    parentIndex: 0
+    spriteID: d58be38b5518bd2459d8dd99e59d0e3d
+    layerID: 43
+    mosaicPosition: {x: 363, y: 4}
+    flatten: 0
+    isImported: 1
+    isVisible: 1
   - name: Body
     spriteName: 
     isGroup: 1
@@ -315,20 +379,20 @@ ScriptedImporter:
   - name: Light_01
     spriteName: Light_01
     isGroup: 0
-    parentIndex: 1
+    parentIndex: 3
     spriteID: af4d9b33978c66e42912b414f0452ba5
     layerID: 37
-    mosaicPosition: {x: 437, y: 359}
+    mosaicPosition: {x: 796, y: 356}
     flatten: 0
     isImported: 1
     isVisible: 1
   - name: Body
     spriteName: Body
     isGroup: 0
-    parentIndex: 1
+    parentIndex: 3
     spriteID: ed647b3d7e7e4ca45b72eb91e5232d8b
     layerID: 36
-    mosaicPosition: {x: 4, y: 4}
+    mosaicPosition: {x: 4, y: 429}
     flatten: 0
     isImported: 1
     isVisible: 1
@@ -345,20 +409,20 @@ ScriptedImporter:
   - name: Light_02
     spriteName: Light_02
     isGroup: 0
-    parentIndex: 4
+    parentIndex: 6
     spriteID: be1bbf807abf60d44887af27aabad631
     layerID: 35
-    mosaicPosition: {x: 4, y: 901}
+    mosaicPosition: {x: 4, y: 784}
     flatten: 0
     isImported: 1
     isVisible: 1
   - name: Hammer
     spriteName: Hammer
     isGroup: 0
-    parentIndex: 4
+    parentIndex: 6
     spriteID: a772669077adec947a00de86ffc90310
     layerID: 34
-    mosaicPosition: {x: 4, y: 586}
+    mosaicPosition: {x: 363, y: 583}
     flatten: 0
     isImported: 1
     isVisible: 1
@@ -368,7 +432,7 @@ ScriptedImporter:
     parentIndex: 0
     spriteID: cd5cffebc7ddf334194723652e8cc599
     layerID: 33
-    mosaicPosition: {x: 4, y: 359}
+    mosaicPosition: {x: 363, y: 356}
     flatten: 0
     isImported: 1
     isVisible: 1
