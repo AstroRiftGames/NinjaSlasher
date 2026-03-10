@@ -26,6 +26,10 @@ public class RewardService : MonoBehaviourSingleton<RewardService>
             case RewardType.Coins:
                 GrantCoins(product.coinAmount);
                 break;
+
+            case RewardType.RemoveAds:
+                GrantRemoveAds();
+                break;
         }
 
         GameEvents.RaiseRewardGranted(product);
@@ -78,5 +82,17 @@ public class RewardService : MonoBehaviourSingleton<RewardService>
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         Debug.Log($"[RewardService] +{amount} coins | Wallet={SaveManager.Instance?.GetCoins()}");
 #endif
+    }
+
+    private void GrantRemoveAds()
+    {
+        if (SaveManager.Instance == null)
+        {
+            Debug.LogWarning("[RewardService] SaveManager not available. Remove Ads could not be persisted.");
+            return;
+        }
+
+        SaveManager.Instance.SetAdsRemoved(true);
+        GameEvents.RaiseAdsRemoved();
     }
 }
