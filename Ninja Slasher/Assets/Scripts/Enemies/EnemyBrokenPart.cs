@@ -6,6 +6,19 @@ public class EnemyBrokenPart
 {
     public Collider2D Col;
     public Rigidbody2D RB;
+    [Space]
+
+    [MinMaxSlider(-1f, 1f)]
+    public FloatRange _impulseX;
+
+    [MinMaxSlider(-1f, 1f)]
+    public FloatRange _impulseY;
+
+    [MinMaxSlider(1f, 10f)]
+    public FloatRange _impulseForce;
+
+    [MinMaxSlider(1f, 10f)]
+    public FloatRange _torqueForce;
 
 
     public void BreakAndThrow()
@@ -14,10 +27,9 @@ public class EnemyBrokenPart
         Col.enabled = true;
         RB.bodyType = RigidbodyType2D.Dynamic;
         Vector2 dir = Vector2.zero;
-        dir.x = UnityEngine.Random.Range(-1f, 1f);
-        dir.y = UnityEngine.Random.Range(1f, 2f);
-        float force = UnityEngine.Random.Range(3f, 8f);
-        Debug.Log($"Applying force {dir * force} to {Col.gameObject.name}");
-        RB.AddForce(dir*force, ForceMode2D.Impulse);
+        dir.x = _impulseX.GetRandom();
+        dir.y = _impulseY.GetRandom();
+        RB.AddForce(dir*_impulseForce.GetRandom(), ForceMode2D.Impulse);
+        RB.AddTorque(_torqueForce.GetRandom(), ForceMode2D.Impulse);
     }
 }
