@@ -29,6 +29,7 @@ public class GameData
     public string dailyRewardData = "";
     public List<int> dailyRewardOrder = new List<int>(); // recompensas diarias orden (1-7)
     public string lastRewardTimestamp = ""; // timestamp ultima recompensa
+    public bool adsRemoved = false;
 
     // Configuraciones
     public float musicVolume = 1f;

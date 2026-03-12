@@ -8,7 +8,7 @@ public class LevelsScreen : UIScreenBase
     [SerializeField] private float _delayBeforeAnimation = 0.3f;
     [SerializeField] private AreaSectionController[] _areaSections;
 
-    private bool _hasAnimatedButtons = false;
+    private bool _hasPlayedIntroAnimation = false;
     private bool _isWaitingForStartupSequence = false;
 
     protected override void Awake()
@@ -55,11 +55,15 @@ public class LevelsScreen : UIScreenBase
             _canvasGroup.interactable = true;
         }
 
-        if (!_hasAnimatedButtons)
+        if (!_hasPlayedIntroAnimation)
         {
-            _hasAnimatedButtons = true;
             _isWaitingForStartupSequence = true;
             HideLevelButtons();
+        }
+        else
+        {
+            _isWaitingForStartupSequence = false;
+            ShowLevelButtonsInstantly();
         }
 
         OnShown();
@@ -90,6 +94,7 @@ public class LevelsScreen : UIScreenBase
             return;
 
         _isWaitingForStartupSequence = false;
+        _hasPlayedIntroAnimation = true;
         StartCoroutine(AnimateLevelButtonsSequence());
     }
 
@@ -141,9 +146,17 @@ public class LevelsScreen : UIScreenBase
         }
     }
 
-    public void ResetAnimationFlag()
+    private void ShowLevelButtonsInstantly()
     {
-        _hasAnimatedButtons = false;
+        if (ButtonManager.Instance == null) return;
+
+        ButtonManager.Instance.StopAllButtonAnimations();
+        ButtonManager.Instance.ShowButtonsInstantly(ButtonManager.Instance.GetLevelButtons());
+    }
+
+    public void ResetAnimationStateForScreenReturn()
+    {
         _isWaitingForStartupSequence = false;
+        ShowLevelButtonsInstantly();
     }
 }

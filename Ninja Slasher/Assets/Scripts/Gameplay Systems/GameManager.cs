@@ -42,6 +42,8 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
         GameEvents.OnLevelStarted += OnLevelStarted;
         GameEvents.OnLevelCompleted += OnLevelCompleted;
         GameEvents.OnLevelFailed += OnLevelFailed;
+        UIEvents.OnRetryButtonPressed += OnRetryButtonPressed;
+        UIEvents.OnQuitToMenuPressed += OnQuitToMenuPressed;
         SceneManager.sceneLoaded += OnSceneLoaded;
     }
 
@@ -51,6 +53,8 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
         GameEvents.OnLevelFailed -= OnLevelFailed;
         GameEvents.OnLivesChanged -= OnLivesChanged;
         GameEvents.OnLevelStarted -= OnLevelStarted;
+        UIEvents.OnRetryButtonPressed -= OnRetryButtonPressed;
+        UIEvents.OnQuitToMenuPressed -= OnQuitToMenuPressed;
         SceneManager.sceneLoaded -= OnSceneLoaded;
     }
 
@@ -161,7 +165,7 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
 
         int currentLives = LifeManager.Instance.GetRealLives();
 
-        if (currentLives <= 0)
+        if (!LifeManager.Instance.HasTimedUnlimitedLives && currentLives <= 0)
         {
             UIEvents.RequestShowNoLivesOverlay();
         }
@@ -208,13 +212,18 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
 
     public void GoToLevelSelection(bool confirmPendingDeduction = true)
     {
+        UIEvents.RaiseQuitToMenuPressed();
+    }
+
+    private void OnQuitToMenuPressed()
+    {
         if (AnalyticsManager.Instance != null)
         {
             string currentScene = SceneManager.GetActiveScene().name;
             AnalyticsManager.Instance.RecordScreenTransition(currentScene, "LevelSelection");
         }
 
-        if (confirmPendingDeduction && (_levelStarted || LifeManager.Instance.HasPendingDeduction()))
+        if (_levelStarted || LifeManager.Instance.HasPendingDeduction())
         {
             LifeManager.Instance.OnLevelExit();
             _levelStarted = false;
@@ -226,16 +235,20 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
         }
 
         SaveManager.Instance.SaveData();
-        SceneManager.sceneLoaded += HandleScreenflowLoaded;
-        SceneManager.LoadScene("SplashScreen");
     }
 
-    private void HandleScreenflowLoaded(Scene scene, LoadSceneMode mode)
+    private void OnRetryButtonPressed()
     {
-        if (scene.name != "SplashScreen") return;
+        if (LifeManager.Instance == null)
+            return;
 
-        UIEvents.RequestShowLevelsScreen();
-        SceneManager.sceneLoaded -= HandleScreenflowLoaded;
+        if (!LifeManager.Instance.HasTimedUnlimitedLives && LifeManager.Instance.GetRealLives() <= 0)
+        {
+            UIEvents.RequestShowNoLivesOverlay();
+            return;
+        }
+
+        UIEvents.RequestRestartLevel();
     }
 
     public void RestartLevel()
@@ -283,6 +296,8 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
         GameEvents.OnLevelCompleted -= OnLevelCompleted;
         GameEvents.OnLevelFailed -= OnLevelFailed;
         GameEvents.OnLivesChanged -= OnLivesChanged;
+        UIEvents.OnRetryButtonPressed -= OnRetryButtonPressed;
+        UIEvents.OnQuitToMenuPressed -= OnQuitToMenuPressed;
     }
 
     private bool IsTestingScene()

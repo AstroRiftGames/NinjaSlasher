@@ -41,6 +41,6 @@ public class BundleDisplayData
 
 public enum BundleTier { Small, Medium, Large }
 
-public enum RewardType { Bundle, Coins }
+public enum RewardType { Bundle, Coins, RemoveAds }
 
 public enum PurchaseState { Idle, Processing, Completed, Failed }

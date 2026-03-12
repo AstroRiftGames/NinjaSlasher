@@ -29,6 +29,7 @@ public class GameDataDTO
     public string dailyRewardData;
     public List<int> dailyRewardOrder = new();
     public string lastRewardTimestamp;
+    public bool adsRemoved;
 
     public float musicVolume;
     public float sfxVolume;
@@ -87,6 +88,7 @@ public static class GameDataMapper
             dailyRewardData = d.dailyRewardData,
             dailyRewardOrder = new List<int>(d.dailyRewardOrder),
             lastRewardTimestamp = d.lastRewardTimestamp,
+            adsRemoved = d.adsRemoved,
 
             musicVolume = d.musicVolume,
             sfxVolume = d.sfxVolume,
@@ -144,6 +146,7 @@ public static class GameDataMapper
             dailyRewardData = dto.dailyRewardData ?? "",
             dailyRewardOrder = dto.dailyRewardOrder ?? new List<int>(),
             lastRewardTimestamp = dto.lastRewardTimestamp ?? "",
+            adsRemoved = dto.adsRemoved,
 
             musicVolume = dto.musicVolume,
             sfxVolume = dto.sfxVolume,

@@ -281,6 +281,8 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
         }
         catch { /* si falla parse, dejamos el existente */ }
 
+        target.adsRemoved = target.adsRemoved || source.adsRemoved;
+
         if (source.lastPlayDate > target.lastPlayDate) target.lastPlayDate = source.lastPlayDate;
 
         if (source.levelObjectives != null)
@@ -589,6 +591,20 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
     {
         var data = GetGameData();
         return data.dailyRewardData;
+    }
+
+    public bool GetAdsRemoved()
+    {
+        return GetGameData().adsRemoved;
+    }
+
+    public void SetAdsRemoved(bool value)
+    {
+        var data = GetGameData();
+        if (data.adsRemoved == value) return;
+
+        data.adsRemoved = value;
+        SaveData();
     }
 
     public void UpdateLevelProgress(int level)

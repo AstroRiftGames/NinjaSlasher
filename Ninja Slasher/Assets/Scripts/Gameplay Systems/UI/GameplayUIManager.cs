@@ -147,13 +147,13 @@ public class GameplayUIManager : MonoBehaviour
     {
         UIEvents.RequestShowLifeLostPanel();
         UIEvents.RequestHideVictoryModal();
-        GameManager.Instance.GoToLevelSelection(confirmPendingDeduction: false);
+        UIEvents.RaiseQuitToMenuPressed();
     }
 
     public void ContinueToLevelSelector()
     {
         UIEvents.RequestHideVictoryModal();
-        GameManager.Instance.GoToLevelSelection(confirmPendingDeduction: false);
+        UIEvents.RaiseQuitToMenuPressed();
     }
 
     private void OnLivesChanged(int lives)

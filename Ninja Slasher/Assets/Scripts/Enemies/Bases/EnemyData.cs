@@ -19,13 +19,6 @@ public enum EnemyType
     Arachnomadre,
 }
 [Serializable]
-public class VulnerabilityValues
-{
-    public bool fromUp;
-    public bool fromDown;
-    public bool fromBehind;
-    public bool fromFront;
-}
 
 [CreateAssetMenu(fileName = "New Enemy Data", menuName = "Enemies/Enemy Data")]
 public class EnemyData : ScriptableObject
@@ -33,7 +26,6 @@ public class EnemyData : ScriptableObject
     [SerializeField] EnemyType _type;
     [SerializeField] Projectile _projectile;
     [SerializeField] private float _range;
-    [SerializeField] VulnerabilityValues _isVulnerable;
 
     [Header("AUDIO")]
     [SerializeField] private AudioSet _audioSet;
@@ -42,5 +34,4 @@ public class EnemyData : ScriptableObject
     public EnemyType Type => _type;
     public Projectile Projectile => _projectile;
     public float Range => _range;
-    public VulnerabilityValues IsVulnerable => _isVulnerable;
 }

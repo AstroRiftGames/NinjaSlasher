@@ -1,5 +1,6 @@
 using UnityEngine;
 using Unity.Services.LevelPlay;
+using System;
 
 public class AdsManager : MonoBehaviourSingleton<AdsManager>
 {
@@ -11,19 +12,24 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
     private LevelPlayRewardedAd _rewardedAd;
     private LevelPlayInterstitialAd _interstitialAd;
 
-    // Callback set at call-site (ShowRewardedAdForExtraLife / ShowRewardedAdForDoubleDailyReward).
-    // Replaces the mutable _currentRewardType field to avoid incorrect rewards on rapid requests.
-    private System.Action _pendingRewardCallback;
+    private Action _pendingRewardCallback;
 
     void Start()
     {
+        GameEvents.OnAdsRemoved += OnAdsRemoved;
+
         InitializeLevelPlay();
+    }
+
+    private bool AreAdsRemoved()
+    {
+        return SaveManager.Instance != null && SaveManager.Instance.GetAdsRemoved();
     }
 
     void InitializeLevelPlay()
     {
         LevelPlay.OnInitSuccess += OnInitSuccess;
-        LevelPlay.OnInitFailed  += OnInitFailed;
+        LevelPlay.OnInitFailed += OnInitFailed;
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         Debug.Log("[AdsManager] Initializing LevelPlay");
@@ -46,22 +52,22 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
     {
         _rewardedAd = new LevelPlayRewardedAd(_rewardedAdUnitId);
 
-        _rewardedAd.OnAdLoaded        += OnRewardedAdLoaded;
-        _rewardedAd.OnAdLoadFailed    += OnRewardedAdLoadFailed;
-        _rewardedAd.OnAdDisplayed     += OnRewardedAdDisplayed;
+        _rewardedAd.OnAdLoaded += OnRewardedAdLoaded;
+        _rewardedAd.OnAdLoadFailed += OnRewardedAdLoadFailed;
+        _rewardedAd.OnAdDisplayed += OnRewardedAdDisplayed;
         _rewardedAd.OnAdDisplayFailed += OnRewardedAdDisplayFailed;
-        _rewardedAd.OnAdRewarded      += OnRewardedAdRewarded;
-        _rewardedAd.OnAdClosed        += OnRewardedAdClosed;
-        _rewardedAd.OnAdClicked       += OnRewardedAdClicked;
+        _rewardedAd.OnAdRewarded += OnRewardedAdRewarded;
+        _rewardedAd.OnAdClosed += OnRewardedAdClosed;
+        _rewardedAd.OnAdClicked += OnRewardedAdClicked;
 
         _interstitialAd = new LevelPlayInterstitialAd(_interstitialAdUnitId);
 
-        _interstitialAd.OnAdLoaded        += OnInterstitialAdLoaded;
-        _interstitialAd.OnAdLoadFailed    += OnInterstitialAdLoadFailed;
-        _interstitialAd.OnAdDisplayed     += OnInterstitialAdDisplayed;
+        _interstitialAd.OnAdLoaded += OnInterstitialAdLoaded;
+        _interstitialAd.OnAdLoadFailed += OnInterstitialAdLoadFailed;
+        _interstitialAd.OnAdDisplayed += OnInterstitialAdDisplayed;
         _interstitialAd.OnAdDisplayFailed += OnInterstitialAdDisplayFailed;
-        _interstitialAd.OnAdClosed        += OnInterstitialAdClosed;
-        _interstitialAd.OnAdClicked       += OnInterstitialAdClicked;
+        _interstitialAd.OnAdClosed += OnInterstitialAdClosed;
+        _interstitialAd.OnAdClicked += OnInterstitialAdClicked;
 
         LoadAds();
     }
@@ -69,18 +75,11 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
     private void LoadAds()
     {
         _rewardedAd?.LoadAd();
-        _interstitialAd?.LoadAd();
+
+        if (!AreAdsRemoved())
+            _interstitialAd?.LoadAd();
     }
 
-    // -------------------------------------------------------------------------
-    // Public API
-    // -------------------------------------------------------------------------
-
-    /// <summary>
-    /// Shows a rewarded ad. If completed, grants an extra life.
-    /// The reward callback is captured here, not in a mutable field,
-    /// so a rapid second call before the ad finishes does not corrupt the reward.
-    /// </summary>
     public void ShowRewardedAdForExtraLife()
     {
         ShowRewardedAd(() =>
@@ -92,7 +91,6 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
         });
     }
 
-    /// <summary>Shows a rewarded ad. If completed, doubles today's daily reward.</summary>
     public void ShowRewardedAdForDoubleDailyReward()
     {
         ShowRewardedAd(() =>
@@ -107,13 +105,18 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
     [ContextMenu("Show Rewarded Ad")]
     public void ShowRewardedAd()
     {
-        // Context-menu / legacy path — no reward action.
         ShowRewardedAd(onRewarded: null);
     }
 
     [ContextMenu("Show Interstitial Ad")]
     public void ShowInterstitialAd()
     {
+        if (AreAdsRemoved())
+        {
+            Debug.Log("[AdsManager] Interstitial ads disabled because Remove Ads is active.");
+            return;
+        }
+
         if (_interstitialAd != null && _interstitialAd.IsAdReady())
         {
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
@@ -128,12 +131,15 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
         }
     }
 
-    public bool IsRewardedAdReady()    => _rewardedAd != null && _rewardedAd.IsAdReady();
-    public bool IsInterstitialAdReady() => _interstitialAd != null && _interstitialAd.IsAdReady();
+    public bool IsRewardedAdReady()
+    {
+        return _rewardedAd != null && _rewardedAd.IsAdReady();
+    }
 
-    // -------------------------------------------------------------------------
-    // Internal show helper
-    // -------------------------------------------------------------------------
+    public bool IsInterstitialAdReady()
+    {
+        return !AreAdsRemoved() && _interstitialAd != null && _interstitialAd.IsAdReady();
+    }
 
     private void ShowRewardedAd(System.Action onRewarded)
     {
@@ -151,10 +157,6 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
             _rewardedAd?.LoadAd();
         }
     }
-
-    // -------------------------------------------------------------------------
-    // Rewarded ad callbacks
-    // -------------------------------------------------------------------------
 
     private void OnRewardedAdLoaded(LevelPlayAdInfo adInfo)
     {
@@ -196,7 +198,7 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         Debug.Log("[AdsManager] Rewarded ad closed");
 #endif
-        _pendingRewardCallback = null; // Clear if closed without reward
+        _pendingRewardCallback = null;
         _rewardedAd?.LoadAd();
     }
 
@@ -206,10 +208,6 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
         Debug.Log("[AdsManager] Rewarded ad clicked");
 #endif
     }
-
-    // -------------------------------------------------------------------------
-    // Interstitial callbacks
-    // -------------------------------------------------------------------------
 
     private void OnInterstitialAdLoaded(LevelPlayAdInfo adInfo)
     {
@@ -241,7 +239,8 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         Debug.Log("[AdsManager] Interstitial ad closed");
 #endif
-        _interstitialAd?.LoadAd();
+        if (!AreAdsRemoved())
+            _interstitialAd?.LoadAd();
     }
 
     private void OnInterstitialAdClicked(LevelPlayAdInfo adInfo)
@@ -251,21 +250,34 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
 #endif
     }
 
-    // -------------------------------------------------------------------------
-    // Helpers / Debug
-    // -------------------------------------------------------------------------
+    private void LoadRewardedAd()
+    {
+        _rewardedAd?.LoadAd();
+    }
 
-    private void LoadRewardedAd()    => _rewardedAd?.LoadAd();
-    private void LoadInterstitialAd() => _interstitialAd?.LoadAd();
+    private void LoadInterstitialAd()
+    {
+        if (!AreAdsRemoved())
+            _interstitialAd?.LoadAd();
+    }
 
     [ContextMenu("Launch Test Suite")]
-    public void LaunchTestSuite() => LevelPlay.LaunchTestSuite();
+    public void LaunchTestSuite()
+    {
+        LevelPlay.LaunchTestSuite();
+    }
 
     [ContextMenu("Reload All Ads")]
-    public void ReloadAllAds() => LoadAds();
+    public void ReloadAllAds()
+    {
+        LoadAds();
+    }
 
     [ContextMenu("Test Show Extra Life Ad")]
-    public void TestShowExtraLifeAd() => ShowRewardedAdForExtraLife();
+    public void TestShowExtraLifeAd()
+    {
+        ShowRewardedAdForExtraLife();
+    }
 
     [ContextMenu("Test Double Daily Reward")]
     public void TestDoubleDailyReward()
@@ -277,31 +289,39 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
         }
     }
 
+    private void OnAdsRemoved()
+    {
+        Debug.Log("[AdsManager] Remove Ads granted. Interstitial ads are disabled; rewarded ads remain available.");
+        CancelInvoke(nameof(LoadInterstitialAd));
+    }
+
     void OnDestroy()
     {
+        GameEvents.OnAdsRemoved -= OnAdsRemoved;
+
         LevelPlay.OnInitSuccess -= OnInitSuccess;
-        LevelPlay.OnInitFailed  -= OnInitFailed;
+        LevelPlay.OnInitFailed -= OnInitFailed;
 
         if (_rewardedAd != null)
         {
-            _rewardedAd.OnAdLoaded        -= OnRewardedAdLoaded;
-            _rewardedAd.OnAdLoadFailed    -= OnRewardedAdLoadFailed;
-            _rewardedAd.OnAdDisplayed     -= OnRewardedAdDisplayed;
+            _rewardedAd.OnAdLoaded -= OnRewardedAdLoaded;
+            _rewardedAd.OnAdLoadFailed -= OnRewardedAdLoadFailed;
+            _rewardedAd.OnAdDisplayed -= OnRewardedAdDisplayed;
             _rewardedAd.OnAdDisplayFailed -= OnRewardedAdDisplayFailed;
-            _rewardedAd.OnAdRewarded      -= OnRewardedAdRewarded;
-            _rewardedAd.OnAdClosed        -= OnRewardedAdClosed;
-            _rewardedAd.OnAdClicked       -= OnRewardedAdClicked;
+            _rewardedAd.OnAdRewarded -= OnRewardedAdRewarded;
+            _rewardedAd.OnAdClosed -= OnRewardedAdClosed;
+            _rewardedAd.OnAdClicked -= OnRewardedAdClicked;
             _rewardedAd.DestroyAd();
         }
 
         if (_interstitialAd != null)
         {
-            _interstitialAd.OnAdLoaded        -= OnInterstitialAdLoaded;
-            _interstitialAd.OnAdLoadFailed    -= OnInterstitialAdLoadFailed;
-            _interstitialAd.OnAdDisplayed     -= OnInterstitialAdDisplayed;
+            _interstitialAd.OnAdLoaded -= OnInterstitialAdLoaded;
+            _interstitialAd.OnAdLoadFailed -= OnInterstitialAdLoadFailed;
+            _interstitialAd.OnAdDisplayed -= OnInterstitialAdDisplayed;
             _interstitialAd.OnAdDisplayFailed -= OnInterstitialAdDisplayFailed;
-            _interstitialAd.OnAdClosed        -= OnInterstitialAdClosed;
-            _interstitialAd.OnAdClicked       -= OnInterstitialAdClicked;
+            _interstitialAd.OnAdClosed -= OnInterstitialAdClosed;
+            _interstitialAd.OnAdClicked -= OnInterstitialAdClicked;
             _interstitialAd.DestroyAd();
         }
     }

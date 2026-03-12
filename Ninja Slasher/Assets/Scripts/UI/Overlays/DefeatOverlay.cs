@@ -10,6 +10,8 @@ public class DefeatOverlay : UIOverlayBase
     [SerializeField] private Button _continueButton;
     [SerializeField] private Button _quitButton;
 
+    private int _lastLivesRemaining;
+
     protected override void Awake()
     {
         base.Awake();
@@ -40,23 +42,21 @@ public class DefeatOverlay : UIOverlayBase
     protected override void OnShown()
     {
         Time.timeScale = 0f;
-
         UIEvents.RaisePause(true);
     }
 
     protected override void OnHidden()
     {
         Time.timeScale = 1f;
-
         UIEvents.RaisePause(false);
     }
 
     private void UpdateUI(int livesRemaining)
     {
+        _lastLivesRemaining = livesRemaining;
+
         if (_titleText != null)
-        {
-            _titleText.text = livesRemaining > 0 ? "¡Vida Perdida!" : "Sin Vidas";
-        }
+            _titleText.text = livesRemaining > 0 ? "Vida Perdida!" : "Sin Vidas";
 
         if (_livesRemainingText != null)
         {
@@ -66,18 +66,18 @@ public class DefeatOverlay : UIOverlayBase
 
         if (_continueButton != null)
         {
-            _continueButton.gameObject.SetActive(livesRemaining > 0);
+            _continueButton.gameObject.SetActive(true);
+            _continueButton.interactable = true;
         }
 
         if (_quitButton != null)
-        {
             _quitButton.gameObject.SetActive(true);
-        }
     }
 
     private void OnContinueClicked()
     {
         Hide();
+        UIEvents.RaiseRetryPressed();
     }
 
     private void OnQuitClicked()
@@ -89,19 +89,13 @@ public class DefeatOverlay : UIOverlayBase
     private void PlayDefeatAudio()
     {
         if (_audioContext == null)
-        {
             return;
-        }
 
         if (AudioService.Instance == null)
-        {
             return;
-        }
 
         if (_audioContext.Audio.defeat != null)
-        {
             AudioService.Instance.PlaySFX(_audioContext.Audio.defeat);
-        }
     }
 
     private void OnDestroy()

@@ -181,6 +181,17 @@ public class StoreService : MonoBehaviourSingleton<StoreService>
         {
             return;
         }
+
+        var product = _catalog?.GetByProductId(productId);
+        if (product != null &&
+            product.rewardType == RewardType.RemoveAds &&
+            SaveManager.Instance != null &&
+            SaveManager.Instance.GetAdsRemoved())
+        {
+            Debug.Log("[StoreService] Ads already removed.");
+            return;
+        }
+
         IAPManager.Instance?.PurchaseProduct(productId);
     }
 

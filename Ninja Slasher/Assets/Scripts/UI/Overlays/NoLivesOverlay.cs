@@ -18,6 +18,16 @@ public class NoLivesOverlay : UIOverlayBase
         SetupButtons();
     }
 
+    private void OnEnable()
+    {
+        GameEvents.OnLivesChanged += OnLivesChanged;
+    }
+
+    private void OnDisable()
+    {
+        GameEvents.OnLivesChanged -= OnLivesChanged;
+    }
+
     private void SetupButtons()
     {
         if (_closeButton != null)
@@ -50,7 +60,7 @@ public class NoLivesOverlay : UIOverlayBase
     {
         if (!LifeManager.Instance.CanPlay())
         {
-            GameManager.Instance.GoToLevelSelection(confirmPendingDeduction: false);
+            UIEvents.RaiseQuitToMenuPressed();
         }
     }
 
@@ -92,44 +102,50 @@ public class NoLivesOverlay : UIOverlayBase
     private void UpdateButtons()
     {
         bool hasLives = LifeManager.Instance?.CanPlay() ?? false;
+        bool canWatchAd = CanWatchAdForRecovery();
+        bool useClaimAsRecoveryButton = _watchAdButton == null;
 
         if (_claimLifeButton != null)
-            _claimLifeButton.gameObject.SetActive(hasLives);
+            _claimLifeButton.gameObject.SetActive(hasLives || (useClaimAsRecoveryButton && canWatchAd));
 
         if (_watchAdButton != null)
-            _watchAdButton.gameObject.SetActive(!hasLives);
+            _watchAdButton.gameObject.SetActive(canWatchAd);
 
         if (_closeButton != null)
-            _closeButton.gameObject.SetActive(hasLives);
+            _closeButton.gameObject.SetActive(true);
     }
 
     private void OnWatchAdClicked()
     {
-        Debug.Log("[NoLivesOverlay] See advertisement to obtain life");
+        if (!CanWatchAdForRecovery())
+        {
+            Debug.Log("[NoLivesOverlay] Rewarded recovery is not available.");
+            UpdateButtons();
+            return;
+        }
 
-        // TODO: Integrar con sistema de ads
-        // AdManager.Instance?.ShowRewardedAd(() => 
-        // {
-        //     LifeManager.Instance?.AddLife();
-        //     Hide();
-        // });
+        Debug.Log("[NoLivesOverlay] See advertisement to obtain life");
+        AdsManager.Instance?.ShowRewardedAdForExtraLife();
     }
 
     private void OnClaimLifeClicked()
     {
-        // TODO: Integrar con sistema de ads
-        // AdManager.Instance?.ShowRewardedAd(() => 
-        // {
-        //     LifeManager.Instance?.AddLife();
-        //     Hide();
-        // });
-
-        if (LifeManager.Instance != null)
+        if (LifeManager.Instance != null && LifeManager.Instance.CanPlay())
         {
-            LifeManager.Instance.AddLife();
             Hide();
-            GameManager.Instance.RestartLevel();
+            UIEvents.RequestRestartLevel();
+            return;
         }
+
+        if (!CanWatchAdForRecovery())
+        {
+            Debug.Log("[NoLivesOverlay] Extra life rewarded ad is not available.");
+            UpdateButtons();
+            return;
+        }
+
+        Debug.Log("[NoLivesOverlay] Claim button requested extra life rewarded ad.");
+        AdsManager.Instance?.ShowRewardedAdForExtraLife();
     }
 
     private void OnDestroy()
@@ -142,5 +158,22 @@ public class NoLivesOverlay : UIOverlayBase
 
         if (_claimLifeButton != null)
             _claimLifeButton.onClick.RemoveAllListeners();
+    }
+
+    private void OnLivesChanged(int lives)
+    {
+        if (!_isVisible)
+            return;
+
+        UpdateMessage();
+        UpdateButtons();
+    }
+
+    private bool CanWatchAdForRecovery()
+    {
+        if (LifeManager.Instance != null && LifeManager.Instance.CanPlay())
+            return false;
+
+        return AdsManager.Instance != null;
     }
 }
