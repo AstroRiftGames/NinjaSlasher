@@ -88,6 +88,7 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
         {
             isDataLoaded = true;
             OnDataLoaded?.Invoke(gameData);
+            PowerUpManager.Instance?.ReloadFromSave();
             return;
         }
 
@@ -99,6 +100,7 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
         SaveData();
         isDataLoaded = true;
         OnDataLoaded?.Invoke(gameData);
+        PowerUpManager.Instance?.ReloadFromSave();
     }
 
     private bool TryLoadFromCurrentPath()
@@ -189,6 +191,7 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
         }
 
         OnDataLoaded?.Invoke(gameData);
+        PowerUpManager.Instance?.ReloadFromSave();
     }
 
     [Serializable]

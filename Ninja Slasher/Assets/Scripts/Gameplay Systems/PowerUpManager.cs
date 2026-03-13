@@ -21,6 +21,7 @@ public class PowerUpInfo
     public int usesRemaining;
 }
 
+[DefaultExecutionOrder(-100)]
 public class PowerUpManager : MonoBehaviourSingleton<PowerUpManager>
 {
     [SerializeField] private PowerUpUIController PowerUpUIController;
@@ -41,9 +42,18 @@ public class PowerUpManager : MonoBehaviourSingleton<PowerUpManager>
     [Header("DEBUG")]
     [SerializeField] private List<PowerUpInfo> availablePowerUps = new List<PowerUpInfo>();
 
+    public override void Awake()
+    {
+        base.Awake();
+
+        if (PowerUpUIController == null)
+            Debug.LogError("[PowerUpManager] PowerUpUIController no asignado. La HUD de power-ups no funcionará.");
+    }
+
     void Start()
     {
         LoadActivePowerUpsFromGameData();
+        RebuildHUD();
     }
 
     void OnEnable()
@@ -322,7 +332,6 @@ public class PowerUpManager : MonoBehaviourSingleton<PowerUpManager>
 
     void ActivatePowerUpDirect(PowerUpType powerUpType, int uses)
     {
-        SaveManager.Instance.RemovePowerUpFromInventory(powerUpType, 1);
         SaveManager.Instance.ActivatePowerUp(powerUpType, uses);
     }
 
@@ -379,6 +388,24 @@ public class PowerUpManager : MonoBehaviourSingleton<PowerUpManager>
         }
     }
 
+    public void ReloadFromSave()
+    {
+        activePowerUps.Clear();
+        _activeUsages.Clear();
+
+        LoadActivePowerUpsFromGameData();
+        RebuildHUD();
+    }
+
+    public void RebuildHUD()
+    {
+        foreach (var (powerUp, usesRemaining) in _activeUsages)
+        {
+            PowerUpType type = GetPowerUpType(powerUp);
+            PowerUpUIController.ShowPowerUp(type, powerUp.icon, usesRemaining);
+        }
+    }
+
     private void OnLevelEndedConsumePowerUps()
     {
         if (activePowerUps.Count == 0)
@@ -386,10 +413,10 @@ public class PowerUpManager : MonoBehaviourSingleton<PowerUpManager>
             return;
         }
 
-        ConsumeAllActivePowerUps();
+        ConsumeOneUseFromAllActivePowerUps();
     }
 
-    public void ConsumeAllActivePowerUps()
+    public void ConsumeOneUseFromAllActivePowerUps()
     {
         if (activePowerUps.Count == 0)
         {
