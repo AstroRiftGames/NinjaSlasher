@@ -11,14 +11,13 @@ public class PowerUpEnhancedParry : PowerUpBase
         context.EnhancedParryActive = true;
         context.EnhancedParryBounces = bouncesAmount;
         context.EnhancedParryVelocityRetention = velocityRetentionPerBounce;
-        context.EnhancedParryUsesRemaining = maxUses;
     }
 
     public override void Deactivate(PowerUpContext context)
     {
         context.EnhancedParryActive = false;
-        context.EnhancedParryBounces = 3;
-        context.EnhancedParryVelocityRetention = 0.9f;
+        context.EnhancedParryBounces = bouncesAmount;
+        context.EnhancedParryVelocityRetention = velocityRetentionPerBounce;
         context.EnhancedParryUsesRemaining = 0;
     }
 
