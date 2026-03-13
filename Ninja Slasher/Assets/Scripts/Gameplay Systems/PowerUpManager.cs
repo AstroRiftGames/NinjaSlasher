@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UI;
 
 public enum PowerUpType
 {
@@ -24,7 +23,7 @@ public class PowerUpInfo
 
 public class PowerUpManager : MonoBehaviourSingleton<PowerUpManager>
 {
-    [SerializeField] private Image _puIconActive;
+    [SerializeField] private PowerUpUIController PowerUpUIController;
     public List<PowerUpBase> activePowerUps = new List<PowerUpBase>();
     public PowerUpContext context = new PowerUpContext();
 
@@ -160,8 +159,7 @@ public class PowerUpManager : MonoBehaviourSingleton<PowerUpManager>
 
         powerUp.Activate(context);
         _activeUsages.Add((powerUp, powerUp.maxUses));
-        _puIconActive.enabled = true;
-        _puIconActive.sprite = powerUp.icon;
+        PowerUpUIController.ShowPowerUp(powerUp.icon);
 
         PowerUpType type = GetPowerUpType(powerUp);
         UpdateContextRemainingUses(type, powerUp.maxUses);
@@ -274,9 +272,9 @@ public class PowerUpManager : MonoBehaviourSingleton<PowerUpManager>
 
         GameEvents.RaisePowerUpExpired(type);
 
-        if (activePowerUps.Count == 0 && _puIconActive != null)
+        if (activePowerUps.Count == 0)
         {
-            _puIconActive.enabled = false;
+            PowerUpUIController.HidePowerUp();
         }
     }
 
@@ -312,11 +310,7 @@ public class PowerUpManager : MonoBehaviourSingleton<PowerUpManager>
 
         GameEvents.RaisePowerUpActivated(type, usesToSet);
 
-        if (_puIconActive != null)
-        {
-            _puIconActive.enabled = true;
-            _puIconActive.sprite = powerUp.icon;
-        }
+        PowerUpUIController.ShowPowerUp(powerUp.icon);
 
         GameEvents.RaisePowerUpUsesUpdated(type, usesToSet);
     }
