@@ -73,7 +73,7 @@ public class EmergencyBundleService : MonoBehaviourSingleton<EmergencyBundleServ
 
         if (isBoss)
         {
-            SaveManager.Instance.GetGameData().consecutiveBossLosses = 0;
+            SaveManager.Instance.Modify(d => d.consecutiveBossLosses = 0);
             AutoSaveManager.Instance?.ForceSave();
         }
         else

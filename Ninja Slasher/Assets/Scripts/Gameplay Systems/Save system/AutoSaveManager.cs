@@ -85,9 +85,7 @@ public class AutoSaveManager : MonoBehaviourSingleton<AutoSaveManager>
         if (!CheckSaveManager()) return;
 
         ShowSaveIndicator("SAVING...");
-        saveManager.UpdateLevelProgress(levelId + 1);
-        saveManager.UpdateStars(levelId, starsEarned);
-        saveManager.UpdateGameStats(enemiesKilled, maxCombo, playTime, true);
+        saveManager.SaveLevelCompletion(levelId, starsEarned, enemiesKilled, maxCombo, playTime);
     }
 
     public void OnLevelFailed(int enemiesKilled, int maxCombo, float playTime)

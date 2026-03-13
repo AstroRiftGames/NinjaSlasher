@@ -171,8 +171,7 @@ public class StoreService : MonoBehaviourSingleton<StoreService>
     private void ClearPendingPurchase()
     {
         if (SaveManager.Instance == null) return;
-        SaveManager.Instance.GetGameData().pendingPurchaseProductId = "";
-        SaveManager.Instance.SaveData();
+        SaveManager.Instance.Modify(d => d.pendingPurchaseProductId = "");
     }
 
     public void Buy(string productId)

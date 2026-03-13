@@ -23,6 +23,8 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
     private bool _resetInProgress;
     public bool ResetInProgress => _resetInProgress;
 
+    private bool isSaving;
+
     public static event Action<GameData> OnDataLoaded;
     public static event Action<GameData> OnDataSaved;
 
@@ -35,7 +37,15 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
 
         InitializeOfflineMode();
 
-        Invoke(nameof(TrySetupAuthIntegration), 0.1f);
+        StartCoroutine(WaitForAuthIntegration());
+    }
+
+    private System.Collections.IEnumerator WaitForAuthIntegration()
+    {
+        while (LoginManager.Instance == null)
+            yield return null;
+
+        TrySetupAuthIntegration();
     }
 
     private void InitializeOfflineMode()
@@ -391,16 +401,19 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
 
     public void SaveData()
     {
+        if (isSaving) return;
+
         if (gameData == null)
         {
             Debug.LogWarning("[SaveManager] Attempted to save null gameData");
             return;
         }
 
-        gameData.lastPlayDate = DateTime.Now;
-
+        isSaving = true;
         try
         {
+            gameData.lastPlayDate = DateTime.Now;
+
             string directory = Path.GetDirectoryName(saveFilePath);
             if (!Directory.Exists(directory))
                 Directory.CreateDirectory(directory);
@@ -424,6 +437,16 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
         {
             Debug.LogError($"[SaveManager] Failed to save data: {e.Message}");
         }
+        finally
+        {
+            isSaving = false;
+        }
+    }
+
+    public void Modify(Action<GameData> mutation)
+    {
+        mutation(GetGameData());
+        SaveData();
     }
 
     private void ValidateAndInitializeProgressionData()
@@ -813,6 +836,54 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
         {
             data.totalPlayTime += playTime;
         }
+
+        SaveData();
+    }
+
+    public void SaveLevelCompletion(int levelId, int stars, int enemiesKilled, int maxCombo, float playTime)
+    {
+        var data = GetGameData();
+
+        // UpdateLevelProgress(levelId + 1)
+        int nextLevel = levelId + 1;
+        if (nextLevel > data.highestUnlockedLevel)
+            data.highestUnlockedLevel = nextLevel;
+
+        // UpdateStars(levelId, stars)
+        int previousStars = 0;
+        if (data.levelStars.ContainsKey(levelId))
+        {
+            previousStars = data.levelStars[levelId];
+            if (data.levelStars[levelId] < stars)
+                data.totalStars += stars - data.levelStars[levelId];
+            data.levelStars[levelId] = stars;
+        }
+        else
+        {
+            data.levelStars.Add(levelId, stars);
+            data.totalStars += stars;
+        }
+
+        if (stars >= 1 && previousStars == 0)
+        {
+            if (levelId >= data.highestUnlockedLevel)
+                data.highestUnlockedLevel = levelId + 1;
+
+            int highestCompletedLevel = 0;
+            foreach (var kv in data.levelStars)
+                if (kv.Value >= 1)
+                    highestCompletedLevel = Mathf.Max(highestCompletedLevel, kv.Key);
+
+            int calculatedArea = Mathf.Min(((highestCompletedLevel - 1) / 10) + 1, 5);
+            if (calculatedArea > data.highestUnlockedArea)
+                data.highestUnlockedArea = calculatedArea;
+        }
+
+        // UpdateGameStats(enemiesKilled, maxCombo, playTime, gameCompleted: true)
+        data.totalGamesPlayed++;
+        if (enemiesKilled > 0) data.totalEnemiesKilled += enemiesKilled;
+        if (maxCombo > data.bestCombo) data.bestCombo = maxCombo;
+        if (playTime > 0f) data.totalPlayTime += playTime;
 
         SaveData();
     }

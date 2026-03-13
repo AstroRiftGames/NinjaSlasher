@@ -10,7 +10,7 @@ public class GameData
     public int currentArea = 1;
     public Dictionary<int, int> levelStars = new Dictionary<int, int>();
     public Dictionary<int, List<int>> levelObjectives = new Dictionary<int, List<int>>(); // objetivos por nivel
-    public List<int> unlockedAreas = new List<int> { 1 }; // areas desbloqueadas
+    public List<int> unlockedAreas = new List<int>(); // areas desbloqueadas
     public Dictionary<int, LevelProgressData> levelProgressData = new Dictionary<int, LevelProgressData>();
     public int totalStars = 0;
     public int consecutiveLevelWins = 0;

@@ -23,7 +23,7 @@ public class GameDataDTO
     public int consecutiveLevelWins;
     public int lastCompletedLevel;
 
-    public List<PowerUpData> activePowerUps = new();
+    public List<PowerUpDataDTO> activePowerUps = new();
     public List<PowerUpInventoryItem> powerUpInventory = new();
 
     public string dailyRewardData;
@@ -62,6 +62,14 @@ public class GameDataDTO
     public int coins;
 }
 
+[Serializable]
+public class PowerUpDataDTO
+{
+    public PowerUpType type;
+    public int usesRemaining;
+    public string activationTimeIso;
+}
+
 [Serializable] public struct IntIntKV { public int key; public int value; }
 [Serializable] public struct IntListKV { public int key; public List<int> value; }
 [Serializable] public struct IntLevelProgressKV { public int key; public LevelProgressData value; }
@@ -82,7 +90,12 @@ public static class GameDataMapper
             lastLifeRegenTime = d.lastLifeRegenTime,
             canRegenLives = d.canRegenLives,
 
-            activePowerUps = new List<PowerUpData>(d.activePowerUps),
+            activePowerUps = d.activePowerUps.ConvertAll(p => new PowerUpDataDTO
+            {
+                type = p.type,
+                usesRemaining = p.usesRemaining,
+                activationTimeIso = p.activationTime.ToString("o"),
+            }),
             powerUpInventory = new List<PowerUpInventoryItem>(d.powerUpInventory),
 
             dailyRewardData = d.dailyRewardData,
@@ -140,7 +153,14 @@ public static class GameDataMapper
             lastLifeRegenTime = dto.lastLifeRegenTime ?? "",
             canRegenLives = dto.canRegenLives,
 
-            activePowerUps = dto.activePowerUps ?? new List<PowerUpData>(),
+            activePowerUps = dto.activePowerUps?.ConvertAll(p =>
+            {
+                var item = new PowerUpData(p.type, p.usesRemaining);
+                if (DateTime.TryParse(p.activationTimeIso, null,
+                    System.Globalization.DateTimeStyles.RoundtripKind, out var dt))
+                    item.activationTime = dt;
+                return item;
+            }) ?? new List<PowerUpData>(),
             powerUpInventory = dto.powerUpInventory ?? new List<PowerUpInventoryItem>(),
 
             dailyRewardData = dto.dailyRewardData ?? "",

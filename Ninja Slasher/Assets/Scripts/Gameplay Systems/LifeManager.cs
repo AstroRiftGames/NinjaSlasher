@@ -367,9 +367,8 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
 
         if (SaveManager.Instance != null)
         {
-            SaveManager.Instance.GetGameData().unlimitedLivesEndUtc =
-                new DateTimeOffset(_unlimitedLivesEndUtc).ToUnixTimeSeconds();
-            SaveManager.Instance.SaveData();
+            long endUtcSeconds = new DateTimeOffset(_unlimitedLivesEndUtc).ToUnixTimeSeconds();
+            SaveManager.Instance.Modify(d => d.unlimitedLivesEndUtc = endUtcSeconds);
         }
 
         Debug.Log($"[LifeManager] ActivateUnlimitedLives: {durationMinutes} min | " +
@@ -624,7 +623,7 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
     private void SaveAdsProgress()
     {
         if (SaveManager.Instance != null)
-            SaveManager.Instance.GetGameData().consecutiveLosses = currentConsecutiveLosses;
+            SaveManager.Instance.Modify(d => d.consecutiveLosses = currentConsecutiveLosses);
         else
         {
             PlayerPrefs.SetInt("ConsecutiveLosses", currentConsecutiveLosses);
