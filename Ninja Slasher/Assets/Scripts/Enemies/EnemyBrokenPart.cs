@@ -17,9 +17,8 @@ public class EnemyBrokenPart
     [MinMaxSlider(1f, 10f)]
     public FloatRange _impulseForce;
 
-    [MinMaxSlider(1f, 10f)]
+    [MinMaxSlider(0f, 10f)]
     public FloatRange _torqueForce;
-
 
     public void BreakAndThrow()
     {
