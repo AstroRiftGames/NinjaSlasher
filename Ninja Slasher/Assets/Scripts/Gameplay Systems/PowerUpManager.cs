@@ -80,6 +80,8 @@ public class PowerUpManager : MonoBehaviourSingleton<PowerUpManager>
 
         UpdateContextRemainingUses(powerUpType, usesRemaining);
 
+        PowerUpUIController.UpdateUses(powerUpType, usesRemaining);
+
         pu.OnUseConsumed(context);
 
         GameEvents.RaisePowerUpUsesUpdated(powerUpType, usesRemaining);
@@ -159,9 +161,9 @@ public class PowerUpManager : MonoBehaviourSingleton<PowerUpManager>
 
         powerUp.Activate(context);
         _activeUsages.Add((powerUp, powerUp.maxUses));
-        PowerUpUIController.ShowPowerUp(powerUp.icon);
 
         PowerUpType type = GetPowerUpType(powerUp);
+        PowerUpUIController.ShowPowerUp(type, powerUp.icon, powerUp.maxUses);
         UpdateContextRemainingUses(type, powerUp.maxUses);
 
         GameEvents.RaisePowerUpUsesUpdated(type, powerUp.maxUses);
@@ -180,6 +182,12 @@ public class PowerUpManager : MonoBehaviourSingleton<PowerUpManager>
         PowerUpBase powerUpToActivate = GetPowerUpReference(powerUpType);
         if (powerUpToActivate != null)
         {
+            if (activePowerUps.Contains(powerUpToActivate))
+            {
+                Debug.LogWarning($"[PowerUpManager] {powerUpToActivate.name} ya está activo.");
+                return false;
+            }
+
             ActivatePowerUpInternal(powerUpToActivate);
         }
 
@@ -270,12 +278,9 @@ public class PowerUpManager : MonoBehaviourSingleton<PowerUpManager>
             SaveManager.Instance.DeactivatePowerUp(type);
         }
 
-        GameEvents.RaisePowerUpExpired(type);
+        PowerUpUIController.HidePowerUp(type);
 
-        if (activePowerUps.Count == 0)
-        {
-            PowerUpUIController.HidePowerUp();
-        }
+        GameEvents.RaisePowerUpExpired(type);
     }
 
     void ActivatePowerUpInternal(PowerUpBase powerUp, int uses = -1)
@@ -310,7 +315,7 @@ public class PowerUpManager : MonoBehaviourSingleton<PowerUpManager>
 
         GameEvents.RaisePowerUpActivated(type, usesToSet);
 
-        PowerUpUIController.ShowPowerUp(powerUp.icon);
+        PowerUpUIController.ShowPowerUp(type, powerUp.icon, usesToSet);
 
         GameEvents.RaisePowerUpUsesUpdated(type, usesToSet);
     }
