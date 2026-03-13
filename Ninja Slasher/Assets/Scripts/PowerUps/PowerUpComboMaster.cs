@@ -19,11 +19,11 @@ public class PowerUpComboMaster : PowerUpBase
 
     public override void OnUseConsumed(PowerUpContext context)
     {
-        Debug.Log($"[DashTurbo] Uso consumido. Restantes: {context.DashTurboUsesRemaining}");
+        Debug.Log($"[ComboMaster] Uso consumido. Restantes: {context.ComboMasterUsesRemaining}");
 
         if (context.ComboMasterUsesRemaining == 1)
         {
-            Debug.LogWarning("[DashTurbo] Ultimo uso disponible");
+            Debug.LogWarning("[ComboMaster] Ultimo uso disponible");
         }
     }
 }
