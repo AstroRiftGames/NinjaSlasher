@@ -397,11 +397,9 @@ public class PowerUpManager : MonoBehaviourSingleton<PowerUpManager>
             return;
         }
 
-        var powerUpsCopy = new List<PowerUpBase>(activePowerUps);
-
-        foreach (var powerUp in powerUpsCopy)
+        for (int i = activePowerUps.Count - 1; i >= 0; i--)
         {
-            PowerUpType type = GetPowerUpType(powerUp);
+            PowerUpType type = GetPowerUpType(activePowerUps[i]);
             ConsumePowerUpUse(type);
         }
 
