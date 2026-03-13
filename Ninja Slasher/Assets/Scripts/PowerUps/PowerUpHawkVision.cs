@@ -7,19 +7,19 @@ public class PowerUpHawkVision : PowerUpBase
 
     public override void Activate(PowerUpContext context)
     {
-        context.TrajectoryGuideActive = true;
+        context.HawkVisionActive = true;
     }
 
     public override void Deactivate(PowerUpContext context)
     {
-        context.TrajectoryGuideActive = false;
+        context.HawkVisionActive = false;
     }
 
     public override void OnUseConsumed(PowerUpContext context)
     {
-        Debug.Log($"[HawkVision] Uso consumido. Restantes: {context.TrajectoryGuideUsesRemaining}");
+        Debug.Log($"[HawkVision] Uso consumido. Restantes: {context.HawkVisionUsesRemaining}");
 
-        if (context.TrajectoryGuideUsesRemaining == 1)
+        if (context.HawkVisionUsesRemaining == 1)
         {
             Debug.LogWarning("[HawkVision] Ultimo uso disponible");
         }

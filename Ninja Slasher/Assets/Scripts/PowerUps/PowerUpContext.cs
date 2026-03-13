@@ -22,16 +22,13 @@ public class PowerUpContext
     public bool SecondChanceActive;
     public int SecondChanceUsesRemaining;
 
-    public bool TrajectoryGuideActive;
-    public int TrajectoryGuideUsesRemaining;
+    public bool HawkVisionActive;
+    public int HawkVisionUsesRemaining;
 
     public bool EnhancedParryActive;
     public int EnhancedParryBounces = 3;
     public float EnhancedParryVelocityRetention = 0.9f;
     public int EnhancedParryUsesRemaining;
-
-    public bool HawkVisionActive;
-    public int HawkVisionUsesRemaining;
 
     public bool AnyPowerUpActive()
     {
@@ -40,7 +37,7 @@ public class PowerUpContext
                ParryPerfectActive ||
                ComboMasterActive ||
                SecondChanceActive ||
-               TrajectoryGuideActive ||
+               HawkVisionActive ||
                EnhancedParryActive;
     }
 
@@ -53,7 +50,7 @@ public class PowerUpContext
         if (ParryPerfectActive) uses.Add(ParryPerfectUsesRemaining);
         if (ComboMasterActive) uses.Add(ComboMasterUsesRemaining);
         if (SecondChanceActive) uses.Add(SecondChanceUsesRemaining);
-        if (TrajectoryGuideActive) uses.Add(TrajectoryGuideUsesRemaining);
+        if (HawkVisionActive) uses.Add(HawkVisionUsesRemaining);
         if (EnhancedParryActive) uses.Add(EnhancedParryUsesRemaining);
 
         return uses.Count > 0 ? uses.Min() : 0;
@@ -67,7 +64,7 @@ public class PowerUpContext
         if (ParryPerfectActive) count++;
         if (ComboMasterActive) count++;
         if (SecondChanceActive) count++;
-        if (TrajectoryGuideActive) count++;
+        if (HawkVisionActive) count++;
         if (EnhancedParryActive) count++;
         return count;
     }
@@ -81,7 +78,7 @@ public class PowerUpContext
         if (ParryPerfectActive) names.Add("Parry Perfect");
         if (ComboMasterActive) names.Add("Combo Master");
         if (SecondChanceActive) names.Add("Second Chance");
-        if (TrajectoryGuideActive) names.Add("Trajectory Guide");
+        if (HawkVisionActive) names.Add("Trajectory Guide");
         if (EnhancedParryActive) names.Add("Enhanced Parry");
 
         return string.Join(", ", names);

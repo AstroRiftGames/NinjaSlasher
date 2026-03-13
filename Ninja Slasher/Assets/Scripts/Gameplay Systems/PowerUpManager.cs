@@ -117,7 +117,7 @@ public class PowerUpManager : MonoBehaviourSingleton<PowerUpManager>
                 context.SecondChanceActive = isActive;
                 break;
             case PowerUpType.HawkVision:
-                context.TrajectoryGuideActive = isActive;
+                context.HawkVisionActive = isActive;
                 break;
             case PowerUpType.EnhancedParry:
                 context.EnhancedParryActive = isActive;
@@ -145,7 +145,7 @@ public class PowerUpManager : MonoBehaviourSingleton<PowerUpManager>
                 context.SecondChanceUsesRemaining = usesRemaining;
                 break;
             case PowerUpType.HawkVision:
-                context.TrajectoryGuideUsesRemaining = usesRemaining;
+                context.HawkVisionUsesRemaining = usesRemaining;
                 break;
             case PowerUpType.EnhancedParry:
                 context.EnhancedParryUsesRemaining = usesRemaining;
