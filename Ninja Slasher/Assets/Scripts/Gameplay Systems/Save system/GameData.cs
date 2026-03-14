@@ -37,6 +37,8 @@ public class GameData
     // Configuraciones
     public float musicVolume = 1f;
     public float sfxVolume = 1f;
+    public bool musicEnabled = true;
+    public bool sfxEnabled = true;
 
     // Estadisticas y Metricas
     public int totalGamesPlayed = 0;

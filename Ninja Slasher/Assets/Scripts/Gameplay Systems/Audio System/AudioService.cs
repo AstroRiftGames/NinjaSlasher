@@ -59,6 +59,13 @@ public class AudioService : MonoBehaviour
         audioSettings.Load();
         audioConfig.LoadFromPlayerPrefs();
 
+        if (SaveManager.Instance != null && SaveManager.Instance.IsDataLoaded)
+        {
+            var data = SaveManager.Instance.GetGameData();
+            audioConfig.SetMusicEnabled(data.musicEnabled);
+            audioConfig.SetSFXEnabled(data.sfxEnabled);
+        }
+
         audioConfig.OnMusicEnabledChanged += OnMusicEnabledChanged;
         audioConfig.OnSFXEnabledChanged += OnSFXEnabledChanged;
 

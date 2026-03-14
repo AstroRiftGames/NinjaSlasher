@@ -23,6 +23,9 @@ public class AudioConfig : ScriptableObject
         sfxEnabled = PlayerPrefs.GetInt(SFX_ENABLED_KEY, 1) == 1;
     }
 
+    public void SetMusicEnabled(bool value) => musicEnabled = value;
+    public void SetSFXEnabled(bool value)   => sfxEnabled   = value;
+
     private void SaveToPlayerPrefs()
     {
         PlayerPrefs.SetInt(MUSIC_ENABLED_KEY, musicEnabled ? 1 : 0);
@@ -34,6 +37,8 @@ public class AudioConfig : ScriptableObject
     {
         musicEnabled = !musicEnabled;
         SaveToPlayerPrefs();
+        if (SaveManager.Instance != null)
+            SaveManager.Instance.Modify(d => d.musicEnabled = musicEnabled);
         OnMusicEnabledChanged?.Invoke(musicEnabled);
     }
 
@@ -41,6 +46,8 @@ public class AudioConfig : ScriptableObject
     {
         sfxEnabled = !sfxEnabled;
         SaveToPlayerPrefs();
+        if (SaveManager.Instance != null)
+            SaveManager.Instance.Modify(d => d.sfxEnabled = sfxEnabled);
         OnSFXEnabledChanged?.Invoke(sfxEnabled);
     }
 }

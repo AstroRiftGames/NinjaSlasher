@@ -33,6 +33,8 @@ public class GameDataDTO
 
     public float musicVolume;
     public float sfxVolume;
+    public bool musicEnabled = true;
+    public bool sfxEnabled = true;
 
     public int totalGamesPlayed;
     public int totalEnemiesKilled;
@@ -108,6 +110,8 @@ public static class GameDataMapper
 
             musicVolume = d.musicVolume,
             sfxVolume = d.sfxVolume,
+            musicEnabled = d.musicEnabled,
+            sfxEnabled = d.sfxEnabled,
 
             totalGamesPlayed = d.totalGamesPlayed,
             totalEnemiesKilled = d.totalEnemiesKilled,
@@ -179,6 +183,8 @@ public static class GameDataMapper
 
             musicVolume = dto.musicVolume,
             sfxVolume = dto.sfxVolume,
+            musicEnabled = dto.musicEnabled,
+            sfxEnabled = dto.sfxEnabled,
 
             totalGamesPlayed = dto.totalGamesPlayed,
             totalEnemiesKilled = dto.totalEnemiesKilled,
