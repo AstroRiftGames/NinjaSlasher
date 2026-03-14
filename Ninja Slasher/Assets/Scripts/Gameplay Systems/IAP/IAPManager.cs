@@ -132,6 +132,15 @@ public class IAPManager : MonoBehaviourSingleton<IAPManager>, IDetailedStoreList
 
         _processedTransactions.Add(transactionId);
 
+#if UNITY_ANDROID && !UNITY_EDITOR
+        if (!ValidateReceipt(purchaseEvent))
+        {
+            Debug.LogWarning($"[IAPManager] Receipt validation failed. Purchase blocked: '{productId}'");
+            _purchaseState = PurchaseState.Idle;
+            return PurchaseProcessingResult.Complete;
+        }
+#endif
+
         if (_purchaseHandlers.TryGetValue(productId, out var handler))
         {
             handler.Invoke(purchaseEvent);
