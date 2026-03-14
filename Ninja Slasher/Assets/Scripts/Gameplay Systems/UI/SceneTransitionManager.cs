@@ -18,7 +18,7 @@ public class SceneTransitionManager : MonoBehaviour
     private void Awake()
     {
         _audioContext = GetComponentInParent<UIAudioContext>();
-        _dailyStartupSequence = new DailyStartupSequence();
+        _dailyStartupSequence = new DailyStartupSequence(this);
     }
 
     private void OnDestroy()
@@ -124,7 +124,6 @@ public class SceneTransitionManager : MonoBehaviour
 
     private IEnumerator ShowLevelSelectorCo()
     {
-        // UI-only path. This should only run when the Level Selector scene is already loaded.
         Time.timeScale = 1;
 
         SetHUDActive(false);

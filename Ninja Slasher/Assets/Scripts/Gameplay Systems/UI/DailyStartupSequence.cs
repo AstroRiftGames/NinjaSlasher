@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using UnityEngine;
 
 public sealed class DailyStartupSequence : IDisposable
@@ -8,8 +9,12 @@ public sealed class DailyStartupSequence : IDisposable
     private bool _isWaitingForReward;
     private bool _isRunning;
 
-    public DailyStartupSequence()
+    private readonly MonoBehaviour _runner;
+    private const float WheelToRewardDelay = 1.5f;
+
+    public DailyStartupSequence(MonoBehaviour runner)
     {
+        _runner = runner;
         SaveManager.OnDataLoaded += OnDataLoaded;
         UIEvents.OnLevelSelectorReady += OnLevelSelectorReady;
         UIEvents.OnWheelSequenceCompleted += OnWheelSequenceCompleted;
@@ -45,6 +50,12 @@ public sealed class DailyStartupSequence : IDisposable
 
         _isWaitingForWheel = false;
         UIEvents.RequestHideDailyWheelModal();
+        _runner.StartCoroutine(DelayedAdvanceSequence());
+    }
+
+    private IEnumerator DelayedAdvanceSequence()
+    {
+        yield return new WaitForSeconds(WheelToRewardDelay);
         TryAdvanceSequence();
     }
 
@@ -64,7 +75,6 @@ public sealed class DailyStartupSequence : IDisposable
 
         if (DailyWheelSystem.Instance == null || DailyRewardSystem.Instance == null)
         {
-            Debug.LogWarning("[DailySequence] Daily systems not ready. Completing startup sequence to avoid blocking UI.");
             CompleteSequence();
             return;
         }
@@ -72,7 +82,6 @@ public sealed class DailyStartupSequence : IDisposable
         if (DailyWheelSystem.Instance.CanSpinToday())
         {
             _isWaitingForWheel = true;
-            Debug.Log("[DailySequence] Showing Daily Wheel");
             UIEvents.RequestShowDailyWheelModal();
             return;
         }
@@ -80,12 +89,10 @@ public sealed class DailyStartupSequence : IDisposable
         if (DailyRewardSystem.Instance.CanClaimToday())
         {
             _isWaitingForReward = true;
-            Debug.Log("[DailySequence] Showing Daily Reward");
             UIEvents.RequestShowDailyRewardModal();
             return;
         }
 
-        Debug.Log("[DailySequence] No wheel or daily reward available");
         CompleteSequence();
     }
 
@@ -97,7 +104,6 @@ public sealed class DailyStartupSequence : IDisposable
         _isWaitingForWheel = false;
         _isWaitingForReward = false;
 
-        Debug.Log("[DailySequence] Startup sequence completed");
         UIEvents.RaiseStartupSequenceCompleted();
     }
 }
