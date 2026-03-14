@@ -8,8 +8,8 @@ public class EnemyBrokenPart : MonoBehaviour
     [SerializeField] private SpriteRenderer _spriteRenderer;
 
     private float _spawnTime;
-    [SerializeField] private float _timeToDestroy;
-    [SerializeField] private float _fadingTime;
+    [SerializeField] private float _timeToDestroy = 3.5f;
+    [SerializeField] private float _fadingTime = 1f;
     private void Start()
     {
         _spawnTime = Time.time;
