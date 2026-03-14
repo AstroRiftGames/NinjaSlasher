@@ -60,6 +60,9 @@ public class GameDataDTO
 
     /// <summary>Monedas del jugador.</summary>
     public int coins;
+
+    /// <summary>Datos de daily wheel.</summary>
+    public DailyWheelSaveData dailyWheelData = new DailyWheelSaveData();
 }
 
 [Serializable]
@@ -122,6 +125,12 @@ public static class GameDataMapper
             pendingPurchaseProductId = d.pendingPurchaseProductId,
             unlimitedLivesEndUtc = d.unlimitedLivesEndUtc,
             coins = d.coins,
+            dailyWheelData = new DailyWheelSaveData
+            {
+                lastSpinDateIso  = d.dailyWheelData?.lastSpinDateIso ?? "",
+                consecutiveSpins = d.dailyWheelData?.consecutiveSpins ?? 0,
+                totalSpins       = d.dailyWheelData?.totalSpins ?? 0,
+            },
         };
 
         if (d.levelStars != null)
@@ -186,6 +195,7 @@ public static class GameDataMapper
             pendingPurchaseProductId = dto.pendingPurchaseProductId ?? "",
             unlimitedLivesEndUtc = dto.unlimitedLivesEndUtc,
             coins = dto.coins,
+            dailyWheelData = dto.dailyWheelData ?? new DailyWheelSaveData(),
         };
 
         if (DateTime.TryParse(dto.lastPlayDate, null,

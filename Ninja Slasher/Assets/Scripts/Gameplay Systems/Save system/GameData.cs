@@ -31,6 +31,9 @@ public class GameData
     public string lastRewardTimestamp = ""; // timestamp ultima recompensa
     public bool adsRemoved = false;
 
+    // Sistema de Daily Wheel
+    public DailyWheelSaveData dailyWheelData = new DailyWheelSaveData();
+
     // Configuraciones
     public float musicVolume = 1f;
     public float sfxVolume = 1f;
@@ -229,4 +232,12 @@ public class ObjectiveCompletionData
         completedDate = DateTime.Now;
         isPermanentlyCompleted = true;
     }
+}
+
+[Serializable]
+public class DailyWheelSaveData
+{
+    public string lastSpinDateIso;
+    public int consecutiveSpins;
+    public int totalSpins;
 }

@@ -11,7 +11,6 @@ public class DailyWheelSystem : MonoBehaviourSingleton<DailyWheelSystem>
     [SerializeField] private WheelReward[] wheelRewards;
 
     private WheelData wheelData = new WheelData();
-    private const string WHEEL_DATA_KEY = "DailyWheelData";
 
     public static event Action<WheelReward> OnRewardSpun;
     public static event Action<bool> OnWheelAvailabilityChanged;
@@ -22,12 +21,31 @@ public class DailyWheelSystem : MonoBehaviourSingleton<DailyWheelSystem>
     public override void Awake()
     {
         base.Awake();
+    }
+
+    private void OnEnable()
+    {
+        SaveManager.OnDataLoaded += HandleDataLoaded;
+    }
+
+    private void OnDisable()
+    {
+        SaveManager.OnDataLoaded -= HandleDataLoaded;
+    }
+
+    private void HandleDataLoaded(GameData _)
+    {
         LoadWheelData();
+        CheckWheelAvailability();
     }
 
     private void Start()
     {
-        CheckWheelAvailability();
+        if (SaveManager.Instance != null && SaveManager.Instance.IsDataLoaded)
+        {
+            LoadWheelData();
+            CheckWheelAvailability();
+        }
     }
 
     public bool SpinWheel(out WheelReward reward)
@@ -111,15 +129,22 @@ public class DailyWheelSystem : MonoBehaviourSingleton<DailyWheelSystem>
 
     private void LoadWheelData()
     {
-        string json = PlayerPrefs.GetString(WHEEL_DATA_KEY, string.Empty);
-        wheelData = !string.IsNullOrEmpty(json) ? JsonUtility.FromJson<WheelData>(json) : new WheelData();
+        if (SaveManager.Instance == null) return;
+        var saved = SaveManager.Instance.GetGameData().dailyWheelData;
+        wheelData.lastSpinDate      = saved.lastSpinDateIso;
+        wheelData.consecutiveSpins  = saved.consecutiveSpins;
+        wheelData.totalSpins        = saved.totalSpins;
     }
 
     private void SaveWheelData()
     {
-        string json = JsonUtility.ToJson(wheelData);
-        PlayerPrefs.SetString(WHEEL_DATA_KEY, json);
-        PlayerPrefs.Save();
+        if (SaveManager.Instance == null) return;
+        SaveManager.Instance.Modify(d =>
+        {
+            d.dailyWheelData.lastSpinDateIso  = wheelData.lastSpinDate;
+            d.dailyWheelData.consecutiveSpins = wheelData.consecutiveSpins;
+            d.dailyWheelData.totalSpins       = wheelData.totalSpins;
+        });
     }
 
     private DateTime GetLastSpinDateSafe()
