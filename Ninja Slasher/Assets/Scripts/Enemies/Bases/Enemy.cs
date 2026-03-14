@@ -19,7 +19,7 @@ public class Enemy : MonoBehaviour
 
     [SerializeField] protected Animator _animator;
     public Animator Animator => _animator;
-    [SerializeField] protected EnemyBrokenPart[] _parts;
+    //[SerializeField] protected EnemyBrokenPart[] _parts;
 
     public virtual void OnEnable()
     {
@@ -70,25 +70,25 @@ public class Enemy : MonoBehaviour
     {
         _animator.SetTrigger("OnHit");
         _col.includeLayers -= LayerMask.GetMask("Player");
-    }
-
-    public void StartBreaking()
-    {
         StartCoroutine(BreakEnemy());
     }
 
+    //public void StartBreaking()
+    //{
+    //    StartCoroutine(BreakEnemy());
+    //}
+
     private IEnumerator BreakEnemy()
     {
-        Debug.Log("Breaking enemy");
-        _rb.bodyType = RigidbodyType2D.Dynamic;
-        foreach (var part in _parts)
-        {
-            part.BreakAndThrow();
-        }
+        //_rb.bodyType = RigidbodyType2D.Dynamic;
+        //foreach (var part in _parts)
+        //{
+        //    part.BreakAndThrow();
+        //}
         yield return new WaitForSeconds(1f);
         RegisterKill();
-        yield return new WaitForSeconds(2f);
-        Destroy(gameObject);
+        //yield return new WaitForSeconds(2f);
+        //Destroy(gameObject);
     }
 
     public void RegisterKill()

@@ -1,34 +1,39 @@
 using System;
 using UnityEngine;
+using DG.Tweening;
 
-[Serializable]
-public class EnemyBrokenPart
+public class EnemyBrokenPart : MonoBehaviour
 {
-    public Collider2D Col;
-    public Rigidbody2D RB;
-    [Space]
+    [SerializeField] private Rigidbody2D _rb;
+    [SerializeField] private SpriteRenderer _spriteRenderer;
 
-    [MinMaxSlider(-1f, 1f)]
-    public FloatRange _impulseX;
-
-    [MinMaxSlider(-1f, 1f)]
-    public FloatRange _impulseY;
-
-    [MinMaxSlider(1f, 10f)]
-    public FloatRange _impulseForce;
-
-    [MinMaxSlider(0f, 10f)]
-    public FloatRange _torqueForce;
-
-    public void BreakAndThrow()
+    private float _spawnTime;
+    [SerializeField] private float _timeToDestroy;
+    [SerializeField] private float _fadingTime;
+    private void Start()
     {
-        Debug.Log("Breaking part");
-        Col.enabled = true;
-        RB.bodyType = RigidbodyType2D.Dynamic;
-        Vector2 dir = Vector2.zero;
-        dir.x = _impulseX.GetRandom();
-        dir.y = _impulseY.GetRandom();
-        RB.AddForce(dir*_impulseForce.GetRandom(), ForceMode2D.Impulse);
-        RB.AddTorque(_torqueForce.GetRandom(), ForceMode2D.Impulse);
+        _spawnTime = Time.time;
     }
+
+    private void Update()
+    {
+        CheckTime();
+    }
+
+    private void OnCollisionStay2D(Collision2D collision)
+    {
+        if(collision.gameObject.layer is 7 or 6)
+        {
+            _rb.linearVelocity = Vector2.zero;
+        }
+    }
+
+    private void CheckTime()
+    {
+        if (Time.time >= _spawnTime + _timeToDestroy)
+        {
+            _spriteRenderer.DOFade(0, _fadingTime);
+        }
+    }
+
 }

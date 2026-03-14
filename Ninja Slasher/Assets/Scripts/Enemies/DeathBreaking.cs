@@ -8,7 +8,7 @@ public class DeathBreaking : MonoBehaviour
     {
         if (_enemy != null)
         {
-            _enemy.StartBreaking();
+            //_enemy.StartBreaking();
         }
     }
 }
