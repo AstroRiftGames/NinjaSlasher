@@ -461,6 +461,8 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
         if (gameData.highestUnlockedLevel < 1) gameData.highestUnlockedLevel = 1;
         if (gameData.highestUnlockedArea < 1) gameData.highestUnlockedArea = 1;
 
+        gameData.coins = Mathf.Max(0, gameData.coins);
+
         if (gameData.levelProgressData == null)
         {
             gameData.levelProgressData = new Dictionary<int, LevelProgressData>();
