@@ -114,7 +114,7 @@ public class DailyRewardSystem : MonoBehaviourSingleton<DailyRewardSystem>
     {
         bool wasAvailable = CanClaimToday();
         var last = GetLastClaimDateSafe();
-        var currentDate = DateTime.Now.Date;
+        var currentDate = DateTime.UtcNow.Date;
 
         if (last == DateTime.MinValue.Date)
         {
@@ -147,7 +147,7 @@ public class DailyRewardSystem : MonoBehaviourSingleton<DailyRewardSystem>
     private void CheckDoubleRewardStatus()
     {
         var last = GetLastClaimDateSafe();
-        var currentDate = DateTime.Now.Date;
+        var currentDate = DateTime.UtcNow.Date;
 
         if (last != currentDate)
         {
@@ -183,7 +183,7 @@ public class DailyRewardSystem : MonoBehaviourSingleton<DailyRewardSystem>
         AddPowerUpToInventoryViaAutoSave(doubledReward);
 
         rewardData.claimedDays[rewardData.currentWeekDay] = true;
-        rewardData.lastClaimDate = DateTime.Now.ToString("yyyy-MM-dd");
+        rewardData.lastClaimDate = DateTime.UtcNow.ToString("yyyy-MM-dd");
 
         _hasDoubledToday = true;
 
@@ -245,7 +245,7 @@ public class DailyRewardSystem : MonoBehaviourSingleton<DailyRewardSystem>
         }
 
         rewardData.claimedDays[rewardData.currentWeekDay] = true;
-        rewardData.lastClaimDate = DateTime.Now.ToString("yyyy-MM-dd");
+        rewardData.lastClaimDate = DateTime.UtcNow.ToString("yyyy-MM-dd");
 
         var claimed = weeklyRewards[rewardData.currentWeekDay];
 
@@ -268,7 +268,7 @@ public class DailyRewardSystem : MonoBehaviourSingleton<DailyRewardSystem>
         if (item != null)
         {
             item.quantity += reward.quantity;
-            item.lastUpdated = DateTime.Now;
+            item.lastUpdated = DateTime.UtcNow;
         }
         else
         {
@@ -295,7 +295,7 @@ public class DailyRewardSystem : MonoBehaviourSingleton<DailyRewardSystem>
         var last = GetLastClaimDateSafe();
         if (last == DateTime.MinValue.Date) return true;
 
-        return DateTime.Now.Date > last;
+        return DateTime.UtcNow.Date > last;
     }
 
     public DailyReward GetTodayReward()
@@ -325,7 +325,7 @@ public class DailyRewardSystem : MonoBehaviourSingleton<DailyRewardSystem>
             return "AVAILABLE NOW";
 
         DateTime nextAvailable = last.AddDays(1);
-        TimeSpan timeUntilNext = nextAvailable - DateTime.Now;
+        TimeSpan timeUntilNext = nextAvailable - DateTime.UtcNow;
 
         if (timeUntilNext.TotalSeconds <= 0)
             return "AVAILABLE NOW";

@@ -67,7 +67,7 @@ public class DailyWheelSystem : MonoBehaviourSingleton<DailyWheelSystem>
         if (debugInfiniteSpins) return true;
 
         DateTime lastSpin = GetLastSpinDateSafe();
-        DateTime currentDate = DateTime.Now.Date;
+        DateTime currentDate = DateTime.UtcNow.Date;
 
         return lastSpin < currentDate;
     }
@@ -92,14 +92,14 @@ public class DailyWheelSystem : MonoBehaviourSingleton<DailyWheelSystem>
     private void UpdateSpinProgress()
     {
         DateTime lastSpin = GetLastSpinDateSafe();
-        DateTime currentDate = DateTime.Now.Date;
+        DateTime currentDate = DateTime.UtcNow.Date;
 
         if (lastSpin == currentDate.AddDays(-1))
             wheelData.consecutiveSpins++;
         else
             wheelData.consecutiveSpins = 1;
 
-        wheelData.lastSpinDate = DateTime.Now.ToString("yyyy-MM-dd");
+        wheelData.lastSpinDate = DateTime.UtcNow.ToString("yyyy-MM-dd");
         wheelData.totalSpins++;
     }
 
