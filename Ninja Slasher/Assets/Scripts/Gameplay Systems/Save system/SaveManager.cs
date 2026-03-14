@@ -12,6 +12,8 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
 
     private static string SaveFileName = "ninja_save.json";
     private const string USER_DATA_FOLDER = "UserData";
+    private const int MAX_POWERUP_STACK = 99;
+    private const int MAX_POWERUP_USES  = 99;
 
     private string saveFilePath;
     private GameData gameData;
@@ -461,7 +463,20 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
         if (gameData.highestUnlockedLevel < 1) gameData.highestUnlockedLevel = 1;
         if (gameData.highestUnlockedArea < 1) gameData.highestUnlockedArea = 1;
 
+        int maxLevel = GameConfigManager.IsReady()
+            ? GameConfigManager.Config.levelsPerArea * GameConfigManager.Config.totalAreas
+            : 50; // default: 10 levels × 5 areas
+        gameData.highestUnlockedLevel = Mathf.Clamp(gameData.highestUnlockedLevel, 1, maxLevel);
+
         gameData.coins = Mathf.Max(0, gameData.coins);
+
+        if (gameData.powerUpInventory != null)
+            foreach (var item in gameData.powerUpInventory)
+                item.quantity = Mathf.Clamp(item.quantity, 0, MAX_POWERUP_STACK);
+
+        if (gameData.activePowerUps != null)
+            foreach (var item in gameData.activePowerUps)
+                item.usesRemaining = Mathf.Clamp(item.usesRemaining, 0, MAX_POWERUP_USES);
 
         if (gameData.levelProgressData == null)
         {
