@@ -10,14 +10,13 @@ public class ElasticPlatform : PlatformBase
     {
         if (collision.gameObject.CompareTag("Player"))
         {
-            OnPlayerEnter(collision.gameObject, collision.GetContact(0).normal);
+            OnPlayerEnter(collision.gameObject, collision.GetContact(0));
         }
     }
 
     public override void OnPlayerEnter(GameObject player) { }
-    public void OnPlayerEnter(GameObject player, Vector2 colNormal)
+    public void OnPlayerEnter(GameObject player, ContactPoint2D contactPoint)
     {
-        Debug.Log("Elastic Platform: Player Entered");
         NewController controller = player.GetComponent<NewController>();
         if (controller == null) return;     
 
@@ -34,8 +33,9 @@ public class ElasticPlatform : PlatformBase
             _animator.SetTrigger("OnBounce");
         }
 
+        Vector2 reflectedDirection = contactPoint.normal;
 
-        Vector2 reflectedDirection = Vector2.Reflect(controller.LastDashDirection, colNormal);
+        reflectedDirection = Vector2.Reflect(controller.LastMoveDirection, contactPoint.normal).normalized;
 
         controller.ForceDash(reflectedDirection);
     }

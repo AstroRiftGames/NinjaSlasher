@@ -33,8 +33,12 @@ public class NewController : MonoBehaviour
     private bool _isKO = false;
 
     private float _lastParry;
-    public Vector2 LastDashDirection => _lastDashDirection;
-    private Vector2 _lastDashDirection;
+    public Vector2 LastMoveDirection => _lastMoveDirection;
+    private Vector2 _lastMoveDirection;
+    public void SetLastMoveDirection(Vector2 dir)
+    {
+        _lastMoveDirection = dir;
+    }
     private float _lastDash;
     private Vector2 _lastNormal;
     private PlatformBase _currentPlatform;
@@ -217,7 +221,7 @@ public class NewController : MonoBehaviour
                 break;
         }
 
-        _lastDashDirection = dashDir;
+        _lastMoveDirection = dashDir;
 
 
         _view.RB.linearVelocity = Vector2.zero;

@@ -23,11 +23,12 @@ public class SlipperyPlatform : PlatformBase
         if (playerRb == null) return;
 
         Vector2 tangent = new Vector2(transform.up.y, -transform.up.x);
-        Vector2 incomingDir = playerController.LastDashDirection;
+        Vector2 incomingDir = playerController.LastMoveDirection;
         float sign = Mathf.Sign(Vector2.Dot(incomingDir, tangent));
         slideDirection = tangent * sign;
 
         playerRb.linearVelocity = Vector2.zero;
+        playerController.SetLastMoveDirection(slideDirection);
         _isSliding = true;
 
         AudioService.Instance.PlaySFXAtPosition(_audioContext.Audio.Interaction, player.transform.position);
