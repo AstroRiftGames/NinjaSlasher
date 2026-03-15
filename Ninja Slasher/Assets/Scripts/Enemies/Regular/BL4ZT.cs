@@ -9,17 +9,20 @@ public class BL4ZT : Enemy
     #region VARIABLES
     //EXTRAS
     [SerializeField] Transform _spriteContainer;
-    private float groundCheckDistance = 0.05f;
-    private float groundCheckOffset = 0.15f;
 
     [Header("Movement")]
     [SerializeField] private float _baseSpeed;
-    private float wallCheckDistance = 0.2f;
     private bool _goingRight = true;
+    private float groundCheckDistance = .05f;
+    private float groundVerticalOffset = -.05f;
+    private float groundHorizontalOffset = .01f;
+    private float wallCheckDistance = .1f;
+    private float wallVerticalOffset = .4f;
+    private float wallHorizontalOffset = .1f;
 
     [Header("Rotation")]
-    [SerializeField] private float rotationSpeed;
-    private float _pivotDistance = 0.05f;
+    private float rotationSpeed = 270;
+    private float _pivotDistance = .2f;
     private float turnSign;
     private bool isTurning;
     private float targetAngle;
@@ -50,19 +53,19 @@ public class BL4ZT : Enemy
     {
         Vector3 origin =
             transform.position +
-            GetMovementDir() * offset;
+            GetMovementDir() * offset +
+            -transform.up * groundVerticalOffset;
 
         Vector2 direction = -transform.up;
 
         hit = Physics2D.Raycast(origin, direction, groundCheckDistance, _obstaclesLayer);
-        Debug.DrawRay(origin, direction * groundCheckDistance, Color.red);
 
         return hit.collider != null;
     }
 
     private bool DetectWall(out RaycastHit2D hit)
     {
-        Vector3 origin = transform.position + transform.up;
+        Vector3 origin = transform.position + transform.up * wallVerticalOffset + GetMovementDir() * wallHorizontalOffset;
         Vector2 direction = GetMovementDir();
 
         hit = Physics2D.Raycast(origin, direction, wallCheckDistance, _obstaclesLayer);
@@ -88,18 +91,19 @@ public class BL4ZT : Enemy
         //MOVEMENT
 
         MoveAlongSurface();
-        SnapToSurface();
         return false;
     }
 
     private bool CheckCorner(bool groundFront, bool groundBack, bool wallAhead)
     {
+        Debug.Log($"Checking corner: GroundF = {groundFront}, GroundB = {groundBack}, Wall = {wallAhead}");
         // CLOSE CORNER
         if (wallAhead && groundFront && groundBack)
         {
             Vector2 newNormal =
                 new Vector2(-currentNormal.y, currentNormal.x);
 
+            Debug.Log("Close Corner");
             StartTurn(newNormal, true);
             return true;
         }
@@ -110,6 +114,7 @@ public class BL4ZT : Enemy
             Vector2 newNormal =
                 new Vector2(currentNormal.y, -currentNormal.x);
 
+            Debug.Log("Open Corner");
             StartTurn(newNormal, false);
             return true;
         }
@@ -135,20 +140,21 @@ public class BL4ZT : Enemy
         transform.position += GetMovementDir() * _currentSpeed * Time.deltaTime;
     }
 
+
     private void SnapToSurface()
     {
-        Vector2 origin = transform.position;
+        Vector3 origin = transform.position;
         Vector2 direction = -transform.up;
 
-        RaycastHit2D hit =
-            Physics2D.Raycast(origin, direction, 2f, _obstaclesLayer);
+        RaycastHit2D hit = Physics2D.Raycast(origin, direction, .5f, _obstaclesLayer);
+        Debug.DrawRay(origin, direction * .5f, Color.green, 2f);
 
         if (!hit.collider)
             return;
 
         float delta = hit.distance;
 
-        transform.position -= (Vector3)transform.up * delta;
+        transform.position -= transform.up * (delta + groundCheckDistance/2);
     }
     #endregion
 
@@ -166,7 +172,16 @@ public class BL4ZT : Enemy
 
         targetAngle = Mathf.Atan2(tangent.y, tangent.x) * Mathf.Rad2Deg;
 
-        pivotPoint = (Vector2)transform.position - (Vector2)transform.up * _pivotDistance;
+        if (isClosedCorner)
+        {
+            pivotPoint = (Vector2)transform.position - (Vector2)transform.up * _pivotDistance;
+        }
+        else
+        {
+            pivotPoint = transform.position + 
+                transform.up * (groundVerticalOffset + groundCheckDistance) +
+                GetMovementDir() * (wallHorizontalOffset + wallCheckDistance);
+        }
     }
 
     private void UpdateTurn()
@@ -184,6 +199,7 @@ public class BL4ZT : Enemy
         }
 
         transform.RotateAround(pivotPoint, Vector3.forward, step);
+        Debug.DrawLine(transform.position, pivotPoint, Color.yellow, 2f);
 
         transform.position += GetMovementDir() * _currentSpeed * Time.deltaTime;
 
@@ -205,7 +221,7 @@ public class BL4ZT : Enemy
 
     private bool CheckTarget(Vector3 target)
     {
-        bool hasReachedTarget = Vector3.Distance(target, transform.position) <= _explosionRadius / 2;
+        bool hasReachedTarget =  Mathf.Approximately(Vector3.Distance(target, transform.position), _isActive ? _explosionRadius / 2 : 0);
         _animator.SetBool("IsMoving", !hasReachedTarget);
         return hasReachedTarget;
     }
@@ -382,7 +398,9 @@ public class BL4ZT : Enemy
     {
         base.Awake();
         _currentSpeed = _baseSpeed;
-        if(!_isRoaming)
+        pivotPoint = Vector2.zero;
+        SnapToSurface();
+        if (!_isRoaming)
         {
             StartCoroutine(SetPatrolTarget());
         }
@@ -391,7 +409,7 @@ public class BL4ZT : Enemy
             SetRandomDirection();
         }
     }
-    public override void CustomUpdate()
+    public void Update()
     {
         if (isTurning)
         {
@@ -399,8 +417,8 @@ public class BL4ZT : Enemy
             return;
         }
 
-        bool groundFront = DetectGround(groundCheckOffset, out RaycastHit2D frontHit);
-        bool groundBack = DetectGround(-groundCheckOffset, out RaycastHit2D backHit);
+        bool groundFront = DetectGround(groundHorizontalOffset, out RaycastHit2D frontHit);
+        bool groundBack = DetectGround(-groundHorizontalOffset, out RaycastHit2D backHit);
         bool wallAhead = DetectWall(out RaycastHit2D wallHit);
 
         if (!groundFront && !groundBack)
@@ -476,7 +494,8 @@ public class BL4ZT : Enemy
     {
         Gizmos.color = Color.white;
         Gizmos.DrawLine(transform.position, _destination);
-        Gizmos.DrawSphere(transform.position + new Vector3(0, -_pivotDistance), 0);
+        Gizmos.color = Color.black;
+        Gizmos.DrawSphere(pivotPoint, .1f);
         Gizmos.color = Color.blue;
         Gizmos.DrawWireSphere(transform.position, _data.Range);
         Gizmos.color = Color.red;
