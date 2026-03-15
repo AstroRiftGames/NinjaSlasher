@@ -145,7 +145,7 @@ MonoBehaviour:
   _view: {fileID: 4198015471619335935}
   _model: {fileID: 6905579431728325560}
   _swipeDetection: {fileID: 340358578149418589}
-  _trajectoryRenderer: {fileID: 0}
+  _trajectoryRenderer: {fileID: 7947812196576171667}
   _slashVFX: {fileID: 6223650219946851022, guid: 628cf0bc6b8bae24e98e2e2f87671efc, type: 3}
   _audio: {fileID: 11400000, guid: 4032d9d64165d6c4ab7b8746366dc31c, type: 2}
   _proyectilesLayer:
@@ -6803,6 +6803,7 @@ GameObject:
   m_Component:
   - component: {fileID: 8525842389228153400}
   - component: {fileID: 8636398599384659159}
+  - component: {fileID: 7947812196576171667}
   m_Layer: 10
   m_Name: TrajectoryLine
   m_TagString: Untagged
@@ -6932,6 +6933,24 @@ LineRenderer:
   m_UseWorldSpace: 1
   m_Loop: 0
   m_ApplyActiveColorSpace: 1
+--- !u!114 &7947812196576171667
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5237033742592620344}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 69a539bcface6e544a50c5aafc631c39, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _indicator: {fileID: 4756240323688480652}
+  _collisionLayers:
+    serializedVersion: 2
+    m_Bits: 192
+  _defaultMaxDistance: 5
+  _hawkVisionSettings: {fileID: 0}
 --- !u!1 &5673186291678007950
 GameObject:
   m_ObjectHideFlags: 0
@@ -7814,6 +7833,11 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: b4e7e25e0e538784b86eecd88d74cf7c, type: 3}
+--- !u!212 &4756240323688480652 stripped
+SpriteRenderer:
+  m_CorrespondingSourceObject: {fileID: 4893792237150473073, guid: b4e7e25e0e538784b86eecd88d74cf7c, type: 3}
+  m_PrefabInstance: {fileID: 138399117372830973}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &7087091918708509996 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 7183762361651935697, guid: b4e7e25e0e538784b86eecd88d74cf7c, type: 3}
