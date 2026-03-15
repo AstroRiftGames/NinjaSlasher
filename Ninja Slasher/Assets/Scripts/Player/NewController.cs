@@ -42,7 +42,7 @@ public class NewController : MonoBehaviour
     [SerializeField] private LayerMask _proyectilesLayer;
 
     private string[] colMatrix = { "Obstacle", "Scenario", "Floor"};
-    private string[] deadlyMatrix = { "Enemy", "Projectile", "Spikes", "EnemyShield", };
+    private string[] deadlyMatrix = { "Enemy", "Spikes", "EnemyShield", };
 
     private void SetFlipped(float angle)
     {
@@ -376,7 +376,6 @@ public class NewController : MonoBehaviour
     {
         string colTag = collision.gameObject.tag;
 
-        Debug.Log($"Collided with: {colTag} ({collision.name})");
         if (deadlyMatrix.Contains(colTag))
         {
             switch (colTag)
