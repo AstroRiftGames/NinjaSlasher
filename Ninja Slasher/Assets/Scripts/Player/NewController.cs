@@ -359,6 +359,11 @@ public class NewController : MonoBehaviour
             _view.TrailRendererComponent.emitting = false;
             collision.collider.TryGetComponent(out PlatformBase platform);
 
+            if(_currentPlatform != null)
+            {
+                _currentPlatform.OnPlayerExit(gameObject, true);
+                _currentPlatform = null;
+            }
             if(platform == null)
             {
                 AudioService.Instance.PlaySFXAtPosition(_audio.landGeneral, transform.position);
