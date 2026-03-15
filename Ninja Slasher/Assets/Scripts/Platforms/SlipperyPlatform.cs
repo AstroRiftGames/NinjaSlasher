@@ -16,17 +16,16 @@ public class SlipperyPlatform : PlatformBase
         playerController = player.GetComponent<NewController>();
         if (playerController == null) return;
 
-        View view = player.GetComponent<View>();
+        View view = playerController.View;
         if (view == null) return;
 
         playerRb = view.RB;
         if (playerRb == null) return;
 
         Vector2 tangent = new Vector2(transform.up.y, -transform.up.x);
-        Vector2 incomingDir = playerController.View.RB.linearVelocity.normalized;
+        Vector2 incomingDir = playerController.LastDashDirection;
         float sign = Mathf.Sign(Vector2.Dot(incomingDir, tangent));
         slideDirection = tangent * sign;
-
 
         playerRb.linearVelocity = Vector2.zero;
         _isSliding = true;
@@ -81,6 +80,5 @@ public class SlipperyPlatform : PlatformBase
         }
 
         playerRb.linearVelocity = slideDirection * slideSpeed;
-
     }
 }
