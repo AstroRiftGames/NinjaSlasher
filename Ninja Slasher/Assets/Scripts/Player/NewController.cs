@@ -416,7 +416,7 @@ public class NewController : MonoBehaviour
                         enemy.Die();
                         HapticFeedback.MediumFeedback();
                         AudioService.Instance.PlaySFXAtPosition(_audio.attack, transform.position);
-                        PlaySlashVFX(transform.position, _lastDashDirection);
+                        PlaySlashVFX(transform.position, _lastMoveDirection);
                     }
                     else
                     {
