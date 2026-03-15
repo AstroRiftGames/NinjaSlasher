@@ -6,64 +6,38 @@ public class ElasticPlatform : PlatformBase
     [SerializeField] private float bounceForce = 15f;
     [SerializeField] private bool isVerticalWall = false;
 
-    public override void OnPlayerEnter(GameObject player)
+    protected override void OnCollisionEnter2D(Collision2D collision)
     {
-        NewController controller = player.GetComponent<NewController>();
-        if (controller == null)
+        if (collision.gameObject.CompareTag("Player"))
         {
-            return;
+            OnPlayerEnter(collision.gameObject, collision.GetContact(0).normal);
         }
+    }
 
-        Vector2 lastDashDir = controller.LastDashDirection;
+    public override void OnPlayerEnter(GameObject player) { }
+    public void OnPlayerEnter(GameObject player, Vector2 colNormal)
+    {
+        Debug.Log("Elastic Platform: Player Entered");
+        NewController controller = player.GetComponent<NewController>();
+        if (controller == null) return;     
 
-        if (lastDashDir == Vector2.zero)
-            return;
-        
-
-        View view = player.GetComponent<View>();
-        if (view == null)
-            return;
+        View view = controller.View;
+        if (view == null) return;
 
         Rigidbody2D rb = view.RB;
-        if (rb == null)        
-            return;
+        if (rb == null) return;
 
-        AudioManager.Instance.PlaySFXAtPosition(Clip, player.transform.position);
-        if(_animator.enabled)
+        //AudioService.Instance.PlaySFXAtPosition(_audioContext.Audio.Interaction, player.transform.position);
+
+        if (_animator != null && _animator.enabled)
         {
             _animator.SetTrigger("OnBounce");
         }
-        StartCoroutine(ApplyBounceAfterCollision(rb, lastDashDir.normalized, controller));
-    }
 
-    private IEnumerator ApplyBounceAfterCollision(Rigidbody2D rb, Vector2 dashDir, NewController controller)
-    {
-        yield return new WaitForFixedUpdate();
 
-        Vector2 bounceDir;
+        Vector2 reflectedDirection = Vector2.Reflect(controller.LastDashDirection, colNormal);
 
-        if (isVerticalWall)
-        {
-            bounceDir = new Vector2(-dashDir.x, dashDir.y);
-        }
-        else
-        {
-            Vector2 surfaceNormal = transform.up;
-            bounceDir = dashDir - 2 * Vector2.Dot(dashDir, surfaceNormal) * surfaceNormal;
-
-            if (bounceDir.y < 0)
-            {
-                bounceDir.y = -bounceDir.y;
-            }
-        }
-
-        bounceDir.Normalize();
-
-        rb.linearVelocity = Vector2.zero;
-        rb.AddForce(bounceDir * bounceForce, ForceMode2D.Impulse);
-
-        Debug.DrawRay(rb.position, dashDir * 2f, Color.red, 2f);
-        Debug.DrawRay(rb.position, bounceDir * 2f, Color.green, 2f);
+        controller.ForceDash(reflectedDirection);
     }
 
     public override void OnPlayerExit(GameObject player, bool isForced = false) { }

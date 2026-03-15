@@ -17,9 +17,6 @@ public abstract class PlatformBase : MonoBehaviour, IPlatform
     public PlatformTypes Type => _type;
     [SerializeField] protected PlatformTypes _type = PlatformTypes.Normal;
 
-    public SFXClip Clip => _clip;   //TODO: Play Landing SFX from AudioSet
-    private SFXClip _clip = SFXClip.P_Landing_General;
-
     [SerializeField] protected Animator _animator;
     public PlatformAudioContext AudioContext => _audioContext;
     protected PlatformAudioContext _audioContext;
@@ -43,14 +40,6 @@ public abstract class PlatformBase : MonoBehaviour, IPlatform
     protected virtual void Start()
     {
         InitializePlatform();
-        _clip = _type switch
-        {
-            PlatformTypes.Normal => SFXClip.P_Landing_General,
-            PlatformTypes.Elastic => SFXClip.P_Landing_Elastic,
-            PlatformTypes.Slippery => SFXClip.P_Landing_Slippery,
-            PlatformTypes.Breakable => SFXClip.P_Landing_Breakable,
-            _ => _clip,
-        };
     }
 
     protected virtual void InitializePlatform() { }

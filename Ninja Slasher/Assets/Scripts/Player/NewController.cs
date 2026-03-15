@@ -144,6 +144,14 @@ public class NewController : MonoBehaviour
     #endregion
 
     #region MECHANICS
+
+    public void ForceDash(Vector2 direction)
+    {
+        if (!_isKO)
+        {
+            Dash(direction);
+        }
+    }
     private void TryDash(Vector2 direction)
     {
         if (!_isKO && !_isDashing && !_isParrying && CheckDashCD())
@@ -211,6 +219,8 @@ public class NewController : MonoBehaviour
 
         _lastDashDirection = dashDir;
 
+
+        _view.RB.linearVelocity = Vector2.zero;
         _view.RB.AddForce(dashDir * _model.DashForce);
         AudioService.Instance.PlaySFXAtPosition(_audio.movementLoop, transform.position);
         _isDashing = true;

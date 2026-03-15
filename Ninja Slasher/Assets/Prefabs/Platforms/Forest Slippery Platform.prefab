@@ -45,6 +45,7 @@ GameObject:
   - component: {fileID: 289706265889700553}
   - component: {fileID: 7358022675993176750}
   - component: {fileID: 6367507209450887128}
+  - component: {fileID: 8963440162936008548}
   m_Layer: 6
   m_Name: Platform
   m_TagString: Obstacle
@@ -228,6 +229,18 @@ MonoBehaviour:
   _startT: {fileID: 2845424523156170268}
   _endT: {fileID: 1894820439052999733}
   _horizontalExpansion: 1
+--- !u!114 &8963440162936008548
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2723356041632121098}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 99e517ef5aee8534ba180ebd39cdccc0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &6394471820751515687
 GameObject:
   m_ObjectHideFlags: 0
@@ -268,7 +281,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7058428694693512062}
-  - component: {fileID: 4895597549291678170}
   m_Layer: 0
   m_Name: Forest Slippery Platform
   m_TagString: Untagged
@@ -294,15 +306,3 @@ Transform:
   - {fileID: 1894820439052999733}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &4895597549291678170
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6906876688887804310}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 99e517ef5aee8534ba180ebd39cdccc0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
