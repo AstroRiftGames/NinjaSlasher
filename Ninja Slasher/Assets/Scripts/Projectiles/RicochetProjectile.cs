@@ -26,7 +26,7 @@ public class RicochetProjectile : Projectile
         }
         else
         {
-            Destroy(gameObject);
+            _animator.SetTrigger("OnImpact");
         }
     }
     private void Ricochet()
