@@ -11,18 +11,15 @@ public class Projectile : MonoBehaviour, IPoolable
     [SerializeField] protected LayerMask enemyLayer;
     [SerializeField] protected LayerMask playerLayer;
     [SerializeField] protected LayerMask scenarioLayer;
-    [SerializeField] private Animator _animator;
-    [SerializeField] private float _impactTime;
-    public float ImpactTime => _impactTime;
+    [SerializeField] protected Animator _animator;
 
     protected Rigidbody2D _rb;
 
-    protected Controller _playerInZone;
     [SerializeField] protected bool isParryable = true;
     public void SetIsParryable(bool value) => isParryable = value;
 
-    private bool _isEnhancedParry = false;
-    private int _bouncesRemaining = 0;
+    protected bool _isEnhancedParry = false;
+    protected int _bouncesRemaining = 0;
     private float _velocityRetention = 1f;
     private HashSet<Enemy> _hitEnemies = new HashSet<Enemy>();
     private Collider2D _projectileCollider;
@@ -35,12 +32,16 @@ public class Projectile : MonoBehaviour, IPoolable
     {
         SetOwner(owner);
         SetDirection(direction);
+        transform.parent = null;
+        transform.localScale = Vector3.one;
     }
 
     public void Initialize(Transform owner)
     {
         SetOwner(owner);
         SetDirection(transform.up);
+        transform.parent = null;
+        transform.localScale = Vector3.one;
     }
 
     public virtual void Update() { }
@@ -80,7 +81,7 @@ public class Projectile : MonoBehaviour, IPoolable
         _rb.AddForce(transform.right * _speed);
     }
 
-    private bool IsShooter(Transform collisionTransform)
+    protected bool IsShooter(Transform collisionTransform)
     {
         if (Shooter == null) return false;
 
@@ -107,14 +108,13 @@ public class Projectile : MonoBehaviour, IPoolable
                 if (_bouncesRemaining > 0)
                     HandleEnhancedParryBounce(collision);
                 else
-                    RequestDespawn();
+                    Collide(collision.collider);
 
                 return;
             }
         }
 
-        if (Shooter != null && Shooter.tag != colTag &&
-            colTag is "Player" or "Boss" or "Enemy" or "Scenario" or "Ceiling" or "Floor" or "Obstacle")
+        if (Shooter != null && Shooter.tag != colTag)
         {
             Collide(collision.collider);
         }
@@ -134,7 +134,7 @@ public class Projectile : MonoBehaviour, IPoolable
         TryDamageEnemy(collision);
     }
 
-    private void HandleEnhancedParryBounce(Collision2D collision)
+    protected void HandleEnhancedParryBounce(Collision2D collision)
     {
         _bouncesRemaining--;
 
@@ -167,16 +167,12 @@ public class Projectile : MonoBehaviour, IPoolable
             DamageEnemy(collision.gameObject);
         }
 
-        _rb.linearVelocity = Vector2.zero;
-        collision.TryGetComponent(out Rigidbody2D rb);
-        if (rb != null) rb.linearVelocity = Vector2.zero;
         _animator.SetTrigger("OnImpact");
-
-        RequestDespawn();
+        _rb.linearVelocity = Vector2.zero;
     }
 
-    private bool TryDamageEnemy(Collider2D collider)
-    {
+    protected bool TryDamageEnemy(Collider2D collider)
+    {   
         Enemy enemy = collider.GetComponentInParent<Enemy>()
                       ?? collider.GetComponent<Enemy>();
 
@@ -258,7 +254,7 @@ public class Projectile : MonoBehaviour, IPoolable
     {
         _isEnhancedParry = false;
 
-        RequestDespawn();
+        _animator.SetTrigger("OnImpact");
     }
 
     public bool IsParryable => isParryable;

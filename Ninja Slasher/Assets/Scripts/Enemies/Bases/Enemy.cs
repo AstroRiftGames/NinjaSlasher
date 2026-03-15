@@ -1,3 +1,5 @@
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class Enemy : MonoBehaviour
@@ -14,9 +16,11 @@ public class Enemy : MonoBehaviour
     protected Transform _player;
     protected Rigidbody2D _rb;
     protected Collider2D _col;
+    [SerializeField] protected Collider2D _triggerCol;
 
     [SerializeField] protected Animator _animator;
     public Animator Animator => _animator;
+    //[SerializeField] protected EnemyBrokenPart[] _parts;
 
     public virtual void OnEnable()
     {
@@ -66,11 +70,27 @@ public class Enemy : MonoBehaviour
     public virtual void Die()
     {
         _animator.SetTrigger("OnHit");
-        _col.includeLayers -= LayerMask.GetMask("Player");
+        _col.excludeLayers += LayerMask.GetMask("Player");
+        _triggerCol.excludeLayers += LayerMask.GetMask("Player");
+        StartCoroutine(BreakEnemy());
+    }
 
+    //public void StartBreaking()
+    //{
+    //    StartCoroutine(BreakEnemy());
+    //}
+
+    private IEnumerator BreakEnemy()
+    {
+        //_rb.bodyType = RigidbodyType2D.Dynamic;
+        //foreach (var part in _parts)
+        //{
+        //    part.BreakAndThrow();
+        //}
+        yield return new WaitForSeconds(1f);
         RegisterKill();
-
-        Destroy(gameObject, _deathTime);
+        //yield return new WaitForSeconds(2f);
+        //Destroy(gameObject);
     }
 
     public void RegisterKill()
@@ -88,4 +108,12 @@ public class Enemy : MonoBehaviour
         if (combo != null)
             combo.RegisterKill(transform.position);
     }
+
+
+    [ContextMenu("Test Death")]
+    private void TestDie()
+    {
+        Die();
+    }
+    
 }
