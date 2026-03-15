@@ -361,6 +361,7 @@ GameObject:
   - component: {fileID: 7156778702020303295}
   - component: {fileID: 3651571147723751412}
   - component: {fileID: 7843367027121799668}
+  - component: {fileID: 4601467041240991787}
   m_Layer: 9
   m_Name: Bot
   m_TagString: Enemy
@@ -399,7 +400,7 @@ BoxCollider2D:
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
-    m_Bits: 1024
+    m_Bits: 192
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 512
@@ -420,7 +421,7 @@ BoxCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: 0, y: 2}
+  m_Offset: {x: 0, y: 0.2800967}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0.5, y: 0.5}
@@ -430,7 +431,7 @@ BoxCollider2D:
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 2.5, y: 3.6791103}
+  m_Size: {x: 2.5, y: 0.23930392}
   m_EdgeRadius: 0
 --- !u!114 &7156778702020303295
 MonoBehaviour:
@@ -452,6 +453,7 @@ MonoBehaviour:
   _playerLayer:
     serializedVersion: 2
     m_Bits: 1024
+  _triggerCol: {fileID: 0}
   _animator: {fileID: 1658897760661979304}
   _refPoint: {fileID: 5312664167768289049}
   _shield: {fileID: 6399494175244458043}
@@ -501,6 +503,52 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 167e4bd7e1f82774db0c7c14c8ae2e2a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!61 &4601467041240991787
+BoxCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3017298618046401831}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_ForceSendLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ForceReceiveLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ContactCaptureLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_CallbackLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_IsTrigger: 1
+  m_UsedByEffector: 0
+  m_CompositeOperation: 0
+  m_CompositeOrder: 0
+  m_Offset: {x: 0.29456863, y: 2.2330234}
+  m_SpriteTilingProperty:
+    border: {x: 0, y: 0, z: 0, w: 0}
+    pivot: {x: 0, y: 0}
+    oldSize: {x: 0, y: 0}
+    newSize: {x: 0, y: 0}
+    adaptiveTilingThreshold: 0
+    drawMode: 0
+    adaptiveTiling: 0
+  m_AutoTiling: 0
+  m_Size: {x: 2.00858, y: 3.6036105}
+  m_EdgeRadius: 0
 --- !u!1 &3080200979743364235
 GameObject:
   m_ObjectHideFlags: 0

@@ -16,6 +16,7 @@ public class Enemy : MonoBehaviour
     protected Transform _player;
     protected Rigidbody2D _rb;
     protected Collider2D _col;
+    [SerializeField] protected Collider2D _triggerCol;
 
     [SerializeField] protected Animator _animator;
     public Animator Animator => _animator;
@@ -69,7 +70,8 @@ public class Enemy : MonoBehaviour
     public virtual void Die()
     {
         _animator.SetTrigger("OnHit");
-        _col.includeLayers -= LayerMask.GetMask("Player");
+        _col.excludeLayers += LayerMask.GetMask("Player");
+        _triggerCol.excludeLayers += LayerMask.GetMask("Player");
         StartCoroutine(BreakEnemy());
     }
 
