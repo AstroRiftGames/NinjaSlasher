@@ -10,8 +10,8 @@ public class Arachnomadre : BossEnemy
     [SerializeField] private ArachnomadreAudioContext _arachnomadreAudioContext;
     [SerializeField] ArachnomadreAudioSet _audioSet;
     [SerializeField] Transform _spriteContainer;
-    private float _verticalOffset = 1.3f;
-    private float _horizontalOffset = 1.1f;
+    private float _verticalOffset = .65f;
+    private float _horizontalOffset = .6f;
     private float groundCheckOffset = .15f;
     private float groundCheckDistance = 0.15f;
 
@@ -175,7 +175,7 @@ public class Arachnomadre : BossEnemy
     {
         Vector3 origin =
             transform.position -
-            transform.up * _verticalOffset;
+            transform.up * _verticalOffset/2;
 
         Vector2 direction = -transform.up;
 
@@ -352,6 +352,7 @@ public class Arachnomadre : BossEnemy
     public void Bite()
     {
         Collider2D playerCol = Physics2D.OverlapCircle(_biteRefPoint.position, _biteRadius, _playerLayer);
+        if (playerCol == null) return;
         playerCol.TryGetComponent(out NewController controller);
         controller.Die();
     }
