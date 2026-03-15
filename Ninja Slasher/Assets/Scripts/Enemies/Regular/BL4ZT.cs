@@ -79,6 +79,7 @@ public class BL4ZT : Enemy
     #region MOVEMENT & ALIGNMENT
     private bool HandleMovement(bool groundFront, RaycastHit2D frontHit, bool groundBack, RaycastHit2D backHit, bool wallAhead)
     {
+        SnapToSurface();
         //ALIGNMENT
         AlignToSurface(groundFront ? frontHit.normal : backHit.normal);
 
