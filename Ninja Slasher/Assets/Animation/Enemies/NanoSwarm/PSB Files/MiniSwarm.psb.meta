@@ -95,6 +95,50 @@ ScriptedImporter:
     spritePosition: {x: 0, y: 0}
   multiSpriteImportData: []
   layeredSpriteImportData:
+  - name: MiniSwarm_Cut_Top
+    originalName: 
+    pivot: {x: 0.5, y: 0.5}
+    alignment: 0
+    border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
+    rect:
+      serializedVersion: 2
+      x: 1471
+      y: 4
+      width: 506
+      height: 250
+    spriteID: 195485059995f624fa8d3ed948d7188c
+    spriteBone: []
+    spriteOutline: []
+    vertices: []
+    spritePhysicsOutline: []
+    indices: 
+    edges: []
+    tessellationDetail: 0
+    uvTransform: {x: 1471, y: 4}
+    spritePosition: {x: 0, y: 271}
+  - name: MiniSwarm_Cut_Bottom
+    originalName: 
+    pivot: {x: 0.5, y: 0.5}
+    alignment: 0
+    border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
+    rect:
+      serializedVersion: 2
+      x: 957
+      y: 4
+      width: 506
+      height: 271
+    spriteID: 4204ba109760d824780f308b0c72da7c
+    spriteBone: []
+    spriteOutline: []
+    vertices: []
+    spritePhysicsOutline: []
+    indices: 
+    edges: []
+    tessellationDetail: 0
+    uvTransform: {x: 957, y: 4}
+    spritePosition: {x: 0, y: 0}
   - name: Lights
     originalName: 
     pivot: {x: 0.5, y: 0.5}
@@ -103,8 +147,8 @@ ScriptedImporter:
     customData: 
     rect:
       serializedVersion: 2
-      x: 850
-      y: 4
+      x: 1290
+      y: 283
       width: 91
       height: 83
     spriteID: 7dbb8e8281cd38140a5c590930529170
@@ -115,7 +159,7 @@ ScriptedImporter:
     indices: 
     edges: []
     tessellationDetail: 0
-    uvTransform: {x: 850, y: 4}
+    uvTransform: {x: 1290, y: 283}
     spritePosition: {x: 160, y: 208}
   - name: Face
     originalName: 
@@ -125,8 +169,8 @@ ScriptedImporter:
     customData: 
     rect:
       serializedVersion: 2
-      x: 517
-      y: 221
+      x: 1471
+      y: 262
       width: 218
       height: 218
     spriteID: fbb3cc3aa11a7044fbd3075546a6f9b0
@@ -137,7 +181,7 @@ ScriptedImporter:
     indices: 
     edges: []
     tessellationDetail: 0
-    uvTransform: {x: 517, y: 221}
+    uvTransform: {x: 1471, y: 262}
     spritePosition: {x: 115, y: 152}
   - name: Helices 1
     originalName: 
@@ -147,8 +191,8 @@ ScriptedImporter:
     customData: 
     rect:
       serializedVersion: 2
-      x: 4
-      y: 533
+      x: 517
+      y: 4
       width: 432
       height: 431
     spriteID: 0a9459884ee622c498bdc5763683d170
@@ -159,7 +203,7 @@ ScriptedImporter:
     indices: 
     edges: []
     tessellationDetail: 0
-    uvTransform: {x: 4, y: 533}
+    uvTransform: {x: 517, y: 4}
     spritePosition: {x: 8, y: 45}
   - name: Helices 2
     originalName: 
@@ -191,8 +235,8 @@ ScriptedImporter:
     customData: 
     rect:
       serializedVersion: 2
-      x: 517
-      y: 4
+      x: 957
+      y: 283
       width: 325
       height: 209
     spriteID: 9e7309f573a031f418fe382292583132
@@ -203,7 +247,7 @@ ScriptedImporter:
     indices: 
     edges: []
     tessellationDetail: 0
-    uvTransform: {x: 517, y: 4}
+    uvTransform: {x: 957, y: 283}
     spritePosition: {x: 115, y: 156}
   spriteImportData: []
   rigSpriteImportData: []
@@ -302,13 +346,33 @@ ScriptedImporter:
     flatten: 0
     isImported: 0
     isVisible: 1
+  - name: MiniSwarm_Cut_Top
+    spriteName: MiniSwarm_Cut_Top
+    isGroup: 0
+    parentIndex: 0
+    spriteID: 195485059995f624fa8d3ed948d7188c
+    layerID: 54
+    mosaicPosition: {x: 1471, y: 4}
+    flatten: 0
+    isImported: 1
+    isVisible: 1
+  - name: MiniSwarm_Cut_Bottom
+    spriteName: MiniSwarm_Cut_Bottom
+    isGroup: 0
+    parentIndex: 0
+    spriteID: 4204ba109760d824780f308b0c72da7c
+    layerID: 53
+    mosaicPosition: {x: 957, y: 4}
+    flatten: 0
+    isImported: 1
+    isVisible: 1
   - name: Lights
     spriteName: Lights
     isGroup: 0
     parentIndex: 0
     spriteID: 7dbb8e8281cd38140a5c590930529170
     layerID: 37
-    mosaicPosition: {x: 850, y: 4}
+    mosaicPosition: {x: 1290, y: 283}
     flatten: 0
     isImported: 1
     isVisible: 1
@@ -318,7 +382,7 @@ ScriptedImporter:
     parentIndex: 0
     spriteID: fbb3cc3aa11a7044fbd3075546a6f9b0
     layerID: 43
-    mosaicPosition: {x: 517, y: 221}
+    mosaicPosition: {x: 1471, y: 262}
     flatten: 0
     isImported: 1
     isVisible: 1
@@ -328,7 +392,7 @@ ScriptedImporter:
     parentIndex: 0
     spriteID: 0a9459884ee622c498bdc5763683d170
     layerID: 40
-    mosaicPosition: {x: 4, y: 533}
+    mosaicPosition: {x: 517, y: 4}
     flatten: 0
     isImported: 1
     isVisible: 1
@@ -348,7 +412,7 @@ ScriptedImporter:
     parentIndex: 0
     spriteID: 9e7309f573a031f418fe382292583132
     layerID: 42
-    mosaicPosition: {x: 517, y: 4}
+    mosaicPosition: {x: 957, y: 283}
     flatten: 0
     isImported: 1
     isVisible: 1
