@@ -3,6 +3,7 @@ using UnityEngine;
 using CandyCoded.HapticFeedback;
 using System.Linq;
 using System.Collections;
+using UnityEngine.VFX;
 
 public enum NinjaStates
 {
@@ -21,6 +22,7 @@ public class NewController : MonoBehaviour
 
     [SerializeField] SwipeDetection _swipeDetection;
     [SerializeField] TrajectoryRenderer _trajectoryRenderer;
+    [SerializeField] private GameObject _slashVFX;
 
     [Header("Audio")]
     [SerializeField] private PlayerAudioSet _audio;
@@ -42,7 +44,10 @@ public class NewController : MonoBehaviour
     [SerializeField] private LayerMask _proyectilesLayer;
 
     private string[] colMatrix = { "Obstacle", "Scenario", "Floor"};
-    private string[] deadlyMatrix = { "Enemy", "Projectile", "Spikes", "EnemyShield", };
+    private string[] deadlyMatrix = { "Enemy", "Spikes", "EnemyShield", };
+
+    public Action<bool> OnHit;
+    public Action<bool> OnParry;
 
     private void SetFlipped(float angle)
     {
@@ -287,6 +292,7 @@ public class NewController : MonoBehaviour
                 projectile.ReflectBackwards(transform, dirToParry);
                 HapticFeedback.LightFeedback();
                 AudioService.Instance.PlaySFXAtPosition(_audio.projectileParried, transform.position);
+                OnParry?.Invoke(false);
                 break;
             }
         }
@@ -304,7 +310,9 @@ public class NewController : MonoBehaviour
     private void Grab(Vector2 normal)
     {
         if (_isDashing)
+        {
             GameEvents.RaiseDashEnded();
+        }
         _isDashing = false;
         _lastNormal = normal;
         _view.Animator.SetBool("IsGrounded", true);
@@ -312,6 +320,7 @@ public class NewController : MonoBehaviour
         _view.RB.linearVelocity = Vector2.zero;
         _view.Animator.SetBool("IsWallGrabbed", false);
         _view.Animator.SetBool("IsCeilingGrabbed", false);
+        _view.LandingParticles.Play();
 
         if (normal == Vector2.right || normal == Vector2.left)
         {
@@ -331,6 +340,7 @@ public class NewController : MonoBehaviour
         Debug.Log("Player Died");
         if (_isKO) return;
         _isKO = true;
+        OnHit?.Invoke(false);
 
         _view.TriggerCol.enabled = false;
 
@@ -376,7 +386,6 @@ public class NewController : MonoBehaviour
     {
         string colTag = collision.gameObject.tag;
 
-        Debug.Log($"Collided with: {colTag} ({collision.name})");
         if (deadlyMatrix.Contains(colTag))
         {
             switch (colTag)
@@ -388,7 +397,7 @@ public class NewController : MonoBehaviour
                         enemy.Die();
                         HapticFeedback.MediumFeedback();
                         AudioService.Instance.PlaySFXAtPosition(_audio.attack, transform.position);
-                        StartCoroutine(SlashEffectCoroutine());
+                        PlaySlashVFX(transform.position, _lastDashDirection);
                     }
                     else
                     {
@@ -403,7 +412,14 @@ public class NewController : MonoBehaviour
                     Die();
                     break;
                 default:
-                    Die();
+                    BoxCollider2D[] boxCollider2Ds = GetComponents<BoxCollider2D>();
+                    foreach(var col in boxCollider2Ds)
+                    {
+                        if (col.IsTouching(collision))
+                        {
+                            Die();
+                        }
+                    }
                     break;
             }
         }
@@ -436,26 +452,19 @@ public class NewController : MonoBehaviour
             TutorialManager.Instance.OnParryPerformed();
         }
     }
-    private IEnumerator SlashEffectCoroutine()
+
+    private void PlaySlashVFX(Vector2 pos, Vector3 dir)
     {
-        TrailRenderer slashTrail = _view.SlashTrail;
-
-        if (slashTrail != null)
-        {
-            slashTrail.Clear();
-            slashTrail.emitting = true;
-
-            yield return new WaitForSeconds(_model.SlashEffectDuration);
-
-            slashTrail.emitting = false;
-        }
+        Transform newVFX = Instantiate(_slashVFX, pos, Quaternion.identity).transform;
+        Quaternion newRotation = Quaternion.Euler(0, 0, Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg);
+        newVFX.rotation = newRotation;
     }
 
     #endregion
-#if UNIT_EDITOR
+#if UNITY_EDITOR
     private void OnDrawGizmos()
     {
-        Gizmos.color = Color.yellow;
+        Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(transform.position, _model.ParryRange);
     }
 #endif

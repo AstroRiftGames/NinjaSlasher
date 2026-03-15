@@ -24,8 +24,8 @@ public class View : MonoBehaviour
     private ParticleSystem _landingParticles;
     public ParticleSystem LandingParticles => _landingParticles;
 
-    [SerializeField] private TrailRenderer _slashTrailRenderer;
-    public TrailRenderer SlashTrail => _slashTrailRenderer;
+    [SerializeField] private TrailRenderer _dashTrailRenderer;
+    public TrailRenderer SlashTrail => _dashTrailRenderer;
 
     void Awake()
     {
@@ -38,9 +38,9 @@ public class View : MonoBehaviour
 
         _landingParticles = GetComponentInChildren<ParticleSystem>();
 
-        if (_slashTrailRenderer != null)
+        if (_dashTrailRenderer != null)
         {
-            _slashTrailRenderer.emitting = false;
+            _dashTrailRenderer.emitting = false;
         }
     }
 }

@@ -95,6 +95,50 @@ ScriptedImporter:
     spritePosition: {x: 0, y: 0}
   multiSpriteImportData: []
   layeredSpriteImportData:
+  - name: NanoSwarm_Cut_Top
+    originalName: 
+    pivot: {x: 0.20513818, y: 0.20106654}
+    alignment: 9
+    border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
+    rect:
+      serializedVersion: 2
+      x: 4
+      y: 6
+      width: 229
+      height: 209
+    spriteID: 7d3a19026d912df41b0413e02ef30b19
+    spriteBone: []
+    spriteOutline: []
+    vertices: []
+    spritePhysicsOutline: []
+    indices: 
+    edges: []
+    tessellationDetail: 0
+    uvTransform: {x: 4, y: 4}
+    spritePosition: {x: 114, y: 146}
+  - name: NanoSwarm_Cut_Bottom
+    originalName: 
+    pivot: {x: 0.7701375, y: 0.81992364}
+    alignment: 9
+    border: {x: 0, y: 0, z: 2, w: 0}
+    customData: 
+    rect:
+      serializedVersion: 2
+      x: 234
+      y: 4
+      width: 207
+      height: 210
+    spriteID: f2ae4d410193b9a4e96380311880442a
+    spriteBone: []
+    spriteOutline: []
+    vertices: []
+    spritePhysicsOutline: []
+    indices: 
+    edges: []
+    tessellationDetail: 0
+    uvTransform: {x: 234, y: 4}
+    spritePosition: {x: 9, y: 8}
   - name: Light
     originalName: 
     pivot: {x: 0.5, y: 0.5}
@@ -103,7 +147,7 @@ ScriptedImporter:
     customData: 
     rect:
       serializedVersion: 2
-      x: 444
+      x: 797
       y: 4
       width: 51
       height: 51
@@ -115,7 +159,7 @@ ScriptedImporter:
     indices: 
     edges: []
     tessellationDetail: 0
-    uvTransform: {x: 444, y: 4}
+    uvTransform: {x: 797, y: 4}
     spritePosition: {x: 112, y: 159}
   - name: Body
     originalName: 
@@ -125,7 +169,7 @@ ScriptedImporter:
     customData: 
     rect:
       serializedVersion: 2
-      x: 89
+      x: 442
       y: 73
       width: 121
       height: 121
@@ -137,7 +181,7 @@ ScriptedImporter:
     indices: 
     edges: []
     tessellationDetail: 0
-    uvTransform: {x: 89, y: 73}
+    uvTransform: {x: 442, y: 73}
     spritePosition: {x: 100, y: 124}
   - name: Helices 2
     originalName: 
@@ -148,7 +192,7 @@ ScriptedImporter:
     rect:
       serializedVersion: 2
       x: 4
-      y: 4
+      y: 223
       width: 77
       height: 369
     spriteID: 4511b7543117b154a975fb2fbd9ec01a
@@ -159,7 +203,7 @@ ScriptedImporter:
     indices: 
     edges: []
     tessellationDetail: 0
-    uvTransform: {x: 4, y: 4}
+    uvTransform: {x: 4, y: 223}
     spritePosition: {x: 130, y: 0}
   - name: Helices 1
     originalName: 
@@ -169,7 +213,7 @@ ScriptedImporter:
     customData: 
     rect:
       serializedVersion: 2
-      x: 89
+      x: 442
       y: 4
       width: 347
       height: 61
@@ -181,7 +225,7 @@ ScriptedImporter:
     indices: 
     edges: []
     tessellationDetail: 0
-    uvTransform: {x: 89, y: 4}
+    uvTransform: {x: 442, y: 4}
     spritePosition: {x: 0, y: 154}
   spriteImportData: []
   rigSpriteImportData: []
@@ -280,13 +324,33 @@ ScriptedImporter:
     flatten: 0
     isImported: 0
     isVisible: 1
+  - name: NanoSwarm_Cut_Top
+    spriteName: NanoSwarm_Cut_Top
+    isGroup: 0
+    parentIndex: 0
+    spriteID: 7d3a19026d912df41b0413e02ef30b19
+    layerID: 38
+    mosaicPosition: {x: 4, y: 4}
+    flatten: 0
+    isImported: 1
+    isVisible: 1
+  - name: NanoSwarm_Cut_Bottom
+    spriteName: NanoSwarm_Cut_Bottom
+    isGroup: 0
+    parentIndex: 0
+    spriteID: f2ae4d410193b9a4e96380311880442a
+    layerID: 37
+    mosaicPosition: {x: 234, y: 4}
+    flatten: 0
+    isImported: 1
+    isVisible: 1
   - name: Light
     spriteName: Light
     isGroup: 0
     parentIndex: 0
     spriteID: 24bb870d6958b0c4bad169ac61b81130
     layerID: 23
-    mosaicPosition: {x: 444, y: 4}
+    mosaicPosition: {x: 797, y: 4}
     flatten: 0
     isImported: 1
     isVisible: 1
@@ -296,7 +360,7 @@ ScriptedImporter:
     parentIndex: 0
     spriteID: 421cb7f20da5ef74cb98286d357c7bab
     layerID: 24
-    mosaicPosition: {x: 89, y: 73}
+    mosaicPosition: {x: 442, y: 73}
     flatten: 0
     isImported: 1
     isVisible: 1
@@ -306,7 +370,7 @@ ScriptedImporter:
     parentIndex: 0
     spriteID: 4511b7543117b154a975fb2fbd9ec01a
     layerID: 25
-    mosaicPosition: {x: 4, y: 4}
+    mosaicPosition: {x: 4, y: 223}
     flatten: 0
     isImported: 1
     isVisible: 1
@@ -316,7 +380,7 @@ ScriptedImporter:
     parentIndex: 0
     spriteID: 0fdb0430ec420a644b2694b320dc7452
     layerID: 26
-    mosaicPosition: {x: 89, y: 4}
+    mosaicPosition: {x: 442, y: 4}
     flatten: 0
     isImported: 1
     isVisible: 1
