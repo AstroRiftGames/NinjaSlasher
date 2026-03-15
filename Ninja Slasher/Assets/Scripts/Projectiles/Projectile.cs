@@ -108,14 +108,13 @@ public class Projectile : MonoBehaviour, IPoolable
                 if (_bouncesRemaining > 0)
                     HandleEnhancedParryBounce(collision);
                 else
-                    _animator.SetTrigger("OnImpact");
+                    Collide(collision.collider);
 
                 return;
             }
         }
 
-        if (Shooter != null && Shooter.tag != colTag &&
-            colTag is "Player" or "Boss" or "Enemy" or "Scenario" or "Ceiling" or "Floor" or "Obstacle")
+        if (Shooter != null && Shooter.tag != colTag)
         {
             Collide(collision.collider);
         }
