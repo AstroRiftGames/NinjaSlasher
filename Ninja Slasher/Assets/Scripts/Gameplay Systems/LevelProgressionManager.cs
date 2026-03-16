@@ -20,6 +20,8 @@ public class LevelProgressionManager : MonoBehaviourSingleton<LevelProgressionMa
 
     private bool isInitialized = false;
 
+    private int _pendingAreaUnlockAnimationId = -1;
+
     public Action OnProgressionUpdated;
     public Action<int> OnNewAreaUnlocked;
 
@@ -192,6 +194,7 @@ public class LevelProgressionManager : MonoBehaviourSingleton<LevelProgressionMa
         if (newAreaId <= TotalAreas && newAreaId > currentHighestArea)
         {
             SaveManager.Instance?.UnlockNewArea(newAreaId);
+            _pendingAreaUnlockAnimationId = newAreaId;
             OnNewAreaUnlocked?.Invoke(newAreaId);
 
             if (EnableAreaUnlockAds)
@@ -199,6 +202,21 @@ public class LevelProgressionManager : MonoBehaviourSingleton<LevelProgressionMa
                 ShowAreaUnlockAd(newAreaId);
             }
         }
+    }
+
+    public int GetRequiredStarsForBoss(int levelId)
+    {
+        if (LevelConfigurationManager.Instance == null) return 0;
+        var config = LevelConfigurationManager.Instance.GetConfigurationForLevel(levelId);
+        if (config?.unlockRequirements == null || !config.unlockRequirements.isBossLevel) return 0;
+        return config.unlockRequirements.minimumStarsRequired;
+    }
+
+    public bool ConsumePendingAreaUnlock(int areaId)
+    {
+        if (_pendingAreaUnlockAnimationId != areaId) return false;
+        _pendingAreaUnlockAnimationId = -1;
+        return true;
     }
 
     public LevelProgressionInfo GetProgressionInfo()

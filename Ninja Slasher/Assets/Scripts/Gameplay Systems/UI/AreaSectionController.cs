@@ -42,6 +42,17 @@ public class AreaSectionController : MonoBehaviour
 
         bool locked = !IsAreaUnlocked();
 
+        if (LevelProgressionManager.Instance != null &&
+            LevelProgressionManager.Instance.ConsumePendingAreaUnlock(_areaData.areaId))
+        {
+            SetLockOverlay(true);
+            SetButtonsInteractable(false);
+            _lastKnownLockState = true;
+            _lockStateInitialized = true;
+            PlayUnlock();
+            return;
+        }
+
         if (!_lockStateInitialized)
         {
             SetLockOverlay(locked);

@@ -67,6 +67,7 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
     [SerializeField] private Image[] levelButtonImages;
     [SerializeField] private Color lockedButtonColor = Color.gray;
     [SerializeField] private Color unlockedButtonColor = Color.white;
+    [SerializeField] private Color _bossLockedButtonColor = new Color(0.8f, 0.6f, 0.2f);
 
     [SerializeField] private string[] sceneNames;
 
@@ -234,9 +235,17 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
 
             if (levelButtonImages != null && i < levelButtonImages.Length && levelButtonImages[i] != null)
             {
-                levelButtonImages[i].color = isUnlocked ? unlockedButtonColor : lockedButtonColor;
+                levelButtonImages[i].color = isUnlocked ? unlockedButtonColor : GetLockedColor(levelId);
             }
         }
+    }
+
+    private Color GetLockedColor(int levelId)
+    {
+        if (LevelProgressionManager.Instance != null &&
+            LevelProgressionManager.Instance.GetRequiredStarsForBoss(levelId) > 0)
+            return _bossLockedButtonColor;
+        return lockedButtonColor;
     }
 
     private void SaveButtonPositions()
@@ -394,7 +403,23 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
 
     private void ShowLevelLockedMessage(int levelId)
     {
-        Debug.Log($"[ButtonManager] Nivel {levelId} esta bloqueado");
+        if (LevelProgressionManager.Instance == null)
+        {
+            Debug.Log($"[ButtonManager] Nivel {levelId} esta bloqueado");
+            return;
+        }
+
+        int requiredStars = LevelProgressionManager.Instance.GetRequiredStarsForBoss(levelId);
+        if (requiredStars > 0)
+        {
+            var (_, _, totalStars) = SaveManager.Instance?.GetProgressionData() ?? (1, 1, 0);
+            int deficit = requiredStars - totalStars;
+            Debug.Log($"[ButtonManager] Nivel {levelId} es un nivel jefe. Necesitas {requiredStars} estrellas (te faltan {Mathf.Max(0, deficit)}).");
+        }
+        else
+        {
+            Debug.Log($"[ButtonManager] Nivel {levelId} esta bloqueado");
+        }
     }
 
     public void RefreshLevelProgression()
@@ -417,7 +442,7 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
 
             if (levelButtonImages != null && i < levelButtonImages.Length && levelButtonImages[i] != null)
             {
-                levelButtonImages[i].color = isUnlocked ? unlockedButtonColor : lockedButtonColor;
+                levelButtonImages[i].color = isUnlocked ? unlockedButtonColor : GetLockedColor(levelId);
             }
 
             if (isUnlocked) unlockedCount++;
@@ -656,7 +681,7 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
         {
             deleteSaveButton.onClick.AddListener(() =>
             {
-                GetComponent<DebugUIManager>().DeleteSaveDataFromUI();
+                SaveManager.Instance.ResetAllLocalSaves(notify: true);
                 RefreshLevelProgression();
             });
         }

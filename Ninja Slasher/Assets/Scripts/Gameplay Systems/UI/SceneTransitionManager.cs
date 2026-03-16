@@ -154,7 +154,6 @@ public class SceneTransitionManager : MonoBehaviour
 
         MusicEvents.OnEnterLevelSelection?.Invoke();
         UIEvents.RequestUpdateLivesUI(LifeManager.Instance.CurrentLives);
-        UIManager.Instance?.GetComponent<DebugUIManager>()?.ShowStarsDebug();
 
         UIEvents.RaiseLevelSelectorReady();
     }
@@ -181,7 +180,6 @@ public class SceneTransitionManager : MonoBehaviour
 
         MusicEvents.OnEnterLevelSelection?.Invoke();
         UIEvents.RequestUpdateLivesUI(LifeManager.Instance.CurrentLives);
-        UIManager.Instance?.GetComponent<DebugUIManager>()?.ShowStarsDebug();
 
         UIEvents.RaiseLevelSelectorReady();
         _isLoadingLevelSelectorScene = false;

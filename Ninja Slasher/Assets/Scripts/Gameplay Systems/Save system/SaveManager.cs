@@ -989,12 +989,6 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
             LevelProgressionManager.Instance.OnProgressionUpdated?.Invoke();
         }
 
-        var debugUI = FindObjectOfType<DebugUIManager>();
-        if (debugUI != null)
-        {
-            debugUI.ShowStarsDebug();
-        }
-
         Debug.Log("Test stars added and UI refreshed");
     }
 
