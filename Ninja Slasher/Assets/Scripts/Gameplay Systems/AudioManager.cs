@@ -136,25 +136,16 @@ public class SFXData
 public class AudioManager : MonoBehaviourSingleton<AudioManager>
 {
     [Header("Audio Sources")]
-    [SerializeField] private AudioSource musicSource;
     [SerializeField] private AudioSource sfxSource;
-
-    //[Header("Music Clips")]
-    //[SerializeField] private MusicData[] musicClips;
 
     [Header("SFX Clips")]
     [SerializeField] private SFXData[] sfxClips;
 
     [Header("Settings")]
     [Range(0f, 1f)] public float masterVolume = 1f;
-    [Range(0f, 1f)] public float musicVolume = 0.7f;
     [Range(0f, 1f)] public float sfxVolume = 0.8f;
 
-    //private Dictionary<MusicClip, AudioClipData> musicDict = new Dictionary<MusicClip, AudioClipData>();
     private Dictionary<SFXClip, AudioClipData> sfxDict = new Dictionary<SFXClip, AudioClipData>();
-
-    private Coroutine musicFadeCoroutine;
-    //private MusicClip currentMusicClip;
 
     private void Start()
     {
@@ -163,13 +154,6 @@ public class AudioManager : MonoBehaviourSingleton<AudioManager>
 
     void InitializeAudioManager()
     {
-        if (musicSource == null)
-        {
-            musicSource = gameObject.AddComponent<AudioSource>();
-            musicSource.loop = true;
-            musicSource.playOnAwake = false;
-        }
-
         if (sfxSource == null)
         {
             sfxSource = gameObject.AddComponent<AudioSource>();
@@ -178,69 +162,15 @@ public class AudioManager : MonoBehaviourSingleton<AudioManager>
         }
 
         PopulateDictionaries();
-
-        UpdateVolumes();
     }
 
     void PopulateDictionaries()
     {
-        //foreach (var musicData in musicClips)
-        //{
-        //    if (musicData.audioData.clip != null)
-        //        musicDict[musicData.clipType] = musicData.audioData;
-        //}
-
         foreach (var sfxData in sfxClips)
         {
             if (sfxData.audioData.clip != null)
                 sfxDict[sfxData.clipType] = sfxData.audioData;
         }
-    }
-
-    //public void PlayMusic(MusicClip clipType, bool fadeIn = true)
-    //{
-    //    if (musicDict.ContainsKey(clipType))
-    //    {
-    //        var audioData = musicDict[clipType];
-
-    //        if (fadeIn && musicSource.isPlaying)
-    //        {
-    //            StartCoroutine(FadeToNewMusic(audioData, clipType));
-    //        }
-    //        else
-    //        {
-    //            musicSource.clip = audioData.clip;
-    //            musicSource.pitch = audioData.pitch;
-    //            musicSource.Play();
-    //            currentMusicClip = clipType;
-    //        }
-    //    }
-    //    else
-    //    {
-    //        Debug.Log($"Clip de m�sica '{clipType}' no encontrado");
-    //    }
-    //}
-
-    public void StopMusic(bool fadeOut = true)
-    {
-        if (fadeOut)
-        {
-            StartCoroutine(FadeOutMusic());
-        }
-        else
-        {
-            musicSource.Stop();
-        }
-    }
-
-    public void PauseMusic()
-    {
-        musicSource.Pause();
-    }
-
-    public void ResumeMusic()
-    {
-        musicSource.UnPause();
     }
 
     public void PlaySFX(SFXClip clipType)
@@ -276,157 +206,6 @@ public class AudioManager : MonoBehaviourSingleton<AudioManager>
                 audioData.volume * sfxVolume * masterVolume * volumeMultiplier);
         }
     }
-
-    public Dictionary<SFXClip, AudioSource> srcDict = new Dictionary<SFXClip, AudioSource>();
-
-    public void PlayLoopedSFXAtPosition(SFXClip clip, Vector3 position, float volumeMultiplier = 1f)
-    {
-        if (sfxDict.ContainsKey(clip))
-        {
-            var audioData = sfxDict[clip];
-
-            GameObject newObj = Instantiate(new GameObject(audioData.clip.name), position, Quaternion.identity);
-            newObj.transform.SetPositionAndRotation(position, Quaternion.identity);
-
-            AudioSource src = newObj.AddComponent<AudioSource>();
-            srcDict.Add(clip, src);
-            string msg = "";
-            foreach (AudioSource element in srcDict.Values)
-            {
-                msg += $"{element.gameObject.name}, ";
-            }
-            Debug.Log(msg);
-            src.loop = true;
-            src.clip = audioData.clip;
-            src.volume = audioData.volume * sfxVolume * masterVolume * volumeMultiplier;
-
-            src.Play();
-        }
-        else
-        {
-            Debug.Log($"Clip de SFX '{clip}' no encontrado");
-        }
-    }
-
-    public void StopSFX(SFXClip clip)
-    {
-        srcDict.TryGetValue(clip, out AudioSource src);
-        if (src == null)
-        {
-            Debug.Log( clip + " not found in array");
-        }
-        else
-        {
-            srcDict.Remove(clip);
-            src.Stop();
-            Destroy(src.gameObject);
-        }
-    }
-
-    public void PlaySFXWithRandomPitch(SFXClip clipType, float minPitch = 0.8f, float maxPitch = 1.2f, float volumeMultiplier = 1f)
-    {
-        if (sfxDict.ContainsKey(clipType))
-        {
-            var audioData = sfxDict[clipType];
-            float randomPitch = UnityEngine.Random.Range(minPitch, maxPitch);
-
-            sfxSource.pitch = randomPitch;
-            sfxSource.PlayOneShot(audioData.clip, audioData.volume * volumeMultiplier);
-        }
-    }
-
-    public void MuteMusic(bool state)
-    {
-        musicSource.mute = state;
-    }
-
-    public void MuteSFX(bool state)
-    {
-        sfxSource.mute = state;
-    }
-    public void SetMusicVolume(float volume)
-    {
-        musicVolume = Mathf.Clamp01(volume);
-        UpdateVolumes();
-    }
-    public void SetSFXVolume(float volume)
-    {
-        sfxVolume = Mathf.Clamp01(volume);
-        UpdateVolumes();
-    }
-
-    void UpdateVolumes()
-    {
-        musicSource.volume = musicVolume * masterVolume;
-        sfxSource.volume = sfxVolume * masterVolume;
-    }
-
-    //IEnumerator FadeToNewMusic(AudioClipData newAudioData, MusicClip newClipType, float fadeDuration = 1f)
-    //{
-    //    float startVolume = musicSource.volume;
-
-    //    for (float t = 0; t < fadeDuration; t += Time.deltaTime)
-    //    {
-    //        musicSource.volume = Mathf.Lerp(startVolume, 0f, t / fadeDuration);
-    //        yield return null;
-    //    }
-
-    //    musicSource.clip = newAudioData.clip;
-    //    musicSource.pitch = newAudioData.pitch;
-    //    musicSource.Play();
-    //    currentMusicClip = newClipType;
-
-    //    float targetVolume = musicVolume * masterVolume;
-    //    for (float t = 0; t < fadeDuration; t += Time.deltaTime)
-    //    {
-    //        musicSource.volume = Mathf.Lerp(0f, targetVolume, t / fadeDuration);
-    //        yield return null;
-    //    }
-
-    //    musicSource.volume = targetVolume;
-    //}
-
-    IEnumerator FadeOutMusic(float fadeDuration = 1f)
-    {
-        float startVolume = musicSource.volume;
-
-        for (float t = 0; t < fadeDuration; t += Time.deltaTime)
-        {
-            musicSource.volume = Mathf.Lerp(startVolume, 0f, t / fadeDuration);
-            yield return null;
-        }
-
-        musicSource.Stop();
-        musicSource.volume = musicVolume * masterVolume;
-    }
-
-    public bool IsMusicPlaying()
-    {
-        return musicSource.isPlaying;
-    }
-
-    //public MusicClip GetCurrentMusicClip()
-    //{
-    //    return currentMusicClip;
-    //}
-
-    //public bool IsPlaying(MusicClip clipType)
-    //{
-    //    return musicSource.isPlaying && currentMusicClip == clipType;
-    //}
-
-    public void SetMusicPitch(float pitch)
-    {
-        musicSource.pitch = pitch;
-    }
-
-    //public void ResetMusicPitch()
-    //{
-    //    if (musicDict.ContainsKey(currentMusicClip))
-    //    {
-    //        musicSource.pitch = musicDict[currentMusicClip].pitch;
-    //    }
-    //}
 
     public float GetSFXDuration(SFXClip clipType)
     {

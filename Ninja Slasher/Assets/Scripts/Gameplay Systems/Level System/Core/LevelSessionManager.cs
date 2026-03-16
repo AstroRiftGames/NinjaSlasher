@@ -20,14 +20,7 @@ public class LevelSessionManager : MonoBehaviourSingleton<LevelSessionManager>
     public override void Awake()
     {
         base.Awake();
-
-        if (Instance != this)
-        {
-            Destroy(gameObject);
-            return;
-        }
-
-        DontDestroyOnLoad(gameObject);
+        if (Instance != this) return;
     }
 
     private void OnEnable()
@@ -198,8 +191,6 @@ public class LevelSessionManager : MonoBehaviourSingleton<LevelSessionManager>
         };
 
         GameEvents.RaiseLevelFailed(context);
-
-        Debug.Log("[EBS] No funca");
     }
 
     private void EvaluateAndSave()
@@ -322,11 +313,6 @@ public class LevelSessionManager : MonoBehaviourSingleton<LevelSessionManager>
         {
             if (config.bossMusic == null)
             {
-                Debug.LogWarning(
-                    $"[LevelSessionManager] Nivel {currentSession.LevelId} ({config.name}): " +
-                    $"isBossLevel=true pero el campo 'bossMusic' no está asignado. " +
-                    $"Asigna un AudioEvent en el LevelConfiguration SO de este nivel.",
-                    config);
                 return;
             }
 
@@ -336,11 +322,6 @@ public class LevelSessionManager : MonoBehaviourSingleton<LevelSessionManager>
         {
             if (config.gameplayMusic == null)
             {
-                Debug.LogWarning(
-                    $"[LevelSessionManager] Nivel {currentSession.LevelId} ({config.name}): " +
-                    $"El campo 'gameplayMusic' no está asignado. " +
-                    $"Asigna un AudioEvent en el LevelConfiguration SO de este nivel.",
-                    config);
                 return;
             }
 
@@ -348,9 +329,10 @@ public class LevelSessionManager : MonoBehaviourSingleton<LevelSessionManager>
         }
     }
 
-    private void OnDestroy()
+    protected override void OnDestroy()
     {
         CleanupSession();
+        base.OnDestroy();
     }
 
 #if UNITY_EDITOR

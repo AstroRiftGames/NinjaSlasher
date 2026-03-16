@@ -159,8 +159,6 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
         _isInitialized = true;
 
         OnLivesChanged?.Invoke(GetDisplayLives());
-
-        Debug.Log($"[LifeManager] Inicializado correctamente. Lives={CurrentLives}");
     }
 
     #endregion
@@ -232,9 +230,6 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
         {
             SaveManager.Instance?.UpdateLives(CurrentLives, _lastLifeUsedUtc, hasTimer);
         }
-#if UNITY_EDITOR
-        Debug.Log($"[LifeManager] Persist -> {reason}. Lives={CurrentLives}, lastUsedUtc={_lastLifeUsedUtc:O}, timer={(hasTimer ? "ON" : "OFF")}");
-#endif
     }
 
     #endregion

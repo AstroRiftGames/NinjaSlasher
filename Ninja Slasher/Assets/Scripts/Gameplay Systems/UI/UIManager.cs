@@ -103,8 +103,6 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
         _gameplayUIManager.Initialize();
 
         _isInitialized = true;
-
-        Debug.Log("[UIManager] Inicializacion completa");
     }
 
     private IEnumerator SafeSubscribeToCustomUpdate()
@@ -343,7 +341,6 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
     public bool IsDailyWheelModalVisible() => IsPanelVisible(_dailyWheelModal);
     private void OnHideDailyWheelRequested()
     {
-        Debug.Log("[DailySequence] Wheel hide requested via UIEvents");
         HideDailyWheelModal();
     }
 

@@ -6,8 +6,10 @@ public class MusicPlayer
     private readonly AudioSource _source;
     private readonly AudioSettingsSO _settings;
     private readonly MonoBehaviour _coroutineRunner;
-    private bool isMuted = false;
-    private float volumeBeforeMute = 1f;
+
+    private bool _isMuted = false;
+
+    private float _intendedVolume = 1f;
 
     public MusicPlayer(AudioSource source, AudioSettingsSO settings, MonoBehaviour coroutineRunner)
     {
@@ -27,16 +29,18 @@ public class MusicPlayer
             return;
         }
 
+        _intendedVolume = audioEvent.volume * _settings.GetChannelMultiplier(AudioChannel.Music);
+
         if (fadeTime > 0f && _source.isPlaying)
         {
             _coroutineRunner.StartCoroutine(CrossfadeCoroutine(audioEvent, fadeTime));
         }
         else
         {
-            _source.clip = audioEvent.clip;
-            _source.pitch = audioEvent.GetPitch();
-            _source.loop = audioEvent.loop;
-            _source.volume = audioEvent.volume * _settings.GetChannelMultiplier(AudioChannel.Music);
+            _source.clip   = audioEvent.clip;
+            _source.pitch  = audioEvent.GetPitch();
+            _source.loop   = audioEvent.loop;
+            _source.volume = _isMuted ? 0f : _intendedVolume;
             _source.Play();
         }
     }
@@ -58,54 +62,54 @@ public class MusicPlayer
 
     public void UpdateVolume()
     {
-        if (_source.isPlaying)
+        if (_source.isPlaying && !_isMuted)
         {
-            float normalizedVolume = _source.volume / _settings.GetChannelMultiplier(AudioChannel.Music);
-            _source.volume = normalizedVolume * _settings.GetChannelMultiplier(AudioChannel.Music);
+            _source.volume = _intendedVolume;
         }
     }
 
     private IEnumerator CrossfadeCoroutine(AudioEvent newEvent, float fadeTime)
     {
-        float halfTime = fadeTime / 2f;
+        float halfTime    = fadeTime / 2f;
         float startVolume = _source.volume;
 
-        // Fade out
         float elapsed = 0f;
         while (elapsed < halfTime)
         {
-            elapsed += Time.deltaTime;
+            elapsed      += Time.deltaTime;
             _source.volume = Mathf.Lerp(startVolume, 0f, elapsed / halfTime);
             yield return null;
         }
 
         _source.Stop();
-        _source.clip = newEvent.clip;
+        _source.clip  = newEvent.clip;
         _source.pitch = newEvent.GetPitch();
-        _source.loop = newEvent.loop;
+        _source.loop  = newEvent.loop;
         _source.Play();
 
-        // Fade in
-        float targetVolume = newEvent.volume * _settings.GetChannelMultiplier(AudioChannel.Music);
-        elapsed = 0f;
-        while (elapsed < halfTime)
-        {
-            elapsed += Time.deltaTime;
-            _source.volume = Mathf.Lerp(0f, targetVolume, elapsed / halfTime);
-            yield return null;
-        }
+        _intendedVolume = newEvent.volume * _settings.GetChannelMultiplier(AudioChannel.Music);
 
-        _source.volume = targetVolume;
+        if (!_isMuted)
+        {
+            elapsed = 0f;
+            while (elapsed < halfTime)
+            {
+                elapsed      += Time.deltaTime;
+                _source.volume = Mathf.Lerp(0f, _intendedVolume, elapsed / halfTime);
+                yield return null;
+            }
+            _source.volume = _intendedVolume;
+        }
     }
 
     private IEnumerator FadeOutCoroutine(float fadeTime)
     {
         float startVolume = _source.volume;
-        float elapsed = 0f;
+        float elapsed     = 0f;
 
         while (elapsed < fadeTime)
         {
-            elapsed += Time.deltaTime;
+            elapsed      += Time.deltaTime;
             _source.volume = Mathf.Lerp(startVolume, 0f, elapsed / fadeTime);
             yield return null;
         }
@@ -116,26 +120,17 @@ public class MusicPlayer
 
     public void MuteMusic()
     {
-        if (isMuted) return;
+        if (_isMuted) return;
 
-        isMuted = true;
-
-        if (_source != null && _source.isPlaying)
-        {
-            volumeBeforeMute = _source.volume;
-            _source.volume = 0f;
-        }
+        _isMuted = true;
+        _source.volume = 0f;
     }
 
     public void UnmuteMusic()
     {
-        if (!isMuted) return;
+        if (!_isMuted) return;
 
-        isMuted = false;
-
-        if (_source != null)
-        {
-            _source.volume = volumeBeforeMute;
-        }
+        _isMuted = false;
+        _source.volume = _intendedVolume;
     }
 }

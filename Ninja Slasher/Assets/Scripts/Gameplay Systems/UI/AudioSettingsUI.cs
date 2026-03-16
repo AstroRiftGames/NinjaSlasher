@@ -3,92 +3,77 @@ using UnityEngine.UI;
 
 public class AudioSettingsUI : MonoBehaviour
 {
-    [Header("References")]
-    [SerializeField] private AudioConfig audioConfig;
+    [Header("Referencia al ScriptableObject de configuración")]
+    [SerializeField] private UserConfig audioConfig;
 
-    [Header("Music")]
-    [SerializeField] private Image musicImage;
-    [SerializeField] private Image musicPauseImage;
+    [Header("Imagen del botón de música")]
+    [SerializeField] private Image musicButtonImage;
+
+    [Header("Sprites de música")]
     [SerializeField] private Sprite musicTurnOnIcon;
     [SerializeField] private Sprite musicTurnOffIcon;
 
-    [Header("SFX")]
-    [SerializeField] private Image sfxImage;
-    [SerializeField] private Image sfxPauseImage;
+    [Header("Imagen del botón de SFX")]
+    [SerializeField] private Image sfxButtonImage;
+
+    [Header("Sprites de SFX")]
     [SerializeField] private Sprite sfxTurnOnIcon;
     [SerializeField] private Sprite sfxTurnOffIcon;
 
-    [Header ("IMAGES")]
+    [Header("Haptic")]
+    [SerializeField] private Image _hapticImage;
     [SerializeField] private Sprite _hapticTurnOnIcon;
     [SerializeField] private Sprite _hapticTurnOffIcon;
 
-    [SerializeField] private Image _hapticImage;
-    [SerializeField] private bool _isHapticOn;
+    private bool _isHapticOn;
 
-    private void Start()
+    private void OnEnable()
     {
-        audioConfig.OnMusicEnabledChanged += UpdateMusicUI;
-        audioConfig.OnSFXEnabledChanged += UpdateSFXUI;
+        if (audioConfig == null) return;
 
-        UpdateMusicUI(audioConfig.MusicEnabled);
-        UpdateSFXUI(audioConfig.SFXEnabled);
+        audioConfig.OnMusicEnabledChanged += UpdateMusicVisual;
+        audioConfig.OnSFXEnabledChanged   += UpdateSFXVisual;
 
-        _isHapticOn = UIManager.Instance.IsHapticFeedbackActive;
+        RefreshUI();
     }
 
-    private void OnDestroy()
+    private void OnDisable()
     {
-        if (audioConfig != null)
-        {
-            audioConfig.OnMusicEnabledChanged -= UpdateMusicUI;
-            audioConfig.OnSFXEnabledChanged -= UpdateSFXUI;
-        }
+        if (audioConfig == null) return;
+
+        audioConfig.OnMusicEnabledChanged -= UpdateMusicVisual;
+        audioConfig.OnSFXEnabledChanged   -= UpdateSFXVisual;
     }
+
+    public void MusicButtonPushed() => audioConfig?.ToggleMusic();
+
+    public void SFXButtonPushed() => audioConfig?.ToggleSFX();
 
     public void HapticFeedbackPushed()
     {
-        if (_isHapticOn)
-        {
-            _hapticImage.sprite = _hapticTurnOffIcon;
-            //_hapticPauseImage.sprite = _hapticTurnOffIcon;
-            _isHapticOn = !_isHapticOn;
-        }
-        else
-        {
-            _hapticImage.sprite = _hapticTurnOnIcon;
-            //_hapticPauseImage.sprite = _hapticTurnOnIcon;
-            _isHapticOn = !_isHapticOn;
-        }
-    }
-    public void SFXButtonPushed()
-    {
-        audioConfig.ToggleSFX();
+        _isHapticOn = !_isHapticOn;
+
+        if (_hapticImage != null)
+            _hapticImage.sprite = _isHapticOn ? _hapticTurnOnIcon : _hapticTurnOffIcon;
     }
 
-    public void MusicButtonPushed()
+    public void RefreshUI()
     {
-        audioConfig.ToggleMusic();
+        if (audioConfig == null) return;
+
+        UpdateMusicVisual(audioConfig.MusicEnabled);
+        UpdateSFXVisual(audioConfig.SFXEnabled);
     }
 
-    private void UpdateMusicUI(bool isEnabled)
+    private void UpdateMusicVisual(bool isEnabled)
     {
-        Sprite targetSprite = isEnabled ? musicTurnOnIcon : musicTurnOffIcon;
-
-        if (musicImage != null)
-            musicImage.sprite = targetSprite;
-
-        if (musicPauseImage != null)
-            musicPauseImage.sprite = targetSprite;
+        if (musicButtonImage != null)
+            musicButtonImage.sprite = isEnabled ? musicTurnOnIcon : musicTurnOffIcon;
     }
 
-    private void UpdateSFXUI(bool isEnabled)
+    private void UpdateSFXVisual(bool isEnabled)
     {
-        Sprite targetSprite = isEnabled ? sfxTurnOnIcon : sfxTurnOffIcon;
-
-        if (sfxImage != null)
-            sfxImage.sprite = targetSprite;
-
-        if (sfxPauseImage != null)
-            sfxPauseImage.sprite = targetSprite;
+        if (sfxButtonImage != null)
+            sfxButtonImage.sprite = isEnabled ? sfxTurnOnIcon : sfxTurnOffIcon;
     }
 }

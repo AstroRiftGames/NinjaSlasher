@@ -4,15 +4,15 @@ public class AudioService : MonoBehaviour
 {
     public static AudioService Instance { get; private set; }
 
-    [Header("Settings")]
+    [Header("AUDIO SETTINGS")]
     [SerializeField] private AudioSettingsSO audioSettings;
     public AudioSettingsSO AudioSettings => audioSettings;
-    [SerializeField] private AudioConfig audioConfig;
+    [SerializeField] private UserConfig audioConfig;
 
-    [Header("Music")]
+    [Header("SOURCE")]
     [SerializeField] private AudioSource musicSource;
 
-    [Header("SFX Pool")]
+    [Header("SFX POOL")]
     [SerializeField] private PooledAudioSource audioSourcePrefab;
     [SerializeField] private int sfxPoolSize = 10;
 
@@ -31,8 +31,15 @@ public class AudioService : MonoBehaviour
         DontDestroyOnLoad(gameObject);
 
         InitializePlayers();
-
         InitializeSettings();
+    }
+
+    private void OnEnable()
+    {
+        if (_musicPlayer == null || _sfxPlayer == null) return;
+
+        ApplyMusicState(audioConfig.MusicEnabled);
+        ApplySFXState(audioConfig.SFXEnabled);
     }
 
     private void Start()
@@ -42,35 +49,16 @@ public class AudioService : MonoBehaviour
 
     private void OnDestroy()
     {
-        if (Instance == this)
-        {
-            Instance = null;
-        }
+        if (Instance == this) Instance = null;
 
         if (audioConfig != null)
         {
             audioConfig.OnMusicEnabledChanged -= OnMusicEnabledChanged;
-            audioConfig.OnSFXEnabledChanged -= OnSFXEnabledChanged;
-        }
-    }
-
-    private void InitializeSettings()
-    {
-        audioSettings.Load();
-        audioConfig.LoadFromPlayerPrefs();
-
-        if (SaveManager.Instance != null && SaveManager.Instance.IsDataLoaded)
-        {
-            var data = SaveManager.Instance.GetGameData();
-            audioConfig.SetMusicEnabled(data.musicEnabled);
-            audioConfig.SetSFXEnabled(data.sfxEnabled);
+            audioConfig.OnSFXEnabledChanged   -= OnSFXEnabledChanged;
+            audioConfig.OnSaveStateRequested  -= PersistAudioSettings;
         }
 
-        audioConfig.OnMusicEnabledChanged += OnMusicEnabledChanged;
-        audioConfig.OnSFXEnabledChanged += OnSFXEnabledChanged;
-
-        ApplyMusicState(audioConfig.MusicEnabled);
-        ApplySFXState(audioConfig.SFXEnabled);
+        SaveManager.OnDataLoaded -= OnSaveDataLoaded;
     }
 
     private void InitializePlayers()
@@ -81,25 +69,71 @@ public class AudioService : MonoBehaviour
             musicGO.transform.SetParent(transform);
             musicSource = musicGO.AddComponent<AudioSource>();
         }
+
         _musicPlayer = new MusicPlayer(musicSource, audioSettings, this);
 
-        if (audioSourcePrefab == null)
-        {
-            CreateAudioSourcePrefab();
-        }
+        if (audioSourcePrefab == null) CreateAudioSourcePrefab();
+
         _sfxPlayer = new SFXPlayer(audioSourcePrefab, sfxPoolSize, audioSettings, transform);
     }
 
-    private void CreateAudioSourcePrefab()
+    private void InitializeSettings()
     {
-        GameObject prefabGO = new GameObject("PooledAudioSource_Prefab");
-        prefabGO.transform.SetParent(transform);
-        prefabGO.AddComponent<AudioSource>();
-        audioSourcePrefab = prefabGO.AddComponent<PooledAudioSource>();
-        prefabGO.SetActive(false);
+        audioSettings.Load();
+
+        audioConfig.OnMusicEnabledChanged += OnMusicEnabledChanged;
+        audioConfig.OnSFXEnabledChanged   += OnSFXEnabledChanged;
+        audioConfig.OnSaveStateRequested  += PersistAudioSettings;
+
+        SaveManager.OnDataLoaded += OnSaveDataLoaded;
+
+        if (SaveManager.Instance != null && SaveManager.Instance.IsDataLoaded)
+        {
+            ApplySettingsFromSave(SaveManager.Instance.GetGameData());
+        }
+        else
+        {
+            ApplyMusicState(audioConfig.MusicEnabled);
+            ApplySFXState(audioConfig.SFXEnabled);
+        }
     }
 
-    #region PUBLIC API
+    private void OnSaveDataLoaded(GameData data)
+    {
+        ApplySettingsFromSave(data);
+    }
+
+    private void ApplySettingsFromSave(GameData data)
+    {
+        audioConfig.InitializeState(data.musicEnabled, data.sfxEnabled);
+    }
+
+    private void OnMusicEnabledChanged(bool enabled) => ApplyMusicState(enabled);
+    private void OnSFXEnabledChanged(bool enabled)   => ApplySFXState(enabled);
+
+    private void ApplyMusicState(bool enabled)
+    {
+        if (enabled) _musicPlayer.UnmuteMusic();
+        else         _musicPlayer.MuteMusic();
+    }
+
+    private void ApplySFXState(bool enabled)
+    {
+        if (enabled) _sfxPlayer.UnmuteSFX();
+        else         _sfxPlayer.MuteSFX();
+    }
+
+    private void PersistAudioSettings()
+    {
+        var sm = SaveManager.Instance;
+        if (sm == null) return;
+
+        sm.Modify(data =>
+        {
+            data.musicEnabled = audioConfig.MusicEnabled;
+            data.sfxEnabled   = audioConfig.SFXEnabled;
+        });
+    }
 
     public void PlayMusic(AudioEvent audioEvent, float fadeTime = 0f)
         => _musicPlayer.Play(audioEvent, fadeTime);
@@ -120,50 +154,23 @@ public class AudioService : MonoBehaviour
         => _sfxPlayer.PlayAtPosition(audioEvent, position);
 
     public void StopSFX(AudioEvent audioEvent)
-    => _sfxPlayer.Stop(audioEvent);
+        => _sfxPlayer.Stop(audioEvent);
 
     public void StopAllSFX()
         => _sfxPlayer.StopAll();
-
-    #endregion
-
-    private void OnMusicEnabledChanged(bool enabled)
-    {
-        ApplyMusicState(enabled);
-    }
-
-    private void OnSFXEnabledChanged(bool enabled)
-    {
-        ApplySFXState(enabled);
-    }
-
-    private void ApplyMusicState(bool enabled)
-    {
-        if (enabled)
-        {
-            _musicPlayer.UnmuteMusic();
-        }
-        else
-        {
-            _musicPlayer.MuteMusic();
-        }
-    }
-
-    private void ApplySFXState(bool enabled)
-    {
-        if (enabled)
-        {
-            _sfxPlayer.UnmuteSFX();
-        }
-        else
-        {
-            _sfxPlayer.MuteSFX();
-        }
-    }
 
     public void RefreshVolumes()
     {
         _musicPlayer?.UpdateVolume();
         _sfxPlayer?.RefreshVolumes();
+    }
+
+    private void CreateAudioSourcePrefab()
+    {
+        GameObject prefabGO = new GameObject("PooledAudioSource_Prefab");
+        prefabGO.transform.SetParent(transform);
+        prefabGO.AddComponent<AudioSource>();
+        audioSourcePrefab = prefabGO.AddComponent<PooledAudioSource>();
+        prefabGO.SetActive(false);
     }
 }

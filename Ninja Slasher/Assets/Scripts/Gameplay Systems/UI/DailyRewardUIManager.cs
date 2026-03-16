@@ -89,8 +89,6 @@ public class DailyRewardUIManager : MonoBehaviourSingleton<DailyRewardUIManager>
         GameEvents.OnRewardAvailabilityChanged += OnRewardAvailabilityChanged;
 
         GameEvents.OnRewardDoubled += OnRewardDoubled;
-
-        Debug.Log("[DailyRewardUIManager] Suscrito a GameEvents");
     }
 
     void UnsubscribeFromEvents()
@@ -108,8 +106,6 @@ public class DailyRewardUIManager : MonoBehaviourSingleton<DailyRewardUIManager>
         SetupWeeklyRewards();
         ShowDailyReward();
         isInitialized = true;
-
-        Debug.Log("[DailyRewardUIManager] UI inicializada");
     }
 
     void SetupWeeklyRewards()

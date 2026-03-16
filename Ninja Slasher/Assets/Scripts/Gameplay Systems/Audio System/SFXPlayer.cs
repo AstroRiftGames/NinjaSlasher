@@ -21,7 +21,8 @@ public class SFXPlayer
 
     public void Play(AudioEvent audioEvent)
     {
-        if (audioEvent == null || audioEvent.clip == null || isMuted)
+        if (isMuted) return;
+        if (audioEvent == null || audioEvent.clip == null)
         {
             Debug.LogWarning("SFXPlayer: AudioEvent o clip null.");
             return;
@@ -43,7 +44,7 @@ public class SFXPlayer
 
     public void PlayAtPosition(AudioEvent audioEvent, Vector3 position)
     {
-        if (audioEvent == null || audioEvent.clip == null)
+        if (audioEvent == null || audioEvent.clip == null || isMuted)
         {
             Debug.LogWarning("SFXPlayer: AudioEvent o clip null.");
             return;
@@ -89,12 +90,33 @@ public class SFXPlayer
 
     public void MuteSFX()
     {
+        if (isMuted) return;
+
         isMuted = true;
+
+        foreach (var kvp in _loopingSources)
+        {
+            if (kvp.Value != null && kvp.Value.Source != null)
+                kvp.Value.Source.volume = 0f;
+        }
     }
 
     public void UnmuteSFX()
     {
+        if (!isMuted) return;
+
         isMuted = false;
+
+        foreach (var kvp in _loopingSources)
+        {
+            var audioEvent = kvp.Key;
+            var pooled     = kvp.Value;
+
+            if (pooled != null && pooled.Source != null)
+                pooled.Source.volume =
+                    audioEvent.volume *
+                    _settings.GetChannelMultiplier(audioEvent.channel);
+        }
     }
 
     public void RefreshVolumes()

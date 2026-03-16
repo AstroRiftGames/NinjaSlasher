@@ -116,6 +116,7 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
 
     private void Start()
     {
+        _configToggles?.RefreshUI();
         StartCoroutine(InitializeCalendarIcon());
     }
 

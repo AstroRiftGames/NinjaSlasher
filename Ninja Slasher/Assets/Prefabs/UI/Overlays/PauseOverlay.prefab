@@ -1433,6 +1433,7 @@ GameObject:
   - component: {fileID: 8971002816337950094}
   - component: {fileID: 5695971101164262095}
   - component: {fileID: 6719817966876680907}
+  - component: {fileID: 6067218704684635856}
   m_Layer: 5
   m_Name: SoundButton
   m_TagString: Untagged
@@ -1554,6 +1555,23 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6e1109dce497fb4469d625a38c86546c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &6067218704684635856
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5399722554178222788}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 12e95d88aefb85a4aa839e829c0e1dd2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _audioConfig: {fileID: 11400000, guid: 7ec7b8ab819915045adb06bc85f2f71b, type: 2}
+  _toggleType: 0
+  _buttonImage: {fileID: 5708295782220718305}
+  _enabledSprite: {fileID: 21300000, guid: 903ed58cd39a19941846b1fdbfb21a9f, type: 3}
+  _disabledSprite: {fileID: 21300000, guid: bd717b7325ca5cf4390ec5dfd873f509, type: 3}
 --- !u!1 &5503750186036728449
 GameObject:
   m_ObjectHideFlags: 0
@@ -1567,6 +1585,7 @@ GameObject:
   - component: {fileID: 875496862395515960}
   - component: {fileID: 7389149534418435952}
   - component: {fileID: 6627721672313490099}
+  - component: {fileID: 7997666823268639322}
   m_Layer: 5
   m_Name: MusicButton
   m_TagString: Untagged
@@ -1688,6 +1707,23 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6e1109dce497fb4469d625a38c86546c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &7997666823268639322
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5503750186036728449}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 12e95d88aefb85a4aa839e829c0e1dd2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _audioConfig: {fileID: 11400000, guid: 7ec7b8ab819915045adb06bc85f2f71b, type: 2}
+  _toggleType: 0
+  _buttonImage: {fileID: 8603010746227891792}
+  _enabledSprite: {fileID: 21300000, guid: 8a694bbc315b3754fbc8b7d70032fe36, type: 3}
+  _disabledSprite: {fileID: 21300000, guid: 9aa9b5d9c765dc043a1155eafdb69022, type: 3}
 --- !u!1 &5547428510507417046
 GameObject:
   m_ObjectHideFlags: 0

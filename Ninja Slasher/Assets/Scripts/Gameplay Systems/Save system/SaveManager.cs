@@ -399,7 +399,7 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
 
     #endregion
 
-    #region Original SaveManager Methods (preserved for compatibility)
+    #region Original SaveManager Methods
 
     public void SaveData()
     {
@@ -619,6 +619,14 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
         var data = GetGameData();
         data.musicVolume = Mathf.Clamp01(musicVolume);
         data.sfxVolume   = Mathf.Clamp01(sfxVolume);
+        SaveData();
+    }
+
+    public void SetAudioToggleState(bool musicEnabled, bool sfxEnabled)
+    {
+        var data = GetGameData();
+        data.musicEnabled = musicEnabled;
+        data.sfxEnabled   = sfxEnabled;
         SaveData();
     }
 
