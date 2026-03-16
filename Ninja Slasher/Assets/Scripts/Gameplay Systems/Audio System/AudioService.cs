@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 
 public class AudioService : MonoBehaviour
@@ -18,6 +19,8 @@ public class AudioService : MonoBehaviour
 
     private MusicPlayer _musicPlayer;
     private SFXPlayer _sfxPlayer;
+
+    private bool _splashMusicPlayed = false;
 
     private void Awake()
     {
@@ -44,12 +47,23 @@ public class AudioService : MonoBehaviour
 
     private void Start()
     {
-        MusicEvents.OnEnterSplash?.Invoke();
+        if (LoginManager.Instance != null && !LoginManager.Instance.IsSignedIn)
+        {
+            LoginManager.OnSignInCompleted += OnAuthSignInCompleted;
+            LoginManager.OnSignInFailed    += OnAuthSignInFailed;
+            StartCoroutine(SplashMusicTimeout());
+        }
+        else
+        {
+            TryPlaySplashMusic();
+        }
     }
 
     private void OnDestroy()
     {
         if (Instance == this) Instance = null;
+
+        UnsubscribeAuthCallbacks();
 
         if (audioConfig != null)
         {
@@ -59,6 +73,39 @@ public class AudioService : MonoBehaviour
         }
 
         SaveManager.OnDataLoaded -= OnSaveDataLoaded;
+    }
+
+    private void OnAuthSignInCompleted(string playerId)
+    {
+        UnsubscribeAuthCallbacks();
+        TryPlaySplashMusic();
+    }
+
+    private void OnAuthSignInFailed(string error)
+    {
+        UnsubscribeAuthCallbacks();
+        TryPlaySplashMusic();
+    }
+
+    private IEnumerator SplashMusicTimeout()
+    {
+        yield return new WaitForSecondsRealtime(8f);
+        UnsubscribeAuthCallbacks();
+        TryPlaySplashMusic();
+    }
+
+    private void TryPlaySplashMusic()
+    {
+        if (_splashMusicPlayed) return;
+        _splashMusicPlayed = true;
+        MusicEvents.OnEnterSplash?.Invoke();
+    }
+
+    private void UnsubscribeAuthCallbacks()
+    {
+        if (LoginManager.Instance == null) return;
+        LoginManager.OnSignInCompleted -= OnAuthSignInCompleted;
+        LoginManager.OnSignInFailed    -= OnAuthSignInFailed;
     }
 
     private void InitializePlayers()
@@ -75,6 +122,9 @@ public class AudioService : MonoBehaviour
         if (audioSourcePrefab == null) CreateAudioSourcePrefab();
 
         _sfxPlayer = new SFXPlayer(audioSourcePrefab, sfxPoolSize, audioSettings, transform);
+
+        _musicPlayer.MuteMusic();
+        _sfxPlayer.MuteSFX();
     }
 
     private void InitializeSettings()
@@ -101,6 +151,8 @@ public class AudioService : MonoBehaviour
     private void OnSaveDataLoaded(GameData data)
     {
         ApplySettingsFromSave(data);
+
+        TryPlaySplashMusic();
     }
 
     private void ApplySettingsFromSave(GameData data)
