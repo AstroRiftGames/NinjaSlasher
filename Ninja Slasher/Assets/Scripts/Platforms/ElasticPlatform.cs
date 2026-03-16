@@ -1,5 +1,5 @@
-using UnityEngine;
 using System.Collections;
+using UnityEngine;
 
 public class ElasticPlatform : PlatformBase
 {
@@ -33,11 +33,12 @@ public class ElasticPlatform : PlatformBase
             _animator.SetTrigger("OnBounce");
         }
 
-        Vector2 reflectedDirection = contactPoint.normal;
+        controller.ForceDash(GetReflectedDir(controller.LastMoveDirection, contactPoint));
+    }
 
-        reflectedDirection = Vector2.Reflect(controller.LastMoveDirection, contactPoint.normal).normalized;
-
-        controller.ForceDash(reflectedDirection);
+    private Vector2 GetReflectedDir(Vector2 originalDir, ContactPoint2D contactPoint)
+    {
+        return Vector2.Reflect(originalDir, contactPoint.normal).normalized;
     }
 
     public override void OnPlayerExit(GameObject player, bool isForced = false) { }

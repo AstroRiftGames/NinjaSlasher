@@ -23,6 +23,8 @@ public class Projectile : MonoBehaviour, IPoolable
     private float _velocityRetention = 1f;
     private HashSet<Enemy> _hitEnemies = new HashSet<Enemy>();
     private Collider2D _projectileCollider;
+    private Vector2 _currentDir;
+    public Vector2 CurrentDir => _currentDir;
 
     public bool WasReflected { get; private set; }
 
@@ -74,10 +76,12 @@ public class Projectile : MonoBehaviour, IPoolable
 
     public virtual void SetDirection(Vector2 direction)
     {
+        _rb.linearVelocity = Vector2.zero;
+
+        _currentDir = direction;
         float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
         transform.rotation = Quaternion.Euler(0, 0, angle);
 
-        _rb.linearVelocity = Vector2.zero;
         _rb.AddForce(transform.right * _speed);
     }
 

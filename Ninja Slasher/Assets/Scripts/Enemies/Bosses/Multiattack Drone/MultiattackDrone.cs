@@ -120,10 +120,8 @@ public class MultiattackDrone : BossEnemy
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
-        Debug.Log("Drone trigger enter: " + collision.gameObject.name);
         if (collision.gameObject.CompareTag("Projectile") && !_isVulnerable)
         {
-            Debug.Log("Drone hit by projectile, getting vulnerable");
             collision.TryGetComponent(out Projectile projectile);
             if (projectile.Shooter.gameObject.CompareTag("Player"))
             {
@@ -133,7 +131,6 @@ public class MultiattackDrone : BossEnemy
         }
         else if (collision.gameObject.CompareTag("Player") && _isVulnerable)
         {
-            Debug.Log("Player hit vulnerable drone");
             StopAllCoroutines();
             Die();
         }
@@ -233,7 +230,6 @@ public class MultiattackDrone : BossEnemy
                 float offsetAngle = n < 1 ? -15 : n == 1 ? 0 : 15;
                 direction = Quaternion.Euler(0, 0, offsetAngle) * direction;
 
-                Debug.DrawRay(_shootingPoint.position, direction * 5, Color.red, 1f);
                 Shoot(AttackType.Cone, direction);
             }
             yield return new WaitForSeconds(.5f);

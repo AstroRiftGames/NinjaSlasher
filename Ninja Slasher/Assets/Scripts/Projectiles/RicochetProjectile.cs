@@ -8,9 +8,8 @@ public class RicochetProjectile : Projectile
     public override void OnCollisionEnter2D(Collision2D collision)
     {
         string colTag = collision.gameObject.tag;
-        if (colTag is "Scenario" or "Ceiling" or "Floor" or "Obstacle")
         {
-            TryRicochet();
+            TryRicochet(collision.GetContact(0).normal);
         }
         else
         {
@@ -18,20 +17,25 @@ public class RicochetProjectile : Projectile
         }
     }
 
-    private void TryRicochet()
+    public void TryRicochet(Vector2 surfaceNormal)
     {
         if (_currentBounces < _maxBounces)
         {
-            Ricochet();
+            Ricochet(surfaceNormal);
         }
         else
         {
             _animator.SetTrigger("OnImpact");
         }
     }
-    private void Ricochet()
+    private void Ricochet(Vector2 surfaceNormal)
     {
         _currentBounces++;
-        AudioManager.Instance.PlaySFXAtPosition(SFXClip.Proj_Ricochet_Bounce, transform.position);
+
+        Vector2 newDir = Vector2.Reflect(CurrentDir, surfaceNormal);
+        SetDirection(newDir);
+
+        //TODO: Use AudioService instead of AudioManager and add ricochet sound
+        //AudioManager.Instance.PlaySFXAtPosition(SFXClip.Proj_Ricochet_Bounce, transform.position);
     }
 }
