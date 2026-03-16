@@ -14,9 +14,13 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
 
     private Action _pendingRewardCallback;
 
+    private bool _interstitialPending = false;
+
     void Start()
     {
         GameEvents.OnAdsRemoved += OnAdsRemoved;
+        UIEvents.OnRetryButtonPressed += OnResultsActionTaken;
+        UIEvents.OnQuitToMenuPressed  += OnResultsActionTaken;
 
         InitializeLevelPlay();
     }
@@ -116,6 +120,25 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
             Debug.Log("[AdsManager] Interstitial ads disabled because Remove Ads is active.");
             return;
         }
+
+        _interstitialPending = true;
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        Debug.Log("[AdsManager] Interstitial ad deferred — esperando OnResultsScreenFullyShown");
+#endif
+    }
+
+    private void OnResultsActionTaken()
+    {
+        if (!_interstitialPending) return;
+
+        _interstitialPending = false;
+        ShowInterstitialAdNow();
+    }
+
+    private void ShowInterstitialAdNow()
+    {
+        if (AreAdsRemoved()) return;
 
         if (_interstitialAd != null && _interstitialAd.IsAdReady())
         {
@@ -298,6 +321,8 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
     void OnDestroy()
     {
         GameEvents.OnAdsRemoved -= OnAdsRemoved;
+        UIEvents.OnRetryButtonPressed -= OnResultsActionTaken;
+        UIEvents.OnQuitToMenuPressed  -= OnResultsActionTaken;
 
         LevelPlay.OnInitSuccess -= OnInitSuccess;
         LevelPlay.OnInitFailed -= OnInitFailed;
