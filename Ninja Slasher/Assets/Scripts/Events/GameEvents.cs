@@ -144,6 +144,13 @@ public static class GameEvents
         OnEnemyDefeated?.Invoke(enemyCount);
     }
 
+    // Evento canónico: emitido una única vez por enemigo muerto, desde Enemy.RegisterKill()
+    public static event Action<Vector3> OnEnemyKilled;
+    public static void RaiseEnemyKilled(Vector3 position)
+    {
+        OnEnemyKilled?.Invoke(position);
+    }
+
     public static event Action<int> OnBL4ZTExplosionKills;
     public static void RaiseBL4ZTExplosionKills(int killCount)
     {
@@ -307,6 +314,7 @@ public static class GameEvents
 
     public static void ClearAllEnemyEvents()
     {
+        OnEnemyKilled = null;
         OnAllEnemiesDefeated = null;
         OnEnemyDefeated = null;
     }

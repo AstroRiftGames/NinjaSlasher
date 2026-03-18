@@ -22,6 +22,9 @@ public class Enemy : MonoBehaviour
     public Animator Animator => _animator;
     //[SerializeField] protected EnemyBrokenPart[] _parts;
 
+    // Guard para garantizar que Die() y RegisterKill() se ejecutan una sola vez por enemigo
+    protected bool _isDead = false;
+
     public virtual void OnEnable()
     {
         if (CustomUpdateManager.Instance != null)
@@ -69,6 +72,9 @@ public class Enemy : MonoBehaviour
 
     public virtual void Die()
     {
+        if (_isDead) return;
+        _isDead = true;
+
         _animator.SetTrigger("OnHit");
         _col.excludeLayers += LayerMask.GetMask("Player");
         _triggerCol.excludeLayers += LayerMask.GetMask("Player");
@@ -93,20 +99,15 @@ public class Enemy : MonoBehaviour
         //Destroy(gameObject);
     }
 
-    public void RegisterKill()
+    protected void RegisterKill()
     {
         if (LevelSessionManager.Instance != null)
-        {
             LevelSessionManager.Instance.RegisterEnemyKilled(this);
-        }
         else
-        {
             Debug.LogError("[Enemy] LevelSessionManager no encontrado - el enemigo no será trackeado");
-        }
 
-        var combo = ComboManager.Instance;
-        if (combo != null)
-            combo.RegisterKill(transform.position);
+        // Evento canónico: ComboManager escucha esto, sin acoplamiento directo
+        GameEvents.RaiseEnemyKilled(transform.position);
     }
 
 

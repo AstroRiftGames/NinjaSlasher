@@ -26,13 +26,14 @@ public class GameplayUIManager : MonoBehaviour
     private void OnDisable()
     {
         GameEvents.OnLivesChanged -= OnLivesChanged;
+        GameEvents.OnLevelTimeChanged -= OnLevelTimeChanged;
+        GameEvents.OnLevelTimeExpired -= OnLevelTimeExpired;
+        GameEvents.OnLevelTimeBonus -= ShowBonusTimeText;
         UIEvents.OnUILivesUpdateRequested -= UpdateLivesUI;
     }
 
     public void Initialize()
     {
-        GameEvents.OnLivesChanged += OnLivesChanged;
-
         UpdateLivesUI(LifeManager.Instance?.GetDisplayLives() ?? 0);
 
         if (_bonusTimeText != null)
@@ -49,7 +50,6 @@ public class GameplayUIManager : MonoBehaviour
 
     public void OnSceneLoaded()
     {
-        //UnsubscribeFromEvents();
         SubscribeToEvents();
     }
 
@@ -58,7 +58,7 @@ public class GameplayUIManager : MonoBehaviour
         GameEvents.OnLivesChanged += OnLivesChanged;
         GameEvents.OnLevelTimeChanged += OnLevelTimeChanged;
         GameEvents.OnLevelTimeExpired += OnLevelTimeExpired;
-        GameEvents.OnComboUpdated += OnComboUpdated;
+        GameEvents.OnLevelTimeBonus += ShowBonusTimeText;
         UIEvents.OnUILivesUpdateRequested += UpdateLivesUI;
     }
 
@@ -92,35 +92,6 @@ public class GameplayUIManager : MonoBehaviour
                 _puRemainingTime.text = "";
             return;
         }
-
-        /*
-        var context = PowerUpManager.Instance.context;
-        if (context == null)
-        {
-            _puRemainingTime.text = "";
-            return;
-        }
-
-        bool isPowerUpActive = context.AnyPowerUpActive();
-
-        if (isPowerUpActive)
-        {
-            var remaining = context.GetLowestRemainingTime();
-            int seconds = Mathf.CeilToInt(remaining);
-            if (seconds > 0)
-            {
-                _puRemainingTime.text = $"{seconds}s";
-            }
-            else
-            {
-                _puRemainingTime.text = "";
-            }
-        }
-        else
-        {
-            _puRemainingTime.text = "";
-        }
-        */
     }
 
     public void ShowNoLivesPanel()
@@ -165,21 +136,6 @@ public class GameplayUIManager : MonoBehaviour
             _noLivesActive = false;
             UIEvents.RequestHideNoLivesOverlay();
         }
-    }
-
-    private void OnComboUpdated(int comboLevel, Vector3 position)
-    {
-        if (comboLevel < 2) return;
-
-        float bonus = comboLevel switch
-        {
-            2 => 3f,
-            3 => 4f,
-            4 => 6f,
-            _ => 3f
-        };
-
-        ShowBonusTimeText(bonus);
     }
 
     private void ShowBonusTimeText(float bonus)

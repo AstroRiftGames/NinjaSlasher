@@ -17,6 +17,9 @@ public class BossEnemy : Enemy
 
     public override void Die()
     {
+        if (_isDead) return;
+        _isDead = true;
+
         _animator.SetTrigger("OnHit");
         RegisterKill();
     }

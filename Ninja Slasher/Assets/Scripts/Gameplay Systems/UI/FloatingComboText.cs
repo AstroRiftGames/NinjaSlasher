@@ -48,17 +48,23 @@ public class FloatingComboText : MonoBehaviour, IPoolable
             return;
         }
 
-        Camera canvasCamera = canvas.worldCamera != null ? canvas.worldCamera : Camera.main;
+        bool isOverlay = canvas.renderMode == RenderMode.ScreenSpaceOverlay;
+        Camera worldCam = isOverlay
+            ? Camera.main
+            : (canvas.worldCamera != null ? canvas.worldCamera : Camera.main);
 
-        if (canvasCamera == null)
+        if (worldCam == null)
         {
             RequestDespawn();
             return;
         }
 
-        Vector3 viewportPosition = canvasCamera.WorldToViewportPoint(worldPosition);
+        Vector3 viewportPosition = worldCam.WorldToViewportPoint(worldPosition);
 
-        Rect cameraRect = canvasCamera.rect;
+        if (viewportPosition.z < 0f)
+            viewportPosition = new Vector3(0.5f, 0.5f, 1f);
+
+        Rect cameraRect = worldCam.rect;
         viewportPosition.x = (viewportPosition.x - cameraRect.x) / cameraRect.width;
         viewportPosition.y = (viewportPosition.y - cameraRect.y) / cameraRect.height;
 
@@ -67,14 +73,24 @@ public class FloatingComboText : MonoBehaviour, IPoolable
             viewportPosition.y * Screen.height
         );
 
+        Camera localCam = isOverlay ? null : worldCam;
+
         RectTransformUtility.ScreenPointToLocalPointInRectangle(
             canvas.transform as RectTransform,
             screenPosition,
-            canvasCamera,
+            localCam,
             out Vector2 localPoint
         );
 
         localPoint += _positionOffset;
+
+        RectTransform canvasRect = canvas.transform as RectTransform;
+        float halfW = canvasRect.rect.width * 0.5f;
+        float halfH = canvasRect.rect.height * 0.5f;
+        const float marginX = 90f;
+        const float marginY = 80f;
+        localPoint.x = Mathf.Clamp(localPoint.x, -halfW + marginX, halfW - marginX);
+        localPoint.y = Mathf.Clamp(localPoint.y, -halfH + marginY, halfH - marginY);
 
         transform.localPosition = localPoint;
 

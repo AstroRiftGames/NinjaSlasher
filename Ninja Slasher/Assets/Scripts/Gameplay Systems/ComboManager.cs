@@ -1,17 +1,7 @@
 using UnityEngine;
-using System;
 
 public class ComboManager : MonoBehaviourSingleton<ComboManager>
 {
-    [Obsolete]
-    public event Action<int> OnComboUpdated;
-
-    [Obsolete]
-    public event Action OnComboEnded;
-
-    [Obsolete]
-    public event Action<int, Vector3> OnComboUpdatedWithPosition;
-
     private float ComboTimeWindow => GameConfigManager.Config.comboTimeWindow;
     private int MaxComboLevel => GameConfigManager.Config.maxComboLevel;
 
@@ -33,9 +23,32 @@ public class ComboManager : MonoBehaviourSingleton<ComboManager>
     }
     public int MaxComboLevelReached => _maxComboLevelReached;
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    private int _debugTotalKillsReceived = 0;
+#endif
+
     public override void Awake()
     {
         base.Awake();
+    }
+
+    private void OnEnable()
+    {
+        GameEvents.OnEnemyKilled += HandleEnemyKilled;
+    }
+
+    private void OnDisable()
+    {
+        GameEvents.OnEnemyKilled -= HandleEnemyKilled;
+    }
+
+    private void HandleEnemyKilled(Vector3 position)
+    {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        _debugTotalKillsReceived++;
+        Debug.Log($"[Combo] Kill #{_debugTotalKillsReceived} recibido | killCount antes: {killCount} → combo proyectado: x{Mathf.Clamp(killCount + 1, 1, MaxComboLevel)}");
+#endif
+        RegisterKill(position);
     }
 
     void Update()
@@ -51,7 +64,7 @@ public class ComboManager : MonoBehaviourSingleton<ComboManager>
         }
     }
 
-    public void RegisterKill(Vector3 enemyPosition)
+    private void RegisterKill(Vector3 enemyPosition)
     {
         lastEnemyPosition = enemyPosition;
 
@@ -88,11 +101,6 @@ public class ComboManager : MonoBehaviourSingleton<ComboManager>
 
             GameEvents.RaiseComboUpdated(level, lastEnemyPosition);
         }
-    }
-
-    public void RegisterKill()
-    {
-        RegisterKill(Vector3.zero);
     }
 
     private void GiveBonus(int level)

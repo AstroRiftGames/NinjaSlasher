@@ -104,6 +104,10 @@ public class ComboVisualFeedback : MonoBehaviour
             return;
         }
 
+        // Asegurar que el texto esté bajo el canvas correcto para que GetComponentInParent<Canvas>() funcione
+        if (targetCanvas != null && text.transform.parent != targetCanvas.transform)
+            text.transform.SetParent(targetCanvas.transform, false);
+
         text.Show(message, worldPosition, color);
     }
 }
