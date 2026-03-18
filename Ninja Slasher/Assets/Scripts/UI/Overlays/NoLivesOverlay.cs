@@ -23,8 +23,9 @@ public class NoLivesOverlay : UIOverlayBase
         GameEvents.OnLivesChanged += OnLivesChanged;
     }
 
-    private void OnDisable()
+    protected override void OnDisable()
     {
+        base.OnDisable();
         GameEvents.OnLivesChanged -= OnLivesChanged;
     }
 

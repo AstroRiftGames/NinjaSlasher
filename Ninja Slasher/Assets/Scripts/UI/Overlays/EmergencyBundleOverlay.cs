@@ -3,19 +3,6 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-/// <summary>
-/// Overlay de Emergency Bundle. Muestra UN SOLO bundle seleccionado por EmergencyBundleService
-/// según la situación del jugador — no es un menú de selección.
-///
-/// Setup en Inspector:
-///  - _bundleIcon:    ícono del bundle (cambia dinámicamente según el tier)
-///  - _bundleNameText: nombre visible del bundle (ej. "Pack Rescate")
-///  - _priceText:     precio localizado del bundle (ej. "$2.99")
-///  - _rewardText:    descripción de la recompensa (ej. "Vida ilimitada 5 min · ExtraTime x2")
-///  - _countdownText: tiempo restante de la oferta (MM:SS)
-///  - _buyBtn:        botón de compra
-///  - _dismissBtn:    cerrar sin comprar
-/// </summary>
 public class EmergencyBundleOverlay : UIOverlayBase
 {
     [Header("Bundle Info")]
@@ -42,17 +29,17 @@ public class EmergencyBundleOverlay : UIOverlayBase
         _dismissBtn?.onClick.AddListener(OnDismissClicked);
     }
 
-    private void OnDisable()
+    protected override void OnDisable()
     {
+        base.OnDisable();
         _buyBtn?.onClick.RemoveListener(OnBuyClicked);
         _dismissBtn?.onClick.RemoveListener(OnDismissClicked);
     }
 
     #endregion
 
-    #region SHOW / HIDE  (llamados por UIManager)
+    #region SHOW / HIDE
 
-    /// <summary>Recibe la oferta seleccionada y muestra el overlay.</summary>
     public void ShowWithOffer(EmergencyBundleOffer offer)
     {
         _currentOffer = offer;

@@ -106,6 +106,10 @@ public abstract class UIOverlayBase : UIPanel
         DOTween.Kill(_backgroundImage);
         DOTween.Kill(_canvasGroup);
 
+        // Deshabilitar raycasts al inicio del cierre, no al final de la animación
+        if (_canvasGroup != null && !_blockRaycastsWhenHidden)
+            _canvasGroup.blocksRaycasts = false;
+
         Sequence hideSequence = DOTween.Sequence();
 
         float currentTime = 0f;
@@ -134,9 +138,6 @@ public abstract class UIOverlayBase : UIPanel
 
         hideSequence.OnComplete(() =>
         {
-            if (_canvasGroup != null && !_blockRaycastsWhenHidden)
-                _canvasGroup.blocksRaycasts = false;
-
             gameObject.SetActive(false);
 
             if (_canvasGroup != null)
@@ -160,5 +161,8 @@ public abstract class UIOverlayBase : UIPanel
     {
         DOTween.Kill(_backgroundImage);
         DOTween.Kill(_canvasGroup);
+
+        if (_canvasGroup != null && !_blockRaycastsWhenHidden)
+            _canvasGroup.blocksRaycasts = false;
     }
 }
