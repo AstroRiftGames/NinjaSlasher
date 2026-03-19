@@ -131,8 +131,8 @@ public class Projectile : MonoBehaviour, IPoolable
 
     public void OnTriggerEnter2D(Collider2D collision)
     {
-        if (!_isEnhancedParry)
-            return;
+        //if (!_isEnhancedParry)
+        //    return;
 
         if (IsShooter(collision.transform))
             return;
