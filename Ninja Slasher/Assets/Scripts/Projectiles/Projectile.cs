@@ -15,8 +15,13 @@ public class Projectile : MonoBehaviour, IPoolable
 
     protected Rigidbody2D _rb;
 
+    public bool IsParryable => isParryable;
     [SerializeField] protected bool isParryable = true;
-    public void SetIsParryable(bool value) => isParryable = value;
+    public void SetIsParryable(bool newValue)
+    {
+        isParryable = newValue;
+        Debug.Log("Proj parryable updated. New value: " + newValue);
+    }
 
     protected bool _isEnhancedParry = false;
     protected int _bouncesRemaining = 0;
@@ -235,7 +240,6 @@ public class Projectile : MonoBehaviour, IPoolable
         SetOwner(newShooter);
         _rb.linearVelocity = Vector2.zero;
         SetDirection(newDir);
-        SetIsParryable(false);
 
         var context = PowerUpManager.Instance?.context;
         if (context != null && context.EnhancedParryActive)
@@ -260,6 +264,4 @@ public class Projectile : MonoBehaviour, IPoolable
 
         _animator.SetTrigger("OnImpact");
     }
-
-    public bool IsParryable => isParryable;
 }
