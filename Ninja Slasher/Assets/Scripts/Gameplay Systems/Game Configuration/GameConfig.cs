@@ -5,7 +5,7 @@ public class GameConfig : ScriptableObject
 {
     [Header("LIVES SYSTEM")]
 
-    [Tooltip("Máximo de vidas que puede tener el jugador")]
+    [Tooltip("Maximo de vidas que puede tener el jugador")]
     public int maxLives = 5;
     [Tooltip("Vidas iniciales al empezar el juego")]
     public int startingLives = 5;
@@ -13,11 +13,11 @@ public class GameConfig : ScriptableObject
     public int lifeRechargeSeconds = 1800;
 
     [Header("PROGRESSION SYSTEM")]
-    [Tooltip("Niveles por área (normalmente 10)")]
+    [Tooltip("Niveles por ï¿½rea (normalmente 10)")]
     public int levelsPerArea = 10;
-    [Tooltip("Total de áreas en el juego")]
+    [Tooltip("Total de ï¿½reas en el juego")]
     public int totalAreas = 5;
-    [Tooltip("Estrellas requeridas para desbloquear cada boss (índice 0 = boss área 1)")]
+    [Tooltip("Estrellas requeridas para desbloquear cada boss (indice 0 = boss area 1)")]
     public int[] starsRequiredPerBoss = { 5, 15, 30, 50, 75 };
 
     [Header("POWER-UPS - USOS")]
@@ -50,10 +50,32 @@ public class GameConfig : ScriptableObject
     [Tooltip("Niveles que dura Enhanced Parry")]
     public int enhancedParryUses = 3;
 
+    [Header("POWER-UPS - COSTOS")]
+    [Tooltip("Costo en monedas para comprar Extra Time")]
+    public int extraTimeCost = 100;
+
+    [Tooltip("Costo en monedas para comprar Dash Turbo")]
+    public int dashTurboCost = 100;
+
+    [Tooltip("Costo en monedas para comprar Parry Perfect")]
+    public int parryPerfectCost = 100;
+
+    [Tooltip("Costo en monedas para comprar Combo Master")]
+    public int comboMasterCost = 100;
+
+    [Tooltip("Costo en monedas para comprar Second Chance")]
+    public int secondChanceCost = 100;
+
+    [Tooltip("Costo en monedas para comprar Hawk Vision")]
+    public int hawkVisionCost = 100;
+
+    [Tooltip("Costo en monedas para comprar Enhanced Parry")]
+    public int enhancedParryCost = 100;
+
     [Header("POWER-UPS - EFECTIVIDAD")]
 
     [Range(0.1f, 2f)]
-    [Tooltip("Extra Time: Porcentaje de tiempo bonus (0.5 = 50% más tiempo)")]
+    [Tooltip("Extra Time: Porcentaje de tiempo bonus (0.5 = 50% mï¿½s tiempo)")]
     public float extraTimeBonus = 0.5f;
 
     [Range(0.1f, 1f)]
@@ -65,7 +87,7 @@ public class GameConfig : ScriptableObject
     public float parryPerfectBonusWindow = 0.2f;
 
     [Range(0.1f, 2f)]
-    [Tooltip("Combo Master: Porcentaje bonus de puntos (0.5 = 50% más puntos)")]
+    [Tooltip("Combo Master: Porcentaje bonus de puntos (0.5 = 50% mï¿½s puntos)")]
     public float comboMasterBonusPercent = 0.5f;
 
     [Range(2, 10)]
@@ -73,37 +95,37 @@ public class GameConfig : ScriptableObject
     public int enhancedParryBounces = 3;
 
     [Range(0.5f, 1f)]
-    [Tooltip("Enhanced Parry: Retención de velocidad por rebote")]
+    [Tooltip("Enhanced Parry: Retenciï¿½n de velocidad por rebote")]
     public float enhancedParryVelocityRetention = 0.9f;
 
     [Header("MONETIZATION - ADS")]
-    [Tooltip("Pérdidas consecutivas necesarias para mostrar ad de vida extra")]
+    [Tooltip("Pï¿½rdidas consecutivas necesarias para mostrar ad de vida extra")]
     public int lossesRequiredForAd = 2;
     [Tooltip("Niveles consecutivos completados para mostrar ad")]
     public int levelsRequiredForAd = 3;
-    [Tooltip("Habilitar ads después de pérdidas consecutivas")]
+    [Tooltip("Habilitar ads despuï¿½s de pï¿½rdidas consecutivas")]
     public bool enableConsecutiveLossAds = true;
-    [Tooltip("Habilitar ads después de victorias consecutivas")]
+    [Tooltip("Habilitar ads despuï¿½s de victorias consecutivas")]
     public bool enableConsecutiveLevelAds = true;
     [Tooltip("Habilitar ads cuando se queda sin vidas")]
     public bool enableNoLivesAds = true;
-    [Tooltip("Habilitar ads al desbloquear nueva área")]
+    [Tooltip("Habilitar ads al desbloquear nueva ï¿½rea")]
     public bool enableAreaUnlockAds = true;
 
     [Header("DAILY SYSTEMS")]
-    [Tooltip("Días que dura la semana de recompensas diarias")]
+    [Tooltip("Dias que dura la semana de recompensas diarias")]
     public int dailyRewardWeekLength = 7;
     [Tooltip("Cantidad de recompensas en la ruleta diaria")]
     public int dailyWheelRewardCount = 8;
 
     [Header("COMBAT SYSTEM")]
-    [Tooltip("Tiempo máximo entre kills para mantener combo (segundos)")]
+    [Tooltip("Tiempo maximo entre kills para mantener combo (segundos)")]
     public float comboTimeWindow = 3f;
-    [Tooltip("Nivel máximo de combo alcanzable")]
+    [Tooltip("Nivel maximo de combo alcanzable")]
     public int maxComboLevel = 5;
     [Tooltip("Ventana de tiempo para hacer parry exitoso (segundos)")]
     public float parryWindow = 0.3f;
-    [Tooltip("Multiplicador de daño por parry perfecto")]
+    [Tooltip("Multiplicador de daï¿½o por parry perfecto")]
     public float parryDamageMultiplier = 2f;
 
     [Header("ECONOMY")]
@@ -115,11 +137,11 @@ public class GameConfig : ScriptableObject
     public int coinsPerLevelCompleted = 50;
 
     [Header("LEVEL TIMING")]
-    [Tooltip("Duración por defecto de un nivel (segundos)")]
+    [Tooltip("Duracion por defecto de un nivel (segundos)")]
     public float defaultLevelDuration = 60f;
-    [Tooltip("Tiempo mínimo para obtener 3 estrellas (segundos)")]
+    [Tooltip("Tiempo minimo para obtener 3 estrellas (segundos)")]
     public float threeStarTimeThreshold = 30f;
-    [Tooltip("Tiempo mínimo para obtener 2 estrellas (segundos)")]
+    [Tooltip("Tiempo minimo para obtener 2 estrellas (segundos)")]
     public float twoStarTimeThreshold = 45f;
 
     [Header("DEBUG & TESTING")]
@@ -129,17 +151,17 @@ public class GameConfig : ScriptableObject
     public bool infiniteLives = false;
 
     [Header("PERFORMANCE")]
-    [Tooltip("Tamaño inicial del pool de proyectiles por tipo")]
+    [Tooltip("TamaÃ±o inicial del pool de proyectiles por tipo")]
     public int projectilePoolInitialSize = 20;
-    [Tooltip("Tamaño inicial del pool de textos flotantes")]
+    [Tooltip("TamaÃ±o inicial del pool de textos flotantes")]
     public int floatingTextPoolSize = 10;
-    [Tooltip("Tamaño inicial del pool de efectos de partículas")]
+    [Tooltip("TamaÃ±o inicial del pool de efectos de particulas")]
     public int vfxPoolInitialSize = 15;
 
     [Header("TUTORIAL")]
     [Tooltip("Mostrar tutorial en el primer nivel")]
     public bool enableTutorial = true;
-    [Tooltip("Tiempo de visualización de cada texto de tutorial (segundos)")]
+    [Tooltip("Tiempo de visualizaciion de cada texto de tutorial (segundos)")]
     public float tutorialTextDisplayTime = 5f;
 
 
@@ -173,6 +195,21 @@ public class GameConfig : ScriptableObject
             case PowerUpType.HawkVision: return hawkVisionUses;
             case PowerUpType.EnhancedParry: return enhancedParryUses;
             default: return 3;
+        }
+    }
+
+    public int GetPowerUpCost(PowerUpType type)
+    {
+        switch (type)
+        {
+            case PowerUpType.ExtraTime: return extraTimeCost;
+            case PowerUpType.DashTurbo: return dashTurboCost;
+            case PowerUpType.ParryPerfect: return parryPerfectCost;
+            case PowerUpType.ComboMaster: return comboMasterCost;
+            case PowerUpType.SecondChance: return secondChanceCost;
+            case PowerUpType.HawkVision: return hawkVisionCost;
+            case PowerUpType.EnhancedParry: return enhancedParryCost;
+            default: return 100;
         }
     }
 
@@ -249,11 +286,11 @@ public class GameConfig : ScriptableObject
     {
         if (ValidateConfiguration())
         {
-            Debug.Log("[GameConfig] Configuración válida");
+            Debug.Log("[GameConfig] Configuraciï¿½n vï¿½lida");
         }
         else
         {
-            Debug.LogError("[GameConfig] Configuración inválida - revisa los errores arriba");
+            Debug.LogError("[GameConfig] Configuraciï¿½n invï¿½lida - revisa los errores arriba");
         }
     }
 
@@ -262,7 +299,7 @@ public class GameConfig : ScriptableObject
     {
         Debug.Log("========== GAME CONFIGURATION ==========");
         Debug.Log($"Lives: {startingLives}/{maxLives} (recharge: {lifeRechargeSeconds}s)");
-        Debug.Log($"Progression: {totalAreas} areas × {levelsPerArea} levels = {totalAreas * levelsPerArea} total");
+        Debug.Log($"Progression: {totalAreas} areas ï¿½ {levelsPerArea} levels = {totalAreas * levelsPerArea} total");
         Debug.Log($"Combat: Combo window {comboTimeWindow}s, Max combo {maxComboLevel}");
         Debug.Log($"Economy: {coinsPerStar} coins/star, {coinsPerLevelCompleted} coins/level");
         Debug.Log("========================================");

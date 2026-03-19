@@ -755,6 +755,15 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
 
     public int GetCoins() => GetGameData().coins;
 
+    public bool SpendCoins(int amount)
+    {
+        if (amount <= 0 || GetGameData().coins < amount) return false;
+        GetGameData().coins -= amount;
+        SaveData();
+        GameEvents.RaiseCoinsChanged(GetGameData().coins);
+        return true;
+    }
+
     public void AddPowerUpToInventory(PowerUpType powerUpType, int quantity = 1)
     {
         var data = GetGameData();

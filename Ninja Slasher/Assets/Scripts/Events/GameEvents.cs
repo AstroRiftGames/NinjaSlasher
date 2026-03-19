@@ -99,6 +99,8 @@ public static class GameEvents
 
     public static event Action OnLevelEndedConsumePowerUps;
 
+    public static event Action<PowerUpType> OnPowerUpPurchased;
+
     public static void RaisePowerUpActivated(PowerUpType type, int uses)
     {
         OnPowerUpActivated?.Invoke(type, uses);
@@ -126,6 +128,8 @@ public static class GameEvents
     {
         OnLevelEndedConsumePowerUps?.Invoke();
     }
+
+    public static void RaisePowerUpPurchased(PowerUpType type) => OnPowerUpPurchased?.Invoke(type);
 
     #endregion
 
@@ -310,6 +314,7 @@ public static class GameEvents
     {
         OnPowerUpActivated = null;
         OnPowerUpExpired = null;
+        OnPowerUpPurchased = null;
     }
 
     public static void ClearAllEnemyEvents()

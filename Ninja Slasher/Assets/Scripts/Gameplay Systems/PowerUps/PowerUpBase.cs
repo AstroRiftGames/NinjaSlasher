@@ -25,6 +25,8 @@ public abstract class PowerUpBase : ScriptableObject
         }
     }
 
+    public int cost => gameConfig != null ? gameConfig.GetPowerUpCost(powerUpType) : 0;
+
     public abstract void Activate(PowerUpContext context);
     public abstract void Deactivate(PowerUpContext context);
     public abstract void OnUseConsumed(PowerUpContext context);

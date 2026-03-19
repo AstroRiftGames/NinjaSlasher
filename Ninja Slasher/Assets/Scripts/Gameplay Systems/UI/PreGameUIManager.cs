@@ -56,9 +56,6 @@ public class PreGameUIManager : MonoBehaviour
     {
         UIEvents.OnLevelPreviewRequested += ShowConfirmationPanel;
         GameEvents.OnRewardClaimed += OnDailyRewardClaimedRefresh;
-
-        // DEPRECATED
-        //DailyRewardSystem.OnRewardClaimed += OnDailyRewardClaimedRefresh;
     }
 
     private void OnDisable()
@@ -66,8 +63,6 @@ public class PreGameUIManager : MonoBehaviour
         UIEvents.OnLevelPreviewRequested -= ShowConfirmationPanel;
         GameEvents.OnRewardClaimed -= OnDailyRewardClaimedRefresh;
 
-        // DEPRECATED
-        //DailyRewardSystem.OnRewardClaimed -= OnDailyRewardClaimedRefresh;
         StopAllAnimations();
     }
 
@@ -117,7 +112,6 @@ public class PreGameUIManager : MonoBehaviour
         _pendingSceneName = sceneName;
         _isLevelSelected = true;
 
-        //UIManager.Instance.ShowHidePreGameCanvas();
         UIEvents.RequestShowPreGameScreen();
 
         ShowPreGameTitle();
@@ -276,17 +270,14 @@ public class PreGameUIManager : MonoBehaviour
         StopAllAnimations();
         _isLevelSelected = false;
 
-        //UIManager.Instance.HidePreGameScreen();
         UIEvents.RequestHidePreGameScreen();
         UIEvents.RequestSceneTransition(_pendingSceneName);
-        //PlayLevelMusic();
     }
 
     private void CancelLevelSelection()
     {
         StopAllAnimations();
         _isLevelSelected = false;
-        //UIManager.Instance.HidePreGameScreen();
         UIEvents.RequestHidePreGameScreen();
         _pendingSceneName = null;
     }
@@ -318,7 +309,7 @@ public class PreGameUIManager : MonoBehaviour
                 item = new PowerUpInventoryItem(powerUpBase.powerUpType, 0);
 
             var slot = Instantiate(_powerUpSlotPrefab, _powerUpsContainer);
-            slot.Setup(item, powerUpBase, OnPowerUpActivateClicked);
+            slot.Setup(item, powerUpBase, OnPowerUpActivateClicked, OnPowerUpPurchaseClicked);
             _slots.Add(slot);
         }
     }
@@ -331,6 +322,24 @@ public class PreGameUIManager : MonoBehaviour
         {
             ShowPreGamePowerUps();
         }
+    }
+
+    private void OnPowerUpPurchaseClicked(PowerUpInventoryItem item)
+    {
+        int cost = GetCostForType(item.type);
+        var result = PowerUpPurchaseService.Purchase(item.type, cost);
+
+        if (result == PurchaseResult.Success)
+        {
+            GameEvents.RaisePowerUpPurchased(item.type);
+            ShowPreGamePowerUps();
+        }
+    }
+
+    private int GetCostForType(PowerUpType type)
+    {
+        var pb = System.Array.Find(allPowerUpBases, p => p.powerUpType == type);
+        return pb != null ? pb.cost : 0;
     }
 
     private void SetGoals()
@@ -405,38 +414,6 @@ public class PreGameUIManager : MonoBehaviour
 
         img.sprite = acquired ? _starAcquiredSprite : _starNotAcquiredSprite;
     }
-
-    //void PlayLevelMusic()
-    //{
-    //    int levelId = GetLevelIdFromSceneName(_pendingSceneName);
-    //    var cfgMgr = LevelConfigurationManager.Instance;
-    //    var config = cfgMgr != null ? cfgMgr.GetConfigurationForLevel(levelId) : null;
-
-    //    if (config.unlockRequirements.isBossLevel)
-    //    {
-    //        AudioManager.Instance.PlayMusic(MusicClip.BossLevel);
-    //        return;
-    //    }
-
-    //    switch (config.unlockRequirements.areaId)
-    //    {
-    //        case 1:
-    //            AudioManager.Instance.PlayMusic(MusicClip.Area1);
-    //            break;
-    //        case 2:
-    //            AudioManager.Instance.PlayMusic(MusicClip.Area2);
-    //            break;
-    //        case 3:
-    //            AudioManager.Instance.PlayMusic(MusicClip.Area3);
-    //            break;
-    //        case 4:
-    //            AudioManager.Instance.PlayMusic(MusicClip.Area4);
-    //            break;
-    //        case 5:
-    //            AudioManager.Instance.PlayMusic(MusicClip.Area5);
-    //            break;
-    //    }
-    //}
 
     private int GetLevelIdFromSceneName(string name)
     {
