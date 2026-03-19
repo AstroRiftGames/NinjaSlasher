@@ -13,6 +13,8 @@ public class GameDataDTO
     public List<IntIntKV> levelStars = new();
     public List<IntListKV> levelObjectives = new();
     public List<IntLevelProgressKV> levelProgressData = new();
+    public List<StringIntKV> tutorialStates = new();
+    public List<StringIntKV> tutorialStepIndices = new();
     public List<int> unlockedAreas = new();
     public int totalStars;
 
@@ -78,6 +80,7 @@ public class PowerUpDataDTO
 [Serializable] public struct IntIntKV { public int key; public int value; }
 [Serializable] public struct IntListKV { public int key; public List<int> value; }
 [Serializable] public struct IntLevelProgressKV { public int key; public LevelProgressData value; }
+[Serializable] public struct StringIntKV { public string key; public int value; }
 
 public static class GameDataMapper
 {
@@ -149,6 +152,14 @@ public static class GameDataMapper
             foreach (var kv in d.levelProgressData)
                 dto.levelProgressData.Add(new IntLevelProgressKV { key = kv.Key, value = kv.Value });
 
+        if (d.tutorialStates != null)
+            foreach (var kv in d.tutorialStates)
+                dto.tutorialStates.Add(new StringIntKV { key = kv.Key, value = kv.Value });
+
+        if (d.tutorialStepIndices != null)
+            foreach (var kv in d.tutorialStepIndices)
+                dto.tutorialStepIndices.Add(new StringIntKV { key = kv.Key, value = kv.Value });
+
         return dto;
     }
 
@@ -219,6 +230,18 @@ public static class GameDataMapper
         d.levelProgressData = new Dictionary<int, LevelProgressData>();
         if (dto.levelProgressData != null)
             foreach (var kv in dto.levelProgressData) d.levelProgressData[kv.key] = kv.value ?? new LevelProgressData(kv.key);
+
+        d.tutorialStates = new Dictionary<string, int>();
+        if (dto.tutorialStates != null)
+            foreach (var kv in dto.tutorialStates)
+                if (!string.IsNullOrEmpty(kv.key))
+                    d.tutorialStates[kv.key] = kv.value;
+
+        d.tutorialStepIndices = new Dictionary<string, int>();
+        if (dto.tutorialStepIndices != null)
+            foreach (var kv in dto.tutorialStepIndices)
+                if (!string.IsNullOrEmpty(kv.key))
+                    d.tutorialStepIndices[kv.key] = kv.value;
 
         return d;
     }

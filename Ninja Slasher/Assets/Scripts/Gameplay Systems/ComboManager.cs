@@ -92,10 +92,6 @@ public class ComboManager : MonoBehaviourSingleton<ComboManager>
         {
             GiveBonus(level);
 
-            if (TutorialManager.Instance != null)
-            {
-                TutorialManager.Instance.OnComboPerformed();
-            }
 
             //Debug.Log($"[ComboManager] Combo x{level} activado en posici�n {lastEnemyPosition}");
 

@@ -342,6 +342,30 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
             }
         }
 
+        if (source.tutorialStates != null)
+        {
+            if (target.tutorialStates == null) target.tutorialStates = new Dictionary<string, int>();
+            foreach (var kv in source.tutorialStates)
+            {
+                if (!target.tutorialStates.ContainsKey(kv.Key))
+                    target.tutorialStates[kv.Key] = kv.Value;
+                else
+                    target.tutorialStates[kv.Key] = Mathf.Max(target.tutorialStates[kv.Key], kv.Value);
+            }
+        }
+
+        if (source.tutorialStepIndices != null)
+        {
+            if (target.tutorialStepIndices == null) target.tutorialStepIndices = new Dictionary<string, int>();
+            foreach (var kv in source.tutorialStepIndices)
+            {
+                if (!target.tutorialStepIndices.ContainsKey(kv.Key))
+                    target.tutorialStepIndices[kv.Key] = kv.Value;
+                else
+                    target.tutorialStepIndices[kv.Key] = Mathf.Max(target.tutorialStepIndices[kv.Key], kv.Value);
+            }
+        }
+
         target.totalGamesPlayed  += source.totalGamesPlayed;
         target.totalEnemiesKilled += source.totalEnemiesKilled;
         target.totalPlayTime     += source.totalPlayTime;
@@ -482,6 +506,16 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
         {
             gameData.levelProgressData = new Dictionary<int, LevelProgressData>();
         }
+
+        if (gameData.tutorialStates == null)
+        {
+            gameData.tutorialStates = new Dictionary<string, int>();
+        }
+
+        if (gameData.tutorialStepIndices == null)
+        {
+            gameData.tutorialStepIndices = new Dictionary<string, int>();
+        }
     }
 
     private void RecalculateProgressionFromStars()
@@ -516,6 +550,16 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
         if (gameData.levelProgressData == null)
         {
             gameData.levelProgressData = new Dictionary<int, LevelProgressData>();
+        }
+
+        if (gameData.tutorialStates == null)
+        {
+            gameData.tutorialStates = new Dictionary<string, int>();
+        }
+
+        if (gameData.tutorialStepIndices == null)
+        {
+            gameData.tutorialStepIndices = new Dictionary<string, int>();
         }
     }
 
@@ -677,6 +721,23 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
     {
         var data = GetGameData();
         data.UpdateLevelProgress(levelId, result, stats);
+        SaveData();
+    }
+
+    public int GetTutorialState(string tutorialId)
+    {
+        return GetGameData().GetTutorialState(tutorialId);
+    }
+
+    public int GetTutorialStepIndex(string tutorialId)
+    {
+        return GetGameData().GetTutorialStepIndex(tutorialId);
+    }
+
+    public void SaveTutorialProgress(string tutorialId, int state, int stepIndex)
+    {
+        var data = GetGameData();
+        data.SetTutorialProgress(tutorialId, state, stepIndex);
         SaveData();
     }
 

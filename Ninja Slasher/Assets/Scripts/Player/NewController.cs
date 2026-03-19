@@ -240,7 +240,6 @@ public class NewController : MonoBehaviour
         RotateSprites(direction);
 
         MoveTracker.RegisterMove();
-        NotifyTutorialDashPerformed();
     }
 
     private bool CheckDashCD()
@@ -306,7 +305,7 @@ public class NewController : MonoBehaviour
                 HapticFeedback.LightFeedback();
                 AudioService.Instance.PlaySFXAtPosition(_audio.projectileParried, transform.position);
                 OnParry?.Invoke(false);
-                NotifyTutorialParryPerformed();
+                GameEvents.RaiseParrySuccessful();
                 break;
             }
         }
@@ -455,23 +454,6 @@ public class NewController : MonoBehaviour
 
 
     #region FOREIGN SYSTEM INTERACTIONS
-
-    private void NotifyTutorialDashPerformed()
-    {
-        if (TutorialManager.Instance != null)
-        {
-            TutorialManager.Instance.OnDashPerformed();
-        }
-    }
-
-    private void NotifyTutorialParryPerformed()
-    {
-        if (TutorialManager.Instance != null)
-        {
-            TutorialManager.Instance.OnParryPerformed();
-        }
-    }
-
     private void PlaySlashVFX(Vector2 pos, Vector3 dir)
     {
         Transform newVFX = Instantiate(_slashVFX, pos, Quaternion.identity).transform;

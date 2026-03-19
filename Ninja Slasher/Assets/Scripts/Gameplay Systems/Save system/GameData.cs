@@ -12,6 +12,8 @@ public class GameData
     public Dictionary<int, List<int>> levelObjectives = new Dictionary<int, List<int>>(); // objetivos por nivel
     public List<int> unlockedAreas = new List<int>(); // areas desbloqueadas
     public Dictionary<int, LevelProgressData> levelProgressData = new Dictionary<int, LevelProgressData>();
+    public Dictionary<string, int> tutorialStates = new Dictionary<string, int>();
+    public Dictionary<string, int> tutorialStepIndices = new Dictionary<string, int>();
     public int totalStars = 0;
     public int consecutiveLevelWins = 0;
     public int lastCompletedLevel = -1;
@@ -152,6 +154,34 @@ public class GameData
             levelProgressData[levelId] = new LevelProgressData(levelId);
         }
         return levelProgressData[levelId];
+    }
+
+    public int GetTutorialState(string tutorialId)
+    {
+        if (string.IsNullOrEmpty(tutorialId) || tutorialStates == null)
+            return 0;
+
+        return tutorialStates.TryGetValue(tutorialId, out int state) ? state : 0;
+    }
+
+    public int GetTutorialStepIndex(string tutorialId)
+    {
+        if (string.IsNullOrEmpty(tutorialId) || tutorialStepIndices == null)
+            return 0;
+
+        return tutorialStepIndices.TryGetValue(tutorialId, out int stepIndex) ? stepIndex : 0;
+    }
+
+    public void SetTutorialProgress(string tutorialId, int state, int stepIndex)
+    {
+        if (string.IsNullOrEmpty(tutorialId))
+            return;
+
+        tutorialStates ??= new Dictionary<string, int>();
+        tutorialStepIndices ??= new Dictionary<string, int>();
+
+        tutorialStates[tutorialId] = state;
+        tutorialStepIndices[tutorialId] = Math.Max(0, stepIndex);
     }
 }
 

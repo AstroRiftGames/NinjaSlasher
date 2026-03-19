@@ -177,6 +177,9 @@ public static class GameEvents
     public static event Action OnDashEnded;
     public static void RaiseDashEnded() => OnDashEnded?.Invoke();
 
+    public static event Action OnParrySuccessful;
+    public static void RaiseParrySuccessful() => OnParrySuccessful?.Invoke();
+
     #endregion
 
     #region PROGRESSION EVENTS
@@ -324,6 +327,13 @@ public static class GameEvents
         OnEnemyDefeated = null;
     }
 
+    public static void ClearAllPlayerEvents()
+    {
+        OnDashStarted = null;
+        OnDashEnded = null;
+        OnParrySuccessful = null;
+    }
+
     public static void ClearAllProgressionEvents()
     {
         OnProgressionUpdated = null;
@@ -358,6 +368,7 @@ public static class GameEvents
         ClearAllComboEvents();
         ClearAllPowerUpEvents();
         ClearAllEnemyEvents();
+        ClearAllPlayerEvents();
         ClearAllProgressionEvents();
         ClearAllSaveEvents();
         ClearAllRewardEvents();

@@ -1,6 +1,13 @@
 using UnityEngine;
 using System.Collections;
 
+public enum TutorialProgressState
+{
+    NotStarted = 0,
+    InProgress = 1,
+    Completed = 2
+}
+
 public class TutorialManager : MonoBehaviour
 {
     public static TutorialManager Instance { get; private set; }
@@ -21,6 +28,7 @@ public class TutorialManager : MonoBehaviour
     // DEPRECATED
     //[SerializeField] private bool skipTutorial = false;
     //[SerializeField] private float textDisplayTime = 5f;
+    [SerializeField] private string tutorialId;
     [SerializeField] private int currentLevel = 1;
 
     private bool SkipTutorial => !GameConfigManager.Config.enableTutorial;
@@ -53,12 +61,22 @@ public class TutorialManager : MonoBehaviour
 
     private void OnEnable()
     {
+        GameEvents.OnDashStarted += HandleDashStarted;
         GameEvents.OnEnemyKilled += HandleEnemyKilled;
+        GameEvents.OnComboUpdated += HandleComboUpdated;
+        GameEvents.OnParrySuccessful += HandleParrySuccessful;
+        GameEvents.OnLevelCompleted += HandleLevelEnded;
+        GameEvents.OnLevelFailed += HandleLevelEnded;
     }
 
     private void OnDisable()
     {
+        GameEvents.OnDashStarted -= HandleDashStarted;
         GameEvents.OnEnemyKilled -= HandleEnemyKilled;
+        GameEvents.OnComboUpdated -= HandleComboUpdated;
+        GameEvents.OnParrySuccessful -= HandleParrySuccessful;
+        GameEvents.OnLevelCompleted -= HandleLevelEnded;
+        GameEvents.OnLevelFailed -= HandleLevelEnded;
         CleanupRuntimeState();
     }
 
@@ -78,13 +96,19 @@ public class TutorialManager : MonoBehaviour
             return;
         }
 
+        if (IsTutorialCompleted())
+        {
+            DisableTutorial();
+            return;
+        }
+
         StartTutorial();
     }
 
     public void StartTutorial()
     {
         tutorialActive = true;
-        currentTextIndex = 0;
+        currentTextIndex = GetSavedStepIndex();
 
         hasPerformedFirstDash = false;
         hasKilledFirstEnemy = false;
@@ -105,6 +129,7 @@ public class TutorialManager : MonoBehaviour
 
         HideAllTexts();
         HideAllAnimations();
+        SaveCurrentProgress();
         ShowCurrentText();
     }
 
@@ -339,6 +364,7 @@ public class TutorialManager : MonoBehaviour
             }
 
             currentTextIndex++;
+            SaveCurrentProgress();
             ShowCurrentText();
         }
 
@@ -352,6 +378,7 @@ public class TutorialManager : MonoBehaviour
             }
 
             currentTextIndex++;
+            SaveCurrentProgress();
             ShowCurrentText();
         }
 
@@ -442,6 +469,31 @@ public class TutorialManager : MonoBehaviour
         OnEnemyKilled();
     }
 
+    private void HandleDashStarted()
+    {
+        OnDashPerformed();
+    }
+
+    private void HandleComboUpdated(int _, Vector3 __)
+    {
+        OnComboPerformed();
+    }
+
+    private void HandleParrySuccessful()
+    {
+        OnParryPerformed();
+    }
+
+    private void HandleLevelEnded(LevelStats _)
+    {
+        DisableTutorial();
+    }
+
+    private void HandleLevelEnded(LevelFailedContext _)
+    {
+        DisableTutorial();
+    }
+
     public void OnComboPerformed()
     {
         if (!tutorialActive || currentLevel != 2) return;
@@ -468,6 +520,7 @@ public class TutorialManager : MonoBehaviour
     private void CompleteTutorial()
     {
         tutorialActive = false;
+        SaveCompletedProgress();
 
         HideAllTexts();
         HideAllAnimations();
@@ -481,6 +534,7 @@ public class TutorialManager : MonoBehaviour
     public void DisableTutorial()
     {
         tutorialActive = false;
+        SaveCurrentProgress();
         CleanupRuntimeState();
     }
 
@@ -566,5 +620,44 @@ public class TutorialManager : MonoBehaviour
     public void SetCurrentLevel(int level)
     {
         currentLevel = level;
+    }
+
+    private string ResolvedTutorialId => string.IsNullOrWhiteSpace(tutorialId) ? $"level_{currentLevel}" : tutorialId;
+
+    private bool IsTutorialCompleted()
+    {
+        return SaveManager.Instance != null &&
+               SaveManager.Instance.GetTutorialState(ResolvedTutorialId) == (int)TutorialProgressState.Completed;
+    }
+
+    private int GetSavedStepIndex()
+    {
+        if (SaveManager.Instance == null)
+            return 0;
+
+        if (SaveManager.Instance.GetTutorialState(ResolvedTutorialId) != (int)TutorialProgressState.InProgress)
+            return 0;
+
+        return SaveManager.Instance.GetTutorialStepIndex(ResolvedTutorialId);
+    }
+
+    private void SaveCurrentProgress()
+    {
+        if (SaveManager.Instance == null)
+            return;
+
+        int state = tutorialActive ? (int)TutorialProgressState.InProgress : SaveManager.Instance.GetTutorialState(ResolvedTutorialId);
+        if (!tutorialActive && state == (int)TutorialProgressState.NotStarted && currentTextIndex == 0)
+            return;
+
+        SaveManager.Instance.SaveTutorialProgress(ResolvedTutorialId, state, currentTextIndex);
+    }
+
+    private void SaveCompletedProgress()
+    {
+        if (SaveManager.Instance == null)
+            return;
+
+        SaveManager.Instance.SaveTutorialProgress(ResolvedTutorialId, (int)TutorialProgressState.Completed, currentTextIndex);
     }
 }
