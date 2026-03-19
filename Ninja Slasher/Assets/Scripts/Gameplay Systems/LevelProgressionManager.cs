@@ -38,7 +38,9 @@ public class LevelProgressionManager : MonoBehaviourSingleton<LevelProgressionMa
 
         if (GameConfigManager.IsReady() && GameConfigManager.Config.unlockAllLevelsOnStart)
         {
+#if UNITY_EDITOR
             UnlockAllLevelsForDebug();
+#endif
         }
     }
 
@@ -311,6 +313,8 @@ public class LevelProgressionManager : MonoBehaviourSingleton<LevelProgressionMa
         return 0;
     }
 
+
+#if UNITY_EDITOR
     private void UnlockAllLevelsForDebug()
     {
         Debug.Log("[LevelProgressionManager] DEBUG MODE: Desbloqueando todos los niveles...");
@@ -320,7 +324,6 @@ public class LevelProgressionManager : MonoBehaviourSingleton<LevelProgressionMa
         Debug.Log($"[LevelProgressionManager] {TotalAreas * LevelsPerArea} niveles desbloqueados");
     }
 
-#if UNITY_EDITOR
     [ContextMenu("Debug/Simular Desbloqueo Area 1")]
     private void SimulateUnlockArea1() => SimulateAreaUnlock(1);
 

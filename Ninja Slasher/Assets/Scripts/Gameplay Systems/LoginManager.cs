@@ -28,9 +28,11 @@ public class LoginManager : MonoBehaviourSingleton<LoginManager>
     private bool isInitializing = false;
     private string authToken = "";
 
+#if UNITY_EDITOR
     [Header("Debug UI")]
     [SerializeField] private TextMeshProUGUI debugOutputText;
     private System.Text.StringBuilder debugLog = new System.Text.StringBuilder();
+#endif
 
     public override void Awake()
     {
@@ -119,7 +121,24 @@ public class LoginManager : MonoBehaviourSingleton<LoginManager>
                 return false;
             }
 
-            await AuthenticationService.Instance.SignInWithGooglePlayGamesAsync(authToken);
+            RequestFailedException lastNetworkException = null;
+            for (int attempt = 0; attempt < 2; attempt++)
+            {
+                try
+                {
+                    if (attempt > 0) await Task.Delay(2000);
+                    await AuthenticationService.Instance.SignInWithGooglePlayGamesAsync(authToken);
+                    lastNetworkException = null;
+                    break;
+                }
+                catch (RequestFailedException ex) when (ex is not AuthenticationException)
+                {
+                    lastNetworkException = ex;
+                    if (debugMode)
+                        Debug.LogWarning($"[LoginManager] UGS sign-in intento {attempt + 1}/2 falló: {ex.Message}");
+                }
+            }
+            if (lastNetworkException != null) throw lastNetworkException;
 
             PlayerName = GetPlayerName();
 
@@ -309,40 +328,45 @@ public class LoginManager : MonoBehaviourSingleton<LoginManager>
 
     private async Task<bool> AuthenticateWithGooglePlayGames()
     {
-        var tcs = new TaskCompletionSource<bool>();
+        var authTcs = new TaskCompletionSource<SignInStatus>();
+        PlayGamesPlatform.Instance.Authenticate(status => authTcs.SetResult(status));
+        SignInStatus authStatus = await authTcs.Task;
 
-        PlayGamesPlatform.Instance.Authenticate((success) =>
+        if (authStatus != SignInStatus.Success)
         {
-            if (success == SignInStatus.Success)
+            Debug.LogError($"[LoginManager] Google Play Games authentication failed: {authStatus}");
+            return false;
+        }
+
+        if (debugMode)
+            Debug.Log("[LoginManager] Google Play Games authentication successful");
+
+        for (int attempt = 0; attempt < 2; attempt++)
+        {
+            if (attempt > 0) await Task.Delay(2000);
+
+            string code = await RequestAuthCodeAsync();
+
+            if (!string.IsNullOrEmpty(code))
             {
+                authToken = code;
                 if (debugMode)
-                    Debug.Log("[LoginManager] Google Play Games authentication successful");
-
-                // Get authorization code
-                PlayGamesPlatform.Instance.RequestServerSideAccess(true, code =>
-                {
-                    if (!string.IsNullOrEmpty(code))
-                    {
-                        authToken = code;
-                        if (debugMode)
-                            Debug.Log("[LoginManager] Authorization code received");
-                        tcs.SetResult(true);
-                    }
-                    else
-                    {
-                        Debug.LogError("[LoginManager] Failed to get authorization code");
-                        tcs.SetResult(false);
-                    }
-                });
+                    Debug.Log("[LoginManager] Authorization code received");
+                return true;
             }
-            else
-            {
-                Debug.LogError($"[LoginManager] Google Play Games authentication failed: {success}");
-                tcs.SetResult(false);
-            }
-        });
 
-        return await tcs.Task;
+            Debug.LogWarning($"[LoginManager] Auth code vacío, intento {attempt + 1}/2");
+        }
+
+        Debug.LogError("[LoginManager] No se pudo obtener el auth code tras 2 intentos");
+        return false;
+    }
+
+    private Task<string> RequestAuthCodeAsync()
+    {
+        var tcs = new TaskCompletionSource<string>();
+        PlayGamesPlatform.Instance.RequestServerSideAccess(true, code => tcs.SetResult(code ?? ""));
+        return tcs.Task;
     }
 
     private string GetPlayerName()
@@ -396,6 +420,7 @@ public class LoginManager : MonoBehaviourSingleton<LoginManager>
 
     #endregion
 
+#if UNITY_EDITOR
     #region Device Debug Methods
 
     public void LogToScreen(string message)
@@ -577,4 +602,5 @@ public class LoginManager : MonoBehaviourSingleton<LoginManager>
     }
 
     #endregion
+#endif
 }
