@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d18a940c24cc36e44a425260adff7ce7, type: 3}
+  m_Name: TutorialLevel1
+  m_EditorClassIdentifier: 
+  tutorialId: Level1
+  steps:
+  - stepId: level1_dash
+    completionTrigger: 1
+    handIndicator: 1
+    showAllBoundTexts: 0
+    autoAdvanceDelay: 0
+    triggerCompletionDelay: 0.3
+    armingDelay: 0
+  - stepId: level1_kill_enemy
+    completionTrigger: 2
+    handIndicator: 0
+    showAllBoundTexts: 0
+    autoAdvanceDelay: 0
+    triggerCompletionDelay: 0
+    armingDelay: 0
+  - stepId: level1_win_level
+    completionTrigger: 5
+    handIndicator: 0
+    showAllBoundTexts: 0
+    autoAdvanceDelay: 5
+    triggerCompletionDelay: 0
+    armingDelay: 0

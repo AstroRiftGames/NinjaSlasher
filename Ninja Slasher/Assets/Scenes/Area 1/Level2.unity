@@ -1730,6 +1730,10 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4906652794539698485, guid: 921f0297795217d4cbb67a05f7eca0ca, type: 3}
+      propertyPath: tutorialId
+      value: Level2
+      objectReference: {fileID: 0}
+    - target: {fileID: 4906652794539698485, guid: 921f0297795217d4cbb67a05f7eca0ca, type: 3}
       propertyPath: currentLevel
       value: 2
       objectReference: {fileID: 0}
@@ -1738,11 +1742,59 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 0}
     - target: {fileID: 4906652794539698485, guid: 921f0297795217d4cbb67a05f7eca0ca, type: 3}
+      propertyPath: tutorialDefinition
+      value: 
+      objectReference: {fileID: 11400000, guid: 77d7a5c41cc8a494eafed10bf63b997c, type: 2}
+    - target: {fileID: 4906652794539698485, guid: 921f0297795217d4cbb67a05f7eca0ca, type: 3}
+      propertyPath: sceneBindings.Array.size
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 4906652794539698485, guid: 921f0297795217d4cbb67a05f7eca0ca, type: 3}
+      propertyPath: tutorialTextsLevel1.Array.size
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4906652794539698485, guid: 921f0297795217d4cbb67a05f7eca0ca, type: 3}
+      propertyPath: tutorialTextsLevel2.Array.size
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4906652794539698485, guid: 921f0297795217d4cbb67a05f7eca0ca, type: 3}
+      propertyPath: tutorialTextsLevel3.Array.size
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4906652794539698485, guid: 921f0297795217d4cbb67a05f7eca0ca, type: 3}
       propertyPath: 'tutorialTextsLevel2.Array.data[0]'
       value: 
       objectReference: {fileID: 2083245002}
     - target: {fileID: 4906652794539698485, guid: 921f0297795217d4cbb67a05f7eca0ca, type: 3}
       propertyPath: 'tutorialTextsLevel2.Array.data[1]'
+      value: 
+      objectReference: {fileID: 522098981}
+    - target: {fileID: 4906652794539698485, guid: 921f0297795217d4cbb67a05f7eca0ca, type: 3}
+      propertyPath: sceneBindings.Array.data[0].stepId
+      value: level2_chain_kills
+      objectReference: {fileID: 0}
+    - target: {fileID: 4906652794539698485, guid: 921f0297795217d4cbb67a05f7eca0ca, type: 3}
+      propertyPath: sceneBindings.Array.data[1].stepId
+      value: level2_combo_explanation
+      objectReference: {fileID: 0}
+    - target: {fileID: 4906652794539698485, guid: 921f0297795217d4cbb67a05f7eca0ca, type: 3}
+      propertyPath: sceneBindings.Array.data[0].textObjects.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4906652794539698485, guid: 921f0297795217d4cbb67a05f7eca0ca, type: 3}
+      propertyPath: sceneBindings.Array.data[1].textObjects.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4906652794539698485, guid: 921f0297795217d4cbb67a05f7eca0ca, type: 3}
+      propertyPath: 'sceneBindings.Array.data[0].textObjects.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2083245002}
+    - target: {fileID: 4906652794539698485, guid: 921f0297795217d4cbb67a05f7eca0ca, type: 3}
+      propertyPath: 'sceneBindings.Array.data[0].textObjects.Array.data[1]'
+      value: 
+      objectReference: {fileID: 2083245002}
+    - target: {fileID: 4906652794539698485, guid: 921f0297795217d4cbb67a05f7eca0ca, type: 3}
+      propertyPath: 'sceneBindings.Array.data[1].textObjects.Array.data[0]'
       value: 
       objectReference: {fileID: 522098981}
     - target: {fileID: 8660352597034515874, guid: 921f0297795217d4cbb67a05f7eca0ca, type: 3}
@@ -14400,6 +14452,14 @@ PrefabInstance:
     - target: {fileID: 578485089312322385, guid: b39e2c7dfaf7b124883ef663372254b5, type: 3}
       propertyPath: m_AnchoredPosition.y
       value: -25
+      objectReference: {fileID: 0}
+    - target: {fileID: 2308465366840918999, guid: b39e2c7dfaf7b124883ef663372254b5, type: 3}
+      propertyPath: m_Name
+      value: Combo Tutorial Text Step 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 2969846306822003953, guid: b39e2c7dfaf7b124883ef663372254b5, type: 3}
+      propertyPath: m_Name
+      value: Combo Tutorial Text Step 1
       objectReference: {fileID: 0}
     - target: {fileID: 3042388765195763257, guid: b39e2c7dfaf7b124883ef663372254b5, type: 3}
       propertyPath: m_SizeDelta.x

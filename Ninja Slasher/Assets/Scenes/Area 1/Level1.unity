@@ -433,12 +433,24 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4906652794539698485, guid: 921f0297795217d4cbb67a05f7eca0ca, type: 3}
+      propertyPath: tutorialId
+      value: Level1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4906652794539698485, guid: 921f0297795217d4cbb67a05f7eca0ca, type: 3}
       propertyPath: handAnimation
       value: 
       objectReference: {fileID: 1326739868459567076, guid: 259c6d8eb7a078f4d8d6e72085872c84, type: 3}
     - target: {fileID: 4906652794539698485, guid: 921f0297795217d4cbb67a05f7eca0ca, type: 3}
       propertyPath: playerController
       value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 4906652794539698485, guid: 921f0297795217d4cbb67a05f7eca0ca, type: 3}
+      propertyPath: tutorialDefinition
+      value: 
+      objectReference: {fileID: 11400000, guid: 2beea289f2b1d804d9b177c7e45e909c, type: 2}
+    - target: {fileID: 4906652794539698485, guid: 921f0297795217d4cbb67a05f7eca0ca, type: 3}
+      propertyPath: sceneBindings.Array.size
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 4906652794539698485, guid: 921f0297795217d4cbb67a05f7eca0ca, type: 3}
       propertyPath: tutorialTexts.Array.size
@@ -455,6 +467,10 @@ PrefabInstance:
     - target: {fileID: 4906652794539698485, guid: 921f0297795217d4cbb67a05f7eca0ca, type: 3}
       propertyPath: 'tutorialTexts.Array.data[2]'
       value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 4906652794539698485, guid: 921f0297795217d4cbb67a05f7eca0ca, type: 3}
+      propertyPath: tutorialTextsLevel1.Array.size
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4906652794539698485, guid: 921f0297795217d4cbb67a05f7eca0ca, type: 3}
       propertyPath: tutorialTextsLevel2.Array.size
@@ -484,6 +500,66 @@ PrefabInstance:
       propertyPath: 'tutorialTextsLevel2.Array.data[1]'
       value: 
       objectReference: {fileID: 0}
+    - target: {fileID: 4906652794539698485, guid: 921f0297795217d4cbb67a05f7eca0ca, type: 3}
+      propertyPath: sceneBindings.Array.data[0].stepId
+      value: level1_dash
+      objectReference: {fileID: 0}
+    - target: {fileID: 4906652794539698485, guid: 921f0297795217d4cbb67a05f7eca0ca, type: 3}
+      propertyPath: sceneBindings.Array.data[1].stepId
+      value: level1_kill_enemy
+      objectReference: {fileID: 0}
+    - target: {fileID: 4906652794539698485, guid: 921f0297795217d4cbb67a05f7eca0ca, type: 3}
+      propertyPath: sceneBindings.Array.data[2].stepId
+      value: level1_win_level
+      objectReference: {fileID: 0}
+    - target: {fileID: 4906652794539698485, guid: 921f0297795217d4cbb67a05f7eca0ca, type: 3}
+      propertyPath: sceneBindings.Array.data[0].textObjects.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4906652794539698485, guid: 921f0297795217d4cbb67a05f7eca0ca, type: 3}
+      propertyPath: sceneBindings.Array.data[1].textObjects.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4906652794539698485, guid: 921f0297795217d4cbb67a05f7eca0ca, type: 3}
+      propertyPath: sceneBindings.Array.data[2].textObjects.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4906652794539698485, guid: 921f0297795217d4cbb67a05f7eca0ca, type: 3}
+      propertyPath: 'sceneBindings.Array.data[0].textObjects.Array.data[0]'
+      value: 
+      objectReference: {fileID: 1166525236}
+    - target: {fileID: 4906652794539698485, guid: 921f0297795217d4cbb67a05f7eca0ca, type: 3}
+      propertyPath: 'sceneBindings.Array.data[0].textObjects.Array.data[1]'
+      value: 
+      objectReference: {fileID: 524511011}
+    - target: {fileID: 4906652794539698485, guid: 921f0297795217d4cbb67a05f7eca0ca, type: 3}
+      propertyPath: 'sceneBindings.Array.data[0].textObjects.Array.data[2]'
+      value: 
+      objectReference: {fileID: 524511011}
+    - target: {fileID: 4906652794539698485, guid: 921f0297795217d4cbb67a05f7eca0ca, type: 3}
+      propertyPath: 'sceneBindings.Array.data[1].textObjects.Array.data[0]'
+      value: 
+      objectReference: {fileID: 315818359}
+    - target: {fileID: 4906652794539698485, guid: 921f0297795217d4cbb67a05f7eca0ca, type: 3}
+      propertyPath: 'sceneBindings.Array.data[1].textObjects.Array.data[1]'
+      value: 
+      objectReference: {fileID: 524511011}
+    - target: {fileID: 4906652794539698485, guid: 921f0297795217d4cbb67a05f7eca0ca, type: 3}
+      propertyPath: 'sceneBindings.Array.data[1].textObjects.Array.data[2]'
+      value: 
+      objectReference: {fileID: 524511011}
+    - target: {fileID: 4906652794539698485, guid: 921f0297795217d4cbb67a05f7eca0ca, type: 3}
+      propertyPath: 'sceneBindings.Array.data[2].textObjects.Array.data[0]'
+      value: 
+      objectReference: {fileID: 524511011}
+    - target: {fileID: 4906652794539698485, guid: 921f0297795217d4cbb67a05f7eca0ca, type: 3}
+      propertyPath: 'sceneBindings.Array.data[2].textObjects.Array.data[1]'
+      value: 
+      objectReference: {fileID: 524511011}
+    - target: {fileID: 4906652794539698485, guid: 921f0297795217d4cbb67a05f7eca0ca, type: 3}
+      propertyPath: 'sceneBindings.Array.data[2].textObjects.Array.data[2]'
+      value: 
+      objectReference: {fileID: 524511011}
     - target: {fileID: 8660352597034515874, guid: 921f0297795217d4cbb67a05f7eca0ca, type: 3}
       propertyPath: m_Name
       value: TutorialManager
@@ -693,6 +769,10 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: 372
       objectReference: {fileID: 0}
+    - target: {fileID: 921715967492674328, guid: b39e2c7dfaf7b124883ef663372254b5, type: 3}
+      propertyPath: m_Name
+      value: Kill Tutorial Text
+      objectReference: {fileID: 0}
     - target: {fileID: 2753524769131984790, guid: b39e2c7dfaf7b124883ef663372254b5, type: 3}
       propertyPath: m_Pivot.x
       value: 0
@@ -737,6 +817,10 @@ PrefabInstance:
       propertyPath: m_Camera
       value: 
       objectReference: {fileID: 7684591255235936935}
+    - target: {fileID: 4091908880800448198, guid: b39e2c7dfaf7b124883ef663372254b5, type: 3}
+      propertyPath: m_Name
+      value: Win Tutorial Text
+      objectReference: {fileID: 0}
     - target: {fileID: 4676518712425905712, guid: b39e2c7dfaf7b124883ef663372254b5, type: 3}
       propertyPath: m_fontSize
       value: 30
@@ -752,6 +836,10 @@ PrefabInstance:
     - target: {fileID: 4676518712425905712, guid: b39e2c7dfaf7b124883ef663372254b5, type: 3}
       propertyPath: m_fontSizeBase
       value: 30
+      objectReference: {fileID: 0}
+    - target: {fileID: 4775683477781536449, guid: b39e2c7dfaf7b124883ef663372254b5, type: 3}
+      propertyPath: m_Name
+      value: Dash Tutorial Text
       objectReference: {fileID: 0}
     - target: {fileID: 6103319772523650860, guid: b39e2c7dfaf7b124883ef663372254b5, type: 3}
       propertyPath: m_margin.w

@@ -449,6 +449,10 @@ PrefabInstance:
       propertyPath: m_fontColor32.rgba
       value: 4289572269
       objectReference: {fileID: 0}
+    - target: {fileID: 2759047184008810468, guid: b39e2c7dfaf7b124883ef663372254b5, type: 3}
+      propertyPath: m_Name
+      value: Parry Explanation Text
+      objectReference: {fileID: 0}
     - target: {fileID: 2838143482982965448, guid: b39e2c7dfaf7b124883ef663372254b5, type: 3}
       propertyPath: m_text
       value: TAP TO PARRY!
@@ -489,6 +493,10 @@ PrefabInstance:
       propertyPath: m_Camera
       value: 
       objectReference: {fileID: 1646045002}
+    - target: {fileID: 5200078975841110523, guid: b39e2c7dfaf7b124883ef663372254b5, type: 3}
+      propertyPath: m_Name
+      value: Tap Text
+      objectReference: {fileID: 0}
     - target: {fileID: 6140859136079891608, guid: b39e2c7dfaf7b124883ef663372254b5, type: 3}
       propertyPath: m_AnchorMax.x
       value: 1
@@ -2683,6 +2691,10 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4906652794539698485, guid: 921f0297795217d4cbb67a05f7eca0ca, type: 3}
+      propertyPath: tutorialId
+      value: Level3
+      objectReference: {fileID: 0}
+    - target: {fileID: 4906652794539698485, guid: 921f0297795217d4cbb67a05f7eca0ca, type: 3}
       propertyPath: currentLevel
       value: 3
       objectReference: {fileID: 0}
@@ -2695,11 +2707,23 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 746444969}
     - target: {fileID: 4906652794539698485, guid: 921f0297795217d4cbb67a05f7eca0ca, type: 3}
+      propertyPath: tutorialDefinition
+      value: 
+      objectReference: {fileID: 11400000, guid: a644a06ad2138aa49851b76e4a4de6b4, type: 2}
+    - target: {fileID: 4906652794539698485, guid: 921f0297795217d4cbb67a05f7eca0ca, type: 3}
+      propertyPath: sceneBindings.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4906652794539698485, guid: 921f0297795217d4cbb67a05f7eca0ca, type: 3}
       propertyPath: tutorialTextsLevel1.Array.size
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4906652794539698485, guid: 921f0297795217d4cbb67a05f7eca0ca, type: 3}
       propertyPath: tutorialTextsLevel2.Array.size
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4906652794539698485, guid: 921f0297795217d4cbb67a05f7eca0ca, type: 3}
+      propertyPath: tutorialTextsLevel3.Array.size
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4906652794539698485, guid: 921f0297795217d4cbb67a05f7eca0ca, type: 3}
@@ -2716,6 +2740,22 @@ PrefabInstance:
       objectReference: {fileID: 196130153}
     - target: {fileID: 4906652794539698485, guid: 921f0297795217d4cbb67a05f7eca0ca, type: 3}
       propertyPath: 'tutorialTextsLevel3.Array.data[1]'
+      value: 
+      objectReference: {fileID: 196130152}
+    - target: {fileID: 4906652794539698485, guid: 921f0297795217d4cbb67a05f7eca0ca, type: 3}
+      propertyPath: sceneBindings.Array.data[0].stepId
+      value: level3_parry
+      objectReference: {fileID: 0}
+    - target: {fileID: 4906652794539698485, guid: 921f0297795217d4cbb67a05f7eca0ca, type: 3}
+      propertyPath: sceneBindings.Array.data[0].textObjects.Array.size
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 4906652794539698485, guid: 921f0297795217d4cbb67a05f7eca0ca, type: 3}
+      propertyPath: 'sceneBindings.Array.data[0].textObjects.Array.data[0]'
+      value: 
+      objectReference: {fileID: 196130153}
+    - target: {fileID: 4906652794539698485, guid: 921f0297795217d4cbb67a05f7eca0ca, type: 3}
+      propertyPath: 'sceneBindings.Array.data[0].textObjects.Array.data[1]'
       value: 
       objectReference: {fileID: 196130152}
     - target: {fileID: 8660352597034515874, guid: 921f0297795217d4cbb67a05f7eca0ca, type: 3}

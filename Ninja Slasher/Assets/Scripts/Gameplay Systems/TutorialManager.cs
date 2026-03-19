@@ -1,5 +1,6 @@
-using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
 
 public enum TutorialProgressState
 {
@@ -12,11 +13,6 @@ public class TutorialManager : MonoBehaviour
 {
     public static TutorialManager Instance { get; private set; }
 
-    [Header("UI REFERENCES")]
-    [SerializeField] private GameObject[] tutorialTextsLevel1;
-    [SerializeField] private GameObject[] tutorialTextsLevel2;
-    [SerializeField] private GameObject[] tutorialTextsLevel3;
-
     [Header("INDICATORS")]
     [SerializeField] private GameObject handAnimation;
     [SerializeField] private GameObject handAnimationParry;
@@ -24,30 +20,20 @@ public class TutorialManager : MonoBehaviour
     [Header("REFERENCES")]
     [SerializeField] private Controller playerController;
 
+    [Header("DATA")]
+    [SerializeField] private TutorialDefinition tutorialDefinition;
+    [SerializeField] private TutorialSceneBinding[] sceneBindings;
+
     [Header("SETTINGS")]
-    // DEPRECATED
-    //[SerializeField] private bool skipTutorial = false;
-    //[SerializeField] private float textDisplayTime = 5f;
     [SerializeField] private string tutorialId;
-    [SerializeField] private int currentLevel = 1;
-
     private bool SkipTutorial => !GameConfigManager.Config.enableTutorial;
-    private float TextDisplayTime => GameConfigManager.Config.tutorialTextDisplayTime;
 
-    private bool tutorialActive = false;
-    private int currentTextIndex = 0;
-    private bool canCompleteParryTutorial = false;
-
-    private bool hasPerformedFirstDash = false;
-    private bool hasKilledFirstEnemy = false;
-    private bool hasPerformedCombo = false;
-    private int enemiesKilledCount = 0;
-    private bool hasPerformedParry;
-
-    private bool waitingForDash = false;
-    private bool waitingForEnemyKill = false;
-    private bool waitingForCombo = false;
-    private bool waitingForParry;
+    private TutorialDefinition _runtimeDefinition;
+    private TutorialDisplayController _displayController;
+    private bool _tutorialActive;
+    private int _currentStepIndex;
+    private bool _currentStepArmed;
+    private Coroutine _activeStepCoroutine;
 
     private void Awake()
     {
@@ -56,6 +42,7 @@ public class TutorialManager : MonoBehaviour
             Destroy(gameObject);
             return;
         }
+
         Instance = this;
     }
 
@@ -65,8 +52,8 @@ public class TutorialManager : MonoBehaviour
         GameEvents.OnEnemyKilled += HandleEnemyKilled;
         GameEvents.OnComboUpdated += HandleComboUpdated;
         GameEvents.OnParrySuccessful += HandleParrySuccessful;
-        GameEvents.OnLevelCompleted += HandleLevelEnded;
-        GameEvents.OnLevelFailed += HandleLevelEnded;
+        GameEvents.OnLevelCompleted += HandleLevelCompleted;
+        GameEvents.OnLevelFailed += HandleLevelFailed;
     }
 
     private void OnDisable()
@@ -75,21 +62,22 @@ public class TutorialManager : MonoBehaviour
         GameEvents.OnEnemyKilled -= HandleEnemyKilled;
         GameEvents.OnComboUpdated -= HandleComboUpdated;
         GameEvents.OnParrySuccessful -= HandleParrySuccessful;
-        GameEvents.OnLevelCompleted -= HandleLevelEnded;
-        GameEvents.OnLevelFailed -= HandleLevelEnded;
+        GameEvents.OnLevelCompleted -= HandleLevelCompleted;
+        GameEvents.OnLevelFailed -= HandleLevelFailed;
+
         CleanupRuntimeState();
     }
 
     private void OnDestroy()
     {
         if (Instance == this)
-        {
             Instance = null;
-        }
     }
 
     private void Start()
     {
+        BuildRuntimeModel();
+
         if (SkipTutorial)
         {
             DisableTutorial();
@@ -107,371 +95,236 @@ public class TutorialManager : MonoBehaviour
 
     public void StartTutorial()
     {
-        tutorialActive = true;
-        currentTextIndex = GetSavedStepIndex();
+        if (_runtimeDefinition == null || _runtimeDefinition.steps == null || _runtimeDefinition.steps.Count == 0)
+        {
+            DisableTutorial();
+            return;
+        }
 
-        hasPerformedFirstDash = false;
-        hasKilledFirstEnemy = false;
-        hasPerformedCombo = false;
-        hasPerformedParry = false;
-        enemiesKilledCount = 0;
-        canCompleteParryTutorial = false;
+        _tutorialActive = true;
+        _currentStepIndex = Mathf.Clamp(GetSavedStepIndex(), 0, _runtimeDefinition.steps.Count - 1);
+        _currentStepArmed = false;
 
-        waitingForDash = false;
-        waitingForEnemyKill = false;
-        waitingForCombo = false;
-        waitingForParry = false;
+        CleanupCoroutines();
 
-        if (playerController != null)           //TODO: REVISAR
-        { 
+        if (playerController != null)
+        {
             //playerController.SetInputEnabled(false);
         }
 
-        HideAllTexts();
-        HideAllAnimations();
+        _displayController.HideAll();
         SaveCurrentProgress();
-        ShowCurrentText();
+        ShowCurrentStep();
     }
 
-    private void ShowCurrentText()
+    public bool IsTutorialActive()
     {
-        GameObject[] currentTutorialTexts = GetCurrentTutorialTexts();
-
-        if (currentTutorialTexts == null || currentTutorialTexts.Length == 0)
-        {
-            CompleteTutorial();
-            return;
-        }
-
-        if (currentTextIndex >= currentTutorialTexts.Length)
-        {
-            CompleteTutorial();
-            return;
-        }
-
-        if (currentLevel == 2)
-        {
-            ShowAllLevel2Texts();
-        }
-        else if (currentLevel == 3)
-        {
-            ShowAllLevel3Texts();
-        }
-        else
-        {
-            HideAllTexts();
-            if (currentTutorialTexts[currentTextIndex] != null)
-            {
-                currentTutorialTexts[currentTextIndex].SetActive(true);
-            }
-        }
-
-        ConfigureTextBehavior(currentTextIndex);
-    }
-
-    private void ShowAllLevel2Texts()
-    {
-        HideAllTexts();
-
-        if (tutorialTextsLevel2 != null)
-        {
-            for (int i = 0; i < tutorialTextsLevel2.Length; i++)
-            {
-                if (tutorialTextsLevel2[i] != null)
-                {
-                    tutorialTextsLevel2[i].SetActive(true);
-                }
-            }
-        }
-    }
-
-    private void ShowAllLevel3Texts()
-    {
-        HideAllTexts();
-
-        if (tutorialTextsLevel3 != null)
-        {
-            for (int i = 0; i < tutorialTextsLevel3.Length; i++)
-            {
-                if (tutorialTextsLevel3[i] != null)
-                {
-                    tutorialTextsLevel3[i].SetActive(true);
-                }
-            }
-        }
-    }
-
-    private void HideAllLevel2Texts()
-    {
-        if (tutorialTextsLevel2 != null)
-        {
-            for (int i = 0; i < tutorialTextsLevel2.Length; i++)
-            {
-                if (tutorialTextsLevel2[i] != null)
-                {
-                    tutorialTextsLevel2[i].SetActive(false);
-                }
-            }
-        }
-    }
-
-    private void HideAllLevel3Texts()
-    {
-        if (tutorialTextsLevel3 != null)
-        {
-            for (int i = 0; i < tutorialTextsLevel3.Length; i++)
-            {
-                if (tutorialTextsLevel3[i] != null)
-                {
-                    tutorialTextsLevel3[i].SetActive(false);
-                }
-            }
-        }
-    }
-
-    private GameObject[] GetCurrentTutorialTexts()
-    {
-        return currentLevel switch
-        {
-            2 => tutorialTextsLevel2,
-            3 => tutorialTextsLevel3,
-            _ => tutorialTextsLevel1
-        };
-    }
-
-    private void ConfigureTextBehavior(int textIndex)
-    {
-        switch (currentLevel)
-        {
-            case 2:
-                ConfigureLevel2Behavior(textIndex);
-                break;
-            case 3:
-                ConfigureLevel3Behavior(textIndex);
-                break;
-            default:
-                ConfigureLevel1Behavior(textIndex);
-                break;
-        }
-    }
-
-    private void ConfigureLevel1Behavior(int textIndex)
-    {
-        switch (textIndex)
-        {
-            case 0:
-                if (handAnimation != null)
-                {
-                    handAnimation.SetActive(true);
-                }
-                if (playerController != null)           //TODO REVISAR
-                {
-                    //playerController.SetInputEnabled(true);
-                }
-                waitingForDash = true;
-                break;
-
-            case 1:
-                if (playerController != null)
-                {
-                    //playerController.SetInputEnabled(true);
-                }
-                waitingForEnemyKill = true;
-                break;
-
-            case 2:
-                if (playerController != null)
-                {
-                    //playerController.SetInputEnabled(true);
-                }
-                StartCoroutine(HideTextAfterDelay(TextDisplayTime, () => {
-                    CompleteTutorial();
-                }));
-                break;
-
-            case 3:
-                StartCoroutine(HideTextAfterDelay(2f, () => {
-                    CompleteTutorial();
-                }));
-                break;
-        }
-    }
-
-    private void ConfigureLevel2Behavior(int textIndex)
-    {
-        switch (textIndex)
-        {
-            case 0:
-                if (playerController != null)       //TODO REVISAR
-                {
-                    //playerController.SetInputEnabled(true);
-                }
-                waitingForCombo = true;
-                break;
-        }
-    }
-
-    private void ConfigureLevel3Behavior(int textIndex)
-    {
-        switch (textIndex)
-        {
-            case 0:
-                if (playerController != null)       
-                {
-                    //playerController.SetInputEnabled(true);
-                }
-                waitingForParry = true;
-                StartCoroutine(EnableParryTutorialCompletion());
-
-                if (handAnimationParry != null)
-                {
-                    handAnimationParry.SetActive(true);
-                }
-                break;
-        }
-    }
-
-    private IEnumerator EnableParryTutorialCompletion()
-    {
-        yield return new WaitForSeconds(0.5f);
-        canCompleteParryTutorial = true;
-    }
-
-    private IEnumerator HideTextAfterDelay(float delay, System.Action onComplete = null)
-    {
-        yield return new WaitForSecondsRealtime(delay);
-
-        GameObject[] currentTutorialTexts = GetCurrentTutorialTexts();
-        if (currentTextIndex < currentTutorialTexts.Length && currentTutorialTexts[currentTextIndex] != null)
-        {
-            currentTutorialTexts[currentTextIndex].SetActive(false);
-        }
-
-        onComplete?.Invoke();
-    }
-
-    private void CheckForActionCompletion()
-    {
-        GameObject[] currentTutorialTexts = GetCurrentTutorialTexts();
-
-        if (waitingForDash && hasPerformedFirstDash)
-        {
-            waitingForDash = false;
-
-            if (currentTextIndex < currentTutorialTexts.Length && currentTutorialTexts[currentTextIndex] != null)
-            {
-                currentTutorialTexts[currentTextIndex].SetActive(false);
-            }
-
-            currentTextIndex++;
-            SaveCurrentProgress();
-            ShowCurrentText();
-        }
-
-        if (waitingForEnemyKill && hasKilledFirstEnemy)
-        {
-            waitingForEnemyKill = false;
-
-            if (currentTextIndex < currentTutorialTexts.Length && currentTutorialTexts[currentTextIndex] != null)
-            {
-                currentTutorialTexts[currentTextIndex].SetActive(false);
-            }
-
-            currentTextIndex++;
-            SaveCurrentProgress();
-            ShowCurrentText();
-        }
-
-        if (waitingForCombo && hasPerformedCombo)
-        {
-            waitingForCombo = false;
-
-            HideAllLevel2Texts();
-
-            CompleteTutorial();
-        }
-
-        if (waitingForParry && hasPerformedParry)
-        {
-            waitingForParry = false;
-
-            if (handAnimationParry != null)
-            {
-                handAnimationParry.SetActive(false);
-            }
-
-            HideAllLevel3Texts();
-
-            CompleteTutorial();
-        }
+        return _tutorialActive;
     }
 
     public void OnDashPerformed()
     {
-        if (!tutorialActive) return;
-
-        if (!hasPerformedFirstDash)
-        {
-            hasPerformedFirstDash = true;
-
-            StartCoroutine(DelayedAnimationHide());
-        }
-    }
-
-    private IEnumerator DelayedAnimationHide()
-    {
-        yield return new WaitForSecondsRealtime(0.3f);
-
-        HandSwipeAnimation[] allHandAnimations = FindObjectsOfType<HandSwipeAnimation>(true);
-
-        foreach (var anim in allHandAnimations)
-        {
-            string path = GetGameObjectPath(anim.gameObject);
-            anim.StopAnimation();
-            anim.gameObject.SetActive(false);
-        }
-
-        if (handAnimation != null)
-        {
-            handAnimation.SetActive(false);
-        }
-
-        CheckForActionCompletion();
-    }
-
-    private string GetGameObjectPath(GameObject obj)
-    {
-        string path = obj.name;
-        Transform current = obj.transform.parent;
-        while (current != null)
-        {
-            path = current.name + "/" + path;
-            current = current.parent;
-        }
-        return path;
+        TryCompleteCurrentStep(TutorialCompletionTrigger.DashStarted);
     }
 
     public void OnEnemyKilled()
     {
-        if (!tutorialActive) return;
+        TryCompleteCurrentStep(TutorialCompletionTrigger.EnemyKilled);
+    }
 
-        enemiesKilledCount++;
+    public void OnComboPerformed()
+    {
+        TryCompleteCurrentStep(TutorialCompletionTrigger.ComboUpdated);
+    }
 
-        if (enemiesKilledCount == 1 && !hasKilledFirstEnemy)
+    public void OnParryPerformed()
+    {
+        TryCompleteCurrentStep(TutorialCompletionTrigger.ParrySuccessful);
+    }
+
+    public void DisableTutorial()
+    {
+        _tutorialActive = false;
+        SaveCurrentProgress();
+        CleanupRuntimeState();
+    }
+
+    private void BuildRuntimeModel()
+    {
+        _runtimeDefinition = tutorialDefinition;
+        _displayController = new TutorialDisplayController(
+            BuildBindings(),
+            handAnimation,
+            handAnimationParry);
+    }
+
+    private Dictionary<string, GameObject[]> BuildBindings()
+    {
+        var bindings = new Dictionary<string, GameObject[]>();
+
+        if (sceneBindings != null)
         {
-            hasKilledFirstEnemy = true;
-            CheckForActionCompletion();
+            for (int i = 0; i < sceneBindings.Length; i++)
+            {
+                TutorialSceneBinding binding = sceneBindings[i];
+                if (binding == null || string.IsNullOrWhiteSpace(binding.stepId))
+                    continue;
+
+                bindings[binding.stepId] = binding.textObjects ?? System.Array.Empty<GameObject>();
+            }
+        }
+
+        return bindings;
+    }
+
+    private void ShowCurrentStep()
+    {
+        TutorialStepDefinition step = GetCurrentStep();
+        if (step == null)
+        {
+            CompleteTutorial();
+            return;
+        }
+
+        _displayController.ShowStep(step);
+        ArmCurrentStep(step);
+    }
+
+    private void ArmCurrentStep(TutorialStepDefinition step)
+    {
+        _currentStepArmed = false;
+        CleanupCoroutines();
+
+        if (step.completionTrigger == TutorialCompletionTrigger.AutoAdvance)
+        {
+            _activeStepCoroutine = StartCoroutine(AutoAdvanceAfterDelay(step.autoAdvanceDelay));
+            return;
+        }
+
+        if (step.armingDelay > 0f)
+        {
+            _activeStepCoroutine = StartCoroutine(ArmAfterDelay(step.armingDelay));
+            return;
+        }
+
+        _currentStepArmed = true;
+    }
+
+    private IEnumerator ArmAfterDelay(float delay)
+    {
+        yield return new WaitForSecondsRealtime(delay);
+        _currentStepArmed = true;
+        _activeStepCoroutine = null;
+    }
+
+    private IEnumerator AutoAdvanceAfterDelay(float delay)
+    {
+        yield return new WaitForSecondsRealtime(delay);
+        _activeStepCoroutine = null;
+        AdvanceToNextStep();
+    }
+
+    private IEnumerator CompleteTriggeredStepAfterDelay(float delay, TutorialStepDefinition step)
+    {
+        yield return new WaitForSecondsRealtime(delay);
+        _activeStepCoroutine = null;
+
+        if (step.handIndicator == TutorialHandIndicator.Dash)
+            _displayController.HideDashIndicator();
+
+        AdvanceToNextStep();
+    }
+
+    private void TryCompleteCurrentStep(TutorialCompletionTrigger trigger)
+    {
+        if (!_tutorialActive || !_currentStepArmed)
+            return;
+
+        TutorialStepDefinition step = GetCurrentStep();
+        if (step == null || step.completionTrigger != trigger)
+            return;
+
+        _currentStepArmed = false;
+        CleanupCoroutines();
+
+        if (step.triggerCompletionDelay > 0f)
+        {
+            _activeStepCoroutine = StartCoroutine(CompleteTriggeredStepAfterDelay(step.triggerCompletionDelay, step));
+            return;
+        }
+
+        if (step.handIndicator == TutorialHandIndicator.Dash)
+            _displayController.HideDashIndicator();
+
+        AdvanceToNextStep();
+    }
+
+    private void AdvanceToNextStep()
+    {
+        if (!_tutorialActive)
+            return;
+
+        _currentStepIndex++;
+
+        if (_runtimeDefinition == null || _currentStepIndex >= _runtimeDefinition.steps.Count)
+        {
+            CompleteTutorial();
+            return;
+        }
+
+        SaveCurrentProgress();
+        ShowCurrentStep();
+    }
+
+    private void CompleteTutorial()
+    {
+        _tutorialActive = false;
+        SaveCompletedProgress();
+        CleanupRuntimeState();
+    }
+
+    private void CleanupRuntimeState()
+    {
+        CleanupCoroutines();
+        _currentStepArmed = false;
+
+        if (_displayController != null)
+            _displayController.HideAll();
+
+        if (playerController != null)
+        {
+            //playerController.SetInputEnabled(true);
         }
     }
 
-    private void HandleEnemyKilled(Vector3 _)
+    private void CleanupCoroutines()
     {
-        OnEnemyKilled();
+        if (_activeStepCoroutine != null)
+        {
+            StopCoroutine(_activeStepCoroutine);
+            _activeStepCoroutine = null;
+        }
+    }
+
+    private TutorialStepDefinition GetCurrentStep()
+    {
+        if (_runtimeDefinition == null || _runtimeDefinition.steps == null)
+            return null;
+
+        if (_currentStepIndex < 0 || _currentStepIndex >= _runtimeDefinition.steps.Count)
+            return null;
+
+        return _runtimeDefinition.steps[_currentStepIndex];
     }
 
     private void HandleDashStarted()
     {
         OnDashPerformed();
+    }
+
+    private void HandleEnemyKilled(Vector3 _)
+    {
+        OnEnemyKilled();
     }
 
     private void HandleComboUpdated(int _, Vector3 __)
@@ -484,145 +337,29 @@ public class TutorialManager : MonoBehaviour
         OnParryPerformed();
     }
 
-    private void HandleLevelEnded(LevelStats _)
+    private void HandleLevelCompleted(LevelStats _)
     {
         DisableTutorial();
     }
 
-    private void HandleLevelEnded(LevelFailedContext _)
+    private void HandleLevelFailed(LevelFailedContext _)
     {
         DisableTutorial();
     }
 
-    public void OnComboPerformed()
+    private string ResolvedTutorialId
     {
-        if (!tutorialActive || currentLevel != 2) return;
-
-        if (!hasPerformedCombo)
+        get
         {
-            hasPerformedCombo = true;
-            CheckForActionCompletion();
+            if (!string.IsNullOrWhiteSpace(tutorialId))
+                return tutorialId;
+
+            if (tutorialDefinition != null && !string.IsNullOrWhiteSpace(tutorialDefinition.tutorialId))
+                return tutorialDefinition.tutorialId;
+
+            return string.Empty;
         }
     }
-
-    public void OnParryPerformed()
-    {
-        if (!tutorialActive || currentLevel != 3) return;
-        if (!canCompleteParryTutorial) return;
-
-        if (!hasPerformedParry)
-        {
-            hasPerformedParry = true;
-            CheckForActionCompletion();
-        }
-    }
-
-    private void CompleteTutorial()
-    {
-        tutorialActive = false;
-        SaveCompletedProgress();
-
-        HideAllTexts();
-        HideAllAnimations();
-
-        if (playerController != null)       //TODO REVISAR
-        {
-            //playerController.SetInputEnabled(true);
-        }
-    }
-
-    public void DisableTutorial()
-    {
-        tutorialActive = false;
-        SaveCurrentProgress();
-        CleanupRuntimeState();
-    }
-
-    private void CleanupRuntimeState()
-    {
-        waitingForDash = false;
-        waitingForEnemyKill = false;
-        waitingForCombo = false;
-        waitingForParry = false;
-        hasPerformedFirstDash = false;
-        hasKilledFirstEnemy = false;
-        hasPerformedCombo = false;
-        hasPerformedParry = false;
-        canCompleteParryTutorial = false;
-        enemiesKilledCount = 0;
-        currentTextIndex = 0;
-
-        StopAllCoroutines();
-
-        HideAllTexts();
-        HideAllAnimations();
-
-        if (playerController != null) //TODO REVISAR
-        {
-            //playerController.SetInputEnabled(true);
-        }
-    }
-
-    private void HideAllTexts()
-    {
-        if (tutorialTextsLevel1 != null)
-        {
-            for (int i = 0; i < tutorialTextsLevel1.Length; i++)
-            {
-                if (tutorialTextsLevel1[i] != null)
-                {
-                    tutorialTextsLevel1[i].SetActive(false);
-                }
-            }
-        }
-
-        if (tutorialTextsLevel2 != null)
-        {
-            for (int i = 0; i < tutorialTextsLevel2.Length; i++)
-            {
-                if (tutorialTextsLevel2[i] != null)
-                {
-                    tutorialTextsLevel2[i].SetActive(false);
-                }
-            }
-        }
-
-        if (tutorialTextsLevel3 != null)
-        {
-            for (int i = 0; i < tutorialTextsLevel3.Length; i++)
-            {
-                if (tutorialTextsLevel3[i] != null)
-                {
-                    tutorialTextsLevel3[i].SetActive(false);
-                }
-            }
-        }
-    }
-
-    private void HideAllAnimations()
-    {
-        if (handAnimation != null)
-        {
-            handAnimation.SetActive(false);
-        }
-
-        if (handAnimationParry != null)
-        {
-            handAnimationParry.SetActive(false);
-        }
-    }
-
-    public bool IsTutorialActive()
-    {
-        return tutorialActive;
-    }
-
-    public void SetCurrentLevel(int level)
-    {
-        currentLevel = level;
-    }
-
-    private string ResolvedTutorialId => string.IsNullOrWhiteSpace(tutorialId) ? $"level_{currentLevel}" : tutorialId;
 
     private bool IsTutorialCompleted()
     {
@@ -643,21 +380,32 @@ public class TutorialManager : MonoBehaviour
 
     private void SaveCurrentProgress()
     {
-        if (SaveManager.Instance == null)
+        if (SaveManager.Instance == null || string.IsNullOrWhiteSpace(ResolvedTutorialId))
             return;
 
-        int state = tutorialActive ? (int)TutorialProgressState.InProgress : SaveManager.Instance.GetTutorialState(ResolvedTutorialId);
-        if (!tutorialActive && state == (int)TutorialProgressState.NotStarted && currentTextIndex == 0)
-            return;
+        int state = _tutorialActive
+            ? (int)TutorialProgressState.InProgress
+            : SaveManager.Instance.GetTutorialState(ResolvedTutorialId);
 
-        SaveManager.Instance.SaveTutorialProgress(ResolvedTutorialId, state, currentTextIndex);
+        if (!_tutorialActive &&
+            state == (int)TutorialProgressState.NotStarted &&
+            _currentStepIndex == 0)
+        {
+            return;
+        }
+
+        SaveManager.Instance.SaveTutorialProgress(ResolvedTutorialId, state, _currentStepIndex);
     }
 
     private void SaveCompletedProgress()
     {
-        if (SaveManager.Instance == null)
+        if (SaveManager.Instance == null || string.IsNullOrWhiteSpace(ResolvedTutorialId))
             return;
 
-        SaveManager.Instance.SaveTutorialProgress(ResolvedTutorialId, (int)TutorialProgressState.Completed, currentTextIndex);
+        SaveManager.Instance.SaveTutorialProgress(
+            ResolvedTutorialId,
+            (int)TutorialProgressState.Completed,
+            _currentStepIndex);
     }
+
 }
