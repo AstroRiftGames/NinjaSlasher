@@ -76,6 +76,7 @@ public class Enemy : MonoBehaviour
         _isDead = true;
 
         _animator.SetTrigger("OnHit");
+        AudioService.Instance.PlaySFXAtPosition(_audioContext.Audio.hit, transform.position);
         _col.excludeLayers += LayerMask.GetMask("Player");
         _triggerCol.excludeLayers += LayerMask.GetMask("Player");
         StartCoroutine(BreakEnemy());
