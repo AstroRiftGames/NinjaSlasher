@@ -51,6 +51,25 @@ public class TutorialManager : MonoBehaviour
         Instance = this;
     }
 
+    private void OnEnable()
+    {
+        GameEvents.OnEnemyKilled += HandleEnemyKilled;
+    }
+
+    private void OnDisable()
+    {
+        GameEvents.OnEnemyKilled -= HandleEnemyKilled;
+        CleanupRuntimeState();
+    }
+
+    private void OnDestroy()
+    {
+        if (Instance == this)
+        {
+            Instance = null;
+        }
+    }
+
     private void Start()
     {
         if (SkipTutorial)
@@ -241,7 +260,7 @@ public class TutorialManager : MonoBehaviour
                     //playerController.SetInputEnabled(true);
                 }
                 StartCoroutine(HideTextAfterDelay(TextDisplayTime, () => {
-                    waitingForEnemyKill = true;
+                    CompleteTutorial();
                 }));
                 break;
 
@@ -374,7 +393,7 @@ public class TutorialManager : MonoBehaviour
 
     private IEnumerator DelayedAnimationHide()
     {
-        yield return new WaitForSeconds(0.3f);
+        yield return new WaitForSecondsRealtime(0.3f);
 
         HandSwipeAnimation[] allHandAnimations = FindObjectsOfType<HandSwipeAnimation>(true);
 
@@ -418,6 +437,11 @@ public class TutorialManager : MonoBehaviour
         }
     }
 
+    private void HandleEnemyKilled(Vector3 _)
+    {
+        OnEnemyKilled();
+    }
+
     public void OnComboPerformed()
     {
         if (!tutorialActive || currentLevel != 2) return;
@@ -457,7 +481,11 @@ public class TutorialManager : MonoBehaviour
     public void DisableTutorial()
     {
         tutorialActive = false;
+        CleanupRuntimeState();
+    }
 
+    private void CleanupRuntimeState()
+    {
         waitingForDash = false;
         waitingForEnemyKill = false;
         waitingForCombo = false;

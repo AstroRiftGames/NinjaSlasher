@@ -241,7 +241,6 @@ public class NewController : MonoBehaviour
 
         MoveTracker.RegisterMove();
         NotifyTutorialDashPerformed();
-        NotifyTutorialParryPerformed();
     }
 
     private bool CheckDashCD()
@@ -307,6 +306,7 @@ public class NewController : MonoBehaviour
                 HapticFeedback.LightFeedback();
                 AudioService.Instance.PlaySFXAtPosition(_audio.projectileParried, transform.position);
                 OnParry?.Invoke(false);
+                NotifyTutorialParryPerformed();
                 break;
             }
         }

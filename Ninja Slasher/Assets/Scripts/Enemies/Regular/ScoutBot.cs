@@ -46,10 +46,6 @@ public class ScoutBot : Enemy
 
     public override void Die()
     {
-        if (TutorialManager.Instance != null)
-        {
-            TutorialManager.Instance.OnEnemyKilled();
-        }
         base.Die();
     }
 }
