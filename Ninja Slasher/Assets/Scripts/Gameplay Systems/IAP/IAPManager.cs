@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using Unity.Services.Core;
 using UnityEngine.Purchasing;
+using UnityEngine.Purchasing.Security;
 using System.Threading.Tasks;
 
 public class IAPManager : MonoBehaviourSingleton<IAPManager>, IDetailedStoreListener
@@ -162,7 +163,7 @@ public class IAPManager : MonoBehaviourSingleton<IAPManager>, IDetailedStoreList
         {
             var validator = new CrossPlatformValidator(
                 GooglePlayTangle.Data(),
-                AppleTangle.Data(),
+                null, // AppleTangle no generado: irrelevante en Android
                 Application.identifier);
 
             validator.Validate(purchaseEvent.purchasedProduct.receipt);
