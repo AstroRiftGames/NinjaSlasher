@@ -4,6 +4,10 @@ using UnityEngine;
 
 public class Projectile : MonoBehaviour, IPoolable
 {
+    [SerializeField] private ProjectileAudioSet _audioSet;
+    protected ProjectileAudioContext _audioContext;
+    public ProjectileAudioContext AudioContext => _audioContext;
+
     [SerializeField] protected float _speed;
     public float MultiplySpeed(float value) => _speed *= value;
     [SerializeField] protected Transform _shooter;
@@ -37,6 +41,7 @@ public class Projectile : MonoBehaviour, IPoolable
 
     public void Initialize(Vector2 direction, Transform owner)
     {
+        InitializeAudioContext();
         SetOwner(owner);
         SetDirection(direction);
         transform.parent = null;
@@ -45,6 +50,7 @@ public class Projectile : MonoBehaviour, IPoolable
 
     public void Initialize(Transform owner)
     {
+        InitializeAudioContext();
         SetOwner(owner);
         SetDirection(transform.up);
         transform.parent = null;
@@ -141,6 +147,8 @@ public class Projectile : MonoBehaviour, IPoolable
             return;
 
         TryDamageEnemy(collision);
+
+        AudioService.Instance.PlaySFXAtPosition(_audioContext.Audio.parried, transform.position);
     }
 
     protected void HandleEnhancedParryBounce(Collision2D collision)
@@ -157,7 +165,6 @@ public class Projectile : MonoBehaviour, IPoolable
         SetDirection(reflectedDirection);
 
         CameraShake.Instance?.TriggerShake(0.1f, 0.15f);
-        AudioManager.Instance?.PlaySFXAtPosition(SFXClip.P_ProjectileParried, transform.position);
 
         if (_bouncesRemaining <= 0)
         {
@@ -177,6 +184,7 @@ public class Projectile : MonoBehaviour, IPoolable
         }
 
         _animator.SetTrigger("OnImpact");
+        AudioService.Instance.PlaySFXAtPosition(_audioContext.Audio.impact, transform.position);
         _rb.linearVelocity = Vector2.zero;
     }
 
@@ -263,5 +271,13 @@ public class Projectile : MonoBehaviour, IPoolable
         _isEnhancedParry = false;
 
         _animator.SetTrigger("OnImpact");
+        AudioService.Instance.PlaySFXAtPosition(_audioContext.Audio.impact, transform.position);
+    }
+
+    protected virtual void InitializeAudioContext()
+    {
+        _audioContext = GetComponent<ProjectileAudioContext>();
+        if (_audioContext != null)
+            _audioContext.Initialize(_audioSet);
     }
 }

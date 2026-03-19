@@ -101,6 +101,7 @@ GameObject:
   - component: {fileID: 1231854264589368963}
   - component: {fileID: 7495953772521434643}
   - component: {fileID: 5223763193030913284}
+  - component: {fileID: 535887742168986502}
   m_Layer: 8
   m_Name: PlasmaBullet
   m_TagString: Projectile
@@ -201,6 +202,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6ee89225aec88174ea67f55bc69a5beb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _audioSet: {fileID: 11400000, guid: b71b57531473fd544b6bb8a4d006c3da, type: 2}
   _speed: 150
   _shooter: {fileID: 0}
   enemyLayer:
@@ -273,6 +275,18 @@ CircleCollider2D:
   m_CompositeOrder: 0
   m_Offset: {x: 0, y: 0}
   m_Radius: 0.2
+--- !u!114 &535887742168986502
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2633275965559991828}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8d24ec7735548514a95cf24f949526aa, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &3004899398891365682
 GameObject:
   m_ObjectHideFlags: 0
