@@ -26,8 +26,6 @@ public class DailyWheelModal : UIModalBase
         if (_canvasGroup != null)
         {
             _canvasGroup.alpha = 1f;
-            _canvasGroup.blocksRaycasts = true;
-            _canvasGroup.interactable = true;
         }
 
         if (_hasBackground && _backgroundImage != null)
@@ -35,6 +33,7 @@ public class DailyWheelModal : UIModalBase
             _backgroundImage.raycastTarget = true;
         }
 
+        NotifyPanelShown();
         OnShown();
     }
 
@@ -44,11 +43,7 @@ public class DailyWheelModal : UIModalBase
 
         _isVisible = false;
 
-        if (_canvasGroup != null)
-        {
-            _canvasGroup.blocksRaycasts = false;
-            _canvasGroup.interactable = false;
-        }
+        SetPanelInputEnabled(false);
 
         if (_hasBackground && _backgroundImage != null)
         {

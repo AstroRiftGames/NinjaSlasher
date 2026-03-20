@@ -20,14 +20,16 @@ public class VictoryModal : UIModalBase
         }
     }
 
-    private void OnEnable()
+    protected override void OnEnable()
     {
+        base.OnEnable();
         GameEvents.OnLevelCompleted += OnLevelCompleted;
         GameEvents.OnLevelFailed += OnLevelFailed;
     }
 
-    private void OnDisable()
+    protected override void OnDisable()
     {
+        base.OnDisable();
         GameEvents.OnLevelCompleted -= OnLevelCompleted;
         GameEvents.OnLevelFailed -= OnLevelFailed;
     }
@@ -57,8 +59,6 @@ public class VictoryModal : UIModalBase
         if (_canvasGroup != null)
         {
             _canvasGroup.alpha = 1f;
-            _canvasGroup.blocksRaycasts = true;
-            _canvasGroup.interactable = true;
         }
 
         if (_hasBackground && _backgroundImage != null)
@@ -76,6 +76,7 @@ public class VictoryModal : UIModalBase
             ResultsUIManager.Instance.PrepareResultsIntro();
         }
 
+        NotifyPanelShown();
         StartCoroutine(ShowResultsDelayed());
 
         OnShown();
@@ -100,11 +101,7 @@ public class VictoryModal : UIModalBase
 
         _isVisible = false;
 
-        if (_canvasGroup != null)
-        {
-            _canvasGroup.blocksRaycasts = false;
-            _canvasGroup.interactable = false;
-        }
+        SetPanelInputEnabled(false);
 
         if (_hasBackground && _backgroundImage != null)
         {

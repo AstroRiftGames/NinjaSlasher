@@ -40,8 +40,6 @@ public class PreGameScreen : UIScreenBase
         if (_canvasGroup != null)
         {
             _canvasGroup.alpha = 1f;
-            _canvasGroup.blocksRaycasts = true;
-            _canvasGroup.interactable = true;
         }
 
         if (_buttonManager != null)
@@ -59,6 +57,7 @@ public class PreGameScreen : UIScreenBase
             _preGameUIManager.ShowPreGamePowerUps();
         }
 
+        NotifyPanelShown();
         OnShown();
     }
 
@@ -68,11 +67,7 @@ public class PreGameScreen : UIScreenBase
 
         _isVisible = false;
 
-        if (_canvasGroup != null)
-        {
-            _canvasGroup.blocksRaycasts = false;
-            _canvasGroup.interactable = false;
-        }
+        SetPanelInputEnabled(false);
 
         if (_preGameUIManager != null)
         {
