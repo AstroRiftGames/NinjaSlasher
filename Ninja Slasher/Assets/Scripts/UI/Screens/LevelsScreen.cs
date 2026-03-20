@@ -16,8 +16,9 @@ public class LevelsScreen : UIScreenBase
         base.Awake();
     }
 
-    private void OnEnable()
+    protected override void OnEnable()
     {
+        base.OnEnable();
         UIEvents.OnStartupSequenceCompleted += OnStartupSequenceCompleted;
 
         if (_areaSections == null) return;
@@ -25,8 +26,9 @@ public class LevelsScreen : UIScreenBase
             if (area != null) area.OnUnlocked += OnAreaUnlocked;
     }
 
-    private void OnDisable()
+    protected override void OnDisable()
     {
+        base.OnDisable();
         UIEvents.OnStartupSequenceCompleted -= OnStartupSequenceCompleted;
 
         if (_areaSections == null) return;
@@ -51,8 +53,6 @@ public class LevelsScreen : UIScreenBase
         if (_canvasGroup != null)
         {
             _canvasGroup.alpha = 1f;
-            _canvasGroup.blocksRaycasts = true;
-            _canvasGroup.interactable = true;
         }
 
         if (!_hasPlayedIntroAnimation)
@@ -66,6 +66,7 @@ public class LevelsScreen : UIScreenBase
             ShowLevelButtonsInstantly();
         }
 
+        NotifyPanelShown();
         OnShown();
     }
 
@@ -75,11 +76,7 @@ public class LevelsScreen : UIScreenBase
 
         _isVisible = false;
 
-        if (_canvasGroup != null)
-        {
-            _canvasGroup.blocksRaycasts = false;
-            _canvasGroup.interactable = false;
-        }
+        SetPanelInputEnabled(false);
 
         ButtonManager.Instance?.StopAllButtonAnimations();
 

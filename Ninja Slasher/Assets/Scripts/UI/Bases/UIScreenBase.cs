@@ -2,6 +2,8 @@ using UnityEngine;
 
 public abstract class UIScreenBase : UIPanel
 {
+    protected override bool BlocksUnderlyingUI => true;
+
     protected override void Awake()
     {
         base.Awake();
@@ -25,9 +27,9 @@ public abstract class UIScreenBase : UIPanel
         if (_canvasGroup != null)
         {
             _canvasGroup.alpha = 1f;
-            _canvasGroup.blocksRaycasts = true;
         }
 
+        NotifyPanelShown();
         OnShown();
     }
 
@@ -37,10 +39,7 @@ public abstract class UIScreenBase : UIPanel
 
         _isVisible = false;
 
-        if (_canvasGroup != null)
-        {
-            _canvasGroup.blocksRaycasts = false;
-        }
+        SetPanelInputEnabled(false);
 
         OnHidden();
 

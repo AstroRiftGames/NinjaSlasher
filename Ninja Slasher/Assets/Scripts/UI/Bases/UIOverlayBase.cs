@@ -19,6 +19,8 @@ public abstract class UIOverlayBase : UIPanel
     [SerializeField] protected float _animatorOpenDuration = 0.35f;
     [SerializeField] protected float _animatorCloseDuration = 0.35f;
 
+    protected override bool BlocksUnderlyingUI => true;
+
     protected override void Awake()
     {
         base.Awake();
@@ -47,11 +49,7 @@ public abstract class UIOverlayBase : UIPanel
         gameObject.SetActive(true);
         _isVisible = true;
 
-        if (_canvasGroup != null)
-        {
-            _canvasGroup.blocksRaycasts = true;
-        }
-
+        NotifyPanelShown();
         AnimateShow();
 
         OnShown();
@@ -107,8 +105,8 @@ public abstract class UIOverlayBase : UIPanel
         DOTween.Kill(_canvasGroup);
 
         // Deshabilitar raycasts al inicio del cierre, no al final de la animación
-        if (_canvasGroup != null && !_blockRaycastsWhenHidden)
-            _canvasGroup.blocksRaycasts = false;
+        if (!_blockRaycastsWhenHidden)
+            SetPanelInputEnabled(false);
 
         Sequence hideSequence = DOTween.Sequence();
 
@@ -159,10 +157,11 @@ public abstract class UIOverlayBase : UIPanel
 
     protected virtual void OnDisable()
     {
+        base.OnDisable();
         DOTween.Kill(_backgroundImage);
         DOTween.Kill(_canvasGroup);
 
-        if (_canvasGroup != null && !_blockRaycastsWhenHidden)
-            _canvasGroup.blocksRaycasts = false;
+        if (!_blockRaycastsWhenHidden)
+            SetPanelInputEnabled(false);
     }
 }

@@ -6,6 +6,8 @@ public abstract class UIModalBase : UIPanel
     [SerializeField] protected bool _hasBackground = true;
     [SerializeField] protected UnityEngine.UI.Image _backgroundImage;
 
+    protected override bool BlocksUnderlyingUI => true;
+
     protected override void Awake()
     {
         base.Awake();
@@ -29,7 +31,6 @@ public abstract class UIModalBase : UIPanel
         if (_canvasGroup != null)
         {
             _canvasGroup.alpha = 1f;
-            _canvasGroup.blocksRaycasts = true;
         }
 
         if (_hasBackground && _backgroundImage != null)
@@ -37,6 +38,7 @@ public abstract class UIModalBase : UIPanel
             _backgroundImage.raycastTarget = true;
         }
 
+        NotifyPanelShown();
         OnShown();
     }
 
@@ -46,10 +48,7 @@ public abstract class UIModalBase : UIPanel
 
         _isVisible = false;
 
-        if (_canvasGroup != null)
-        {
-            _canvasGroup.blocksRaycasts = false;
-        }
+        SetPanelInputEnabled(false);
 
         if (_hasBackground && _backgroundImage != null)
         {

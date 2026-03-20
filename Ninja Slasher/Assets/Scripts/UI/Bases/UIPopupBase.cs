@@ -9,6 +9,8 @@ public abstract class UIPopupBase : UIPanel
     [SerializeField] protected Ease _closeEase = Ease.InBack;
     [SerializeField] protected float _scaleOvershoot = 1.1f;
 
+    protected override bool BlocksUnderlyingUI => true;
+
     protected override void Awake()
     {
         base.Awake();
@@ -24,6 +26,7 @@ public abstract class UIPopupBase : UIPanel
         gameObject.SetActive(true);
         _isVisible = true;
 
+        NotifyPanelShown();
         AnimateShow();
 
         OnShown();
@@ -35,6 +38,7 @@ public abstract class UIPopupBase : UIPanel
 
         _isVisible = false;
 
+        SetPanelInputEnabled(false);
         AnimateHide();
 
         OnHidden();
@@ -48,6 +52,8 @@ public abstract class UIPopupBase : UIPanel
 
         if (_canvasGroup != null)
             _canvasGroup.alpha = 1f;
+
+        SetPanelInputEnabled(true);
 
         Sequence showSequence = DOTween.Sequence();
         showSequence.Append(_panelTransform.DOScale(_scaleOvershoot, _animationDuration * 0.7f)
@@ -84,6 +90,7 @@ public abstract class UIPopupBase : UIPanel
 
     protected virtual void OnDisable()
     {
+        base.OnDisable();
         DOTween.Kill(_panelTransform);
     }
 }

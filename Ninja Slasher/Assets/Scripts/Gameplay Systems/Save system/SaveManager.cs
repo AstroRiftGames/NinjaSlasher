@@ -14,6 +14,8 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
     private const string USER_DATA_FOLDER = "UserData";
     private const int MAX_POWERUP_STACK = 99;
     private const int MAX_POWERUP_USES  = 99;
+    private const int DEFAULT_MAX_LIVES = 5;
+    private const int DEFAULT_STARTING_LIVES = 5;
 
     private string saveFilePath;
     private GameData gameData;
@@ -146,7 +148,8 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
             try
             {
                 var dto = JsonUtility.FromJson<GameDataDTO>(json);
-                if (dto != null && (dto.levelStars != null || dto.highestUnlockedLevel != 0 || !string.IsNullOrEmpty(dto.lastPlayDate)))
+                bool hasDtoMarker = json.Contains("\"saveVersion\"");
+                if (hasDtoMarker && dto != null)
                 {
                     gameData = GameDataMapper.FromDto(dto);
                     loadedWithDto = true;
@@ -160,6 +163,7 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
             }
 
             ValidateAndInitializeProgressionData();
+            Debug.Log($"[SaveManager] LoadLives | path='{path}' | lives={gameData.currentLives} | timestamp='{gameData.lastLifeRegenTime}' | canRegen={gameData.canRegenLives} | unlimitedLivesEndUtc={gameData.unlimitedLivesEndUtc}");
             return true;
         }
         catch (Exception e)
@@ -447,6 +451,8 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
             var dto = GameDataMapper.ToDto(gameData);
             string json = JsonUtility.ToJson(dto, true);
 
+            Debug.Log($"[SaveManager] SaveData | path='{saveFilePath}' | lives={gameData.currentLives} | timestamp='{gameData.lastLifeRegenTime}' | canRegen={gameData.canRegenLives} | unlimitedLivesEndUtc={gameData.unlimitedLivesEndUtc}");
+
             string tempPath   = saveFilePath + ".tmp";
             string backupPath = saveFilePath + ".bak";
 
@@ -516,6 +522,8 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
         {
             gameData.tutorialStepIndices = new Dictionary<string, int>();
         }
+
+        RepairLifeDataIfNeeded();
     }
 
     private void RecalculateProgressionFromStars()
@@ -561,6 +569,8 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
         {
             gameData.tutorialStepIndices = new Dictionary<string, int>();
         }
+
+        InitializeLifeDataForNewSave();
     }
 
     public GameData GetGameData()
@@ -576,7 +586,7 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
 
     public void UpdateLives(int lives, DateTime lastRegen, bool canRegen)
     {
-        Debug.Log($"[SaveManager] UpdateLives | lives={lives} | lastRegen={lastRegen:o} | kind={lastRegen.Kind}");
+        Debug.Log($"[SaveManager] SaveLives | lives={lives} | timestamp='{lastRegen:o}' | canRegen={canRegen} | kind={lastRegen.Kind}");
         var data = GetGameData();
         data.currentLives = lives;
         data.lastLifeRegenTime = lastRegen.ToString("o");
@@ -1001,6 +1011,68 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
     {
         if (_resetInProgress) return;
         SaveData();
+    }
+
+    private void InitializeLifeDataForNewSave()
+    {
+        int maxLives = GetConfiguredMaxLives();
+        int startingLives = Mathf.Clamp(GetConfiguredStartingLives(), 0, maxLives);
+
+        gameData.currentLives = startingLives;
+        gameData.lastLifeRegenTime = DateTime.UtcNow.ToString("o");
+        gameData.canRegenLives = startingLives < maxLives;
+    }
+
+    private void RepairLifeDataIfNeeded()
+    {
+        int maxLives = GetConfiguredMaxLives();
+        int currentLives = gameData.currentLives;
+
+        if (currentLives < 0 || currentLives > maxLives)
+        {
+            int clampedLives = Mathf.Clamp(currentLives, 0, maxLives);
+            Debug.LogWarning($"[SaveManager] RepairLifeData | clamping lives from {currentLives} to {clampedLives}");
+            gameData.currentLives = clampedLives;
+        }
+
+        if (!TryParseLifeTimestampUtc(gameData.lastLifeRegenTime, out DateTime parsedUtc))
+        {
+            parsedUtc = DateTime.UtcNow;
+            Debug.LogWarning($"[SaveManager] RepairLifeData | invalid timestamp '{gameData.lastLifeRegenTime}'. Replacing with '{parsedUtc:o}'");
+        }
+
+        gameData.lastLifeRegenTime = parsedUtc.ToString("o");
+        gameData.canRegenLives = gameData.currentLives < maxLives;
+    }
+
+    private bool TryParseLifeTimestampUtc(string value, out DateTime parsedUtc)
+    {
+        parsedUtc = DateTime.UtcNow;
+
+        if (string.IsNullOrWhiteSpace(value))
+            return false;
+
+        if (!DateTime.TryParse(value, null, System.Globalization.DateTimeStyles.RoundtripKind, out var parsed))
+            return false;
+
+        parsedUtc = parsed.Kind == DateTimeKind.Utc ? parsed : parsed.ToUniversalTime();
+        return true;
+    }
+
+    private int GetConfiguredMaxLives()
+    {
+        if (GameConfigManager.IsReady())
+            return Mathf.Max(1, GameConfigManager.Config.maxLives);
+
+        return DEFAULT_MAX_LIVES;
+    }
+
+    private int GetConfiguredStartingLives()
+    {
+        if (GameConfigManager.IsReady())
+            return GameConfigManager.Config.startingLives;
+
+        return DEFAULT_STARTING_LIVES;
     }
 
     public void ShowProgressionDebug()

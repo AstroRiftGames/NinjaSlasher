@@ -179,7 +179,7 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
     {
         var data = SaveManager.Instance?.GetGameData();
 
-        Debug.Log($"[LifeManager] InitializeFromSave | savedLives={data?.currentLives} | savedDate='{data?.lastLifeRegenTime}'");
+        Debug.Log($"[LifeManager] LoadLives | savedLives={data?.currentLives} | savedTimestamp='{data?.lastLifeRegenTime}' | canRegen={data?.canRegenLives} | unlimitedLivesEndUtc={data?.unlimitedLivesEndUtc}");
 
         DateTime lastRegenUtc = DateTime.UtcNow;
         bool validDate = data != null && DateTime.TryParse(
@@ -189,6 +189,10 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
 
         if (validDate)
         {
+            lastRegenUtc = lastRegenUtc.Kind == DateTimeKind.Utc
+                ? lastRegenUtc
+                : lastRegenUtc.ToUniversalTime();
+
             TimeSpan timeDiff = DateTime.UtcNow - lastRegenUtc;
             if (timeDiff.TotalDays < -1 || timeDiff.TotalDays > 365)
             {
@@ -197,15 +201,18 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
             }
         }
 
-        bool isCorruptOrFirstTime =
+        bool hasValidLives =
+            data != null &&
+            data.currentLives >= 0 &&
+            data.currentLives <= MaxLives;
+
+        bool shouldResetToStartingLives =
             data == null ||
-            data.currentLives < 0 ||
-            data.currentLives > MaxLives ||
-            !validDate;
+            !hasValidLives;
 
-        Debug.Log($"[LifeManager] InitializeFromSave | validDate={validDate} | isCorruptOrFirstTime={isCorruptOrFirstTime} | parsedDate={lastRegenUtc:O} | dataNull={data == null} | livesInRange={data != null && data.currentLives >= 0 && data.currentLives <= MaxLives}");
+        Debug.Log($"[LifeManager] InitializeFromSave | validTimestamp={validDate} | shouldResetToStartingLives={shouldResetToStartingLives} | parsedTimestamp={lastRegenUtc:O} | dataNull={data == null} | hasValidLives={hasValidLives}");
 
-        if (isCorruptOrFirstTime)
+        if (shouldResetToStartingLives)
         {
             CurrentLives = Mathf.Clamp(StartingLives, 0, MaxLives);
             _lastLifeUsedUtc = DateTime.UtcNow;
@@ -214,7 +221,15 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
         else
         {
             CurrentLives = Mathf.Clamp(data.currentLives, 0, MaxLives);
-            _lastLifeUsedUtc = DateTime.SpecifyKind(lastRegenUtc, DateTimeKind.Utc);
+            if (validDate)
+            {
+                _lastLifeUsedUtc = lastRegenUtc;
+            }
+            else
+            {
+                _lastLifeUsedUtc = DateTime.UtcNow;
+                Persist("Repair missing life timestamp");
+            }
         }
 
         if (data != null && data.unlimitedLivesEndUtc > 0)
@@ -223,7 +238,7 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
         CheckOfflineRegeneration();
         _virtualLives = CurrentLives;
 
-        Debug.Log($"[LifeManager] InitializeFromSave DONE | CurrentLives={CurrentLives}");
+        Debug.Log($"[LifeManager] RuntimeLivesFinal | currentLives={CurrentLives} | displayLives={GetDisplayLives()} | timerBaseUtc={_lastLifeUsedUtc:O} | unlimitedLivesActive={HasTimedUnlimitedLives}");
     }
 
     private void Persist(string reason = "Autosave")
@@ -312,6 +327,7 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
 
         try
         {
+            int savedLives = CurrentLives;
             double seconds = (DateTime.UtcNow - _lastLifeUsedUtc).TotalSeconds;
 
             if (seconds < 0 || seconds > (365 * 24 * 60 * 60))
@@ -321,7 +337,11 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
                 return;
             }
 
-            if (seconds < LifeRechargeSeconds) return;
+            if (seconds < LifeRechargeSeconds)
+            {
+                Debug.Log($"[LifeManager] OfflineRegen | savedLives={savedLives} | elapsedSeconds={seconds:F0} | generated=0 | resultLives={CurrentLives} | nextTimestamp='{_lastLifeUsedUtc:O}'");
+                return;
+            }
 
             int toGenerate = Mathf.FloorToInt((float)seconds / LifeRechargeSeconds);
             int newLives = Mathf.Min(CurrentLives + toGenerate, MaxLives);
@@ -341,6 +361,8 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
             CurrentLives = newLives;
 
             _virtualLives = _hasVirtualDeduction ? Mathf.Max(0, CurrentLives - 1) : CurrentLives;
+
+            Debug.Log($"[LifeManager] OfflineRegen | savedLives={savedLives} | elapsedSeconds={seconds:F0} | generated={toGenerate} | resultLives={CurrentLives} | nextTimestamp='{_lastLifeUsedUtc:O}'");
 
             Persist("Vidas offline regeneradas");
             EmitDisplayLivesChanged();
