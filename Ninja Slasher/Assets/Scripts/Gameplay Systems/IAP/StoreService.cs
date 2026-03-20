@@ -10,6 +10,9 @@ public class StoreService : MonoBehaviourSingleton<StoreService>
 
     public event Action OnIAPReady;
 
+    private string _pendingVisualProductId;
+    private RectTransform _pendingCoinFeedbackOrigin;
+
     private void OnEnable()
     {
         if (Instance != this) return;
@@ -122,6 +125,8 @@ public class StoreService : MonoBehaviourSingleton<StoreService>
             return;
 
         RewardService.Instance?.Grant(product);
+        TryRaiseCoinPurchaseFeedback(product, productId);
+        ClearPendingVisualFeedback();
 
         ClearPendingPurchase();
     }
@@ -176,6 +181,11 @@ public class StoreService : MonoBehaviourSingleton<StoreService>
 
     public void Buy(string productId)
     {
+        Buy(productId, null);
+    }
+
+    public void Buy(string productId, RectTransform feedbackOrigin)
+    {
         if (string.IsNullOrEmpty(productId))
         {
             return;
@@ -191,6 +201,9 @@ public class StoreService : MonoBehaviourSingleton<StoreService>
             return;
         }
 
+        _pendingVisualProductId = productId;
+        _pendingCoinFeedbackOrigin = feedbackOrigin;
+
         IAPManager.Instance?.PurchaseProduct(productId);
     }
 
@@ -202,4 +215,28 @@ public class StoreService : MonoBehaviourSingleton<StoreService>
 
     public StoreProductDefinition GetProduct(string productId)
         => _catalog?.GetByProductId(productId);
+
+    private void TryRaiseCoinPurchaseFeedback(StoreProductDefinition product, string purchasedProductId)
+    {
+        if (product == null || product.rewardType != RewardType.Coins)
+            return;
+
+        if (string.IsNullOrEmpty(_pendingVisualProductId) || _pendingVisualProductId != purchasedProductId)
+            return;
+
+        if (_pendingCoinFeedbackOrigin == null)
+        {
+            ClearPendingVisualFeedback();
+            return;
+        }
+
+        GameEvents.RaiseCoinPackPurchaseFeedbackRequested(product.coinAmount, _pendingCoinFeedbackOrigin);
+        ClearPendingVisualFeedback();
+    }
+
+    private void ClearPendingVisualFeedback()
+    {
+        _pendingVisualProductId = null;
+        _pendingCoinFeedbackOrigin = null;
+    }
 }

@@ -254,10 +254,16 @@ public static class GameEvents
     #region CURRENCY EVENTS
 
     public static event Action<int> OnCoinsChanged;
+    public static event Action<int, RectTransform> OnCoinPackPurchaseFeedbackRequested;
 
     public static void RaiseCoinsChanged(int newTotal)
     {
         OnCoinsChanged?.Invoke(newTotal);
+    }
+
+    public static void RaiseCoinPackPurchaseFeedbackRequested(int coinAmount, RectTransform sourceTransform)
+    {
+        OnCoinPackPurchaseFeedbackRequested?.Invoke(coinAmount, sourceTransform);
     }
 
     #endregion
@@ -359,6 +365,7 @@ public static class GameEvents
     public static void ClearAllCurrencyEvents()
     {
         OnCoinsChanged = null;
+        OnCoinPackPurchaseFeedbackRequested = null;
     }
 
     public static void ClearAllEvents()

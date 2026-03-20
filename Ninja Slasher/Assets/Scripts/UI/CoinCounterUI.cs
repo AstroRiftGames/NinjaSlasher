@@ -1,9 +1,12 @@
 using DG.Tweening;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class CoinCounterUI : MonoBehaviour
 {
+    public static CoinCounterUI Instance { get; private set; }
+
     [Header("References")]
     [SerializeField] private TextMeshProUGUI _label;
     [SerializeField] private RectTransform   _coinIcon;
@@ -28,16 +31,54 @@ public class CoinCounterUI : MonoBehaviour
 
     private void OnEnable()
     {
+        Instance = this;
         GameEvents.OnCoinsChanged += AnimateTo;
 
         int saved = SaveManager.Instance != null ? SaveManager.Instance.GetCoins() : 0;
         SetImmediate(saved);
+        CoinFlyFeedbackController.EnsureFor(this);
     }
 
     private void OnDisable()
     {
+        if (Instance == this)
+            Instance = null;
+
         GameEvents.OnCoinsChanged -= AnimateTo;
         _countTween?.Kill();
+    }
+
+    public RectTransform GetFeedbackTarget()
+    {
+        if (_coinIcon != null)
+            return _coinIcon;
+
+        if (_label != null)
+            return _label.rectTransform;
+
+        return transform as RectTransform;
+    }
+
+    public Canvas GetRootCanvas()
+    {
+        return GetComponentInParent<Canvas>();
+    }
+
+    public void PlayArrivalFeedback()
+    {
+        PlayPolish();
+    }
+
+    public Sprite GetCoinSprite()
+    {
+        Image iconImage = _coinIcon != null ? _coinIcon.GetComponent<Image>() : null;
+        return iconImage != null ? iconImage.sprite : null;
+    }
+
+    public Color GetCoinColor()
+    {
+        Image iconImage = _coinIcon != null ? _coinIcon.GetComponent<Image>() : null;
+        return iconImage != null ? iconImage.color : Color.white;
     }
 
     public void SetImmediate(int value)

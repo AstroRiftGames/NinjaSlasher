@@ -11,6 +11,7 @@ public class StoreItemUI : MonoBehaviour
 
     [SerializeField] private Button _buyButton;
     [SerializeField] private TMP_Text _priceLabel;
+    [SerializeField] private RectTransform _coinFlyOrigin;
 
     private void OnEnable()
     {
@@ -60,6 +61,17 @@ public class StoreItemUI : MonoBehaviour
     private void OnBuyClicked()
     {
         if (string.IsNullOrEmpty(_productId)) return;
-        StoreService.Instance?.Buy(_productId);
+        StoreService.Instance?.Buy(_productId, GetFeedbackOrigin());
+    }
+
+    private RectTransform GetFeedbackOrigin()
+    {
+        if (_coinFlyOrigin != null)
+            return _coinFlyOrigin;
+
+        if (_buyButton != null)
+            return _buyButton.transform as RectTransform;
+
+        return transform as RectTransform;
     }
 }
