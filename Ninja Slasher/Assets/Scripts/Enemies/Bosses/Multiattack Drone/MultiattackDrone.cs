@@ -97,7 +97,7 @@ public class MultiattackDrone : BossEnemy
     {
         bool playerIsOnRight = _player.transform.position.x > transform.position.x;
         Vector3 localScale = transform.localScale;
-        localScale.x = playerIsOnRight ? -1 : 1;
+        localScale.x = playerIsOnRight ? -.5f : .5f;
         transform.localScale = localScale;
     }
 
