@@ -39,7 +39,7 @@ public class BlaztEgg : MonoBehaviour, IPoolable
 
             BL4ZT newEnemy = Instantiate(
                 BlaztPrefab,
-                transform.position - Vector3.up*.5f,
+                collision.GetContact(0).point,
                 Quaternion.identity
             ).GetComponentInChildren<BL4ZT>();
 
