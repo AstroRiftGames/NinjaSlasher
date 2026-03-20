@@ -489,7 +489,7 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
 
         int maxLevel = GameConfigManager.IsReady()
             ? GameConfigManager.Config.levelsPerArea * GameConfigManager.Config.totalAreas
-            : 50; // default: 10 levels × 5 areas
+            : 50;
         gameData.highestUnlockedLevel = Mathf.Clamp(gameData.highestUnlockedLevel, 1, maxLevel);
 
         gameData.coins = Mathf.Max(0, gameData.coins);
@@ -576,6 +576,7 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
 
     public void UpdateLives(int lives, DateTime lastRegen, bool canRegen)
     {
+        Debug.Log($"[SaveManager] UpdateLives | lives={lives} | lastRegen={lastRegen:o} | kind={lastRegen.Kind}");
         var data = GetGameData();
         data.currentLives = lives;
         data.lastLifeRegenTime = lastRegen.ToString("o");
@@ -939,12 +940,10 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
     {
         var data = GetGameData();
 
-        // UpdateLevelProgress(levelId + 1)
         int nextLevel = levelId + 1;
         if (nextLevel > data.highestUnlockedLevel)
             data.highestUnlockedLevel = nextLevel;
 
-        // UpdateStars(levelId, stars)
         int previousStars = 0;
         if (data.levelStars.ContainsKey(levelId))
         {
@@ -974,7 +973,6 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
                 data.highestUnlockedArea = calculatedArea;
         }
 
-        // UpdateGameStats(enemiesKilled, maxCombo, playTime, gameCompleted: true)
         data.totalGamesPlayed++;
         if (enemiesKilled > 0) data.totalEnemiesKilled += enemiesKilled;
         if (maxCombo > data.bestCombo) data.bestCombo = maxCombo;

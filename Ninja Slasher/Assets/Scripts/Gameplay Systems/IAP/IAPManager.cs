@@ -138,6 +138,7 @@ public class IAPManager : MonoBehaviourSingleton<IAPManager>, IDetailedStoreList
         {
             Debug.LogWarning($"[IAPManager] Receipt validation failed. Purchase blocked: '{productId}'");
             _purchaseState = PurchaseState.Idle;
+            SaveManager.Instance?.Modify(d => d.pendingPurchaseProductId = "");
             return PurchaseProcessingResult.Complete;
         }
 #endif
@@ -188,6 +189,7 @@ public class IAPManager : MonoBehaviourSingleton<IAPManager>, IDetailedStoreList
     public void OnPurchaseFailed(Product product, PurchaseFailureReason failureReason)
     {
         _purchaseState = PurchaseState.Idle;
+        SaveManager.Instance?.Modify(d => d.pendingPurchaseProductId = "");
         Debug.LogError($"[IAPManager] Purchase failed: {product.definition.id}, reason: {failureReason}");
         OnPurchaseFailedEvent?.Invoke(product.definition.id, failureReason.ToString());
     }

@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections;
+using System.Text.RegularExpressions;
 using UnityEngine.SceneManagement;
 
 public class GameManager : MonoBehaviourSingleton<GameManager>
@@ -11,6 +12,8 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
     private bool _playerHasDied;
     private bool _levelStarted = false;
     private bool _levelEnded = false;
+
+    private bool _pausedByFocusLoss = false;
 
     public bool PlayerHasDied => _playerHasDied;
 
@@ -29,12 +32,6 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
         _playerHasDied = false;
         _levelStarted = false;
         _levelEnded = false;
-
-        if (!LifeManager.Instance.CanPlay())
-        {
-            GoToLevelSelection();
-            return;
-        }
     }
 
     private void OnEnable()
@@ -159,7 +156,6 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
     {
         yield return new WaitForSeconds(0.1f);
 
-        // Si el Emergency Bundle está activo, él reemplaza la pantalla de derrota.
         if (EmergencyBundleService.Instance != null && EmergencyBundleService.Instance.HasActiveOffer)
             yield break;
 
@@ -279,25 +275,22 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
     {
         string sceneName = SceneManager.GetActiveScene().name;
 
-        if (sceneName.Contains("Level"))
-        {
-            string levelNumber = sceneName.Replace("Level", "").Replace("_", "");
-            if (int.TryParse(levelNumber, out int levelId))
-            {
-                return levelId;
-            }
-        }
+        var match = Regex.Match(sceneName, @"\d+");
+        if (match.Success && int.TryParse(match.Value, out int levelId))
+            return levelId;
 
         return 1;
     }
 
     private void OnDestroy()
     {
+        GameEvents.OnLevelStarted -= OnLevelStarted;
         GameEvents.OnLevelCompleted -= OnLevelCompleted;
         GameEvents.OnLevelFailed -= OnLevelFailed;
         GameEvents.OnLivesChanged -= OnLivesChanged;
         UIEvents.OnRetryButtonPressed -= OnRetryButtonPressed;
         UIEvents.OnQuitToMenuPressed -= OnQuitToMenuPressed;
+        SceneManager.sceneLoaded -= OnSceneLoaded;
     }
 
     private bool IsTestingScene()
@@ -318,19 +311,41 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
         _playerHasDied = false;
         _levelStarted = false;
         _levelEnded = false;
+        _pausedByFocusLoss = false;
     }
 
     private void OnApplicationPause(bool pauseStatus)
     {
-        // TO DO
+        if (pauseStatus)
+            HandleFocusLost();
+        else
+            HandleFocusRegained();
     }
 
     private void OnApplicationFocus(bool hasFocus)
     {
-        if (!hasFocus && _levelStarted)
+        if (!hasFocus)
+            HandleFocusLost();
+        else
+            HandleFocusRegained();
+    }
+
+    private void HandleFocusLost()
+    {
+        if (!_levelStarted) return;
+
+        if (Time.timeScale > 0f)
         {
-            LifeManager.Instance.OnLevelExit();
-            _levelStarted = false;
+            Time.timeScale = 0f;
+            _pausedByFocusLoss = true;
         }
+    }
+
+    private void HandleFocusRegained()
+    {
+        if (!_levelStarted || !_pausedByFocusLoss) return;
+
+        Time.timeScale = 1f;
+        _pausedByFocusLoss = false;
     }
 }

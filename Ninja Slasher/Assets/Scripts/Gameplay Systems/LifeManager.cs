@@ -129,8 +129,6 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
     private bool _levelInProgress = false;
     private bool _isInitialized = false;
 
-    public event Action<int> OnLivesChanged;
-
     #region INITIALIZATION
 
     public override void Awake()
@@ -158,7 +156,7 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
 
         _isInitialized = true;
 
-        OnLivesChanged?.Invoke(GetDisplayLives());
+        GameEvents.RaiseLivesChanged(GetDisplayLives());
     }
 
     #endregion
@@ -181,8 +179,13 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
     {
         var data = SaveManager.Instance?.GetGameData();
 
+        Debug.Log($"[LifeManager] InitializeFromSave | savedLives={data?.currentLives} | savedDate='{data?.lastLifeRegenTime}'");
+
         DateTime lastRegenUtc = DateTime.UtcNow;
-        bool validDate = data != null && DateTime.TryParse(data.lastLifeRegenTime, out lastRegenUtc);
+        bool validDate = data != null && DateTime.TryParse(
+            data.lastLifeRegenTime, null,
+            System.Globalization.DateTimeStyles.RoundtripKind,
+            out lastRegenUtc);
 
         if (validDate)
         {
@@ -199,6 +202,8 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
             data.currentLives < 0 ||
             data.currentLives > MaxLives ||
             !validDate;
+
+        Debug.Log($"[LifeManager] InitializeFromSave | validDate={validDate} | isCorruptOrFirstTime={isCorruptOrFirstTime} | parsedDate={lastRegenUtc:O} | dataNull={data == null} | livesInRange={data != null && data.currentLives >= 0 && data.currentLives <= MaxLives}");
 
         if (isCorruptOrFirstTime)
         {
@@ -217,6 +222,8 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
 
         CheckOfflineRegeneration();
         _virtualLives = CurrentLives;
+
+        Debug.Log($"[LifeManager] InitializeFromSave DONE | CurrentLives={CurrentLives}");
     }
 
     private void Persist(string reason = "Autosave")
@@ -352,6 +359,8 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
     #endregion
 
     #region PUBLIC API
+
+    public bool IsInitialized => _isInitialized;
 
     public bool HasTimedUnlimitedLives => DateTime.UtcNow < _unlimitedLivesEndUtc;
 

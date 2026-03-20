@@ -83,6 +83,7 @@ public class DefeatOverlay : UIOverlayBase
     private void OnQuitClicked()
     {
         Time.timeScale = 1f;
+        UIEvents.RaisePause(false);
         UIEvents.RaiseQuitToMenuPressed();
     }
 

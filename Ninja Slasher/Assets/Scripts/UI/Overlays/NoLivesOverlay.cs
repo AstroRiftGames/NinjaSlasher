@@ -21,12 +21,18 @@ public class NoLivesOverlay : UIOverlayBase
     private void OnEnable()
     {
         GameEvents.OnLivesChanged += OnLivesChanged;
+
+        if (AdsManager.Instance != null)
+            AdsManager.Instance.OnRewardedAdReadinessChanged += UpdateButtons;
     }
 
     protected override void OnDisable()
     {
         base.OnDisable();
         GameEvents.OnLivesChanged -= OnLivesChanged;
+
+        if (AdsManager.Instance != null)
+            AdsManager.Instance.OnRewardedAdReadinessChanged -= UpdateButtons;
     }
 
     private void SetupButtons()
@@ -175,6 +181,6 @@ public class NoLivesOverlay : UIOverlayBase
         if (LifeManager.Instance != null && LifeManager.Instance.CanPlay())
             return false;
 
-        return AdsManager.Instance != null;
+        return AdsManager.Instance != null && AdsManager.Instance.IsRewardedAdReady();
     }
 }

@@ -16,6 +16,8 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
 
     private bool _interstitialPending = false;
 
+    public event Action OnRewardedAdReadinessChanged;
+
     void Start()
     {
         GameEvents.OnAdsRemoved += OnAdsRemoved;
@@ -186,12 +188,14 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         Debug.Log($"[AdsManager] Rewarded ad loaded. Network: {adInfo.AdNetwork}");
 #endif
+        OnRewardedAdReadinessChanged?.Invoke();
     }
 
     private void OnRewardedAdLoadFailed(LevelPlayAdError error)
     {
         Debug.LogError($"[AdsManager] Rewarded ad load failed: {error.ErrorMessage}");
         Invoke(nameof(LoadRewardedAd), 10f);
+        OnRewardedAdReadinessChanged?.Invoke();
     }
 
     private void OnRewardedAdDisplayed(LevelPlayAdInfo adInfo)
@@ -205,6 +209,7 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
     {
         Debug.LogError($"[AdsManager] Rewarded ad display failed: {error.ErrorMessage}");
         _pendingRewardCallback = null;
+        OnRewardedAdReadinessChanged?.Invoke();
     }
 
     private void OnRewardedAdRewarded(LevelPlayAdInfo adInfo, LevelPlayReward reward)

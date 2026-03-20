@@ -153,7 +153,7 @@ public class SceneTransitionManager : MonoBehaviour
         AudioService.Instance?.PlaySFX(_audioContext.Audio.transitionSlash);
 
         MusicEvents.OnEnterLevelSelection?.Invoke();
-        UIEvents.RequestUpdateLivesUI(LifeManager.Instance.CurrentLives);
+        UIEvents.RequestUpdateLivesUI(LifeManager.Instance?.CurrentLives ?? 0);
 
         UIEvents.RaiseLevelSelectorReady();
     }
@@ -179,7 +179,7 @@ public class SceneTransitionManager : MonoBehaviour
         AudioService.Instance?.PlaySFX(_audioContext.Audio.transitionSlash);
 
         MusicEvents.OnEnterLevelSelection?.Invoke();
-        UIEvents.RequestUpdateLivesUI(LifeManager.Instance.CurrentLives);
+        UIEvents.RequestUpdateLivesUI(LifeManager.Instance?.CurrentLives ?? 0);
 
         UIEvents.RaiseLevelSelectorReady();
         _isLoadingLevelSelectorScene = false;

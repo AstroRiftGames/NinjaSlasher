@@ -129,12 +129,14 @@ public class VictoryModal : UIModalBase
 
     private void PlayVictoryAudio()
     {
-        bool isVictory = GameManager.Instance != null && GameManager.Instance.IsVictory;
+        if (AudioService.Instance == null || _audioContext == null || _audioContext.Audio == null)
+            return;
 
-        if (isVictory)
-            AudioService.Instance.PlaySFX(_audioContext.Audio.victory);
-        else
-            AudioService.Instance.PlaySFX(_audioContext.Audio.defeat);
+        bool isVictory = GameManager.Instance != null && GameManager.Instance.IsVictory;
+        AudioEvent clip = isVictory ? _audioContext.Audio.victory : _audioContext.Audio.defeat;
+
+        if (clip != null)
+            AudioService.Instance.PlaySFX(clip);
     }
 
     public void ShowVictory()

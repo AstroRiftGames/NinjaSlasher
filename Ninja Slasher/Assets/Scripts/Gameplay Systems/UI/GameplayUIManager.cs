@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using TMPro;
 using UnityEngine;
 using DG.Tweening;
@@ -25,11 +26,7 @@ public class GameplayUIManager : MonoBehaviour
 
     private void OnDisable()
     {
-        GameEvents.OnLivesChanged -= OnLivesChanged;
-        GameEvents.OnLevelTimeChanged -= OnLevelTimeChanged;
-        GameEvents.OnLevelTimeExpired -= OnLevelTimeExpired;
-        GameEvents.OnLevelTimeBonus -= ShowBonusTimeText;
-        UIEvents.OnUILivesUpdateRequested -= UpdateLivesUI;
+        UnsubscribeFromEvents();
     }
 
     public void Initialize()
@@ -55,11 +52,22 @@ public class GameplayUIManager : MonoBehaviour
 
     private void SubscribeToEvents()
     {
+        UnsubscribeFromEvents();
+
         GameEvents.OnLivesChanged += OnLivesChanged;
         GameEvents.OnLevelTimeChanged += OnLevelTimeChanged;
         GameEvents.OnLevelTimeExpired += OnLevelTimeExpired;
         GameEvents.OnLevelTimeBonus += ShowBonusTimeText;
         UIEvents.OnUILivesUpdateRequested += UpdateLivesUI;
+    }
+
+    private void UnsubscribeFromEvents()
+    {
+        GameEvents.OnLivesChanged -= OnLivesChanged;
+        GameEvents.OnLevelTimeChanged -= OnLevelTimeChanged;
+        GameEvents.OnLevelTimeExpired -= OnLevelTimeExpired;
+        GameEvents.OnLevelTimeBonus -= ShowBonusTimeText;
+        UIEvents.OnUILivesUpdateRequested -= UpdateLivesUI;
     }
 
     public void UpdateUI()
@@ -69,19 +77,24 @@ public class GameplayUIManager : MonoBehaviour
 
     private void UpdateNoLivesTimer()
     {
-        if (LifeManager.Instance.GetRealLives() < 3)
-        {
-            var time = LifeManager.Instance.GetTimeToNextLife();
-            _noLivesTimerText.text = $"{time.Minutes:D2}:{time.Seconds:D2}";
-            _livesTimerText.text = $"{time.Minutes:D2}:{time.Seconds:D2}";
+        var lm = LifeManager.Instance;
+        if (lm == null || !lm.IsInitialized) return;
 
-            _livesTimerObj.SetActive(true);
-        }
+        bool needsTimer = lm.GetRealLives() < 3;
 
-        if (LifeManager.Instance.GetRealLives() >= 3)
-        {
-            _livesTimerObj.SetActive(false);
-        }
+        if (_livesTimerObj != null)
+            _livesTimerObj.SetActive(needsTimer);
+
+        if (!needsTimer) return;
+
+        TimeSpan time = lm.GetTimeToNextLife();
+        string formatted = $"{time.Minutes:D2}:{time.Seconds:D2}";
+
+        if (_noLivesTimerText != null)
+            _noLivesTimerText.text = formatted;
+
+        if (_livesTimerText != null)
+            _livesTimerText.text = formatted;
     }
 
     private void UpdatePowerUpsUI()
@@ -110,8 +123,7 @@ public class GameplayUIManager : MonoBehaviour
 
     public void OnRetryPressed()
     {
-        UIEvents.RequestRestartLevel();
-        UIEvents.RequestShowLifeLostPanel();
+        UIEvents.RaiseRetryPressed();
     }
 
     public void OnBackToSelectionPressed()
