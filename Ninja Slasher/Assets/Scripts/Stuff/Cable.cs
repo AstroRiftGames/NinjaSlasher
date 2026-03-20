@@ -1,8 +1,11 @@
 using UnityEngine;
+using System;
 
 public class Cable : MonoBehaviour
 {
     [SerializeField] private Transform itemAttached;
+
+    public Action OnDropItem;
 
     void Awake()
     {
@@ -23,6 +26,7 @@ public class Cable : MonoBehaviour
 
     void Cut()
     {
+        OnDropItem?.Invoke();
         itemAttached.SetParent(null);
         itemAttached.TryGetComponent(out Rigidbody2D rb);
         rb.bodyType = RigidbodyType2D.Dynamic;
