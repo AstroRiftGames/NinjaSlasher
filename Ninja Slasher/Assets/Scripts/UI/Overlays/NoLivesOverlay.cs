@@ -9,8 +9,10 @@ public class NoLivesOverlay : UIOverlayBase
     [SerializeField] private TextMeshProUGUI _messageText;
     [SerializeField] private TextMeshProUGUI _timerText;
     [SerializeField] private Button _closeButton;
-    [SerializeField] private Button _watchAdButton;
     [SerializeField] private Button _claimLifeButton;
+
+    private bool? _lastClaimLifeButtonVisible;
+    private string _lastRecoveryState;
 
     protected override void Awake()
     {
@@ -39,9 +41,6 @@ public class NoLivesOverlay : UIOverlayBase
     {
         if (_closeButton != null)
             _closeButton.onClick.AddListener(Hide);
-
-        if (_watchAdButton != null)
-            _watchAdButton.onClick.AddListener(OnWatchAdClicked);
 
         if (_claimLifeButton != null)
             _claimLifeButton.onClick.AddListener(OnClaimLifeClicked);
@@ -110,31 +109,21 @@ public class NoLivesOverlay : UIOverlayBase
     {
         bool hasLives = LifeManager.Instance?.CanPlay() ?? false;
         bool canWatchAd = CanWatchAdForRecovery();
-        bool useClaimAsRecoveryButton = _watchAdButton == null;
+        bool claimVisible = hasLives || (canWatchAd);
+        string recoveryState = $"canPlay={hasLives} | realLives={LifeManager.Instance?.GetRealLives() ?? -1} | rewarded={AdsManager.Instance?.GetRewardedAvailabilityReason() ?? "ads_manager_missing"}";
 
         if (_claimLifeButton != null)
-            _claimLifeButton.gameObject.SetActive(hasLives || (useClaimAsRecoveryButton && canWatchAd));
-
-        if (_watchAdButton != null)
-            _watchAdButton.gameObject.SetActive(canWatchAd);
+            _claimLifeButton.gameObject.SetActive(claimVisible);
 
         if (_closeButton != null)
             _closeButton.gameObject.SetActive(true);
-    }
 
-    private void OnWatchAdClicked()
-    {
-        Debug.Log($"[NoLivesOverlay] Watch ad clicked | rewarded={AdsManager.Instance?.GetRewardedAvailabilityReason() ?? "ads_manager_missing"}");
-
-        if (!CanWatchAdForRecovery())
+        if (_lastClaimLifeButtonVisible != claimVisible || _lastRecoveryState != recoveryState)
         {
-            Debug.LogWarning($"[NoLivesOverlay] Rewarded recovery request rejected | reason={AdsManager.Instance?.GetRewardedAvailabilityReason() ?? "ads_manager_missing"}");
-            UpdateButtons();
-            return;
+            Debug.Log($"[NoLivesOverlay] UpdateButtons | claimVisible={claimVisible} | {recoveryState}");
+            _lastClaimLifeButtonVisible = claimVisible;
+            _lastRecoveryState = recoveryState;
         }
-
-        Debug.Log("[NoLivesOverlay] Requesting rewarded ad for extra life from watch button.");
-        AdsManager.Instance?.ShowRewardedAdForExtraLife();
     }
 
     private void OnClaimLifeClicked()
@@ -163,9 +152,6 @@ public class NoLivesOverlay : UIOverlayBase
     {
         if (_closeButton != null)
             _closeButton.onClick.RemoveAllListeners();
-
-        if (_watchAdButton != null)
-            _watchAdButton.onClick.RemoveAllListeners();
 
         if (_claimLifeButton != null)
             _claimLifeButton.onClick.RemoveAllListeners();

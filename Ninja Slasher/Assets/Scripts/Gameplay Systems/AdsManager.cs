@@ -19,6 +19,7 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
     private bool _interstitialPending = false;
     private bool _isLevelPlayInitialized = false;
     private bool _levelPlayInitFailed = false;
+    private bool _isInitializingLevelPlay = false;
 
     public event Action OnRewardedAdReadinessChanged;
 
@@ -38,6 +39,10 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
 
     void InitializeLevelPlay()
     {
+        if (_isLevelPlayInitialized || _isInitializingLevelPlay)
+            return;
+
+        _isInitializingLevelPlay = true;
         LevelPlay.OnInitSuccess += OnInitSuccess;
         LevelPlay.OnInitFailed += OnInitFailed;
 
@@ -49,6 +54,7 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
 
     private void OnInitSuccess(LevelPlayConfiguration config)
     {
+        _isInitializingLevelPlay = false;
         _isLevelPlayInitialized = true;
         _levelPlayInitFailed = false;
         Debug.Log("[AdsManager] LevelPlay initialized");
@@ -57,9 +63,12 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
 
     private void OnInitFailed(LevelPlayInitError error)
     {
+        _isInitializingLevelPlay = false;
         _isLevelPlayInitialized = false;
         _levelPlayInitFailed = true;
         Debug.LogError($"[AdsManager] LevelPlay init failed ({error.ErrorCode}): {error.ErrorMessage}");
+        OnRewardedAdReadinessChanged?.Invoke();
+        Invoke(nameof(RetryInitializeLevelPlay), 10f);
     }
 
     private void CreateAdUnits()
@@ -188,9 +197,20 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
             _pendingRewardContext = context;
             _pendingRewardShowRequest = true;
 
-            string reason = _rewardedAd == null
-                ? "rewarded unit not created yet"
-                : "rewarded ad not ready";
+            string reason;
+            if (_levelPlayInitFailed)
+            {
+                reason = "levelplay init failed";
+                RetryInitializeLevelPlay();
+            }
+            else if (_rewardedAd == null)
+            {
+                reason = "rewarded unit not created yet";
+            }
+            else
+            {
+                reason = "rewarded ad not ready";
+            }
 
             Debug.LogWarning($"[AdsManager] Rewarded ad show deferred | context={context} | reason={reason}");
             _rewardedAd?.LoadAd();
@@ -336,7 +356,7 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
 
     public bool CanRequestRewardedAd()
     {
-        return !_levelPlayInitFailed;
+        return true;
     }
 
     public string GetRewardedAvailabilityReason()
@@ -364,6 +384,17 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
         _pendingRewardCallback = null;
         _pendingRewardContext = null;
         _pendingRewardShowRequest = false;
+    }
+
+    private void RetryInitializeLevelPlay()
+    {
+        if (_isLevelPlayInitialized || _isInitializingLevelPlay)
+            return;
+
+        Debug.Log("[AdsManager] Retrying LevelPlay initialization.");
+        LevelPlay.OnInitSuccess -= OnInitSuccess;
+        LevelPlay.OnInitFailed -= OnInitFailed;
+        InitializeLevelPlay();
     }
 
     void OnDestroy()
