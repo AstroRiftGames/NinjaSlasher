@@ -6,6 +6,7 @@ public class StoreModal : UIModalBase
     [Header("Animation")]
     [SerializeField] private Animator _panelAnimator;
     [SerializeField] private float _closeAnimationDuration = 0.4f;
+    [SerializeField] private StorePurchaseConfirmationPanel _purchaseConfirmationPanel;
 
     protected override void Awake()
     {
@@ -14,6 +15,16 @@ public class StoreModal : UIModalBase
         if (_panelAnimator == null)
         {
             _panelAnimator = GetComponentInChildren<Animator>();
+        }
+
+        if (_purchaseConfirmationPanel == null)
+        {
+            _purchaseConfirmationPanel = GetComponentInChildren<StorePurchaseConfirmationPanel>(true);
+        }
+
+        if (_purchaseConfirmationPanel == null)
+        {
+            Debug.LogWarning("[StoreModal] StorePurchaseConfirmationPopUp instance is not assigned or not present under the StoreModal hierarchy.");
         }
     }
 
@@ -56,6 +67,8 @@ public class StoreModal : UIModalBase
             _backgroundImage.raycastTarget = false;
         }
 
+        _purchaseConfirmationPanel?.HideImmediate();
+
         if (_panelAnimator != null)
         {
             _panelAnimator.SetTrigger("Close");
@@ -70,5 +83,10 @@ public class StoreModal : UIModalBase
     {
         yield return new WaitForSecondsRealtime(_closeAnimationDuration);
         gameObject.SetActive(false);
+    }
+
+    public void ShowPurchaseConfirmation(string productId, RectTransform feedbackOrigin)
+    {
+        _purchaseConfirmationPanel?.ShowConfirmation(productId, feedbackOrigin);
     }
 }

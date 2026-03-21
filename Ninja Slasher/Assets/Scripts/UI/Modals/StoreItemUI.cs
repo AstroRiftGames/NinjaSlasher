@@ -13,8 +13,13 @@ public class StoreItemUI : MonoBehaviour
     [SerializeField] private TMP_Text _priceLabel;
     [SerializeField] private RectTransform _coinFlyOrigin;
 
+    private StoreModal _storeModal;
+
     private void OnEnable()
     {
+        if (_storeModal == null)
+            _storeModal = GetComponentInParent<StoreModal>(true);
+
         _buyButton?.onClick.AddListener(OnBuyClicked);
         GameEvents.OnAdsRemoved += RefreshView;
 
@@ -61,7 +66,16 @@ public class StoreItemUI : MonoBehaviour
     private void OnBuyClicked()
     {
         if (string.IsNullOrEmpty(_productId)) return;
-        StoreService.Instance?.Buy(_productId, GetFeedbackOrigin());
+
+        RectTransform feedbackOrigin = GetFeedbackOrigin();
+
+        if (_storeModal != null)
+        {
+            _storeModal.ShowPurchaseConfirmation(_productId, feedbackOrigin);
+            return;
+        }
+
+        StoreService.Instance?.Buy(_productId, feedbackOrigin);
     }
 
     private RectTransform GetFeedbackOrigin()
