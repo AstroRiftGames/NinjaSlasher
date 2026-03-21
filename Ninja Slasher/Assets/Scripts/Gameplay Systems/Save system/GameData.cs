@@ -83,6 +83,12 @@ public class GameData
     /// Unix epoch (segundos UTC) en que expiran las vidas ilimitadas.
     /// 0 = sin vidas ilimitadas activas.
     /// </summary>
+    public long unlimitedLivesStartUtc = 0L;
+
+    /// <summary>
+    /// Unix epoch (segundos UTC) en que expiran las vidas ilimitadas.
+    /// 0 = sin vidas ilimitadas activas.
+    /// </summary>
     public long unlimitedLivesEndUtc = 0L;
 
     /// <summary>Monedas del jugador.</summary>

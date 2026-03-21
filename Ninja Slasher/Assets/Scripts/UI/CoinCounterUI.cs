@@ -36,7 +36,7 @@ public class CoinCounterUI : MonoBehaviour
 
         int saved = SaveManager.Instance != null ? SaveManager.Instance.GetCoins() : 0;
         SetImmediate(saved);
-        CoinFlyFeedbackController.EnsureFor(this);
+        StoreRewardFeedbackController.EnsureFor(this);
     }
 
     private void OnDisable()

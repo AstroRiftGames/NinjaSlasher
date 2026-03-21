@@ -11,7 +11,7 @@ public class StoreService : MonoBehaviourSingleton<StoreService>
     public event Action OnIAPReady;
 
     private string _pendingVisualProductId;
-    private RectTransform _pendingCoinFeedbackOrigin;
+    private RectTransform _pendingRewardFeedbackOrigin;
 
     private void OnEnable()
     {
@@ -125,7 +125,7 @@ public class StoreService : MonoBehaviourSingleton<StoreService>
             return;
 
         RewardService.Instance?.Grant(product);
-        TryRaiseCoinPurchaseFeedback(product, productId);
+        TryRaisePurchaseFeedback(product, productId);
         ClearPendingVisualFeedback();
 
         ClearPendingPurchase();
@@ -202,7 +202,7 @@ public class StoreService : MonoBehaviourSingleton<StoreService>
         }
 
         _pendingVisualProductId = productId;
-        _pendingCoinFeedbackOrigin = feedbackOrigin;
+        _pendingRewardFeedbackOrigin = feedbackOrigin;
 
         IAPManager.Instance?.PurchaseProduct(productId);
     }
@@ -216,27 +216,87 @@ public class StoreService : MonoBehaviourSingleton<StoreService>
     public StoreProductDefinition GetProduct(string productId)
         => _catalog?.GetByProductId(productId);
 
-    private void TryRaiseCoinPurchaseFeedback(StoreProductDefinition product, string purchasedProductId)
+    private void TryRaisePurchaseFeedback(StoreProductDefinition product, string purchasedProductId)
     {
-        if (product == null || product.rewardType != RewardType.Coins)
+        if (product == null)
             return;
 
         if (string.IsNullOrEmpty(_pendingVisualProductId) || _pendingVisualProductId != purchasedProductId)
             return;
 
-        if (_pendingCoinFeedbackOrigin == null)
+        if (_pendingRewardFeedbackOrigin == null)
         {
             ClearPendingVisualFeedback();
             return;
         }
 
-        GameEvents.RaiseCoinPackPurchaseFeedbackRequested(product.coinAmount, _pendingCoinFeedbackOrigin);
+        StorePurchaseFeedbackRequest request = BuildPurchaseFeedbackRequest(product, purchasedProductId, _pendingRewardFeedbackOrigin);
+        if (request == null || !request.HasRewards)
+            return;
+
+        GameEvents.RaiseStorePurchaseFeedbackRequested(request);
         ClearPendingVisualFeedback();
+    }
+
+    private StorePurchaseFeedbackRequest BuildPurchaseFeedbackRequest(StoreProductDefinition product, string purchasedProductId, RectTransform sourceTransform)
+    {
+        if (product == null || sourceTransform == null)
+            return null;
+
+        StorePurchaseFeedbackRequest request = new StorePurchaseFeedbackRequest
+        {
+            ProductId = purchasedProductId,
+            SourceTransform = sourceTransform
+        };
+
+        switch (product.rewardType)
+        {
+            case RewardType.Coins:
+                if (product.coinAmount > 0)
+                {
+                    request.Rewards.Add(new StoreRewardFeedbackEntry
+                    {
+                        RewardType = StoreRewardFeedbackType.Coins,
+                        Amount = product.coinAmount
+                    });
+                }
+                break;
+
+            case RewardType.Bundle:
+                AppendBundleFeedback(request, product.bundleReward);
+                break;
+        }
+
+        return request.HasRewards ? request : null;
+    }
+
+    private void AppendBundleFeedback(StorePurchaseFeedbackRequest request, BundleRewardData reward)
+    {
+        if (request == null || reward == null)
+            return;
+
+        if (reward.coins > 0)
+        {
+            request.Rewards.Add(new StoreRewardFeedbackEntry
+            {
+                RewardType = StoreRewardFeedbackType.Coins,
+                Amount = reward.coins
+            });
+        }
+
+        if (reward.unlimitedLives && reward.unlimitedLivesDurationMinutes > 0f)
+        {
+            request.Rewards.Add(new StoreRewardFeedbackEntry
+            {
+                RewardType = StoreRewardFeedbackType.UnlimitedLives,
+                DurationMinutes = reward.unlimitedLivesDurationMinutes
+            });
+        }
     }
 
     private void ClearPendingVisualFeedback()
     {
         _pendingVisualProductId = null;
-        _pendingCoinFeedbackOrigin = null;
+        _pendingRewardFeedbackOrigin = null;
     }
 }

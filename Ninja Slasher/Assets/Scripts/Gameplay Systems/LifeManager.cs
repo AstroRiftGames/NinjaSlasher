@@ -9,6 +9,7 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
     public int ConsecutiveLosses => currentConsecutiveLosses;
 
     private DateTime _lastLifeUsedUtc;
+    private DateTime _unlimitedLivesStartUtc = DateTime.MinValue;
     private DateTime _unlimitedLivesEndUtc = DateTime.MinValue;
 
     [Header("VIRTUAL LIFE DEDUCTION")]
@@ -169,6 +170,7 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
             return;
 
         UpdateLifeRecharge();
+        UpdateUnlimitedLivesState();
     }
 
     #endregion
@@ -233,7 +235,24 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
         }
 
         if (data != null && data.unlimitedLivesEndUtc > 0)
+        {
             _unlimitedLivesEndUtc = DateTimeOffset.FromUnixTimeSeconds(data.unlimitedLivesEndUtc).UtcDateTime;
+
+            if (data.unlimitedLivesStartUtc > 0)
+            {
+                _unlimitedLivesStartUtc = DateTimeOffset.FromUnixTimeSeconds(data.unlimitedLivesStartUtc).UtcDateTime;
+            }
+            else if (DateTime.UtcNow < _unlimitedLivesEndUtc)
+            {
+                _unlimitedLivesStartUtc = DateTime.UtcNow;
+                PersistUnlimitedLivesState();
+            }
+        }
+        else
+        {
+            _unlimitedLivesStartUtc = DateTime.MinValue;
+            _unlimitedLivesEndUtc = DateTime.MinValue;
+        }
 
         CheckOfflineRegeneration();
         _virtualLives = CurrentLives;
@@ -389,15 +408,13 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
     public void ActivateUnlimitedLives(float durationMinutes)
     {
         DateTime baseTime = HasTimedUnlimitedLives ? _unlimitedLivesEndUtc : DateTime.UtcNow;
+        _unlimitedLivesStartUtc = DateTime.UtcNow;
         _unlimitedLivesEndUtc = baseTime.AddMinutes(durationMinutes);
 
-        if (SaveManager.Instance != null)
-        {
-            long endUtcSeconds = new DateTimeOffset(_unlimitedLivesEndUtc).ToUnixTimeSeconds();
-            SaveManager.Instance.Modify(d => d.unlimitedLivesEndUtc = endUtcSeconds);
-        }
+        PersistUnlimitedLivesState();
 
         Debug.Log($"[LifeManager] ActivateUnlimitedLives: {durationMinutes} min | " +
+                  $"StartUtc={_unlimitedLivesStartUtc:O} | " +
                   $"EndUtc={_unlimitedLivesEndUtc:O} | " +
                   $"HasTimedUnlimitedLives={HasTimedUnlimitedLives} | " +
                   $"SaveManager={(SaveManager.Instance != null ? "OK" : "NULL")}");
@@ -409,6 +426,19 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
     {
         if (!HasTimedUnlimitedLives) return TimeSpan.Zero;
         return _unlimitedLivesEndUtc - DateTime.UtcNow;
+    }
+
+    public float GetUnlimitedLivesFillAmount()
+    {
+        if (!HasTimedUnlimitedLives)
+            return 0f;
+
+        double totalSeconds = (_unlimitedLivesEndUtc - _unlimitedLivesStartUtc).TotalSeconds;
+        if (totalSeconds <= 0d)
+            return 0f;
+
+        double remainingSeconds = (_unlimitedLivesEndUtc - DateTime.UtcNow).TotalSeconds;
+        return Mathf.Clamp01((float)(remainingSeconds / totalSeconds));
     }
 
     public bool CanPlay()
@@ -632,6 +662,40 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
     {
         int displayLives = GetDisplayLives();
         GameEvents.RaiseLivesChanged(displayLives);
+    }
+
+    private void UpdateUnlimitedLivesState()
+    {
+        if (_unlimitedLivesEndUtc == DateTime.MinValue)
+            return;
+
+        if (DateTime.UtcNow < _unlimitedLivesEndUtc)
+            return;
+
+        _unlimitedLivesStartUtc = DateTime.MinValue;
+        _unlimitedLivesEndUtc = DateTime.MinValue;
+        PersistUnlimitedLivesState();
+        EmitDisplayLivesChanged();
+    }
+
+    private void PersistUnlimitedLivesState()
+    {
+        if (SaveManager.Instance == null)
+            return;
+
+        long startUtcSeconds = _unlimitedLivesStartUtc > DateTime.MinValue
+            ? new DateTimeOffset(_unlimitedLivesStartUtc).ToUnixTimeSeconds()
+            : 0L;
+
+        long endUtcSeconds = _unlimitedLivesEndUtc > DateTime.MinValue
+            ? new DateTimeOffset(_unlimitedLivesEndUtc).ToUnixTimeSeconds()
+            : 0L;
+
+        SaveManager.Instance.Modify(d =>
+        {
+            d.unlimitedLivesStartUtc = startUtcSeconds;
+            d.unlimitedLivesEndUtc = endUtcSeconds;
+        });
     }
 
     #endregion

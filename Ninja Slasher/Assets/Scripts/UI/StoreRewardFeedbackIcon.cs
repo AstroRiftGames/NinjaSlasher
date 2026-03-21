@@ -5,7 +5,7 @@ using UnityEngine.UI;
 [RequireComponent(typeof(RectTransform))]
 [RequireComponent(typeof(CanvasGroup))]
 [RequireComponent(typeof(Image))]
-public class CoinFlyFeedbackCoin : MonoBehaviour, IPoolable
+public class StoreRewardFeedbackIcon : MonoBehaviour, IPoolable
 {
     private RectTransform _rectTransform;
     private CanvasGroup _canvasGroup;
