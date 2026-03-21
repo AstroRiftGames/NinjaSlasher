@@ -6,7 +6,7 @@ public class StoreModal : UIModalBase
     [Header("Animation")]
     [SerializeField] private Animator _panelAnimator;
     [SerializeField] private float _closeAnimationDuration = 0.4f;
-    [SerializeField] private StorePurchaseConfirmationPanel _purchaseConfirmationPanel;
+    [SerializeField] private StorePurchaseConfirmationPopUp _purchaseConfirmationPanel;
 
     protected override void Awake()
     {
@@ -19,7 +19,7 @@ public class StoreModal : UIModalBase
 
         if (_purchaseConfirmationPanel == null)
         {
-            _purchaseConfirmationPanel = GetComponentInChildren<StorePurchaseConfirmationPanel>(true);
+            _purchaseConfirmationPanel = GetComponentInChildren<StorePurchaseConfirmationPopUp>(true);
         }
 
         if (_purchaseConfirmationPanel == null)
