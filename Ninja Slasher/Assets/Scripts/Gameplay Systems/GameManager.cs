@@ -160,18 +160,17 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
             yield break;
 
         int currentLives = LifeManager.Instance.GetRealLives();
+        bool canPlay = LifeManager.Instance.CanPlay();
 
-        if (!LifeManager.Instance.HasTimedUnlimitedLives && currentLives <= 0)
+        Debug.Log($"[GameManager] Resolve defeat UI | realLives={currentLives} | canPlay={canPlay} | unlimitedLives={LifeManager.Instance.HasTimedUnlimitedLives}");
+
+        if (!canPlay)
         {
             UIEvents.RequestShowNoLivesOverlay();
-        }
-        else if (LifeManager.Instance.CanPlay())
-        {
-            UIEvents.RequestShowDefeatOverlay(currentLives);
         }
         else
         {
-            UIEvents.RequestShowNoLivesOverlay();
+            UIEvents.RequestShowDefeatOverlay(currentLives);
         }
     }
 
@@ -238,7 +237,12 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
         if (LifeManager.Instance == null)
             return;
 
-        if (!LifeManager.Instance.HasTimedUnlimitedLives && LifeManager.Instance.GetRealLives() <= 0)
+        bool canPlay = LifeManager.Instance.CanPlay();
+        int realLives = LifeManager.Instance.GetRealLives();
+
+        Debug.Log($"[GameManager] Retry requested | realLives={realLives} | canPlay={canPlay} | unlimitedLives={LifeManager.Instance.HasTimedUnlimitedLives}");
+
+        if (!canPlay)
         {
             UIEvents.RequestShowNoLivesOverlay();
             return;

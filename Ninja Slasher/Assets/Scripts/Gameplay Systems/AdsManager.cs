@@ -13,8 +13,12 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
     private LevelPlayInterstitialAd _interstitialAd;
 
     private Action _pendingRewardCallback;
+    private string _pendingRewardContext;
+    private bool _pendingRewardShowRequest;
 
     private bool _interstitialPending = false;
+    private bool _isLevelPlayInitialized = false;
+    private bool _levelPlayInitFailed = false;
 
     public event Action OnRewardedAdReadinessChanged;
 
@@ -45,12 +49,16 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
 
     private void OnInitSuccess(LevelPlayConfiguration config)
     {
+        _isLevelPlayInitialized = true;
+        _levelPlayInitFailed = false;
         Debug.Log("[AdsManager] LevelPlay initialized");
         CreateAdUnits();
     }
 
     private void OnInitFailed(LevelPlayInitError error)
     {
+        _isLevelPlayInitialized = false;
+        _levelPlayInitFailed = true;
         Debug.LogError($"[AdsManager] LevelPlay init failed ({error.ErrorCode}): {error.ErrorMessage}");
     }
 
@@ -91,10 +99,8 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
         ShowRewardedAd(() =>
         {
             LifeManager.Instance?.AddLife();
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-            Debug.Log("[AdsManager] Extra life granted");
-#endif
-        });
+            Debug.Log("[AdsManager] Extra life granted from rewarded ad.");
+        }, "extra_life");
     }
 
     public void ShowRewardedAdForDoubleDailyReward()
@@ -102,16 +108,14 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
         ShowRewardedAd(() =>
         {
             DailyRewardSystem.Instance?.DoubleTodaysReward();
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-            Debug.Log("[AdsManager] Daily reward doubled");
-#endif
-        });
+            Debug.Log("[AdsManager] Daily reward doubled from rewarded ad.");
+        }, "double_daily_reward");
     }
 
     [ContextMenu("Show Rewarded Ad")]
     public void ShowRewardedAd()
     {
-        ShowRewardedAd(onRewarded: null);
+        ShowRewardedAd(onRewarded: null, context: "manual");
     }
 
     [ContextMenu("Show Interstitial Ad")]
@@ -132,6 +136,8 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
 
     private void OnResultsActionTaken()
     {
+        CancelPendingRewardedRequest("results action taken");
+
         if (!_interstitialPending) return;
 
         _interstitialPending = false;
@@ -166,29 +172,42 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
         return !AreAdsRemoved() && _interstitialAd != null && _interstitialAd.IsAdReady();
     }
 
-    private void ShowRewardedAd(System.Action onRewarded)
+    private void ShowRewardedAd(System.Action onRewarded, string context)
     {
         if (_rewardedAd != null && _rewardedAd.IsAdReady())
         {
             _pendingRewardCallback = onRewarded;
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-            Debug.Log("[AdsManager] Showing rewarded ad");
-#endif
+            _pendingRewardContext = context;
+            _pendingRewardShowRequest = false;
+            Debug.Log($"[AdsManager] Showing rewarded ad | context={context}");
             _rewardedAd.ShowAd();
         }
         else
         {
-            Debug.LogWarning("[AdsManager] Rewarded ad not ready");
+            _pendingRewardCallback = onRewarded;
+            _pendingRewardContext = context;
+            _pendingRewardShowRequest = true;
+
+            string reason = _rewardedAd == null
+                ? "rewarded unit not created yet"
+                : "rewarded ad not ready";
+
+            Debug.LogWarning($"[AdsManager] Rewarded ad show deferred | context={context} | reason={reason}");
             _rewardedAd?.LoadAd();
         }
     }
 
     private void OnRewardedAdLoaded(LevelPlayAdInfo adInfo)
     {
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
         Debug.Log($"[AdsManager] Rewarded ad loaded. Network: {adInfo.AdNetwork}");
-#endif
         OnRewardedAdReadinessChanged?.Invoke();
+
+        if (_pendingRewardShowRequest && _rewardedAd != null && _rewardedAd.IsAdReady())
+        {
+            _pendingRewardShowRequest = false;
+            Debug.Log($"[AdsManager] Retrying deferred rewarded ad | context={_pendingRewardContext}");
+            _rewardedAd.ShowAd();
+        }
     }
 
     private void OnRewardedAdLoadFailed(LevelPlayAdError error)
@@ -200,41 +219,33 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
 
     private void OnRewardedAdDisplayed(LevelPlayAdInfo adInfo)
     {
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-        Debug.Log("[AdsManager] Rewarded ad displayed");
-#endif
+        Debug.Log($"[AdsManager] Rewarded ad displayed | context={_pendingRewardContext}");
     }
 
     private void OnRewardedAdDisplayFailed(LevelPlayAdInfo adInfo, LevelPlayAdError error)
     {
-        Debug.LogError($"[AdsManager] Rewarded ad display failed: {error.ErrorMessage}");
-        _pendingRewardCallback = null;
+        Debug.LogError($"[AdsManager] Rewarded ad display failed | context={_pendingRewardContext} | error={error.ErrorMessage}");
+        CancelPendingRewardedRequest("display failed");
         OnRewardedAdReadinessChanged?.Invoke();
     }
 
     private void OnRewardedAdRewarded(LevelPlayAdInfo adInfo, LevelPlayReward reward)
     {
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-        Debug.Log($"[AdsManager] User rewarded: {reward.Name} x{reward.Amount}");
-#endif
+        Debug.Log($"[AdsManager] Reward received | context={_pendingRewardContext} | reward={reward.Name} x{reward.Amount}");
         _pendingRewardCallback?.Invoke();
         _pendingRewardCallback = null;
     }
 
     private void OnRewardedAdClosed(LevelPlayAdInfo adInfo)
     {
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-        Debug.Log("[AdsManager] Rewarded ad closed");
-#endif
-        _pendingRewardCallback = null;
+        Debug.Log($"[AdsManager] Rewarded ad closed | context={_pendingRewardContext}");
+        CancelPendingRewardedRequest("ad closed");
         _rewardedAd?.LoadAd();
     }
 
     private void OnRewardedAdClicked(LevelPlayAdInfo adInfo)
     {
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-        Debug.Log("[AdsManager] Rewarded ad clicked");
-#endif
+        Debug.Log($"[AdsManager] Rewarded ad clicked | context={_pendingRewardContext}");
     }
 
     private void OnInterstitialAdLoaded(LevelPlayAdInfo adInfo)
@@ -321,6 +332,38 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
     {
         Debug.Log("[AdsManager] Remove Ads granted. Interstitial ads are disabled; rewarded ads remain available.");
         CancelInvoke(nameof(LoadInterstitialAd));
+    }
+
+    public bool CanRequestRewardedAd()
+    {
+        return !_levelPlayInitFailed;
+    }
+
+    public string GetRewardedAvailabilityReason()
+    {
+        if (_rewardedAd != null && _rewardedAd.IsAdReady())
+            return "ready";
+
+        if (_levelPlayInitFailed)
+            return "rewarded init failed";
+
+        if (_rewardedAd == null)
+            return _isLevelPlayInitialized
+                ? "rewarded unit not initialized"
+                : "rewarded init pending";
+
+        return "rewarded loading";
+    }
+
+    private void CancelPendingRewardedRequest(string reason)
+    {
+        if (_pendingRewardCallback == null && !_pendingRewardShowRequest && string.IsNullOrEmpty(_pendingRewardContext))
+            return;
+
+        Debug.Log($"[AdsManager] Clearing pending rewarded request | context={_pendingRewardContext} | reason={reason}");
+        _pendingRewardCallback = null;
+        _pendingRewardContext = null;
+        _pendingRewardShowRequest = false;
     }
 
     void OnDestroy()

@@ -56,7 +56,7 @@ public class NoLivesOverlay : UIOverlayBase
 
     protected override void OnShown()
     {
-        Debug.Log("[NoLivesOverlay] No lives available");
+        Debug.Log($"[NoLivesOverlay] No lives available | realLives={LifeManager.Instance?.GetRealLives() ?? -1} | displayLives={LifeManager.Instance?.GetDisplayLives() ?? -1} | rewarded={AdsManager.Instance?.GetRewardedAvailabilityReason() ?? "ads_manager_missing"}");
 
         UpdateMessage();
         UpdateTimer();
@@ -124,19 +124,23 @@ public class NoLivesOverlay : UIOverlayBase
 
     private void OnWatchAdClicked()
     {
+        Debug.Log($"[NoLivesOverlay] Watch ad clicked | rewarded={AdsManager.Instance?.GetRewardedAvailabilityReason() ?? "ads_manager_missing"}");
+
         if (!CanWatchAdForRecovery())
         {
-            Debug.Log("[NoLivesOverlay] Rewarded recovery is not available.");
+            Debug.LogWarning($"[NoLivesOverlay] Rewarded recovery request rejected | reason={AdsManager.Instance?.GetRewardedAvailabilityReason() ?? "ads_manager_missing"}");
             UpdateButtons();
             return;
         }
 
-        Debug.Log("[NoLivesOverlay] See advertisement to obtain life");
+        Debug.Log("[NoLivesOverlay] Requesting rewarded ad for extra life from watch button.");
         AdsManager.Instance?.ShowRewardedAdForExtraLife();
     }
 
     private void OnClaimLifeClicked()
     {
+        Debug.Log($"[NoLivesOverlay] Claim life clicked | canPlay={LifeManager.Instance?.CanPlay() ?? false} | realLives={LifeManager.Instance?.GetRealLives() ?? -1} | rewarded={AdsManager.Instance?.GetRewardedAvailabilityReason() ?? "ads_manager_missing"}");
+
         if (LifeManager.Instance != null && LifeManager.Instance.CanPlay())
         {
             Hide();
@@ -146,7 +150,7 @@ public class NoLivesOverlay : UIOverlayBase
 
         if (!CanWatchAdForRecovery())
         {
-            Debug.Log("[NoLivesOverlay] Extra life rewarded ad is not available.");
+            Debug.LogWarning($"[NoLivesOverlay] Extra life rewarded ad request rejected | reason={AdsManager.Instance?.GetRewardedAvailabilityReason() ?? "ads_manager_missing"}");
             UpdateButtons();
             return;
         }
@@ -181,6 +185,6 @@ public class NoLivesOverlay : UIOverlayBase
         if (LifeManager.Instance != null && LifeManager.Instance.CanPlay())
             return false;
 
-        return AdsManager.Instance != null && AdsManager.Instance.IsRewardedAdReady();
+        return AdsManager.Instance != null && AdsManager.Instance.CanRequestRewardedAd();
     }
 }
