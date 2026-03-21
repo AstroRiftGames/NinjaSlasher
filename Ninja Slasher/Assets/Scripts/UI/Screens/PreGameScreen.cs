@@ -52,11 +52,6 @@ public class PreGameScreen : UIScreenBase
             _panelAnimator.SetTrigger("Open");
         }
 
-        if (_preGameUIManager != null)
-        {
-            _preGameUIManager.ShowPreGamePowerUps();
-        }
-
         NotifyPanelShown();
         OnShown();
     }
