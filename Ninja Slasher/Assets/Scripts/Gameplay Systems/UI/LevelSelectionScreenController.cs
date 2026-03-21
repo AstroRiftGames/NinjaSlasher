@@ -1,18 +1,41 @@
+using System;
 using UnityEngine;
 using TMPro;
+using DG.Tweening;
+using UnityEngine.UI;
 
 public class LevelSelectionScreenController : MonoBehaviour
 {
+    private static readonly Color UnlimitedLivesOverlayColor = new Color(1f, 0.95f, 0.5f, 0.8f);
+
+    public static LevelSelectionScreenController Instance { get; private set; }
+
     [Header("Areas")]
     [SerializeField] private AreaSectionController[] _areas;
 
     [Header("UI")]
     [SerializeField] private TextMeshProUGUI _totalStarsText;
+    [SerializeField] private RectTransform _livesWidgetRoot;
+    [SerializeField] private Image _lifeIconImage;
+    [SerializeField] private Image _unlimitedLivesFillImage;
+    [SerializeField] private TextMeshProUGUI _livesAmountText;
+    [SerializeField] private TextMeshProUGUI _livesTimerText;
+
+    private void Awake()
+    {
+        Instance = this;
+        CacheLivesWidgetReferences();
+        StoreRewardFeedbackController.EnsureFor(this);
+    }
 
     private void OnEnable()
     {
+        Instance = this;
+        CacheLivesWidgetReferences();
+        StoreRewardFeedbackController.EnsureFor(this);
         RefreshAll();
         UpdateTotalStarsDisplay();
+        RefreshLivesWidget();
 
         if (LevelProgressionManager.Instance != null)
         {
@@ -29,6 +52,9 @@ public class LevelSelectionScreenController : MonoBehaviour
 
     private void OnDisable()
     {
+        if (Instance == this)
+            Instance = null;
+
         if (LevelProgressionManager.Instance != null)
         {
             LevelProgressionManager.Instance.OnNewAreaUnlocked -= HandleNewAreaUnlocked;
@@ -39,6 +65,50 @@ public class LevelSelectionScreenController : MonoBehaviour
         {
             if (area != null)
                 area.OnUnlocked -= OnAreaUnlockAnimationComplete;
+        }
+    }
+
+    private void Update()
+    {
+        RefreshLivesWidget();
+    }
+
+    public RectTransform GetUnlimitedLivesFeedbackTarget()
+    {
+        if (_livesWidgetRoot != null)
+            return _livesWidgetRoot;
+
+        if (_livesTimerText != null)
+            return _livesTimerText.rectTransform;
+
+        if (_livesAmountText != null)
+            return _livesAmountText.rectTransform;
+
+        return null;
+    }
+
+    public Canvas GetRootCanvas()
+    {
+        return GetComponentInParent<Canvas>();
+    }
+
+    public void PlayUnlimitedLivesArrivalFeedback()
+    {
+        RefreshLivesWidget();
+
+        RectTransform target = GetUnlimitedLivesFeedbackTarget();
+        if (target != null)
+        {
+            DOTween.Kill(target);
+            target.DOPunchScale(new Vector3(0.26f, 0.26f, 0f), 0.32f, vibrato: 1, elasticity: 0.45f)
+                .SetUpdate(true);
+        }
+
+        if (_livesAmountText != null)
+        {
+            DOTween.Kill(_livesAmountText.rectTransform);
+            _livesAmountText.rectTransform.DOPunchScale(new Vector3(0.16f, 0.16f, 0f), 0.24f, vibrato: 1, elasticity: 0.4f)
+                .SetUpdate(true);
         }
     }
 
@@ -75,4 +145,115 @@ public class LevelSelectionScreenController : MonoBehaviour
     [ContextMenu("Debug/Refresh Todas las Áreas")]
     private void ContextMenuRefreshAll() => RefreshAll();
 #endif
+
+    private void CacheLivesWidgetReferences()
+    {
+        if (_livesWidgetRoot == null)
+            _livesWidgetRoot = FindRectTransformByName("Lives");
+
+        if (_lifeIconImage == null)
+        {
+            RectTransform iconRect = FindRectTransformByName("LifeIcon");
+            if (iconRect != null)
+                _lifeIconImage = iconRect.GetComponent<Image>();
+        }
+
+        if (_livesAmountText == null)
+            _livesAmountText = FindTextByName("LivesAmount");
+
+        if (_livesTimerText == null)
+            _livesTimerText = FindTextByName("CounterText");
+
+        EnsureUnlimitedLivesFillImage();
+    }
+
+    private RectTransform FindRectTransformByName(string objectName)
+    {
+        Transform[] children = GetComponentsInChildren<Transform>(includeInactive: true);
+        foreach (Transform child in children)
+        {
+            if (child.name == objectName)
+                return child as RectTransform;
+        }
+
+        return null;
+    }
+
+    private TextMeshProUGUI FindTextByName(string objectName)
+    {
+        RectTransform rect = FindRectTransformByName(objectName);
+        return rect != null ? rect.GetComponent<TextMeshProUGUI>() : null;
+    }
+
+    private void RefreshLivesWidget()
+    {
+        LifeManager lifeManager = LifeManager.Instance;
+        if (lifeManager == null || !lifeManager.IsInitialized)
+            return;
+
+        if (_livesAmountText != null)
+            _livesAmountText.text = lifeManager.GetDisplayLives().ToString();
+
+        bool hasUnlimitedLives = lifeManager.HasTimedUnlimitedLives;
+        if (_unlimitedLivesFillImage != null)
+        {
+            _unlimitedLivesFillImage.gameObject.SetActive(hasUnlimitedLives);
+            if (hasUnlimitedLives)
+                _unlimitedLivesFillImage.fillAmount = lifeManager.GetUnlimitedLivesFillAmount();
+        }
+
+        if (_livesTimerText != null)
+        {
+            if (hasUnlimitedLives)
+            {
+                _livesTimerText.text = FormatUnlimitedLivesTime(lifeManager.GetUnlimitedLivesRemainingTime());
+            }
+            else
+            {
+                TimeSpan nextLife = lifeManager.GetTimeToNextLife();
+                _livesTimerText.text = nextLife.TotalSeconds > 0d
+                    ? $"{nextLife.Minutes:D2}:{nextLife.Seconds:D2}"
+                    : string.Empty;
+            }
+        }
+    }
+
+    private void EnsureUnlimitedLivesFillImage()
+    {
+        if (_lifeIconImage == null)
+            return;
+
+        if (_unlimitedLivesFillImage == null)
+        {
+            GameObject overlayObject = new GameObject("UnlimitedLivesFill", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+            overlayObject.transform.SetParent(_lifeIconImage.transform, false);
+
+            RectTransform overlayRect = overlayObject.GetComponent<RectTransform>();
+            overlayRect.anchorMin = Vector2.zero;
+            overlayRect.anchorMax = Vector2.one;
+            overlayRect.offsetMin = Vector2.zero;
+            overlayRect.offsetMax = Vector2.zero;
+            overlayRect.SetAsLastSibling();
+
+            _unlimitedLivesFillImage = overlayObject.GetComponent<Image>();
+        }
+
+        _unlimitedLivesFillImage.raycastTarget = false;
+        _unlimitedLivesFillImage.sprite = _lifeIconImage.sprite;
+        _unlimitedLivesFillImage.color = UnlimitedLivesOverlayColor;
+        _unlimitedLivesFillImage.type = Image.Type.Filled;
+        _unlimitedLivesFillImage.fillMethod = Image.FillMethod.Radial360;
+        _unlimitedLivesFillImage.fillOrigin = (int)Image.Origin360.Top;
+        _unlimitedLivesFillImage.fillClockwise = false;
+        _unlimitedLivesFillImage.fillAmount = 0f;
+        _unlimitedLivesFillImage.gameObject.SetActive(false);
+    }
+
+    private string FormatUnlimitedLivesTime(TimeSpan remaining)
+    {
+        if (remaining.TotalHours >= 1d)
+            return $"{Mathf.FloorToInt((float)remaining.TotalHours):D2}:{remaining.Minutes:D2}:{remaining.Seconds:D2}";
+
+        return $"{remaining.Minutes:D2}:{remaining.Seconds:D2}";
+    }
 }

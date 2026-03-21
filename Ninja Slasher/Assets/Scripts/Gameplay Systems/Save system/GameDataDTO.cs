@@ -60,6 +60,9 @@ public class GameDataDTO
     public string pendingPurchaseProductId;
 
     /// <summary>Unix epoch (segundos UTC) en que expiran las vidas ilimitadas. 0 = inactivo.</summary>
+    public long unlimitedLivesStartUtc;
+
+    /// <summary>Unix epoch (segundos UTC) en que expiran las vidas ilimitadas. 0 = inactivo.</summary>
     public long unlimitedLivesEndUtc;
 
     /// <summary>Monedas del jugador.</summary>
@@ -130,6 +133,7 @@ public static class GameDataMapper
             consecutiveBossLosses = d.consecutiveBossLosses,
             consecutiveLosses = d.consecutiveLosses,
             pendingPurchaseProductId = d.pendingPurchaseProductId,
+            unlimitedLivesStartUtc = d.unlimitedLivesStartUtc,
             unlimitedLivesEndUtc = d.unlimitedLivesEndUtc,
             coins = d.coins,
             dailyWheelData = new DailyWheelSaveData
@@ -210,6 +214,7 @@ public static class GameDataMapper
             consecutiveBossLosses = dto.consecutiveBossLosses,
             consecutiveLosses = dto.consecutiveLosses,
             pendingPurchaseProductId = dto.pendingPurchaseProductId ?? "",
+            unlimitedLivesStartUtc = dto.unlimitedLivesStartUtc,
             unlimitedLivesEndUtc = dto.unlimitedLivesEndUtc,
             coins = dto.coins,
             dailyWheelData = dto.dailyWheelData ?? new DailyWheelSaveData(),
