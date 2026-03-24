@@ -597,24 +597,24 @@ public class PreGameUIManager : MonoBehaviour
                 item = new PowerUpInventoryItem(powerUpBase.powerUpType, 0);
 
             PowerUpSlotUI slot = Instantiate(_powerUpSlotPrefab, _powerUpsContainer);
-            slot.Setup(item, powerUpBase, OnPowerUpActivateClicked, OnPowerUpPurchaseClicked);
+            slot.Setup(item, powerUpBase, OnPowerUpInteractClicked);
             _slots.Add(slot);
         }
     }
 
-    private void OnPowerUpActivateClicked(PowerUpInventoryItem item, PowerUpBase powerUpBase)
+    private void OnPowerUpInteractClicked(PowerUpInventoryItem item, PowerUpBase powerUpBase)
     {
-        if (item == null || powerUpBase == null || item.quantity <= 0)
+        if (item == null || powerUpBase == null)
             return;
 
         if (_powerUpConfirmationPopUp == null)
         {
             Debug.LogWarning("[PreGameUIManager] PowerUpConfirmationPopUp not assigned. Falling back to direct activation.");
-            ConfirmPowerUpActivation(item.type);
+            HandlePowerUpPrimaryAction(item);
             return;
         }
 
-        _powerUpConfirmationPopUp.ShowConfirmation(powerUpBase, () => ConfirmPowerUpActivation(item.type));
+        _powerUpConfirmationPopUp.ShowConfirmation(BuildPowerUpConfirmationRequest(item, powerUpBase));
     }
 
     private void OnPowerUpPurchaseClicked(PowerUpInventoryItem item)
@@ -728,6 +728,36 @@ public class PreGameUIManager : MonoBehaviour
     public void HidePowerUpConfirmationImmediate()
     {
         _powerUpConfirmationPopUp?.HideImmediate();
+    }
+
+    private PowerUpConfirmationRequest BuildPowerUpConfirmationRequest(PowerUpInventoryItem item, PowerUpBase powerUpBase)
+    {
+        bool hasStock = item.quantity > 0;
+
+        if (hasStock)
+        {
+            return new PowerUpConfirmationRequest(
+                powerUpBase,
+                _powerUpConfirmationPopUp.GetActivateButtonLabel(),
+                true,
+                null,
+                () => ConfirmPowerUpActivation(item.type));
+        }
+
+        return new PowerUpConfirmationRequest(
+            powerUpBase,
+            _powerUpConfirmationPopUp.GetBuyButtonLabel(powerUpBase.cost),
+            PowerUpPurchaseService.CanAfford(powerUpBase.cost),
+            CoinCounterUI.Instance != null ? CoinCounterUI.Instance.GetCoinSprite() : null,
+            () => OnPowerUpPurchaseClicked(item));
+    }
+
+    private void HandlePowerUpPrimaryAction(PowerUpInventoryItem item)
+    {
+        if (item.quantity > 0)
+            ConfirmPowerUpActivation(item.type);
+        else
+            OnPowerUpPurchaseClicked(item);
     }
 
     private void ConfirmPowerUpActivation(PowerUpType powerUpType)

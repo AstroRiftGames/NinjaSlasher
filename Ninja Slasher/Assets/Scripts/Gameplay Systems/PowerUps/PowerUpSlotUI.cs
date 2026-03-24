@@ -16,15 +16,10 @@ public class PowerUpSlotUI : MonoBehaviour
     [SerializeField] private GameObject _quantityContainer;
     [SerializeField] private TextMeshProUGUI _quantityText;
 
-    [SerializeField] private GameObject _costContainer;
-    [SerializeField] private TextMeshProUGUI _costText;
-
     private PowerUpInventoryItem _item;
-    private Action<PowerUpInventoryItem, PowerUpBase> _onActivateCallback;
-    private Action<PowerUpInventoryItem> _onPurchaseCallback;
+    private Action<PowerUpInventoryItem, PowerUpBase> _onInteractCallback;
     private PowerUpBase _powerUpBase;
     private PowerUpType _powerUpType;
-    private int _cost;
 
     void OnEnable()
     {
@@ -41,25 +36,18 @@ public class PowerUpSlotUI : MonoBehaviour
     }
 
     public void Setup(PowerUpInventoryItem item, PowerUpBase powerUpBase,
-                      Action<PowerUpInventoryItem, PowerUpBase> onActivate,
-                      Action<PowerUpInventoryItem> onPurchase = null)
+                      Action<PowerUpInventoryItem, PowerUpBase> onInteract)
     {
         _item = item;
-        _onActivateCallback = onActivate;
-        _onPurchaseCallback = onPurchase;
+        _onInteractCallback = onInteract;
         _powerUpBase = powerUpBase;
         _powerUpType = powerUpBase.powerUpType;
-        _cost = powerUpBase.cost;
 
         iconImage.sprite = powerUpBase.icon;
         nameText.text = powerUpBase.displayName;
 
         activateButton.onClick.RemoveAllListeners();
-        activateButton.onClick.AddListener(() =>
-        {
-            if (_item.quantity > 0) OnActivatePressed();
-            else OnBuyPressed();
-        });
+        activateButton.onClick.AddListener(OnInteractPressed);
 
         RefreshState();
     }
@@ -69,21 +57,12 @@ public class PowerUpSlotUI : MonoBehaviour
         if (_item == null) return;
 
         bool isActive = PowerUpManager.Instance.IsPowerUpActive(_powerUpType);
-        bool hasStock = _item.quantity > 0;
-        bool showCost = !hasStock && !isActive;
-        bool canAfford = PowerUpPurchaseService.CanAfford(_cost);
 
         if (_quantityContainer != null)
-            _quantityContainer.SetActive(!showCost);
+            _quantityContainer.SetActive(!isActive);
 
-        if (_quantityText != null && !showCost)
+        if (_quantityText != null && !isActive)
             _quantityText.text = $"x{_item.quantity}";
-
-        if (_costContainer != null)
-            _costContainer.SetActive(showCost);
-
-        if (_costText != null && showCost)
-            _costText.text = _cost.ToString();
 
         if (activeIndicator != null)
             activeIndicator.SetActive(isActive);
@@ -102,26 +81,13 @@ public class PowerUpSlotUI : MonoBehaviour
             }
         }
 
-        if (hasStock && !isActive)
-            activateButton.interactable = true;
-        else if (hasStock && isActive)
-            activateButton.interactable = false;
-        else if (!hasStock && canAfford)
-            activateButton.interactable = true;
-        else
-            activateButton.interactable = false;
+        activateButton.interactable = !isActive;
     }
 
-    private void OnActivatePressed()
+    private void OnInteractPressed()
     {
         AudioManager.Instance.PlaySFX(SFXClip.UI_PowerUp);
-        _onActivateCallback?.Invoke(_item, _powerUpBase);
-    }
-
-    private void OnBuyPressed()
-    {
-        AudioManager.Instance.PlaySFX(SFXClip.UI_PowerUp);
-        _onPurchaseCallback?.Invoke(_item);
+        _onInteractCallback?.Invoke(_item, _powerUpBase);
     }
 
     private void OnCoinsChanged(int _) => RefreshState();

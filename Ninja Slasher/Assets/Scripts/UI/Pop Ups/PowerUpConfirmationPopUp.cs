@@ -4,6 +4,24 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
+public sealed class PowerUpConfirmationRequest
+{
+    public PowerUpBase PowerUp { get; }
+    public string PrimaryButtonLabel { get; }
+    public bool IsPrimaryButtonInteractable { get; }
+    public Sprite PrimaryButtonIcon { get; }
+    public Action PrimaryAction { get; }
+
+    public PowerUpConfirmationRequest(PowerUpBase powerUp, string primaryButtonLabel, bool isPrimaryButtonInteractable, Sprite primaryButtonIcon, Action primaryAction)
+    {
+        PowerUp = powerUp;
+        PrimaryButtonLabel = primaryButtonLabel;
+        IsPrimaryButtonInteractable = isPrimaryButtonInteractable;
+        PrimaryButtonIcon = primaryButtonIcon;
+        PrimaryAction = primaryAction;
+    }
+}
+
 public class PowerUpConfirmationPopUp : UIPopupBase
 {
     [Header("REFERENCES")]
@@ -12,6 +30,12 @@ public class PowerUpConfirmationPopUp : UIPopupBase
     [SerializeField] private TextMeshProUGUI _descriptionText;
     [SerializeField] private Button _buyButton;
     [SerializeField] private Button _cancelButton;
+    [SerializeField] private TextMeshProUGUI _buyButtonLabel;
+    [SerializeField] private Image _buyButtonIcon;
+
+    [Header("LABELS")]
+    [SerializeField] private string _activateButtonLabel = "Activate";
+    [SerializeField] private string _buyButtonLabelFormat = "{0}";
 
     private Action _confirmAction;
     private bool _isInitialized;
@@ -22,19 +46,19 @@ public class PowerUpConfirmationPopUp : UIPopupBase
         InitializeIfNeeded();
     }
 
-    public void ShowConfirmation(PowerUpBase powerUp, Action onConfirm)
+    public void ShowConfirmation(PowerUpConfirmationRequest request)
     {
         InitializeIfNeeded();
 
-        if (powerUp == null)
+        if (request == null || request.PowerUp == null)
         {
             Debug.LogWarning("[PowerUpConfirmationPopUp] Cannot show confirmation for a null power-up.");
             return;
         }
 
-        _confirmAction = onConfirm;
+        _confirmAction = request.PrimaryAction;
 
-        ApplyPowerUp(powerUp);
+        ApplyRequest(request);
         Show();
     }
 
@@ -81,13 +105,22 @@ public class PowerUpConfirmationPopUp : UIPopupBase
         if (_isInitialized)
             return;
 
+        ResolveOptionalReferences();
         SetupButtons();
         ResetViewState();
         _isInitialized = true;
     }
 
-    private void ApplyPowerUp(PowerUpBase powerUp)
+    private void ResolveOptionalReferences()
     {
+        if (_buyButtonLabel == null && _buyButton != null)
+            _buyButtonLabel = _buyButton.GetComponentInChildren<TextMeshProUGUI>(true);
+    }
+
+    private void ApplyRequest(PowerUpConfirmationRequest request)
+    {
+        PowerUpBase powerUp = request.PowerUp;
+
         if (_purchaseNameText != null)
         {
             _purchaseNameText.gameObject.SetActive(true);
@@ -105,6 +138,20 @@ public class PowerUpConfirmationPopUp : UIPopupBase
             _purchaseIcon.gameObject.SetActive(true);
             _purchaseIcon.sprite = powerUp.icon;
             _purchaseIcon.enabled = powerUp.icon != null;
+        }
+
+        if (_buyButton != null)
+            _buyButton.interactable = request.IsPrimaryButtonInteractable;
+
+        if (_buyButtonLabel != null)
+            _buyButtonLabel.text = request.PrimaryButtonLabel;
+
+        if (_buyButtonIcon != null)
+        {
+            bool showIcon = request.PrimaryButtonIcon != null;
+            _buyButtonIcon.gameObject.SetActive(showIcon);
+            _buyButtonIcon.sprite = request.PrimaryButtonIcon;
+            _buyButtonIcon.enabled = showIcon;
         }
     }
 
@@ -136,6 +183,19 @@ public class PowerUpConfirmationPopUp : UIPopupBase
             _purchaseIcon.sprite = null;
             _purchaseIcon.enabled = false;
         }
+
+        if (_buyButton != null)
+            _buyButton.interactable = true;
+
+        if (_buyButtonLabel != null)
+            _buyButtonLabel.text = string.Empty;
+
+        if (_buyButtonIcon != null)
+        {
+            _buyButtonIcon.gameObject.SetActive(false);
+            _buyButtonIcon.sprite = null;
+            _buyButtonIcon.enabled = false;
+        }
     }
 
     private void OnDestroy()
@@ -146,4 +206,8 @@ public class PowerUpConfirmationPopUp : UIPopupBase
         if (_cancelButton != null)
             _cancelButton.onClick.RemoveListener(OnCancelClicked);
     }
+
+    public string GetActivateButtonLabel() => _activateButtonLabel;
+
+    public string GetBuyButtonLabel(int cost) => string.Format(_buyButtonLabelFormat, cost);
 }
