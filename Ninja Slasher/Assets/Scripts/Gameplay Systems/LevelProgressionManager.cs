@@ -92,32 +92,12 @@ public class LevelProgressionManager : MonoBehaviourSingleton<LevelProgressionMa
 
     private void ShowConsecutiveLevelAd()
     {
-        if (AdsManager.Instance != null && AdsManager.Instance.IsInterstitialAdReady())
-        {
-            AdsManager.Instance.ShowInterstitialAd();
-        }
-        else
-        {
-            if (AdsManager.Instance != null)
-            {
-                AdsManager.Instance.ReloadAllAds();
-            }
-        }
+        AdsManager.Instance?.ShowInterstitialAd("consecutive_level_win");
     }
 
     private void ShowAreaUnlockAd(int newAreaId)
     {
-        if (AdsManager.Instance != null && AdsManager.Instance.IsInterstitialAdReady())
-        {
-            AdsManager.Instance.ShowInterstitialAd();
-        }
-        else
-        {
-            if (AdsManager.Instance != null)
-            {
-                AdsManager.Instance.ReloadAllAds();
-            }
-        }
+        AdsManager.Instance?.ShowInterstitialAd("area_unlock");
     }
 
     private void ResetConsecutiveCounter()

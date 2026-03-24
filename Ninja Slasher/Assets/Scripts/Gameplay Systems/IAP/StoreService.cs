@@ -124,11 +124,23 @@ public class StoreService : MonoBehaviourSingleton<StoreService>
         if (product == null)
             return;
 
+        string source = (!string.IsNullOrEmpty(_pendingVisualProductId) && _pendingVisualProductId == productId)
+            ? "shop"
+            : "paywall";
+
+        string transactionId = args.purchasedProduct.transactionID ?? "";
+
         RewardService.Instance?.Grant(product);
         TryRaisePurchaseFeedback(product, productId);
         ClearPendingVisualFeedback();
-
         ClearPendingPurchase();
+
+        AnalyticsManager.Instance?.RecordPurchaseCompleted(
+            productId,
+            AnalyticsManager.ProductCategoryStr(product.category),
+            source,
+            transactionId
+        );
     }
 
     private void OnPurchaseCompletedFallback(string productId)
@@ -203,6 +215,11 @@ public class StoreService : MonoBehaviourSingleton<StoreService>
 
         _pendingVisualProductId = productId;
         _pendingRewardFeedbackOrigin = feedbackOrigin;
+
+        string category = product != null
+            ? AnalyticsManager.ProductCategoryStr(product.category)
+            : "unknown";
+        AnalyticsManager.Instance?.RecordPurchaseStarted(productId, category, "shop");
 
         IAPManager.Instance?.PurchaseProduct(productId);
     }

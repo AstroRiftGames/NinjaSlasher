@@ -80,13 +80,13 @@ public class TutorialManager : MonoBehaviour
 
         if (SkipTutorial)
         {
-            DisableTutorial();
+            DisableTutorial("skipped");
             return;
         }
 
         if (IsTutorialCompleted())
         {
-            DisableTutorial();
+            DisableTutorial("alreadyCompleted");
             return;
         }
 
@@ -97,9 +97,12 @@ public class TutorialManager : MonoBehaviour
     {
         if (_runtimeDefinition == null || _runtimeDefinition.steps == null || _runtimeDefinition.steps.Count == 0)
         {
-            DisableTutorial();
+            DisableTutorial("noDefinition");
             return;
         }
+
+        bool isFreshStart = SaveManager.Instance == null ||
+                            SaveManager.Instance.GetTutorialState(ResolvedTutorialId) != (int)TutorialProgressState.InProgress;
 
         _tutorialActive = true;
         _currentStepIndex = Mathf.Clamp(GetSavedStepIndex(), 0, _runtimeDefinition.steps.Count - 1);
@@ -114,6 +117,10 @@ public class TutorialManager : MonoBehaviour
 
         _displayController.HideAll();
         SaveCurrentProgress();
+
+        if (isFreshStart)
+            AnalyticsManager.Instance?.RecordTutorialStarted(ResolvedTutorialId, _runtimeDefinition.steps.Count);
+
         ShowCurrentStep();
     }
 
@@ -142,8 +149,19 @@ public class TutorialManager : MonoBehaviour
         TryCompleteCurrentStep(TutorialCompletionTrigger.ParrySuccessful);
     }
 
-    public void DisableTutorial()
+    public void DisableTutorial(string reason = "")
     {
+        if (_tutorialActive)
+        {
+            var abandonedStep = GetCurrentStep();
+            AnalyticsManager.Instance?.RecordTutorialAbandoned(
+                ResolvedTutorialId,
+                reason,
+                abandonedStep?.stepId ?? "",
+                _currentStepIndex,
+                _runtimeDefinition?.steps?.Count ?? 0);
+        }
+
         _tutorialActive = false;
         SaveCurrentProgress();
         CleanupRuntimeState();
@@ -187,6 +205,13 @@ public class TutorialManager : MonoBehaviour
         }
 
         _displayController.ShowStep(step);
+
+        AnalyticsManager.Instance?.RecordTutorialStepStarted(
+            ResolvedTutorialId,
+            step.stepId,
+            _currentStepIndex,
+            _runtimeDefinition?.steps?.Count ?? 0);
+
         ArmCurrentStep(step);
     }
 
@@ -264,7 +289,17 @@ public class TutorialManager : MonoBehaviour
         if (!_tutorialActive)
             return;
 
+        var completedStep = GetCurrentStep();
         _currentStepIndex++;
+
+        if (completedStep != null)
+        {
+            AnalyticsManager.Instance?.RecordTutorialStepCompleted(
+                ResolvedTutorialId,
+                completedStep.stepId,
+                _currentStepIndex - 1,
+                _runtimeDefinition?.steps?.Count ?? 0);
+        }
 
         if (_runtimeDefinition == null || _currentStepIndex >= _runtimeDefinition.steps.Count)
         {
@@ -280,6 +315,11 @@ public class TutorialManager : MonoBehaviour
     {
         _tutorialActive = false;
         SaveCompletedProgress();
+
+        AnalyticsManager.Instance?.RecordTutorialCompleted(
+            ResolvedTutorialId,
+            _runtimeDefinition?.steps?.Count ?? 0);
+
         CleanupRuntimeState();
     }
 
@@ -339,12 +379,12 @@ public class TutorialManager : MonoBehaviour
 
     private void HandleLevelCompleted(LevelStats _)
     {
-        DisableTutorial();
+        DisableTutorial("levelCompleted");
     }
 
     private void HandleLevelFailed(LevelFailedContext _)
     {
-        DisableTutorial();
+        DisableTutorial("levelFailed");
     }
 
     private string ResolvedTutorialId

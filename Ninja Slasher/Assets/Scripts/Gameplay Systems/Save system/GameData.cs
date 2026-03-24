@@ -94,6 +94,13 @@ public class GameData
     /// <summary>Monedas del jugador.</summary>
     public int coins = 0;
 
+    /// <summary>
+    /// Marca que el evento firstOpen ya fue enviado.
+    /// Una vez true, no vuelve a dispararse aunque la app se reinstale sobre sí misma
+    /// con datos de nube/backup. Valor false en saves existentes = primer open legítimo.
+    /// </summary>
+    public bool hasFirstOpenFired = false;
+
     public GameData()
     {
         unlockedAreas.Add(1); // area 1 desbloqueada
@@ -238,6 +245,11 @@ public class LevelProgressData
     public int bestMoves;
     public bool parryKillAchieved;
 
+    // Total de intentos fallidos acumulados en este nivel.
+    // Usado para enviar attemptNumber real en el evento levelFailed.
+    // Valor 0 en saves existentes equivale a "sin historial previo".
+    public int totalAttempts = 0;
+
     public LevelProgressData() { }
 
     public LevelProgressData(int id)
@@ -250,6 +262,7 @@ public class LevelProgressData
         bestTimeSeconds = float.MaxValue;
         bestMoves = int.MaxValue;
         parryKillAchieved = false;
+        totalAttempts = 0;
     }
 }
 

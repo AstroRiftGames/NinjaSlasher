@@ -69,6 +69,14 @@ public class StoreItemUI : MonoBehaviour
 
         RectTransform feedbackOrigin = GetFeedbackOrigin();
 
+        // productSelected registra la intención del jugador en el momento del tap,
+        // antes de la confirmación (modal) o de la compra directa.
+        var product = StoreService.Instance?.GetProduct(_productId);
+        string category = product != null
+            ? AnalyticsManager.ProductCategoryStr(product.category)
+            : "unknown";
+        AnalyticsManager.Instance?.RecordProductSelected(_productId, category);
+
         if (_storeModal != null)
         {
             _storeModal.ShowPurchaseConfirmation(_productId, feedbackOrigin);

@@ -68,6 +68,9 @@ public class GameDataDTO
     /// <summary>Monedas del jugador.</summary>
     public int coins;
 
+    /// <summary>Marca que el evento firstOpen ya fue enviado una vez.</summary>
+    public bool hasFirstOpenFired;
+
     /// <summary>Datos de daily wheel.</summary>
     public DailyWheelSaveData dailyWheelData = new DailyWheelSaveData();
 }
@@ -136,6 +139,7 @@ public static class GameDataMapper
             unlimitedLivesStartUtc = d.unlimitedLivesStartUtc,
             unlimitedLivesEndUtc = d.unlimitedLivesEndUtc,
             coins = d.coins,
+            hasFirstOpenFired = d.hasFirstOpenFired,
             dailyWheelData = new DailyWheelSaveData
             {
                 lastSpinDateIso  = d.dailyWheelData?.lastSpinDateIso ?? "",
@@ -217,6 +221,7 @@ public static class GameDataMapper
             unlimitedLivesStartUtc = dto.unlimitedLivesStartUtc,
             unlimitedLivesEndUtc = dto.unlimitedLivesEndUtc,
             coins = dto.coins,
+            hasFirstOpenFired = dto.hasFirstOpenFired,
             dailyWheelData = dto.dailyWheelData ?? new DailyWheelSaveData(),
         };
 

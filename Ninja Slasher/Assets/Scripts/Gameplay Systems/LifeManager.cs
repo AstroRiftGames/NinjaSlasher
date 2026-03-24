@@ -130,6 +130,8 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
     private bool _levelInProgress = false;
     private bool _isInitialized = false;
 
+    private bool _lifeWallActive = false;
+
     #region INITIALIZATION
 
     public override void Awake()
@@ -298,6 +300,8 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
             int toGenerate = Mathf.FloorToInt((float)seconds / LifeRechargeSeconds);
             int newLives = Mathf.Min(CurrentLives + toGenerate, MaxLives);
 
+            bool wasAtWall = _lifeWallActive && CurrentLives == 0;
+
             double secondsToAdd = toGenerate * LifeRechargeSeconds;
             if (secondsToAdd > int.MaxValue)
             {
@@ -322,8 +326,15 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
             {
                 AnalyticsManager.Instance.RecordLifeRestored(
                     CurrentLives,
-                    "timeRegeneration"
+                    LifeRestoreSource.TimeRegeneration
                 );
+            }
+
+            if (wasAtWall && CurrentLives > 0)
+            {
+                _lifeWallActive = false;
+                int wallLevelId = LevelSessionManager.Instance?.CurrentSession?.LevelId ?? 0;
+                AnalyticsManager.Instance?.RecordLifeWallResolved(LifeWallOutcome.Waited, wallLevelId);
             }
 
             Persist("Vida regenerada");
@@ -505,6 +516,13 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
 
             Persist("Vida perdida (confirmada)");
             EmitDisplayLivesChanged();
+
+            if (CurrentLives == 0 && !_lifeWallActive)
+            {
+                _lifeWallActive = true;
+                int wallLevelId = LevelSessionManager.Instance?.CurrentSession?.LevelId ?? 0;
+                AnalyticsManager.Instance?.RecordLifeWallEncountered(wallLevelId);
+            }
         }
         else
         {
@@ -528,6 +546,13 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
 
             Persist("Vida perdida (directa)");
             EmitDisplayLivesChanged();
+
+            if (CurrentLives == 0 && !_lifeWallActive)
+            {
+                _lifeWallActive = true;
+                int wallLevelId = LevelSessionManager.Instance?.CurrentSession?.LevelId ?? 0;
+                AnalyticsManager.Instance?.RecordLifeWallEncountered(wallLevelId);
+            }
         }
     }
 
@@ -573,7 +598,7 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
     public int GetDisplayLives() => _hasVirtualDeduction ? _virtualLives : CurrentLives;
     public int GetRealLives() => CurrentLives;
 
-    public void AddLife()
+    public void AddLife(LifeRestoreSource source = LifeRestoreSource.Unknown)
     {
         if (CurrentLives >= MaxLives) return;
 
@@ -588,8 +613,15 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
         {
             AnalyticsManager.Instance.RecordLifeRestored(
                 CurrentLives,
-                "manualAdd"
+                source
             );
+        }
+
+        if (_lifeWallActive)
+        {
+            _lifeWallActive = false;
+            int wallLevelId = LevelSessionManager.Instance?.CurrentSession?.LevelId ?? 0;
+            AnalyticsManager.Instance?.RecordLifeWallResolved(WallOutcomeFromSource(source), wallLevelId);
         }
 
         Persist("Vida ganada");
@@ -651,6 +683,15 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
     }
 
     public bool HasPendingDeduction() => _hasVirtualDeduction;
+
+    public void NotifyLifeWallAbandoned()
+    {
+        if (!_lifeWallActive) return;
+
+        _lifeWallActive = false;
+        int wallLevelId = LevelSessionManager.Instance?.CurrentSession?.LevelId ?? 0;
+        AnalyticsManager.Instance?.RecordLifeWallResolved(LifeWallOutcome.Abandoned, wallLevelId);
+    }
 
     #endregion
 
@@ -744,32 +785,12 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
 
     private void ShowConsecutiveLossAd()
     {
-        if (AdsManager.Instance != null && AdsManager.Instance.IsInterstitialAdReady())
-        {
-            AdsManager.Instance.ShowInterstitialAd();
-        }
-        else
-        {
-            if (AdsManager.Instance != null)
-            {
-                AdsManager.Instance.ReloadAllAds();
-            }
-        }
+        AdsManager.Instance?.ShowInterstitialAd("consecutive_loss");
     }
 
     private void ShowNoLivesAd()
     {
-        if (AdsManager.Instance != null && AdsManager.Instance.IsInterstitialAdReady())
-        {
-            AdsManager.Instance.ShowInterstitialAd();
-        }
-        else
-        {
-            if (AdsManager.Instance != null)
-            {
-                AdsManager.Instance.ReloadAllAds();
-            }
-        }
+        AdsManager.Instance?.ShowInterstitialAd("no_lives");
     }
 
     private void ResetLossCounter()
@@ -781,6 +802,14 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
         currentConsecutiveLosses = 0;
         SaveAdsProgress();
     }
+
+    private static LifeWallOutcome WallOutcomeFromSource(LifeRestoreSource source) => source switch
+    {
+        LifeRestoreSource.AdReward        => LifeWallOutcome.AdReward,
+        LifeRestoreSource.IapPurchase     => LifeWallOutcome.IapPurchase,
+        LifeRestoreSource.EmergencyBundle => LifeWallOutcome.IapPurchase,
+        _                                 => LifeWallOutcome.Waited
+    };
 
     #endregion
 }

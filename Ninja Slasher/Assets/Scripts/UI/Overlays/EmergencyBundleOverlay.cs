@@ -138,7 +138,15 @@ public class EmergencyBundleOverlay : UIOverlayBase
         }
 
         if (_countdownText != null) _countdownText.text = "00:00";
-        DismissOffer();
+        OnCountdownExpired();
+    }
+
+    private void OnCountdownExpired()
+    {
+        if (EmergencyBundleService.Instance != null)
+            EmergencyBundleService.Instance.OnOfferExpired();
+        else
+            UIEvents.RequestHideEmergencyBundleOverlay();
     }
 
     private void StopCountdown()
@@ -160,6 +168,12 @@ public class EmergencyBundleOverlay : UIOverlayBase
 
         string productId = _currentOffer.Product.PrimaryProductId;
         if (string.IsNullOrEmpty(productId)) return;
+
+        AnalyticsManager.Instance?.RecordPurchaseStarted(
+            productId,
+            AnalyticsManager.ProductCategoryStr(_currentOffer.Product.category),
+            "paywall"
+        );
 
         if (IAPManager.Instance != null)
             IAPManager.Instance.PurchaseProduct(productId);

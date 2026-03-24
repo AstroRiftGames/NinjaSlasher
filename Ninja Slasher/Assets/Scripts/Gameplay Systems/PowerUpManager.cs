@@ -39,6 +39,8 @@ public class PowerUpManager : MonoBehaviourSingleton<PowerUpManager>
 
     private List<(PowerUpBase powerUp, int usesRemaining)> _activeUsages = new List<(PowerUpBase, int)>();
 
+    private Dictionary<PowerUpType, int> _activationLevelIds = new Dictionary<PowerUpType, int>();
+
     [Header("DEBUG")]
     [SerializeField] private List<PowerUpInfo> availablePowerUps = new List<PowerUpInfo>();
 
@@ -198,7 +200,7 @@ public class PowerUpManager : MonoBehaviourSingleton<PowerUpManager>
                 return false;
             }
 
-            ActivatePowerUpInternal(powerUpToActivate);
+            ActivatePowerUpInternal(powerUpToActivate, isFromInventory: true);
         }
 
         if (AutoSaveManager.Instance != null)
@@ -291,9 +293,23 @@ public class PowerUpManager : MonoBehaviourSingleton<PowerUpManager>
         PowerUpUIController.HidePowerUp(type);
 
         GameEvents.RaisePowerUpExpired(type);
+
+        {
+            int levelId           = LevelSessionManager.Instance?.CurrentSession?.LevelId ?? -1;
+            int activatedAtLevelId = _activationLevelIds.TryGetValue(type, out int al) ? al : -1;
+            int attemptNumber     = GetCurrentAttemptNumber(levelId);
+            _activationLevelIds.Remove(type);
+            AnalyticsManager.Instance?.RecordPowerUpExpired(type.ToString(), levelId, activatedAtLevelId, attemptNumber);
+        }
     }
 
-    void ActivatePowerUpInternal(PowerUpBase powerUp, int uses = -1)
+    private int GetCurrentAttemptNumber(int levelId)
+    {
+        if (SaveManager.Instance == null || levelId <= 0) return 1;
+        return SaveManager.Instance.GetGameData().GetLevelProgress(levelId).totalAttempts + 1;
+    }
+
+    void ActivatePowerUpInternal(PowerUpBase powerUp, int uses = -1, bool isFromInventory = false)
     {
         int usesToSet = uses > 0 ? uses : powerUp.maxUses;
 
@@ -324,6 +340,14 @@ public class PowerUpManager : MonoBehaviourSingleton<PowerUpManager>
         Debug.Log($"[PowerUpManager] Power-up {type} activado - Usos: {usesToSet}");
 
         GameEvents.RaisePowerUpActivated(type, usesToSet);
+
+        if (isFromInventory)
+        {
+            int levelId       = LevelSessionManager.Instance?.CurrentSession?.LevelId ?? -1;
+            int attemptNumber = GetCurrentAttemptNumber(levelId);
+            _activationLevelIds[type] = levelId;
+            AnalyticsManager.Instance?.RecordPowerUpActivated(type.ToString(), usesToSet, levelId, attemptNumber);
+        }
 
         PowerUpUIController.ShowPowerUp(type, powerUp.icon, usesToSet);
 
@@ -388,10 +412,20 @@ public class PowerUpManager : MonoBehaviourSingleton<PowerUpManager>
         }
     }
 
+    public string GetActivePowerUpsString()
+    {
+        if (activePowerUps.Count == 0) return "";
+        var names = new List<string>(activePowerUps.Count);
+        foreach (var pu in activePowerUps)
+            names.Add(GetPowerUpType(pu).ToString());
+        return string.Join(",", names);
+    }
+
     public void ReloadFromSave()
     {
         activePowerUps.Clear();
         _activeUsages.Clear();
+        _activationLevelIds.Clear();
 
         LoadActivePowerUpsFromGameData();
         RebuildHUD();
@@ -432,7 +466,7 @@ public class PowerUpManager : MonoBehaviourSingleton<PowerUpManager>
         Debug.Log("[PowerUpManager] Consumo completado");
     }
 
-    #region DEBUG_CONTEXT_MENU
+    #region DEBUG
 
     [ContextMenu("Add 5 Units of All Power-Ups")]
     private void AddAllPowerUps()

@@ -68,6 +68,10 @@ public class LevelSessionManager : MonoBehaviourSingleton<LevelSessionManager>
             return levelId;
         }
 
+        // Fallback silencioso corregido: ahora loggea warning para que la contaminación
+        // sea detectable. Si este warning aparece, revisar la convención de nombre de escena.
+        Debug.LogWarning($"[LevelSessionManager] No se pudo extraer levelId de '{sceneName}'. " +
+                         $"Usando fallback 1, lo que puede contaminar analytics si no es nivel 1.");
         return 1;
     }
 
@@ -124,6 +128,14 @@ public class LevelSessionManager : MonoBehaviourSingleton<LevelSessionManager>
         timerService.Start();
 
         PlayGameplayMusic();
+
+        if (AnalyticsManager.Instance != null)
+        {
+            AnalyticsManager.Instance.RecordLevelStart(
+                currentSession.LevelId,
+                PowerUpManager.Instance?.GetActivePowerUpsString() ?? ""
+            );
+        }
 
         GameEvents.RaiseLevelStarted();
     }
@@ -227,6 +239,19 @@ public class LevelSessionManager : MonoBehaviourSingleton<LevelSessionManager>
                 result.starsEarned,
                 stats.timeTaken
             );
+
+            AnalyticsManager.Instance.RecordLevelMechanicsSummary(
+                currentSession.LevelId,
+                "completed",
+                GetAttemptNumber(currentSession.LevelId),
+                stats.movesUsed,
+                stats.maxComboLevelReached,
+                stats.enemiesDefeated,
+                stats.totalEnemies,
+                stats.reflectedProjectileKills,
+                stats.maxEnemiesKilledInSingleAttack,
+                PowerUpManager.Instance?.GetActivePowerUpsString() ?? ""
+            );
         }
 
         GameEvents.RaiseLevelCompleted(stats);
@@ -265,6 +290,12 @@ public class LevelSessionManager : MonoBehaviourSingleton<LevelSessionManager>
         }
 
         return objectiveService.GetProgressData(currentSession.CurrentStats);
+    }
+
+    private int GetAttemptNumber(int levelId)
+    {
+        if (SaveManager.Instance == null || levelId <= 0) return 1;
+        return SaveManager.Instance.GetGameData().GetLevelProgress(levelId).totalAttempts + 1;
     }
 
     public LevelStats GetCurrentStats()

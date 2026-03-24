@@ -126,18 +126,37 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
 
         if (_levelStarted && AnalyticsManager.Instance != null)
         {
-            int currentLevelId = GetCurrentLevelId();
-            float attemptTime = 0f;
+            int currentLevelId = GetLevelIdForAnalytics();
+            float attemptTime = LevelSessionManager.Instance?.GetTimeTaken() ?? 0f;
 
-            if (LevelSessionManager.Instance != null)
+            int attemptNumber = 1;
+            if (SaveManager.Instance != null && currentLevelId > 0)
             {
-                attemptTime = LevelSessionManager.Instance.GetTimeTaken();
+                var progress = SaveManager.Instance.GetGameData().GetLevelProgress(currentLevelId);
+                attemptNumber = progress.totalAttempts + 1;
+                int capturedLevelId = currentLevelId;
+                SaveManager.Instance.Modify(d => d.GetLevelProgress(capturedLevelId).totalAttempts++);
             }
 
             AnalyticsManager.Instance.RecordLevelFailed(
                 currentLevelId,
                 reason,
-                attemptTime
+                attemptTime,
+                attemptNumber
+            );
+
+            var defeatStats = LevelSessionManager.Instance?.GetCurrentStats() ?? new LevelStats();
+            AnalyticsManager.Instance.RecordLevelMechanicsSummary(
+                currentLevelId,
+                "failed",
+                attemptNumber,
+                defeatStats.movesUsed,
+                defeatStats.maxComboLevelReached,
+                defeatStats.enemiesDefeated,
+                defeatStats.totalEnemies,
+                defeatStats.reflectedProjectileKills,
+                defeatStats.maxEnemiesKilledInSingleAttack,
+                PowerUpManager.Instance?.GetActivePowerUpsString() ?? ""
             );
         }
 
@@ -273,6 +292,16 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
         _levelStarted = true;
 
         SceneManager.LoadScene(currentScene);
+    }
+
+    private int GetLevelIdForAnalytics()
+    {
+        if (LevelSessionManager.Instance?.CurrentSession != null)
+            return LevelSessionManager.Instance.CurrentSession.LevelId;
+
+        int fallback = GetCurrentLevelId();
+        Debug.LogWarning($"[GameManager] levelId obtenido por Regex fallback ({fallback}). LevelSessionManager no disponible.");
+        return fallback;
     }
 
     private int GetCurrentLevelId()

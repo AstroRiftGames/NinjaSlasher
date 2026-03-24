@@ -66,6 +66,7 @@ public class NoLivesOverlay : UIOverlayBase
     {
         if (!LifeManager.Instance.CanPlay())
         {
+            LifeManager.Instance?.NotifyLifeWallAbandoned();
             UIEvents.RaiseQuitToMenuPressed();
         }
     }

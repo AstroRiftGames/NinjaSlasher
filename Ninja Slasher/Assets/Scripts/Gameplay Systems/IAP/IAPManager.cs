@@ -192,6 +192,7 @@ public class IAPManager : MonoBehaviourSingleton<IAPManager>, IDetailedStoreList
         SaveManager.Instance?.Modify(d => d.pendingPurchaseProductId = "");
         Debug.LogError($"[IAPManager] Purchase failed: {product.definition.id}, reason: {failureReason}");
         OnPurchaseFailedEvent?.Invoke(product.definition.id, failureReason.ToString());
+        AnalyticsManager.Instance?.RecordPurchaseFailed(product.definition.id, failureReason.ToString());
     }
 
     public void OnPurchaseFailed(Product product, PurchaseFailureDescription failureDescription)
@@ -255,6 +256,7 @@ public class IAPManager : MonoBehaviourSingleton<IAPManager>, IDetailedStoreList
                 if (success)
                 {
                     Debug.Log("[IAPManager] Purchases restored successfully.");
+                    AnalyticsManager.Instance?.RecordPurchaseRestored();
                     callback?.Invoke(true, null);
                 }
                 else

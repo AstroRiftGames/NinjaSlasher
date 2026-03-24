@@ -14,6 +14,10 @@ public class AnalyticsManager : MonoBehaviourSingleton<AnalyticsManager>
     [SerializeField] private bool isInitialized = false;
     [SerializeField] private bool isDataCollectionActive = false;
 
+    private DateTime _sessionStartUtc = DateTime.UtcNow;
+
+    private bool _gameEndFired = false;
+
     public override void Awake()
     {
         base.Awake();
@@ -26,11 +30,15 @@ public class AnalyticsManager : MonoBehaviourSingleton<AnalyticsManager>
 
     private async Task InitializeAnalytics()
     {
+        if (!enableAnalyticsInEditor && Application.isEditor)
+        {
+            Debug.Log("[AnalyticsManager] Analytics deshabilitado en editor (enableAnalyticsInEditor = false).");
+            return;
+        }
+
         try
         {
             await UnityServices.InitializeAsync();
-
-            //Debug.Log("Unity Services inicializado correctamente");
 
             if (AnalyticsService.Instance != null)
             {
@@ -39,13 +47,11 @@ public class AnalyticsManager : MonoBehaviourSingleton<AnalyticsManager>
                 isInitialized = true;
                 isDataCollectionActive = true;
 
-                //Debug.Log("Unity Analytics inicializado y recolección de datos iniciada");
-
                 RecordGameStart();
             }
             else
             {
-                Debug.LogError("[AnalyticsManager] AnalyticsService no está disponible");
+                Debug.LogError("[AnalyticsManager] AnalyticsService no estÃ¡ disponible");
             }
         }
         catch (Exception e)
@@ -58,44 +64,101 @@ public class AnalyticsManager : MonoBehaviourSingleton<AnalyticsManager>
     {
         if (!CanRecordEvent()) return;
 
+        _sessionStartUtc = DateTime.UtcNow;
+        _gameEndFired = false;
+
         try
         {
-            var gameStartEvent = new CustomEvent("gameStart")
+            var gameStartEvent = new CustomEvent(AnalyticsEvents.GameStart)
             {
-                { "sessionId", Guid.NewGuid().ToString() },
-                { "eventTime", DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ") },
-                { "devicePlatform", Application.platform.ToString() },
-                { "version", Application.version }
+                { AnalyticsEvents.Props.SessionId,      Guid.NewGuid().ToString() },
+                { AnalyticsEvents.Props.EventTime,      GetEventTime() },
+                { AnalyticsEvents.Props.DevicePlatform, Application.platform.ToString() },
+                { AnalyticsEvents.Props.Version,        Application.version }
             };
 
             AnalyticsService.Instance.RecordEvent(gameStartEvent);
-            //Debug.Log("Evento 'gameStart' enviado correctamente");
         }
         catch (Exception e)
         {
             Debug.LogError($"[AnalyticsManager] Error enviando gameStart: {e.Message}");
         }
+
+        RecordFirstOpen();
     }
 
-    public void RecordGameEnd(float sessionDuration)
+    private void RecordFirstOpen()
+    {
+        if (!CanRecordEvent()) return;
+        if (SaveManager.Instance == null) return;
+
+        var data = SaveManager.Instance.GetGameData();
+        if (data.hasFirstOpenFired) return;
+
+        SaveManager.Instance.Modify(d => d.hasFirstOpenFired = true);
+
+        try
+        {
+            var e = new CustomEvent(AnalyticsEvents.FirstOpen)
+            {
+                { AnalyticsEvents.Props.DevicePlatform, Application.platform.ToString() },
+                { AnalyticsEvents.Props.Version,        Application.version },
+                { AnalyticsEvents.Props.EventTime,      GetEventTime() }
+            };
+            AnalyticsService.Instance.RecordEvent(e);
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"[AnalyticsManager] Error enviando firstOpen: {e.Message}");
+        }
+    }
+
+    public void RecordGameEnd()
+    {
+        if (_gameEndFired) return;
+
+        if (!CanRecordEvent()) return;
+
+        _gameEndFired = true;
+        
+        float sessionDuration = (float)(DateTime.UtcNow - _sessionStartUtc).TotalSeconds;
+        if (sessionDuration < 0f) sessionDuration = 0f;
+
+        try
+        {
+            var gameEndEvent = new CustomEvent(AnalyticsEvents.GameEnd)
+            {
+                { AnalyticsEvents.Props.SessionDuration, sessionDuration },
+                { AnalyticsEvents.Props.EventTime,       GetEventTime() },
+                { AnalyticsEvents.Props.DevicePlatform,  Application.platform.ToString() }
+            };
+
+            AnalyticsService.Instance.RecordEvent(gameEndEvent);
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"[AnalyticsManager] Error enviando gameEnd: {e.Message}");
+        }
+    }
+
+    public void RecordLevelStart(int levelId, string activePowerUps = "")
     {
         if (!CanRecordEvent()) return;
 
         try
         {
-            var gameEndEvent = new CustomEvent("gameEnd")
+            var levelStartEvent = new CustomEvent(AnalyticsEvents.LevelStart)
             {
-                { "sessionDuration", sessionDuration },
-                { "eventTime", DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ") },
-                { "devicePlatform", Application.platform.ToString() }
+                { AnalyticsEvents.Props.LevelId,       levelId },
+                { AnalyticsEvents.Props.ActivePowerUps, activePowerUps },
+                { AnalyticsEvents.Props.EventTime,      GetEventTime() }
             };
 
-            AnalyticsService.Instance.RecordEvent(gameEndEvent);
-            //Debug.Log($"Evento 'gameEnd' enviado - Duración: {sessionDuration} segundos");
+            AnalyticsService.Instance.RecordEvent(levelStartEvent);
         }
         catch (Exception e)
         {
-            Debug.LogError($"[AnalyticsManager] Error enviando gameEnd: {e.Message}");
+            Debug.LogError($"[AnalyticsManager] Error enviando levelStart: {e.Message}");
         }
     }
 
@@ -105,16 +168,15 @@ public class AnalyticsManager : MonoBehaviourSingleton<AnalyticsManager>
 
         try
         {
-            var levelCompletedEvent = new CustomEvent("levelCompleted")
+            var levelCompletedEvent = new CustomEvent(AnalyticsEvents.LevelCompleted)
             {
-                { "levelId", levelId },
-                { "starsEarned", starsEarned },
-                { "completionTime", completionTime },
-                { "eventTime", DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ") }
+                { AnalyticsEvents.Props.LevelId,        levelId },
+                { AnalyticsEvents.Props.StarsEarned,    starsEarned },
+                { AnalyticsEvents.Props.CompletionTime, completionTime },
+                { AnalyticsEvents.Props.EventTime,      GetEventTime() }
             };
 
             AnalyticsService.Instance.RecordEvent(levelCompletedEvent);
-            //Debug.Log($"Evento 'levelCompleted' enviado - Nivel: {levelId}, Estrellas: {starsEarned}, Tiempo: {completionTime}s");
         }
         catch (Exception e)
         {
@@ -128,17 +190,16 @@ public class AnalyticsManager : MonoBehaviourSingleton<AnalyticsManager>
 
         try
         {
-            var levelFailedEvent = new CustomEvent("levelFailed")
+            var levelFailedEvent = new CustomEvent(AnalyticsEvents.LevelFailed)
             {
-                { "levelId", levelId },
-                { "failReason", failReason },
-                { "attemptTime", attemptTime },
-                { "attemptNumber", attemptNumber },
-                { "eventTime", DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ") }
+                { AnalyticsEvents.Props.LevelId,       levelId },
+                { AnalyticsEvents.Props.FailReason,    failReason },
+                { AnalyticsEvents.Props.AttemptTime,   attemptTime },
+                { AnalyticsEvents.Props.AttemptNumber, attemptNumber },
+                { AnalyticsEvents.Props.EventTime,     GetEventTime() }
             };
 
             AnalyticsService.Instance.RecordEvent(levelFailedEvent);
-            //Debug.Log($"Evento 'levelFailed' enviado - Nivel: {levelId}, Razón: {failReason}");
         }
         catch (Exception e)
         {
@@ -152,16 +213,15 @@ public class AnalyticsManager : MonoBehaviourSingleton<AnalyticsManager>
 
         try
         {
-            var lifeLostEvent = new CustomEvent("lifeLost")
+            var lifeLostEvent = new CustomEvent(AnalyticsEvents.LifeLost)
             {
-                { "currentLives", currentLives },
-                { "totalLivesLost", totalLivesLost },
-                { "lossReason", lossReason },
-                { "eventTime", DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ") }
+                { AnalyticsEvents.Props.CurrentLives,   currentLives },
+                { AnalyticsEvents.Props.TotalLivesLost, totalLivesLost },
+                { AnalyticsEvents.Props.LossReason,     lossReason },
+                { AnalyticsEvents.Props.EventTime,      GetEventTime() }
             };
 
             AnalyticsService.Instance.RecordEvent(lifeLostEvent);
-            //Debug.Log($"Evento 'lifeLost' enviado - Vidas restantes: {currentLives}, Razón: {lossReason}");
         }
         catch (Exception e)
         {
@@ -169,21 +229,20 @@ public class AnalyticsManager : MonoBehaviourSingleton<AnalyticsManager>
         }
     }
 
-    public void RecordLifeRestored(int newLifeCount, string restoreMethod)
+    public void RecordLifeRestored(int newLifeCount, LifeRestoreSource source)
     {
         if (!CanRecordEvent()) return;
 
         try
         {
-            var lifeRestoredEvent = new CustomEvent("lifeRestored")
+            var lifeRestoredEvent = new CustomEvent(AnalyticsEvents.LifeRestored)
             {
-                { "newLifeCount", newLifeCount },
-                { "restoreMethod", restoreMethod },
-                { "eventTime", DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ") }
+                { AnalyticsEvents.Props.NewLifeCount,  newLifeCount },
+                { AnalyticsEvents.Props.RestoreMethod, LifeRestoreSourceToString(source) },
+                { AnalyticsEvents.Props.EventTime,     GetEventTime() }
             };
 
             AnalyticsService.Instance.RecordEvent(lifeRestoredEvent);
-            //Debug.Log($"Evento 'lifeRestored' enviado - Nuevas vidas: {newLifeCount}, Método: {restoreMethod}");
         }
         catch (Exception e)
         {
@@ -191,26 +250,580 @@ public class AnalyticsManager : MonoBehaviourSingleton<AnalyticsManager>
         }
     }
 
-    public void RecordPlayerAction(string actionType, string actionDetails = "", int currentLevel = -1)
+    public void RecordShopOpened()
     {
         if (!CanRecordEvent()) return;
 
         try
         {
-            var playerActionEvent = new CustomEvent("playerAction")
+            var e = new CustomEvent(AnalyticsEvents.ShopOpened)
             {
-                { "actionType", actionType },
-                { "actionDetails", actionDetails },
-                { "currentLevel", currentLevel },
-                { "eventTime", DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ") }
+                { AnalyticsEvents.Props.EventTime, GetEventTime() }
             };
 
-            AnalyticsService.Instance.RecordEvent(playerActionEvent);
-            //Debug.Log($"Evento 'playerAction' enviado - Acción: {actionType}, Detalles: {actionDetails}");
+            AnalyticsService.Instance.RecordEvent(e);
         }
         catch (Exception e)
         {
-            Debug.LogError($"[AnalyticsManager] Error enviando playerAction: {e.Message}");
+            Debug.LogError($"[AnalyticsManager] Error enviando shopOpened: {e.Message}");
+        }
+    }
+
+    public void RecordProductSelected(string productId, string category)
+    {
+        if (!CanRecordEvent()) return;
+
+        try
+        {
+            var e = new CustomEvent(AnalyticsEvents.ProductSelected)
+            {
+                { AnalyticsEvents.Props.ProductId, productId },
+                { AnalyticsEvents.Props.Category,  category },
+                { AnalyticsEvents.Props.EventTime, GetEventTime() }
+            };
+
+            AnalyticsService.Instance.RecordEvent(e);
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"[AnalyticsManager] Error enviando productSelected: {e.Message}");
+        }
+    }
+
+    public void RecordPurchaseStarted(string productId, string category, string source)
+    {
+        if (!CanRecordEvent()) return;
+
+        try
+        {
+            var e = new CustomEvent(AnalyticsEvents.PurchaseStarted)
+            {
+                { AnalyticsEvents.Props.ProductId, productId },
+                { AnalyticsEvents.Props.Category,  category },
+                { AnalyticsEvents.Props.Source,    source },
+                { AnalyticsEvents.Props.EventTime, GetEventTime() }
+            };
+
+            AnalyticsService.Instance.RecordEvent(e);
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"[AnalyticsManager] Error enviando purchaseStarted: {e.Message}");
+        }
+    }
+
+    public void RecordPurchaseCompleted(string productId, string category, string source, string transactionId)
+    {
+        if (!CanRecordEvent()) return;
+
+        try
+        {
+            var e = new CustomEvent(AnalyticsEvents.PurchaseCompleted)
+            {
+                { AnalyticsEvents.Props.ProductId,     productId },
+                { AnalyticsEvents.Props.Category,      category },
+                { AnalyticsEvents.Props.Source,        source },
+                { AnalyticsEvents.Props.TransactionId, transactionId },
+                { AnalyticsEvents.Props.EventTime,     GetEventTime() }
+            };
+
+            AnalyticsService.Instance.RecordEvent(e);
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"[AnalyticsManager] Error enviando purchaseCompleted: {e.Message}");
+        }
+    }
+
+    public void RecordPurchaseFailed(string productId, string reason)
+    {
+        if (!CanRecordEvent()) return;
+
+        try
+        {
+            var e = new CustomEvent(AnalyticsEvents.PurchaseFailed)
+            {
+                { AnalyticsEvents.Props.ProductId, productId },
+                { AnalyticsEvents.Props.Reason,    reason },
+                { AnalyticsEvents.Props.EventTime, GetEventTime() }
+            };
+
+            AnalyticsService.Instance.RecordEvent(e);
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"[AnalyticsManager] Error enviando purchaseFailed: {e.Message}");
+        }
+    }
+
+    public void RecordPurchaseRestored()
+    {
+        if (!CanRecordEvent()) return;
+
+        try
+        {
+            var e = new CustomEvent(AnalyticsEvents.PurchaseRestored)
+            {
+                { AnalyticsEvents.Props.EventTime, GetEventTime() }
+            };
+
+            AnalyticsService.Instance.RecordEvent(e);
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"[AnalyticsManager] Error enviando purchaseRestored: {e.Message}");
+        }
+    }
+
+    public void RecordPaywallShown(string productId, string tier, int levelId, int consecutiveLosses, bool isBossLevel)
+    {
+        if (!CanRecordEvent()) return;
+
+        try
+        {
+            var e = new CustomEvent(AnalyticsEvents.PaywallShown)
+            {
+                { AnalyticsEvents.Props.ProductId,         productId },
+                { AnalyticsEvents.Props.Tier,              tier },
+                { AnalyticsEvents.Props.LevelId,           levelId },
+                { AnalyticsEvents.Props.ConsecutiveLosses, consecutiveLosses },
+                { AnalyticsEvents.Props.IsBossLevel,       isBossLevel },
+                { AnalyticsEvents.Props.EventTime,         GetEventTime() }
+            };
+
+            AnalyticsService.Instance.RecordEvent(e);
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"[AnalyticsManager] Error enviando paywallShown: {e.Message}");
+        }
+    }
+
+    public void RecordPaywallResolved(PaywallOutcome outcome, string productId, string tier)
+    {
+        if (!CanRecordEvent()) return;
+
+        try
+        {
+            var e = new CustomEvent(AnalyticsEvents.PaywallResolved)
+            {
+                { AnalyticsEvents.Props.Outcome,   PaywallOutcomeToString(outcome) },
+                { AnalyticsEvents.Props.ProductId, productId },
+                { AnalyticsEvents.Props.Tier,      tier },
+                { AnalyticsEvents.Props.EventTime, GetEventTime() }
+            };
+
+            AnalyticsService.Instance.RecordEvent(e);
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"[AnalyticsManager] Error enviando paywallResolved: {e.Message}");
+        }
+    }
+
+    public void RecordLifeWallEncountered(int levelId)
+    {
+        if (!CanRecordEvent()) return;
+
+        try
+        {
+            var e = new CustomEvent(AnalyticsEvents.LifeWallEncountered)
+            {
+                { AnalyticsEvents.Props.LevelId,   levelId },
+                { AnalyticsEvents.Props.EventTime, GetEventTime() }
+            };
+
+            AnalyticsService.Instance.RecordEvent(e);
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"[AnalyticsManager] Error enviando lifeWallEncountered: {e.Message}");
+        }
+    }
+
+    public void RecordLifeWallResolved(LifeWallOutcome outcome, int levelId)
+    {
+        if (!CanRecordEvent()) return;
+
+        try
+        {
+            var e = new CustomEvent(AnalyticsEvents.LifeWallResolved)
+            {
+                { AnalyticsEvents.Props.Outcome,   LifeWallOutcomeToString(outcome) },
+                { AnalyticsEvents.Props.LevelId,   levelId },
+                { AnalyticsEvents.Props.EventTime, GetEventTime() }
+            };
+
+            AnalyticsService.Instance.RecordEvent(e);
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"[AnalyticsManager] Error enviando lifeWallResolved: {e.Message}");
+        }
+    }
+
+    public void RecordRewardedAdRequested(string context)
+    {
+        if (!CanRecordEvent()) return;
+
+        try
+        {
+            var e = new CustomEvent(AnalyticsEvents.RewardedAdRequested)
+            {
+                { AnalyticsEvents.Props.Context,   context },
+                { AnalyticsEvents.Props.EventTime, GetEventTime() }
+            };
+
+            AnalyticsService.Instance.RecordEvent(e);
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"[AnalyticsManager] Error enviando rewardedAdRequested: {e.Message}");
+        }
+    }
+
+    public void RecordRewardedAdShown(string context)
+    {
+        if (!CanRecordEvent()) return;
+
+        try
+        {
+            var e = new CustomEvent(AnalyticsEvents.RewardedAdShown)
+            {
+                { AnalyticsEvents.Props.Context,   context },
+                { AnalyticsEvents.Props.EventTime, GetEventTime() }
+            };
+
+            AnalyticsService.Instance.RecordEvent(e);
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"[AnalyticsManager] Error enviando rewardedAdShown: {e.Message}");
+        }
+    }
+
+    public void RecordRewardedAdCompleted(string context)
+    {
+        if (!CanRecordEvent()) return;
+
+        try
+        {
+            var e = new CustomEvent(AnalyticsEvents.RewardedAdCompleted)
+            {
+                { AnalyticsEvents.Props.Context,   context },
+                { AnalyticsEvents.Props.EventTime, GetEventTime() }
+            };
+
+            AnalyticsService.Instance.RecordEvent(e);
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"[AnalyticsManager] Error enviando rewardedAdCompleted: {e.Message}");
+        }
+    }
+
+    public void RecordRewardedAdFailed(string context, string reason)
+    {
+        if (!CanRecordEvent()) return;
+
+        try
+        {
+            var e = new CustomEvent(AnalyticsEvents.RewardedAdFailed)
+            {
+                { AnalyticsEvents.Props.Context,   context },
+                { AnalyticsEvents.Props.Reason,    reason },
+                { AnalyticsEvents.Props.EventTime, GetEventTime() }
+            };
+
+            AnalyticsService.Instance.RecordEvent(e);
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"[AnalyticsManager] Error enviando rewardedAdFailed: {e.Message}");
+        }
+    }
+
+    public void RecordRewardedAdClosed(string context)
+    {
+        if (!CanRecordEvent()) return;
+
+        try
+        {
+            var e = new CustomEvent(AnalyticsEvents.RewardedAdClosed)
+            {
+                { AnalyticsEvents.Props.Context,   context },
+                { AnalyticsEvents.Props.EventTime, GetEventTime() }
+            };
+
+            AnalyticsService.Instance.RecordEvent(e);
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"[AnalyticsManager] Error enviando rewardedAdClosed: {e.Message}");
+        }
+    }
+
+    public void RecordInterstitialOpportunity(string placement, int levelId = -1)
+    {
+        if (!CanRecordEvent()) return;
+
+        try
+        {
+            var e = new CustomEvent(AnalyticsEvents.InterstitialOpportunity)
+            {
+                { AnalyticsEvents.Props.Placement, placement },
+                { AnalyticsEvents.Props.LevelId,   levelId },
+                { AnalyticsEvents.Props.EventTime, GetEventTime() }
+            };
+            AnalyticsService.Instance.RecordEvent(e);
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"[AnalyticsManager] Error enviando interstitialOpportunity: {e.Message}");
+        }
+    }
+
+    public void RecordInterstitialShown(string placement, int levelId = -1)
+    {
+        if (!CanRecordEvent()) return;
+
+        try
+        {
+            var e = new CustomEvent(AnalyticsEvents.InterstitialShown)
+            {
+                { AnalyticsEvents.Props.Placement, placement },
+                { AnalyticsEvents.Props.LevelId,   levelId },
+                { AnalyticsEvents.Props.EventTime, GetEventTime() }
+            };
+            AnalyticsService.Instance.RecordEvent(e);
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"[AnalyticsManager] Error enviando interstitialShown: {e.Message}");
+        }
+    }
+
+    public void RecordInterstitialFailed(string placement, string reason, int levelId = -1)
+    {
+        if (!CanRecordEvent()) return;
+
+        try
+        {
+            var e = new CustomEvent(AnalyticsEvents.InterstitialFailed)
+            {
+                { AnalyticsEvents.Props.Placement, placement },
+                { AnalyticsEvents.Props.Reason,    reason },
+                { AnalyticsEvents.Props.LevelId,   levelId },
+                { AnalyticsEvents.Props.EventTime, GetEventTime() }
+            };
+            AnalyticsService.Instance.RecordEvent(e);
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"[AnalyticsManager] Error enviando interstitialFailed: {e.Message}");
+        }
+    }
+
+    public void RecordInterstitialClosed(string placement, int levelId = -1)
+    {
+        if (!CanRecordEvent()) return;
+
+        try
+        {
+            var e = new CustomEvent(AnalyticsEvents.InterstitialClosed)
+            {
+                { AnalyticsEvents.Props.Placement, placement },
+                { AnalyticsEvents.Props.LevelId,   levelId },
+                { AnalyticsEvents.Props.EventTime, GetEventTime() }
+            };
+            AnalyticsService.Instance.RecordEvent(e);
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"[AnalyticsManager] Error enviando interstitialClosed: {e.Message}");
+        }
+    }
+
+    public void RecordTutorialStarted(string tutorialId, int totalSteps)
+    {
+        if (!CanRecordEvent()) return;
+
+        try
+        {
+            var e = new CustomEvent(AnalyticsEvents.TutorialStarted)
+            {
+                { AnalyticsEvents.Props.TutorialId, tutorialId },
+                { AnalyticsEvents.Props.TotalSteps, totalSteps },
+                { AnalyticsEvents.Props.EventTime,  GetEventTime() }
+            };
+            AnalyticsService.Instance.RecordEvent(e);
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"[AnalyticsManager] Error enviando tutorialStarted: {e.Message}");
+        }
+    }
+
+    public void RecordTutorialStepStarted(string tutorialId, string stepId, int stepIndex, int totalSteps)
+    {
+        if (!CanRecordEvent()) return;
+
+        try
+        {
+            var e = new CustomEvent(AnalyticsEvents.TutorialStepStarted)
+            {
+                { AnalyticsEvents.Props.TutorialId, tutorialId },
+                { AnalyticsEvents.Props.StepId,     stepId },
+                { AnalyticsEvents.Props.StepIndex,  stepIndex },
+                { AnalyticsEvents.Props.TotalSteps, totalSteps },
+                { AnalyticsEvents.Props.EventTime,  GetEventTime() }
+            };
+            AnalyticsService.Instance.RecordEvent(e);
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"[AnalyticsManager] Error enviando tutorialStepStarted: {e.Message}");
+        }
+    }
+
+    public void RecordTutorialStepCompleted(string tutorialId, string stepId, int stepIndex, int totalSteps)
+    {
+        if (!CanRecordEvent()) return;
+
+        try
+        {
+            var e = new CustomEvent(AnalyticsEvents.TutorialStepCompleted)
+            {
+                { AnalyticsEvents.Props.TutorialId, tutorialId },
+                { AnalyticsEvents.Props.StepId,     stepId },
+                { AnalyticsEvents.Props.StepIndex,  stepIndex },
+                { AnalyticsEvents.Props.TotalSteps, totalSteps },
+                { AnalyticsEvents.Props.EventTime,  GetEventTime() }
+            };
+            AnalyticsService.Instance.RecordEvent(e);
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"[AnalyticsManager] Error enviando tutorialStepCompleted: {e.Message}");
+        }
+    }
+
+    public void RecordTutorialCompleted(string tutorialId, int totalSteps)
+    {
+        if (!CanRecordEvent()) return;
+
+        try
+        {
+            var e = new CustomEvent(AnalyticsEvents.TutorialCompleted)
+            {
+                { AnalyticsEvents.Props.TutorialId, tutorialId },
+                { AnalyticsEvents.Props.TotalSteps, totalSteps },
+                { AnalyticsEvents.Props.EventTime,  GetEventTime() }
+            };
+            AnalyticsService.Instance.RecordEvent(e);
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"[AnalyticsManager] Error enviando tutorialCompleted: {e.Message}");
+        }
+    }
+
+    public void RecordTutorialAbandoned(string tutorialId, string reason, string stepId, int stepIndex, int totalSteps)
+    {
+        if (!CanRecordEvent()) return;
+
+        try
+        {
+            var e = new CustomEvent(AnalyticsEvents.TutorialAbandoned)
+            {
+                { AnalyticsEvents.Props.TutorialId,    tutorialId },
+                { AnalyticsEvents.Props.AbandonReason, reason },
+                { AnalyticsEvents.Props.StepId,        stepId },
+                { AnalyticsEvents.Props.StepIndex,     stepIndex },
+                { AnalyticsEvents.Props.TotalSteps,    totalSteps },
+                { AnalyticsEvents.Props.EventTime,     GetEventTime() }
+            };
+            AnalyticsService.Instance.RecordEvent(e);
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"[AnalyticsManager] Error enviando tutorialAbandoned: {e.Message}");
+        }
+    }
+
+    public void RecordPowerUpActivated(string powerUpType, int usesGranted, int levelId, int attemptNumber)
+    {
+        if (!CanRecordEvent()) return;
+
+        try
+        {
+            var e = new CustomEvent(AnalyticsEvents.PowerUpActivated)
+            {
+                { AnalyticsEvents.Props.PowerUpType,   powerUpType },
+                { AnalyticsEvents.Props.UsesGranted,   usesGranted },
+                { AnalyticsEvents.Props.LevelId,       levelId },
+                { AnalyticsEvents.Props.AttemptNumber, attemptNumber },
+                { AnalyticsEvents.Props.EventTime,     GetEventTime() }
+            };
+            AnalyticsService.Instance.RecordEvent(e);
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"[AnalyticsManager] Error enviando powerUpActivated: {e.Message}");
+        }
+    }
+
+    public void RecordPowerUpExpired(string powerUpType, int levelId, int activatedAtLevelId, int attemptNumber)
+    {
+        if (!CanRecordEvent()) return;
+
+        try
+        {
+            var e = new CustomEvent(AnalyticsEvents.PowerUpExpired)
+            {
+                { AnalyticsEvents.Props.PowerUpType,        powerUpType },
+                { AnalyticsEvents.Props.LevelId,            levelId },
+                { AnalyticsEvents.Props.ActivatedAtLevelId, activatedAtLevelId },
+                { AnalyticsEvents.Props.AttemptNumber,      attemptNumber },
+                { AnalyticsEvents.Props.EventTime,          GetEventTime() }
+            };
+            AnalyticsService.Instance.RecordEvent(e);
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"[AnalyticsManager] Error enviando powerUpExpired: {e.Message}");
+        }
+    }
+
+    public void RecordLevelMechanicsSummary(
+        int levelId, string outcome, int attemptNumber,
+        int movesUsed, int maxComboLevel, int enemiesDefeated,
+        int totalEnemies, int reflectedKills, int maxSingleAttackKills,
+        string activePowerUps = "")
+    {
+        if (!CanRecordEvent()) return;
+
+        try
+        {
+            var e = new CustomEvent(AnalyticsEvents.LevelMechanicsSummary)
+            {
+                { AnalyticsEvents.Props.LevelId,             levelId },
+                { AnalyticsEvents.Props.Outcome,             outcome },
+                { AnalyticsEvents.Props.AttemptNumber,       attemptNumber },
+                { AnalyticsEvents.Props.MovesUsed,           movesUsed },
+                { AnalyticsEvents.Props.MaxComboLevel,       maxComboLevel },
+                { AnalyticsEvents.Props.EnemiesDefeated,     enemiesDefeated },
+                { AnalyticsEvents.Props.TotalEnemies,        totalEnemies },
+                { AnalyticsEvents.Props.ReflectedKills,      reflectedKills },
+                { AnalyticsEvents.Props.MaxSingleAttackKills, maxSingleAttackKills },
+                { AnalyticsEvents.Props.ActivePowerUps,      activePowerUps },
+                { AnalyticsEvents.Props.EventTime,           GetEventTime() }
+            };
+            AnalyticsService.Instance.RecordEvent(e);
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"[AnalyticsManager] Error enviando levelMechanicsSummary: {e.Message}");
         }
     }
 
@@ -220,15 +833,14 @@ public class AnalyticsManager : MonoBehaviourSingleton<AnalyticsManager>
 
         try
         {
-            var screenTransitionEvent = new CustomEvent("screenTransition")
+            var screenTransitionEvent = new CustomEvent(AnalyticsEvents.ScreenTransition)
             {
-                { "fromScreen", fromScreen },
-                { "toScreen", toScreen },
-                { "eventTime", DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ") }
+                { AnalyticsEvents.Props.FromScreen, fromScreen },
+                { AnalyticsEvents.Props.ToScreen,   toScreen },
+                { AnalyticsEvents.Props.EventTime,  GetEventTime() }
             };
 
             AnalyticsService.Instance.RecordEvent(screenTransitionEvent);
-            //Debug.Log($"Evento 'screenTransition' enviado - De: {fromScreen} a: {toScreen}");
         }
         catch (Exception e)
         {
@@ -238,15 +850,18 @@ public class AnalyticsManager : MonoBehaviourSingleton<AnalyticsManager>
 
     private bool CanRecordEvent()
     {
+        if (!enableAnalyticsInEditor && Application.isEditor)
+            return false;
+
         if (!isInitialized)
         {
-            Debug.Log("Analytics no está inicializado");
+            Debug.LogWarning("[AnalyticsManager] Evento descartado: analytics no inicializado.");
             return false;
         }
 
         if (!isDataCollectionActive)
         {
-            Debug.Log("Recolección de datos no está activa");
+            Debug.Log("[AnalyticsManager] Evento descartado: recolecciÃ³n de datos inactiva.");
             return false;
         }
 
@@ -259,7 +874,6 @@ public class AnalyticsManager : MonoBehaviourSingleton<AnalyticsManager>
         {
             AnalyticsService.Instance.StopDataCollection();
             isDataCollectionActive = false;
-            //Debug.Log("Recolección de datos detenida");
         }
     }
 
@@ -269,27 +883,59 @@ public class AnalyticsManager : MonoBehaviourSingleton<AnalyticsManager>
         {
             AnalyticsService.Instance.StartDataCollection();
             isDataCollectionActive = true;
-            //Debug.Log("Recolección de datos reiniciada");
         }
     }
 
     private void OnApplicationPause(bool pauseStatus)
     {
         if (pauseStatus)
-        {
-            RecordGameEnd(Time.time);
-        }
+            RecordGameEnd();
         else
-        {
             RecordGameStart();
-        }
     }
 
     private void OnApplicationFocus(bool hasFocus)
     {
         if (!hasFocus)
-        {
-            RecordGameEnd(Time.time);
-        }
+            RecordGameEnd();
     }
+
+    private static string GetEventTime()
+        => DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ");
+
+    private static string PaywallOutcomeToString(PaywallOutcome outcome) => outcome switch
+    {
+        PaywallOutcome.Purchased => "purchased",
+        PaywallOutcome.Dismissed => "dismissed",
+        PaywallOutcome.Expired   => "expired",
+        _                        => "unknown"
+    };
+
+    public static string ProductCategoryStr(ProductCategory cat) => cat switch
+    {
+        ProductCategory.Bundle   => "bundle",
+        ProductCategory.CoinPack => "coinPack",
+        _                        => "unknown"
+    };
+
+    private static string LifeWallOutcomeToString(LifeWallOutcome outcome) => outcome switch
+    {
+        LifeWallOutcome.AdReward    => "adReward",
+        LifeWallOutcome.IapPurchase => "iapPurchase",
+        LifeWallOutcome.Waited      => "waited",
+        LifeWallOutcome.Abandoned   => "abandoned",
+        _                           => "unknown"
+    };
+
+    private static string LifeRestoreSourceToString(LifeRestoreSource source) => source switch
+    {
+        LifeRestoreSource.TimeRegeneration => "timeRegeneration",
+        LifeRestoreSource.AdReward         => "adReward",
+        LifeRestoreSource.IapPurchase      => "iapPurchase",
+        LifeRestoreSource.DailyBonus       => "dailyBonus",
+        LifeRestoreSource.DailyWheel       => "dailyWheel",
+        LifeRestoreSource.EmergencyBundle  => "emergencyBundle",
+        LifeRestoreSource.Debug            => "debug",
+        _                                  => "unknown"
+    };
 }

@@ -6,6 +6,7 @@ public class EmergencyBundleService : MonoBehaviourSingleton<EmergencyBundleServ
     [SerializeField] private EmergencyBundleConfig _config;
 
     private StoreProductDefinition _activeProduct;
+    private BundleTier             _activeTier;
     private bool                   _offerActive;
 
     public bool HasActiveOffer => _offerActive;
@@ -29,7 +30,13 @@ public class EmergencyBundleService : MonoBehaviourSingleton<EmergencyBundleServ
     public void OnOfferDismissed()
     {
         if (!_offerActive) return;
-        CloseOffer(purchased: false);
+        CloseOffer(PaywallOutcome.Dismissed);
+    }
+
+    public void OnOfferExpired()
+    {
+        if (!_offerActive) return;
+        CloseOffer(PaywallOutcome.Expired);
     }
 
     private void OnLevelFailed(LevelFailedContext ctx)
@@ -92,7 +99,7 @@ public class EmergencyBundleService : MonoBehaviourSingleton<EmergencyBundleServ
 #endif
 
         AutoSaveManager.Instance?.OnEmergencyBundleActivated();
-        CloseOffer(purchased: true);
+        CloseOffer(PaywallOutcome.Purchased);
     }
 
     private void ShowOffer(LevelFailedContext ctx, GameData data)
@@ -120,7 +127,16 @@ public class EmergencyBundleService : MonoBehaviourSingleton<EmergencyBundleServ
         };
 
         _activeProduct = product;
+        _activeTier    = tier;
         _offerActive   = true;
+
+        AnalyticsManager.Instance?.RecordPaywallShown(
+            product.PrimaryProductId,
+            BundleTierToString(tier),
+            ctx.LevelId,
+            ctx.ConsecutiveLosses,
+            ctx.IsBossLevel
+        );
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         Debug.Log($"[EBS] Showing offer | tier={tier} | productId='{product.PrimaryProductId}'");
@@ -129,14 +145,28 @@ public class EmergencyBundleService : MonoBehaviourSingleton<EmergencyBundleServ
         UIEvents.RequestShowEmergencyBundleOverlay(offer);
     }
 
-    private void CloseOffer(bool purchased = false)
+    private void CloseOffer(PaywallOutcome outcome)
     {
+        AnalyticsManager.Instance?.RecordPaywallResolved(
+            outcome,
+            _activeProduct?.PrimaryProductId ?? "",
+            BundleTierToString(_activeTier)
+        );
+
         _offerActive   = false;
         _activeProduct = null;
 
         UIEvents.RequestHideEmergencyBundleOverlay();
         ShowDefeatUI();
     }
+
+    private static string BundleTierToString(BundleTier tier) => tier switch
+    {
+        BundleTier.Small  => "small",
+        BundleTier.Medium => "medium",
+        BundleTier.Large  => "large",
+        _                 => "unknown"
+    };
 
     private void ShowDefeatUI()
     {

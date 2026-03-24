@@ -16,7 +16,10 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
     private string _pendingRewardContext;
     private bool _pendingRewardShowRequest;
 
-    private bool _interstitialPending = false;
+    private bool   _interstitialPending = false;
+    private string _pendingInterstitialPlacement = "";
+    private int    _pendingInterstitialLevelId   = -1;
+
     private bool _isLevelPlayInitialized = false;
     private bool _levelPlayInitFailed = false;
     private bool _isInitializingLevelPlay = false;
@@ -107,7 +110,7 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
     {
         ShowRewardedAd(() =>
         {
-            LifeManager.Instance?.AddLife();
+            LifeManager.Instance?.AddLife(LifeRestoreSource.AdReward);
             Debug.Log("[AdsManager] Extra life granted from rewarded ad.");
         }, "extra_life");
     }
@@ -128,7 +131,7 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
     }
 
     [ContextMenu("Show Interstitial Ad")]
-    public void ShowInterstitialAd()
+    public void ShowInterstitialAd(string placement = "")
     {
         if (AreAdsRemoved())
         {
@@ -136,10 +139,24 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
             return;
         }
 
-        _interstitialPending = true;
+        int levelId = LevelSessionManager.Instance?.CurrentSession?.LevelId ?? -1;
+
+        AnalyticsManager.Instance?.RecordInterstitialOpportunity(placement, levelId);
+
+        if (_interstitialAd == null || !_interstitialAd.IsAdReady())
+        {
+            Debug.LogWarning($"[AdsManager] Interstitial not available | placement={placement}");
+            AnalyticsManager.Instance?.RecordInterstitialFailed(placement, "not_available", levelId);
+            _interstitialAd?.LoadAd();
+            return;
+        }
+
+        _pendingInterstitialPlacement = placement;
+        _pendingInterstitialLevelId   = levelId;
+        _interstitialPending          = true;
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-        Debug.Log("[AdsManager] Interstitial ad deferred — esperando OnResultsScreenFullyShown");
+        Debug.Log($"[AdsManager] Interstitial deferred | placement={placement}");
 #endif
     }
 
@@ -160,13 +177,16 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
         if (_interstitialAd != null && _interstitialAd.IsAdReady())
         {
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-            Debug.Log("[AdsManager] Showing interstitial ad");
+            Debug.Log($"[AdsManager] Showing interstitial | placement={_pendingInterstitialPlacement}");
 #endif
             _interstitialAd.ShowAd();
         }
         else
         {
-            Debug.LogWarning("[AdsManager] Interstitial ad not ready");
+            Debug.LogWarning($"[AdsManager] Interstitial lost readiness | placement={_pendingInterstitialPlacement}");
+            AnalyticsManager.Instance?.RecordInterstitialFailed(
+                _pendingInterstitialPlacement, "not_ready_at_show", _pendingInterstitialLevelId);
+            ClearPendingInterstitial();
             _interstitialAd?.LoadAd();
         }
     }
@@ -183,6 +203,8 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
 
     private void ShowRewardedAd(System.Action onRewarded, string context)
     {
+        AnalyticsManager.Instance?.RecordRewardedAdRequested(context);
+
         if (_rewardedAd != null && _rewardedAd.IsAdReady())
         {
             _pendingRewardCallback = onRewarded;
@@ -240,11 +262,13 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
     private void OnRewardedAdDisplayed(LevelPlayAdInfo adInfo)
     {
         Debug.Log($"[AdsManager] Rewarded ad displayed | context={_pendingRewardContext}");
+        AnalyticsManager.Instance?.RecordRewardedAdShown(_pendingRewardContext);
     }
 
     private void OnRewardedAdDisplayFailed(LevelPlayAdInfo adInfo, LevelPlayAdError error)
     {
         Debug.LogError($"[AdsManager] Rewarded ad display failed | context={_pendingRewardContext} | error={error.ErrorMessage}");
+        AnalyticsManager.Instance?.RecordRewardedAdFailed(_pendingRewardContext, error.ErrorMessage);
         CancelPendingRewardedRequest("display failed");
         OnRewardedAdReadinessChanged?.Invoke();
     }
@@ -252,6 +276,7 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
     private void OnRewardedAdRewarded(LevelPlayAdInfo adInfo, LevelPlayReward reward)
     {
         Debug.Log($"[AdsManager] Reward received | context={_pendingRewardContext} | reward={reward.Name} x{reward.Amount}");
+        AnalyticsManager.Instance?.RecordRewardedAdCompleted(_pendingRewardContext);
         _pendingRewardCallback?.Invoke();
         _pendingRewardCallback = null;
     }
@@ -259,6 +284,7 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
     private void OnRewardedAdClosed(LevelPlayAdInfo adInfo)
     {
         Debug.Log($"[AdsManager] Rewarded ad closed | context={_pendingRewardContext}");
+        AnalyticsManager.Instance?.RecordRewardedAdClosed(_pendingRewardContext);
         CancelPendingRewardedRequest("ad closed");
         _rewardedAd?.LoadAd();
     }
@@ -283,21 +309,26 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
 
     private void OnInterstitialAdDisplayed(LevelPlayAdInfo adInfo)
     {
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-        Debug.Log("[AdsManager] Interstitial ad displayed");
-#endif
+        Debug.Log($"[AdsManager] Interstitial displayed | placement={_pendingInterstitialPlacement}");
+        AnalyticsManager.Instance?.RecordInterstitialShown(
+            _pendingInterstitialPlacement, _pendingInterstitialLevelId);
     }
 
     private void OnInterstitialAdDisplayFailed(LevelPlayAdInfo adInfo, LevelPlayAdError error)
     {
-        Debug.LogError($"[AdsManager] Interstitial ad display failed: {error.ErrorMessage}");
+        Debug.LogError($"[AdsManager] Interstitial display failed | placement={_pendingInterstitialPlacement} | error={error.ErrorMessage}");
+        AnalyticsManager.Instance?.RecordInterstitialFailed(
+            _pendingInterstitialPlacement, error.ErrorMessage, _pendingInterstitialLevelId);
+        ClearPendingInterstitial();
     }
 
     private void OnInterstitialAdClosed(LevelPlayAdInfo adInfo)
     {
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-        Debug.Log("[AdsManager] Interstitial ad closed");
-#endif
+        Debug.Log($"[AdsManager] Interstitial closed | placement={_pendingInterstitialPlacement}");
+        AnalyticsManager.Instance?.RecordInterstitialClosed(
+            _pendingInterstitialPlacement, _pendingInterstitialLevelId);
+        ClearPendingInterstitial();
+
         if (!AreAdsRemoved())
             _interstitialAd?.LoadAd();
     }
@@ -307,6 +338,12 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         Debug.Log("[AdsManager] Interstitial ad clicked");
 #endif
+    }
+
+    private void ClearPendingInterstitial()
+    {
+        _pendingInterstitialPlacement = "";
+        _pendingInterstitialLevelId   = -1;
     }
 
     private void LoadRewardedAd()

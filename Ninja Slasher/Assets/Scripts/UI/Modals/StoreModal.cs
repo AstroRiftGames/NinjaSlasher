@@ -85,6 +85,12 @@ public class StoreModal : UIModalBase
         gameObject.SetActive(false);
     }
 
+    protected override void OnShown()
+    {
+        base.OnShown();
+        AnalyticsManager.Instance?.RecordShopOpened();
+    }
+
     public void ShowPurchaseConfirmation(string productId, RectTransform feedbackOrigin)
     {
         _purchaseConfirmationPanel?.ShowConfirmation(productId, feedbackOrigin);
