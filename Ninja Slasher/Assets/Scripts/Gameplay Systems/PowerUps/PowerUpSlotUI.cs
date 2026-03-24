@@ -20,8 +20,9 @@ public class PowerUpSlotUI : MonoBehaviour
     [SerializeField] private TextMeshProUGUI _costText;
 
     private PowerUpInventoryItem _item;
-    private Action<PowerUpInventoryItem> _onActivateCallback;
+    private Action<PowerUpInventoryItem, PowerUpBase> _onActivateCallback;
     private Action<PowerUpInventoryItem> _onPurchaseCallback;
+    private PowerUpBase _powerUpBase;
     private PowerUpType _powerUpType;
     private int _cost;
 
@@ -40,12 +41,13 @@ public class PowerUpSlotUI : MonoBehaviour
     }
 
     public void Setup(PowerUpInventoryItem item, PowerUpBase powerUpBase,
-                      Action<PowerUpInventoryItem> onActivate,
+                      Action<PowerUpInventoryItem, PowerUpBase> onActivate,
                       Action<PowerUpInventoryItem> onPurchase = null)
     {
         _item = item;
         _onActivateCallback = onActivate;
         _onPurchaseCallback = onPurchase;
+        _powerUpBase = powerUpBase;
         _powerUpType = powerUpBase.powerUpType;
         _cost = powerUpBase.cost;
 
@@ -113,8 +115,7 @@ public class PowerUpSlotUI : MonoBehaviour
     private void OnActivatePressed()
     {
         AudioManager.Instance.PlaySFX(SFXClip.UI_PowerUp);
-        _onActivateCallback?.Invoke(_item);
-        RefreshState();
+        _onActivateCallback?.Invoke(_item, _powerUpBase);
     }
 
     private void OnBuyPressed()

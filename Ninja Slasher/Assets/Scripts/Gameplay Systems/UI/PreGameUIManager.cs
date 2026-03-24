@@ -15,6 +15,7 @@ public class PreGameUIManager : MonoBehaviour
     [SerializeField] private Transform _powerUpsContainer;
     [SerializeField] private PowerUpSlotUI _powerUpSlotPrefab;
     [SerializeField] private PowerUpBase[] allPowerUpBases;
+    [SerializeField] private PowerUpConfirmationPopUp _powerUpConfirmationPopUp;
     [SerializeField] private TextMeshProUGUI _title;
     [SerializeField] private Transform _starsContainer;
     [SerializeField] private TextMeshProUGUI _primaryGoalText;
@@ -54,6 +55,9 @@ public class PreGameUIManager : MonoBehaviour
 
     private void Awake()
     {
+        if (_powerUpConfirmationPopUp == null)
+            _powerUpConfirmationPopUp = GetComponentInChildren<PowerUpConfirmationPopUp>(true);
+
         CacheBaseVisualState();
         SetupButtonListeners();
         InitializeTitleReveal();
@@ -69,6 +73,7 @@ public class PreGameUIManager : MonoBehaviour
     {
         GameEvents.OnRewardClaimed -= OnDailyRewardClaimedRefresh;
         StopAllAnimations();
+        HidePowerUpConfirmationImmediate();
     }
 
     private void SetupButtonListeners()
@@ -188,6 +193,7 @@ public class PreGameUIManager : MonoBehaviour
     public void ShowConfirmationPanel(string sceneName)
     {
         StopAllAnimations();
+        HidePowerUpConfirmationImmediate();
 
         _pendingSceneName = sceneName;
         _isLevelSelected = true;
@@ -596,13 +602,19 @@ public class PreGameUIManager : MonoBehaviour
         }
     }
 
-    private void OnPowerUpActivateClicked(PowerUpInventoryItem item)
+    private void OnPowerUpActivateClicked(PowerUpInventoryItem item, PowerUpBase powerUpBase)
     {
-        if (item.quantity <= 0)
+        if (item == null || powerUpBase == null || item.quantity <= 0)
             return;
 
-        if (PowerUpManager.Instance.ActivatePowerUpFromInventory(item.type))
-            ShowPreGamePowerUps();
+        if (_powerUpConfirmationPopUp == null)
+        {
+            Debug.LogWarning("[PreGameUIManager] PowerUpConfirmationPopUp not assigned. Falling back to direct activation.");
+            ConfirmPowerUpActivation(item.type);
+            return;
+        }
+
+        _powerUpConfirmationPopUp.ShowConfirmation(powerUpBase, () => ConfirmPowerUpActivation(item.type));
     }
 
     private void OnPowerUpPurchaseClicked(PowerUpInventoryItem item)
@@ -711,5 +723,16 @@ public class PreGameUIManager : MonoBehaviour
                int.TryParse(sceneName.Substring(5), out int id)
             ? id
             : 1;
+    }
+
+    public void HidePowerUpConfirmationImmediate()
+    {
+        _powerUpConfirmationPopUp?.HideImmediate();
+    }
+
+    private void ConfirmPowerUpActivation(PowerUpType powerUpType)
+    {
+        if (PowerUpManager.Instance != null && PowerUpManager.Instance.ActivatePowerUpFromInventory(powerUpType))
+            ShowPreGamePowerUps();
     }
 }

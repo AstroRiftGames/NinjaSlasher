@@ -67,6 +67,7 @@ public class PreGameScreen : UIScreenBase
         if (_preGameUIManager != null)
         {
             _preGameUIManager.StopAllAnimations();
+            _preGameUIManager.HidePowerUpConfirmationImmediate();
         }
 
         if (_panelAnimator != null)
