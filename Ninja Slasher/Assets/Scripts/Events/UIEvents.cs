@@ -295,6 +295,7 @@ public static class UIEvents
     public static event Action<string> OnSceneTransitionRequested;
     public static event Action OnShowLevelSelectorRequested;
     public static event Action OnRestartLevelRequested;
+    public static event Action OnLoadLevelSelectorSceneRequested;
 
     public static event Action OnLevelSelectorReady;
 
@@ -311,6 +312,11 @@ public static class UIEvents
     public static void RequestRestartLevel()
     {
         OnRestartLevelRequested?.Invoke();
+    }
+
+    public static void RequestLoadLevelSelectorScene()
+    {
+        OnLoadLevelSelectorSceneRequested?.Invoke();
     }
 
     public static void RaiseLevelSelectorReady()
@@ -535,6 +541,7 @@ public static class UIEvents
         OnSceneTransitionRequested = null;
         OnShowLevelSelectorRequested = null;
         OnRestartLevelRequested = null;
+        OnLoadLevelSelectorSceneRequested = null;
         OnLevelSelectorReady = null;
     }
 

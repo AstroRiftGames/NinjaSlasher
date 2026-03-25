@@ -201,10 +201,5 @@ public class GameplayUIManager : MonoBehaviour
     {
         if (_levelTimerText != null)
             _levelTimerText.text = "00:00";
-
-        if (GameManager.Instance != null)
-        {
-            GameManager.Instance.OnLevelFailed();
-        }
     }
 }

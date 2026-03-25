@@ -40,6 +40,7 @@ public class PowerUpManager : MonoBehaviourSingleton<PowerUpManager>
     private List<(PowerUpBase powerUp, int usesRemaining)> _activeUsages = new List<(PowerUpBase, int)>();
 
     private Dictionary<PowerUpType, int> _activationLevelIds = new Dictionary<PowerUpType, int>();
+    private bool _levelEndConsumptionHandled;
 
     [Header("DEBUG")]
     [SerializeField] private List<PowerUpInfo> availablePowerUps = new List<PowerUpInfo>();
@@ -61,11 +62,18 @@ public class PowerUpManager : MonoBehaviourSingleton<PowerUpManager>
     void OnEnable()
     {
         GameEvents.OnLevelEndedConsumePowerUps += OnLevelEndedConsumePowerUps;
+        GameEvents.OnLevelStarted += OnLevelStarted;
     }
 
     void OnDisable()
     {
         GameEvents.OnLevelEndedConsumePowerUps -= OnLevelEndedConsumePowerUps;
+        GameEvents.OnLevelStarted -= OnLevelStarted;
+    }
+
+    private void OnLevelStarted()
+    {
+        _levelEndConsumptionHandled = false;
     }
 
     private void Update()
@@ -442,11 +450,18 @@ public class PowerUpManager : MonoBehaviourSingleton<PowerUpManager>
 
     private void OnLevelEndedConsumePowerUps()
     {
-        if (activePowerUps.Count == 0)
+        if (_levelEndConsumptionHandled)
         {
             return;
         }
 
+        if (activePowerUps.Count == 0)
+        {
+            _levelEndConsumptionHandled = true;
+            return;
+        }
+
+        _levelEndConsumptionHandled = true;
         ConsumeOneUseFromAllActivePowerUps();
     }
 

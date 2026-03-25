@@ -15,6 +15,8 @@ public class LevelSessionManager : MonoBehaviourSingleton<LevelSessionManager>
 
     public LevelSession CurrentSession => currentSession;
     public bool HasActiveSession => currentSession != null && !currentSession.IsComplete && !currentSession.IsFailed;
+    public bool IsSessionRunning => currentSession != null && currentSession.IsRunning;
+    public bool IsSessionPaused => currentSession != null && currentSession.State == LevelSessionState.Paused;
     public bool IsLevelActive => isLevelActive;
 
     public override void Awake()
@@ -30,6 +32,11 @@ public class LevelSessionManager : MonoBehaviourSingleton<LevelSessionManager>
         GameEvents.OnAllEnemiesDefeated += OnAllEnemiesDefeated;
         GameEvents.OnLevelTimeExpired += OnLevelTimeExpired;
         GameEvents.OnLevelTimeBonus += OnComboTimeBonus;
+
+        UIEvents.OnRestartLevelRequested += OnRestartLevelRequested;
+        UIEvents.OnRetryButtonPressed += OnRetryButtonPressed;
+        UIEvents.OnQuitToMenuPressed += OnQuitToMenuPressed;
+        UIEvents.RaiseGamePaused += OnPauseStateChanged;
     }
 
     private void OnDisable()
@@ -39,6 +46,11 @@ public class LevelSessionManager : MonoBehaviourSingleton<LevelSessionManager>
         GameEvents.OnAllEnemiesDefeated -= OnAllEnemiesDefeated;
         GameEvents.OnLevelTimeExpired -= OnLevelTimeExpired;
         GameEvents.OnLevelTimeBonus -= OnComboTimeBonus;
+
+        UIEvents.OnRestartLevelRequested -= OnRestartLevelRequested;
+        UIEvents.OnRetryButtonPressed -= OnRetryButtonPressed;
+        UIEvents.OnQuitToMenuPressed -= OnQuitToMenuPressed;
+        UIEvents.RaiseGamePaused -= OnPauseStateChanged;
     }
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
@@ -158,7 +170,7 @@ public class LevelSessionManager : MonoBehaviourSingleton<LevelSessionManager>
 
     private void OnAllEnemiesDefeated(LevelStats stats)
     {
-        if (!HasActiveSession) return;
+        if (!IsSessionRunning) return;
 
         if (GameManager.Instance != null && GameManager.Instance.PlayerHasDied)
         {
@@ -170,7 +182,7 @@ public class LevelSessionManager : MonoBehaviourSingleton<LevelSessionManager>
 
     private void CompleteLevel()
     {
-        if (!HasActiveSession) return;
+        if (!IsSessionRunning) return;
 
         timerService.Stop();
         currentSession.Complete();
@@ -180,15 +192,15 @@ public class LevelSessionManager : MonoBehaviourSingleton<LevelSessionManager>
 
     private void OnLevelTimeExpired()
     {
-        if (!HasActiveSession) return;
+        if (!IsSessionRunning) return;
 
-        FailLevel("Tiempo agotado");
+        FailLevel("timeExpired");
     }
 
     public void FailLevel(string reason)
     {
         Debug.Log($"[LSM] FailLevel | reason={reason} | HasActiveSession={HasActiveSession} | session={currentSession != null} | IsFailed={currentSession?.IsFailed} | IsComplete={currentSession?.IsComplete}");
-        if (!HasActiveSession) return;
+        if (!CanFailCurrentSession()) return;
 
         timerService.Stop();
         currentSession.Fail(reason);
@@ -259,26 +271,26 @@ public class LevelSessionManager : MonoBehaviourSingleton<LevelSessionManager>
 
     private void OnComboTimeBonus(float bonusSeconds)
     {
-        if (!HasActiveSession) return;
+        if (!IsSessionRunning) return;
 
         timerService?.AddTime(bonusSeconds);
     }
 
     public void RegisterMove()
     {
-        if (!HasActiveSession) return;
+        if (!IsSessionRunning) return;
         trackingService?.RegisterMove();
     }
 
     public void RegisterParryKill()
     {
-        if (!HasActiveSession) return;
+        if (!IsSessionRunning) return;
         trackingService?.RegisterParryKill();
     }
 
     public void RegisterEnemyKilled(Enemy enemy)
     {
-        if (!HasActiveSession) return;
+        if (!IsSessionRunning) return;
         trackingService?.RegisterEnemyKilled(enemy);
     }
 
@@ -316,6 +328,85 @@ public class LevelSessionManager : MonoBehaviourSingleton<LevelSessionManager>
     public bool IsPaused()
     {
         return timerService?.IsPaused ?? false;
+    }
+
+    private bool CanFailCurrentSession()
+    {
+        if (currentSession == null || currentSession.IsComplete || currentSession.IsFailed)
+            return false;
+
+        return currentSession.State == LevelSessionState.Running ||
+               currentSession.State == LevelSessionState.Paused;
+    }
+
+    private void OnPauseStateChanged(bool isPaused)
+    {
+        if (isPaused)
+        {
+            PauseLevel();
+        }
+        else
+        {
+            ResumeLevel();
+        }
+    }
+
+    private void OnRetryButtonPressed()
+    {
+        if (!IsLevelScene(SceneManager.GetActiveScene().name) || LifeManager.Instance == null)
+            return;
+
+        if (!LifeManager.Instance.CanPlay())
+        {
+            UIEvents.RequestShowNoLivesOverlay();
+            return;
+        }
+
+        CloseSessionForSceneChange();
+        UIEvents.RequestSceneTransition(SceneManager.GetActiveScene().name);
+    }
+
+    private void OnRestartLevelRequested()
+    {
+        if (!IsLevelScene(SceneManager.GetActiveScene().name))
+            return;
+
+        bool hadPendingDeduction = LifeManager.Instance != null && LifeManager.Instance.HasPendingDeduction();
+        CloseSessionForSceneChange();
+
+        if (hadPendingDeduction && LifeManager.Instance != null && !LifeManager.Instance.CanPlay())
+        {
+            UIEvents.RequestLoadLevelSelectorScene();
+            return;
+        }
+
+        UIEvents.RequestSceneTransition(SceneManager.GetActiveScene().name);
+    }
+
+    private void OnQuitToMenuPressed()
+    {
+        string currentScene = SceneManager.GetActiveScene().name;
+
+        if (AnalyticsManager.Instance != null)
+        {
+            AnalyticsManager.Instance.RecordScreenTransition(currentScene, "LevelSelection");
+        }
+
+        CloseSessionForSceneChange();
+        SaveManager.Instance?.SaveData();
+        UIEvents.RequestLoadLevelSelectorScene();
+    }
+
+    private void CloseSessionForSceneChange()
+    {
+        Time.timeScale = 1f;
+
+        if (LifeManager.Instance != null && LifeManager.Instance.HasPendingDeduction())
+        {
+            LifeManager.Instance.OnLevelExit();
+        }
+
+        CleanupSession();
     }
 
     private void CleanupSession()

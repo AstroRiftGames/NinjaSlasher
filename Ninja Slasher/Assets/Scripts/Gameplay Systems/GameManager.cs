@@ -10,9 +10,6 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
 
     private LevelStats currentStats;
     private bool _playerHasDied;
-    private bool _levelStarted = false;
-    private bool _levelEnded = false;
-
     private bool _pausedByFocusLoss = false;
 
     public bool PlayerHasDied => _playerHasDied;
@@ -30,8 +27,6 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
         GameEvents.OnLivesChanged += OnLivesChanged;
 
         _playerHasDied = false;
-        _levelStarted = false;
-        _levelEnded = false;
     }
 
     private void OnEnable()
@@ -39,8 +34,6 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
         GameEvents.OnLevelStarted += OnLevelStarted;
         GameEvents.OnLevelCompleted += OnLevelCompleted;
         GameEvents.OnLevelFailed += OnLevelFailed;
-        UIEvents.OnRetryButtonPressed += OnRetryButtonPressed;
-        UIEvents.OnQuitToMenuPressed += OnQuitToMenuPressed;
         SceneManager.sceneLoaded += OnSceneLoaded;
     }
 
@@ -50,8 +43,6 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
         GameEvents.OnLevelFailed -= OnLevelFailed;
         GameEvents.OnLivesChanged -= OnLivesChanged;
         GameEvents.OnLevelStarted -= OnLevelStarted;
-        UIEvents.OnRetryButtonPressed -= OnRetryButtonPressed;
-        UIEvents.OnQuitToMenuPressed -= OnQuitToMenuPressed;
         SceneManager.sceneLoaded -= OnSceneLoaded;
     }
 
@@ -67,13 +58,9 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
 
     private void OnLevelStarted()
     {
-        if (_levelStarted)
-        {
-            return;
-        }
-
+        _playerHasDied = false;
+        _isVictory = false;
         LifeManager.Instance.OnLevelStart();
-        _levelStarted = true;
     }
 
     private void OnLevelCompleted(LevelStats stats)
@@ -84,24 +71,8 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
 
         GameEvents.RaiseLevelEndedConsumePowerUps();
 
-        if (_levelEnded)
-        {
-            return;
-        }
-
         currentStats = stats;
-
-        if (_levelStarted)
-        {
-            LifeManager.Instance.OnLevelCompleted();
-            _levelStarted = false;
-        }
-
-        _levelEnded = true;
-
-        int currentLevelId = GetCurrentLevelId();
-
-        int starsEarned = stats.starsEarned;
+        LifeManager.Instance.OnLevelCompleted();
 
         StartCoroutine(HandleVictoryWithDelay());
     }
@@ -117,14 +88,7 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
     {
         _isVictory = false;
 
-        if (_levelEnded)
-        {
-            return;
-        }
-
-        _levelEnded = true;
-
-        if (_levelStarted && AnalyticsManager.Instance != null)
+        if (AnalyticsManager.Instance != null)
         {
             int currentLevelId = GetLevelIdForAnalytics();
             float attemptTime = LevelSessionManager.Instance?.GetTimeTaken() ?? 0f;
@@ -160,13 +124,7 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
             );
         }
 
-        if (_levelStarted)
-        {
-            Debug.Log($"[GM] HandleLevelDefeat | reason={reason} | LSM.Instance={LevelSessionManager.Instance != null} | HasActiveSession={LevelSessionManager.Instance?.HasActiveSession}");
-            LevelSessionManager.Instance?.FailLevel(reason);
-            LifeManager.Instance.UseLife();
-            _levelStarted = false;
-        }
+        LifeManager.Instance.UseLife();
 
         StartCoroutine(HandleDefeatUIWithDelay());
     }
@@ -195,13 +153,7 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
 
     public void TriggerLevelDefeat(string reason)
     {
-        HandleLevelDefeat(reason);
-    }
-
-    public void OnLevelFailed()
-    {
-        HandleLevelDefeat("timeExpired");
-        GameEvents.RaiseLevelEndedConsumePowerUps();
+        LevelSessionManager.Instance?.FailLevel(reason);
     }
 
     private void OnLevelFailed(LevelFailedContext ctx)
@@ -213,7 +165,7 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
     public void OnPlayerLose()
     {
         _playerHasDied = true;
-        HandleLevelDefeat("playerDeath");
+        LevelSessionManager.Instance?.FailLevel("playerDeath");
     }
 
     private void OnLivesChanged(int newLives)
@@ -222,76 +174,6 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
         {
             Debug.Log($"[LevelManager] lives updated: {newLives}");
         }
-    }
-
-    public void GoToLevelSelection(bool confirmPendingDeduction = true)
-    {
-        UIEvents.RaiseQuitToMenuPressed();
-    }
-
-    private void OnQuitToMenuPressed()
-    {
-        if (AnalyticsManager.Instance != null)
-        {
-            string currentScene = SceneManager.GetActiveScene().name;
-            AnalyticsManager.Instance.RecordScreenTransition(currentScene, "LevelSelection");
-        }
-
-        if (_levelStarted || LifeManager.Instance.HasPendingDeduction())
-        {
-            LifeManager.Instance.OnLevelExit();
-            _levelStarted = false;
-        }
-
-        if (AudioService.Instance != null)
-        {
-            AudioService.Instance.StopAllSFX();
-        }
-
-        SaveManager.Instance.SaveData();
-    }
-
-    private void OnRetryButtonPressed()
-    {
-        if (LifeManager.Instance == null)
-            return;
-
-        bool canPlay = LifeManager.Instance.CanPlay();
-        int realLives = LifeManager.Instance.GetRealLives();
-
-        Debug.Log($"[GameManager] Retry requested | realLives={realLives} | canPlay={canPlay} | unlimitedLives={LifeManager.Instance.HasTimedUnlimitedLives}");
-
-        if (!canPlay)
-        {
-            UIEvents.RequestShowNoLivesOverlay();
-            return;
-        }
-
-        UIEvents.RequestRestartLevel();
-    }
-
-    public void RestartLevel()
-    {
-        if (_levelStarted || LifeManager.Instance.HasPendingDeduction())
-        {
-            LifeManager.Instance.OnLevelExit();
-            _levelStarted = false;
-        }
-
-        if (!LifeManager.Instance.CanPlay())
-        {
-            GoToLevelSelection();
-            return;
-        }
-
-        _playerHasDied = false;
-        _levelEnded = false;
-        string currentScene = SceneManager.GetActiveScene().name;
-
-        LifeManager.Instance.OnLevelStart();
-        _levelStarted = true;
-
-        SceneManager.LoadScene(currentScene);
     }
 
     private int GetLevelIdForAnalytics()
@@ -321,8 +203,6 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
         GameEvents.OnLevelCompleted -= OnLevelCompleted;
         GameEvents.OnLevelFailed -= OnLevelFailed;
         GameEvents.OnLivesChanged -= OnLivesChanged;
-        UIEvents.OnRetryButtonPressed -= OnRetryButtonPressed;
-        UIEvents.OnQuitToMenuPressed -= OnQuitToMenuPressed;
         SceneManager.sceneLoaded -= OnSceneLoaded;
     }
 
@@ -342,9 +222,8 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
     public void ResetLevelState()
     {
         _playerHasDied = false;
-        _levelStarted = false;
-        _levelEnded = false;
         _pausedByFocusLoss = false;
+        _isVictory = false;
     }
 
     private void OnApplicationPause(bool pauseStatus)
@@ -365,10 +244,11 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
 
     private void HandleFocusLost()
     {
-        if (!_levelStarted) return;
+        if (LevelSessionManager.Instance == null || !LevelSessionManager.Instance.IsSessionRunning) return;
 
         if (Time.timeScale > 0f)
         {
+            LevelSessionManager.Instance.PauseLevel();
             Time.timeScale = 0f;
             _pausedByFocusLoss = true;
         }
@@ -376,8 +256,9 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
 
     private void HandleFocusRegained()
     {
-        if (!_levelStarted || !_pausedByFocusLoss) return;
+        if (!_pausedByFocusLoss) return;
 
+        LevelSessionManager.Instance?.ResumeLevel();
         Time.timeScale = 1f;
         _pausedByFocusLoss = false;
     }

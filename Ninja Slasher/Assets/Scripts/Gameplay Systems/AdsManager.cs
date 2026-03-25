@@ -15,6 +15,9 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
     private Action _pendingRewardCallback;
     private string _pendingRewardContext;
     private bool _pendingRewardShowRequest;
+    private bool _rewardedAdShowing;
+    private bool _rewardGrantedForCurrentAd;
+    private bool _awaitingRewardAfterClose;
 
     private bool   _interstitialPending = false;
     private string _pendingInterstitialPlacement = "";
@@ -25,6 +28,7 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
     private bool _isInitializingLevelPlay = false;
 
     public event Action OnRewardedAdReadinessChanged;
+    public event Action<string, bool> OnRewardedAdFlowCompleted;
 
     void Start()
     {
@@ -162,6 +166,12 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
 
     private void OnResultsActionTaken()
     {
+        if (IsRewardedAdFlowInProgress("extra_life"))
+        {
+            Debug.Log("[AdsManager] Ignoring results action while extra life rewarded flow is still in progress.");
+            return;
+        }
+
         CancelPendingRewardedRequest("results action taken");
 
         if (!_interstitialPending) return;
@@ -210,6 +220,9 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
             _pendingRewardCallback = onRewarded;
             _pendingRewardContext = context;
             _pendingRewardShowRequest = false;
+            _rewardGrantedForCurrentAd = false;
+            _awaitingRewardAfterClose = false;
+            CancelInvoke(nameof(FinalizePendingRewardedClose));
             Debug.Log($"[AdsManager] Showing rewarded ad | context={context}");
             _rewardedAd.ShowAd();
         }
@@ -261,32 +274,64 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
 
     private void OnRewardedAdDisplayed(LevelPlayAdInfo adInfo)
     {
+        _rewardedAdShowing = true;
         Debug.Log($"[AdsManager] Rewarded ad displayed | context={_pendingRewardContext}");
         AnalyticsManager.Instance?.RecordRewardedAdShown(_pendingRewardContext);
     }
 
     private void OnRewardedAdDisplayFailed(LevelPlayAdInfo adInfo, LevelPlayAdError error)
     {
+        string context = _pendingRewardContext;
+        _rewardedAdShowing = false;
+        _rewardGrantedForCurrentAd = false;
+        _awaitingRewardAfterClose = false;
         Debug.LogError($"[AdsManager] Rewarded ad display failed | context={_pendingRewardContext} | error={error.ErrorMessage}");
         AnalyticsManager.Instance?.RecordRewardedAdFailed(_pendingRewardContext, error.ErrorMessage);
         CancelPendingRewardedRequest("display failed");
+        OnRewardedAdFlowCompleted?.Invoke(context, false);
         OnRewardedAdReadinessChanged?.Invoke();
     }
 
     private void OnRewardedAdRewarded(LevelPlayAdInfo adInfo, LevelPlayReward reward)
     {
+        string context = _pendingRewardContext;
+        _rewardGrantedForCurrentAd = true;
+        _awaitingRewardAfterClose = false;
+        CancelInvoke(nameof(FinalizePendingRewardedClose));
         Debug.Log($"[AdsManager] Reward received | context={_pendingRewardContext} | reward={reward.Name} x{reward.Amount}");
         AnalyticsManager.Instance?.RecordRewardedAdCompleted(_pendingRewardContext);
         _pendingRewardCallback?.Invoke();
         _pendingRewardCallback = null;
+
+        if (!_rewardedAdShowing)
+        {
+            OnRewardedAdFlowCompleted?.Invoke(context, true);
+            CancelPendingRewardedRequest("reward granted after close");
+            _rewardGrantedForCurrentAd = false;
+        }
     }
 
     private void OnRewardedAdClosed(LevelPlayAdInfo adInfo)
     {
+        string context = _pendingRewardContext;
+        bool rewardGranted = _rewardGrantedForCurrentAd;
+        _rewardedAdShowing = false;
         Debug.Log($"[AdsManager] Rewarded ad closed | context={_pendingRewardContext}");
         AnalyticsManager.Instance?.RecordRewardedAdClosed(_pendingRewardContext);
-        CancelPendingRewardedRequest("ad closed");
         _rewardedAd?.LoadAd();
+
+        if (rewardGranted)
+        {
+            OnRewardedAdFlowCompleted?.Invoke(context, true);
+            CancelPendingRewardedRequest("ad closed after reward");
+            _rewardGrantedForCurrentAd = false;
+            _awaitingRewardAfterClose = false;
+            return;
+        }
+
+        _awaitingRewardAfterClose = true;
+        CancelInvoke(nameof(FinalizePendingRewardedClose));
+        Invoke(nameof(FinalizePendingRewardedClose), 0.75f);
     }
 
     private void OnRewardedAdClicked(LevelPlayAdInfo adInfo)
@@ -393,7 +438,21 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
 
     public bool CanRequestRewardedAd()
     {
-        return true;
+        return _rewardedAd != null && _rewardedAd.IsAdReady();
+    }
+
+    public bool IsRewardedAdFlowInProgress(string context = null)
+    {
+        bool hasPendingRequest =
+            _pendingRewardCallback != null ||
+            _pendingRewardShowRequest ||
+            _rewardedAdShowing ||
+            _awaitingRewardAfterClose;
+
+        if (!hasPendingRequest)
+            return false;
+
+        return string.IsNullOrEmpty(context) || string.Equals(_pendingRewardContext, context, StringComparison.Ordinal);
     }
 
     public string GetRewardedAvailabilityReason()
@@ -421,6 +480,20 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
         _pendingRewardCallback = null;
         _pendingRewardContext = null;
         _pendingRewardShowRequest = false;
+        _rewardedAdShowing = false;
+        _awaitingRewardAfterClose = false;
+    }
+
+    private void FinalizePendingRewardedClose()
+    {
+        if (_rewardGrantedForCurrentAd)
+            return;
+
+        string context = _pendingRewardContext;
+        _awaitingRewardAfterClose = false;
+        OnRewardedAdFlowCompleted?.Invoke(context, false);
+        CancelPendingRewardedRequest("ad closed without reward");
+        OnRewardedAdReadinessChanged?.Invoke();
     }
 
     private void RetryInitializeLevelPlay()

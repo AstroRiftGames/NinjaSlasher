@@ -4,15 +4,31 @@ public class LevelSessionStarter : MonoBehaviour
 {
     [Header("AUTO START SETTINGS")]
     [SerializeField] private bool autoStartOnReady = true;
-    [SerializeField] private float delayBeforeStart = 0.5f;
 
     private bool hasStarted = false;
+    private Coroutine _startRoutine;
 
     private void Start()
     {
         if (autoStartOnReady)
         {
-            Invoke(nameof(StartLevelSession), delayBeforeStart);
+            _startRoutine = StartCoroutine(WaitForReadyAndStart());
+        }
+    }
+
+    private System.Collections.IEnumerator WaitForReadyAndStart()
+    {
+        while (!hasStarted)
+        {
+            if (LevelSessionManager.Instance != null &&
+                LevelSessionManager.Instance.CurrentSession != null &&
+                LevelSessionManager.Instance.CurrentSession.State == LevelSessionState.Ready)
+            {
+                StartLevelSession();
+                yield break;
+            }
+
+            yield return null;
         }
     }
 
@@ -45,5 +61,14 @@ public class LevelSessionStarter : MonoBehaviour
         }
 
         StartLevelSession();
+    }
+
+    private void OnDisable()
+    {
+        if (_startRoutine != null)
+        {
+            StopCoroutine(_startRoutine);
+            _startRoutine = null;
+        }
     }
 }

@@ -29,20 +29,18 @@ public class SceneTransitionManager : MonoBehaviour
     private void OnEnable()
     {
         UIEvents.OnSceneTransitionRequested += LoadLevelScene;
-        UIEvents.OnRestartLevelRequested += RestartLevel;
-        UIEvents.OnQuitToMenuPressed += LoadLevelSelectorScene;
+        UIEvents.OnLoadLevelSelectorSceneRequested += LoadLevelSelectorScene;
         UIEvents.OnShowLevelSelectorRequested += ShowLevelSelector;
     }
 
     private void OnDisable()
     {
         UIEvents.OnSceneTransitionRequested -= LoadLevelScene;
-        UIEvents.OnRestartLevelRequested -= RestartLevel;
-        UIEvents.OnQuitToMenuPressed -= LoadLevelSelectorScene;
+        UIEvents.OnLoadLevelSelectorSceneRequested -= LoadLevelSelectorScene;
         UIEvents.OnShowLevelSelectorRequested -= ShowLevelSelector;
     }
 
-    public void LoadLevelScene(string sceneName)
+    private void LoadLevelScene(string sceneName)
     {
         StartCoroutine(LoadLevelSceneCo(sceneName));
     }
@@ -70,12 +68,6 @@ public class SceneTransitionManager : MonoBehaviour
 
         yield return new WaitForEndOfFrame();
         SetHUDActive(true);
-    }
-
-    public void RestartLevel()
-    {
-        string sceneName = SceneManager.GetActiveScene().name;
-        LoadLevelScene(sceneName);
     }
 
     public void LoadLevelSelectorScene()

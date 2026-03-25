@@ -17,6 +17,7 @@ public class TrackingService
     private int _currentDashKills = 0;
 
     private bool isActive;
+    private bool CanTrackGameplay => isActive && session != null && session.IsRunning;
 
     public TrackingService(LevelSession levelSession)
     {
@@ -96,7 +97,7 @@ public class TrackingService
 
     public void RegisterMove()
     {
-        if (!isActive) return;
+        if (!CanTrackGameplay) return;
 
         movesCount++;
         session.IncrementMoves();
@@ -104,7 +105,7 @@ public class TrackingService
 
     public void RegisterParryKill()
     {
-        if (!isActive) return;
+        if (!CanTrackGameplay) return;
 
         parryKillRegistered = true;
         session.RegisterParryKill();
@@ -112,7 +113,7 @@ public class TrackingService
 
     public void RegisterEnemyKilled(Enemy enemy)
     {
-        if (!isActive) return;
+        if (!CanTrackGameplay) return;
 
         if (activeEnemies.Contains(enemy))
         {
@@ -135,30 +136,34 @@ public class TrackingService
 
     private void OnEnemyDefeated(int enemyCount)
     {
-        int defeated = totalEnemiesAtStart - activeEnemies.Count;
+        if (!CanTrackGameplay) return;
+
         UpdateSessionStats();
     }
 
     private void OnBL4ZTExplosionKills(int count)
     {
-        if (!isActive) return;
+        if (!CanTrackGameplay) return;
         session.AddBL4ZTKills(count);
     }
 
     private void OnBreakablePlatformBroken()
     {
-        if (!isActive) return;
+        if (!CanTrackGameplay) return;
         session.AddPlatformBroken();
     }
 
     private void OnDashStarted()
     {
+        if (!CanTrackGameplay) return;
         _isDashActive = true;
         _currentDashKills = 0;
     }
 
     private void OnDashEnded()
     {
+        if (!CanTrackGameplay) return;
+
         if (_isDashActive)
         {
             session.UpdateMaxSingleAttackKills(_currentDashKills);

@@ -2,6 +2,7 @@ using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.SceneManagement;
 
 public class NoLivesOverlay : UIOverlayBase
 {
@@ -13,6 +14,8 @@ public class NoLivesOverlay : UIOverlayBase
 
     private bool? _lastClaimLifeButtonVisible;
     private string _lastRecoveryState;
+    private bool _suppressAbandonOnHide;
+    private bool _isClaimLifeFlowInProgress;
 
     protected override void Awake()
     {
@@ -25,7 +28,10 @@ public class NoLivesOverlay : UIOverlayBase
         GameEvents.OnLivesChanged += OnLivesChanged;
 
         if (AdsManager.Instance != null)
+        {
             AdsManager.Instance.OnRewardedAdReadinessChanged += UpdateButtons;
+            AdsManager.Instance.OnRewardedAdFlowCompleted += OnRewardedAdFlowCompleted;
+        }
     }
 
     protected override void OnDisable()
@@ -34,7 +40,10 @@ public class NoLivesOverlay : UIOverlayBase
         GameEvents.OnLivesChanged -= OnLivesChanged;
 
         if (AdsManager.Instance != null)
+        {
             AdsManager.Instance.OnRewardedAdReadinessChanged -= UpdateButtons;
+            AdsManager.Instance.OnRewardedAdFlowCompleted -= OnRewardedAdFlowCompleted;
+        }
     }
 
     private void SetupButtons()
@@ -64,6 +73,15 @@ public class NoLivesOverlay : UIOverlayBase
 
     protected override void OnHidden()
     {
+        if (_suppressAbandonOnHide)
+        {
+            _suppressAbandonOnHide = false;
+            return;
+        }
+
+        if (_isClaimLifeFlowInProgress || (AdsManager.Instance != null && AdsManager.Instance.IsRewardedAdFlowInProgress("extra_life")))
+            return;
+
         if (!LifeManager.Instance.CanPlay())
         {
             LifeManager.Instance?.NotifyLifeWallAbandoned();
@@ -114,10 +132,16 @@ public class NoLivesOverlay : UIOverlayBase
         string recoveryState = $"canPlay={hasLives} | realLives={LifeManager.Instance?.GetRealLives() ?? -1} | rewarded={AdsManager.Instance?.GetRewardedAvailabilityReason() ?? "ads_manager_missing"}";
 
         if (_claimLifeButton != null)
+        {
             _claimLifeButton.gameObject.SetActive(claimVisible);
+            _claimLifeButton.interactable = claimVisible && !_isClaimLifeFlowInProgress;
+        }
 
         if (_closeButton != null)
+        {
             _closeButton.gameObject.SetActive(true);
+            _closeButton.interactable = !_isClaimLifeFlowInProgress;
+        }
 
         if (_lastClaimLifeButtonVisible != claimVisible || _lastRecoveryState != recoveryState)
         {
@@ -133,8 +157,7 @@ public class NoLivesOverlay : UIOverlayBase
 
         if (LifeManager.Instance != null && LifeManager.Instance.CanPlay())
         {
-            Hide();
-            UIEvents.RequestRestartLevel();
+            ResolveRecoveredLifeFlow();
             return;
         }
 
@@ -146,6 +169,8 @@ public class NoLivesOverlay : UIOverlayBase
         }
 
         Debug.Log("[NoLivesOverlay] Claim button requested extra life rewarded ad.");
+        _isClaimLifeFlowInProgress = true;
+        UpdateButtons();
         AdsManager.Instance?.ShowRewardedAdForExtraLife();
     }
 
@@ -165,6 +190,30 @@ public class NoLivesOverlay : UIOverlayBase
 
         UpdateMessage();
         UpdateButtons();
+
+        if (LifeManager.Instance != null && LifeManager.Instance.CanPlay())
+        {
+            ResolveRecoveredLifeFlow();
+        }
+    }
+
+    private void OnRewardedAdFlowCompleted(string context, bool rewarded)
+    {
+        if (!string.Equals(context, "extra_life", StringComparison.Ordinal))
+            return;
+
+        _isClaimLifeFlowInProgress = false;
+
+        if (!_isVisible)
+            return;
+
+        if (rewarded && LifeManager.Instance != null && LifeManager.Instance.CanPlay())
+        {
+            ResolveRecoveredLifeFlow();
+            return;
+        }
+
+        UpdateButtons();
     }
 
     private bool CanWatchAdForRecovery()
@@ -173,5 +222,35 @@ public class NoLivesOverlay : UIOverlayBase
             return false;
 
         return AdsManager.Instance != null && AdsManager.Instance.CanRequestRewardedAd();
+    }
+
+    public void HideForFlowTransition()
+    {
+        if (!_isVisible)
+            return;
+
+        _suppressAbandonOnHide = true;
+        Hide();
+    }
+
+    private void ResolveRecoveredLifeFlow()
+    {
+        if (LifeManager.Instance == null || !LifeManager.Instance.CanPlay())
+            return;
+
+        _isClaimLifeFlowInProgress = false;
+        HideForFlowTransition();
+
+        if (ShouldReturnToDefeatFlow())
+            UIEvents.RequestShowDefeatOverlay(LifeManager.Instance.GetRealLives());
+    }
+
+    private bool ShouldReturnToDefeatFlow()
+    {
+        if (LevelSessionManager.Instance != null && LevelSessionManager.Instance.IsLevelActive)
+            return true;
+
+        string activeSceneName = SceneManager.GetActiveScene().name;
+        return activeSceneName.StartsWith("Level_") || activeSceneName.Contains("Level");
     }
 }

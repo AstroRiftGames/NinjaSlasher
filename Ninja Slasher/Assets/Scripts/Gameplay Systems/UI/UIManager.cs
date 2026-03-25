@@ -254,11 +254,18 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
     private void HidePauseOverlay() => HidePanel(_pauseOverlay);
     public void TogglePauseOverlay() => TogglePanel(_pauseOverlay);
 
-    private void ShowNoLivesOverlay() => ShowPanel(_noLivesOverlay);
+    private void ShowNoLivesOverlay()
+    {
+        HidePanel(_emergencyBundleOverlay);
+        ShowPanel(_noLivesOverlay);
+    }
     private void HideNoLivesOverlay() => HidePanel(_noLivesOverlay);
 
     private void ShowDefeatOverlay(int livesRemaining)
     {
+        _noLivesOverlay?.HideForFlowTransition();
+        HidePanel(_emergencyBundleOverlay);
+
         if (_defeatOverlay != null)
             _defeatOverlay.ShowLifeLost(livesRemaining);
     }
@@ -272,6 +279,8 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
     private void ShowEmergencyBundleOverlay(EmergencyBundleOffer offer)
     {
         Debug.Log($"[UIManager] ShowEmergencyBundleOverlay | overlay assigned={_emergencyBundleOverlay != null}");
+        _noLivesOverlay?.HideForFlowTransition();
+
         if (_emergencyBundleOverlay != null)
             _emergencyBundleOverlay.ShowWithOffer(offer);
     }

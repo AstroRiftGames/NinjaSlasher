@@ -6,7 +6,7 @@ public static class ParryKillTracker
     {
         get
         {
-            if (LevelSessionManager.Instance?.HasActiveSession ?? false)
+            if (LevelSessionManager.Instance?.IsSessionRunning ?? false)
             {
                 return LevelSessionManager.Instance.GetCurrentStats().parryKillDone;
             }
