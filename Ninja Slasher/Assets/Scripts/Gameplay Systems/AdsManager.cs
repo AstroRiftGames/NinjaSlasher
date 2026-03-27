@@ -166,9 +166,9 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
 
     private void OnResultsActionTaken()
     {
-        if (IsRewardedAdFlowInProgress("extra_life"))
+        if (IsRewardedAdFlowInProgress())
         {
-            Debug.Log("[AdsManager] Ignoring results action while extra life rewarded flow is still in progress.");
+            Debug.Log("[AdsManager] Ignoring results action while rewarded flow is still in progress.");
             return;
         }
 
@@ -275,6 +275,8 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
     private void OnRewardedAdDisplayed(LevelPlayAdInfo adInfo)
     {
         _rewardedAdShowing = true;
+        _interstitialPending = false;
+        ClearPendingInterstitial();
         Debug.Log($"[AdsManager] Rewarded ad displayed | context={_pendingRewardContext}");
         AnalyticsManager.Instance?.RecordRewardedAdShown(_pendingRewardContext);
     }
