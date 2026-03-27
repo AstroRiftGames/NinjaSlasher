@@ -1,9 +1,15 @@
-using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
 public class SwipeDetection : MonoBehaviour
 {
+    public delegate void ActionEvent();
+    public event ActionEvent OnSwipeCanceled;
+    public event ActionEvent OnSwipeResumed;
+
+    public event Swipe OnInputStart;
+    public event Swipe OnInputEnd;
+
     public delegate void Swipe(Vector2 direction);
     public event Swipe OnSwipe;
 
@@ -18,16 +24,22 @@ public class SwipeDetection : MonoBehaviour
     private InputAction press;
 
     private Vector2 currentPos => position.ReadValue<Vector2>();
+    public Vector2 CurrentPosition => currentPos;
     [SerializeField] private float swipeResistance = 100f;
     private Vector2 initialPos;
 
     private float currentTime => Time.time;
     [SerializeField] private float timeThreshold = .2f;
+    [SerializeField] private float cancelRadius = 50f;
     private float pressTime;
+
+    private bool isCanceled;
+    private bool wasCanceled;
 
     private void Awake()
     {
         _controls = new InputActions();
+        FindFirstObjectByType<SwipeFeedbackUI>().SetSwipeDetection(this);
     }
 
     private void OnEnable()
@@ -58,6 +70,10 @@ public class SwipeDetection : MonoBehaviour
     {
         initialPos = currentPos;
         pressTime = Time.time;
+
+        isCanceled = true;
+
+        OnInputStart?.Invoke(currentPos);
     }
 
     private void OnPressCanceled(InputAction.CallbackContext _)
@@ -69,7 +85,31 @@ public class SwipeDetection : MonoBehaviour
     {
         if (IsPressing)
         {
-            Direction = CalculateDirection();
+            Vector2 delta = initialPos - currentPos;
+            float distance = delta.magnitude;
+
+            bool nowCanceled = distance <= cancelRadius;
+
+            if (nowCanceled && !isCanceled)
+            {
+                isCanceled = true;
+                OnSwipeCanceled?.Invoke();
+            }
+
+            if (!nowCanceled && isCanceled)
+            {
+                isCanceled = false;
+                OnSwipeResumed?.Invoke();
+            }
+
+            if (!isCanceled && distance > swipeResistance)
+            {
+                Direction = delta.normalized;
+            }
+            else
+            {
+                Direction = Vector2.zero;
+            }
         }
         else
         {
@@ -79,6 +119,11 @@ public class SwipeDetection : MonoBehaviour
 
     private void DetectInput()
     {
+        if (isCanceled)
+        {
+            return;
+        }
+
         Vector2 direction = CalculateDirection();
 
         if (direction != Vector2.zero)

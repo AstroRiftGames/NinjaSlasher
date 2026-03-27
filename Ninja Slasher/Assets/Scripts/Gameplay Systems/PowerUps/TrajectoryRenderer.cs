@@ -4,8 +4,13 @@ public class TrajectoryRenderer : MonoBehaviour
 {
     [SerializeField] private SpriteRenderer _indicator;
     public SpriteRenderer Indicator => _indicator;
+
+    [SerializeField] private SpriteRenderer _hitMarker;
+
     [SerializeField] private LayerMask _collisionLayers;
-    [SerializeField] private float _defaultMaxDistance = 50f;
+    [SerializeField] private float _defaultMaxDistance = 5f;
+
+    [SerializeField] private float _playerRadius = 0.5f;
 
     [SerializeField] private PowerUpHawkVision _hawkVisionSettings;
 
@@ -18,6 +23,11 @@ public class TrajectoryRenderer : MonoBehaviour
             _fixedWidth = _indicator.size.x;
             _indicator.enabled = false;
         }
+
+        if (_hitMarker != null)
+        {
+            _hitMarker.enabled = false;
+        }
     }
 
     public void ShowTrajectory(Vector3 startPosition, Vector2 direction)
@@ -26,22 +36,47 @@ public class TrajectoryRenderer : MonoBehaviour
 
         float maxDist = _hawkVisionSettings != null ? _hawkVisionSettings.maxDistance : _defaultMaxDistance;
 
-        float distance = CalculateDistance(startPosition, direction, maxDist);
-        UpdateArrowTransform(startPosition, direction, distance);
+        RaycastHit2D hit = CalculateHit(startPosition, direction);
 
-        _indicator.enabled = true;
-    }
-
-    private float CalculateDistance(Vector3 startPos, Vector2 direction, float maxDist)
-    {
-        RaycastHit2D hit = Physics2D.Raycast(startPos, direction.normalized, maxDist, _collisionLayers);
+        float distance;
+        Vector3 hitPoint;
 
         if (hit.collider != null)
         {
-            return hit.distance;
+            distance = hit.distance;
+            hitPoint = hit.point;
+
+            if (_hitMarker != null)
+            {
+                _hitMarker.enabled = true;
+                _hitMarker.transform.position = hitPoint;
+            }
+        }
+        else
+        {
+            distance = maxDist;
+            hitPoint = startPosition + (Vector3)(direction.normalized * maxDist);
+
+            if (_hitMarker != null)
+            {
+                _hitMarker.enabled = false;
+            }
         }
 
-        return maxDist;
+        //UpdateArrowTransform(startPosition, direction, distance);
+
+        //_indicator.enabled = true;
+    }
+
+    private RaycastHit2D CalculateHit(Vector3 startPos, Vector2 direction)
+    {
+        return Physics2D.CircleCast(
+            startPos,
+            _playerRadius * transform.parent.localScale.x,
+            direction.normalized,
+            20f,
+            _collisionLayers
+        );
     }
 
     private void UpdateArrowTransform(Vector3 startPos, Vector2 direction, float distance)
@@ -49,7 +84,6 @@ public class TrajectoryRenderer : MonoBehaviour
         _indicator.transform.position = startPos;
 
         float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
-
         _indicator.transform.rotation = Quaternion.Euler(0, 0, angle - 90f);
 
         _indicator.size = new Vector2(_fixedWidth, distance);
@@ -57,6 +91,7 @@ public class TrajectoryRenderer : MonoBehaviour
 
     public void HideTrajectory()
     {
-        if (_indicator != null) _indicator.enabled = false;
+        //if (_indicator != null) _indicator.enabled = false;
+        if (_hitMarker != null) _hitMarker.enabled = false;
     }
 }
