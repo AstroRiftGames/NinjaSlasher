@@ -97,6 +97,7 @@ public class WheelLever : MonoBehaviour, IDragHandler, IBeginDragHandler, IEndDr
         if(HasReachedNextThird(finalAngle))
         {
             AudioService.Instance.PlaySFX(_audioContext.Audio.leverPull);
+            CandyCoded.HapticFeedback.HapticFeedback.LightFeedback();
         }
     }
 

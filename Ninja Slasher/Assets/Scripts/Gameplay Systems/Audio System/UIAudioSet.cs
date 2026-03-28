@@ -21,6 +21,8 @@ public class UIAudioSet : ScriptableObject
     [Header("Diegetic UI")]
     public AudioEvent wheelSpin;
     public AudioEvent leverPull;
+    public AudioEvent ballHit;
+    public AudioEvent finishBallHit;
 
     [Header("Rewards")]
     public AudioEvent rewardCoins;

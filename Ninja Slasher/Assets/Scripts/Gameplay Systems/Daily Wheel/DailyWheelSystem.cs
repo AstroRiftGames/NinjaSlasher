@@ -8,15 +8,11 @@ public class DailyWheelSystem : MonoBehaviourSingleton<DailyWheelSystem>
     [SerializeField] private bool debugInfiniteSpins = false;
 
     [Header("WHEEL CONFIGURATION")]
-    [SerializeField] private WheelReward[] wheelRewards;
+    [SerializeField] private WheelRewardSet _rewardSet;
 
     private WheelData wheelData = new WheelData();
 
-    public static event Action<WheelReward> OnRewardSpun;
-    public static event Action<bool> OnWheelAvailabilityChanged;
-    public static event Action<int> OnConsecutiveSpinsUpdated;
-
-    public WheelReward[] WheelRewards => wheelRewards;
+    public WheelReward[] WheelRewards => _rewardSet?.rewards;
 
     public override void Awake()
     {
@@ -72,10 +68,10 @@ public class DailyWheelSystem : MonoBehaviourSingleton<DailyWheelSystem>
             SaveWheelData();
         }
 
-        OnRewardSpun?.Invoke(reward);
+        GameEvents.RaiseWheelSpun(reward);
 
         CheckWheelAvailability();
-        OnConsecutiveSpinsUpdated?.Invoke(wheelData.consecutiveSpins);
+        GameEvents.RaiseConsecutiveDaysUpdated(wheelData.consecutiveSpins);
 
         return true;
     }
@@ -92,19 +88,36 @@ public class DailyWheelSystem : MonoBehaviourSingleton<DailyWheelSystem>
 
     private WheelReward GetCalculatedReward()
     {
-        if (wheelRewards == null || wheelRewards.Length == 0) return null;
+        var rewards = WheelRewards;
+        if (rewards == null || rewards.Length == 0)
+        {
+            Debug.LogError("[DailyWheel] No rewards defined in the RewardSet!");
+            return null;
+        }
 
-        float totalWeight = wheelRewards.Sum(r => r.weight);
-        float randomValue = UnityEngine.Random.Range(0f, totalWeight);
+        float totalWeight = 0;
+        foreach (var r in rewards) totalWeight += r.weight;
+
+        if (totalWeight <= 0)
+        {
+            Debug.LogWarning("[DailyWheel] Total weight is 0. Returning a random reward with equal probability.");
+            return rewards[UnityEngine.Random.Range(0, rewards.Length)];
+        }
+
+        float randomValue = UnityEngine.Random.value * totalWeight;
         float currentWeight = 0f;
 
-        foreach (var reward in wheelRewards)
+        foreach (var reward in rewards)
         {
             currentWeight += reward.weight;
             if (randomValue <= currentWeight)
+            {
+                Debug.Log($"[DailyWheel] Rolled {randomValue}/{totalWeight}. Selected: {reward.displayName}");
                 return reward;
+            }
         }
-        return wheelRewards.Last();
+
+        return rewards[rewards.Length - 1];
     }
 
     private void UpdateSpinProgress()
@@ -124,7 +137,7 @@ public class DailyWheelSystem : MonoBehaviourSingleton<DailyWheelSystem>
     private void CheckWheelAvailability()
     {
         bool isAvailable = CanSpinToday();
-        OnWheelAvailabilityChanged?.Invoke(isAvailable);
+        GameEvents.RaiseWheelAvailabilityChanged(isAvailable);
     }
 
     private void LoadWheelData()
