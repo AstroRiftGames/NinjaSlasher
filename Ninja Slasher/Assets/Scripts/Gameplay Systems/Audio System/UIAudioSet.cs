@@ -23,6 +23,7 @@ public class UIAudioSet : ScriptableObject
     public AudioEvent leverPull;
     public AudioEvent ballHit;
     public AudioEvent finishBallHit;
+    public AudioEvent _ballBounceAudio;
 
     [Header("Rewards")]
     public AudioEvent rewardCoins;
@@ -31,4 +32,6 @@ public class UIAudioSet : ScriptableObject
 
     [Header("Panels")]
     public AudioEvent panelOpen;
+    public AudioEvent _rewardPopupAudio;
+
 }

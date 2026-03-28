@@ -27,6 +27,10 @@ public class DailyWheelUI : MonoBehaviour
     [SerializeField] private int _spinLoopCount = 3;
     [SerializeField] private float _rewardPopupScaleDuration = 0.4f;
 
+    [Header("Spin Audio")]
+    [SerializeField] private float _tickEveryDegrees = 30f;
+    [SerializeField] private Vector2 _ballHitIntervalRange = new Vector2(0.08f, 0.2f);
+
     [Header("Wheel Controller")]
     [SerializeField] private string _wheelSpinTrigger = "Spin";
     [SerializeField] private string _wheelIdleState = "GaraponIdle";
@@ -41,7 +45,16 @@ public class DailyWheelUI : MonoBehaviour
     private bool _isSpinning;
     private Coroutine _timerCoroutine;
     private Coroutine _sequenceCoroutine;
+    private Coroutine _spinAudioCoroutine;
     private WheelReward _currentReward;
+    private UIAudioContext _audioContext;
+    private float _lastWheelAngle;
+    private float _accumulatedSpinDegrees;
+
+    private void Awake()
+    {
+        _audioContext = GetComponentInParent<UIAudioContext>();
+    }
 
     private void OnEnable()
     {
@@ -54,6 +67,7 @@ public class DailyWheelUI : MonoBehaviour
         if (_wheelLever != null) _wheelLever.OnLeverActivated -= OnLeverPulled;
         if (_timerCoroutine != null) StopCoroutine(_timerCoroutine);
         if (_sequenceCoroutine != null) StopCoroutine(_sequenceCoroutine);
+        StopSpinAudio(false);
 
         _timerCoroutine = null;
         _sequenceCoroutine = null;
@@ -96,6 +110,8 @@ public class DailyWheelUI : MonoBehaviour
         if (rewardPopup != null) rewardPopup.SetActive(false);
         if (_closeButton != null) _closeButton.gameObject.SetActive(false);
 
+        StartSpinAudio();
+
         int spinCount = Mathf.Max(1, _spinLoopCount);
         for (int i = 0; i < spinCount; i++)
         {
@@ -105,6 +121,7 @@ public class DailyWheelUI : MonoBehaviour
         }
 
         yield return WaitForState(_wheelAnimator, _wheelIdleState);
+        StopSpinAudio(true);
 
         TriggerBallReveal();
         yield return WaitForStateToStart(_ballAnimator, _ballRevealState);
@@ -149,7 +166,7 @@ public class DailyWheelUI : MonoBehaviour
     private void ShowRewardPopup()
     {
         if (_currentReward == null || rewardPopup == null) return;
-
+        PlayUIAudio(_audioContext?.Audio?._rewardPopupAudio);
         rewardPopup.SetActive(true);
         rewardPopup.transform.localScale = Vector3.zero;
         rewardPopup.transform.DOScale(1f, _rewardPopupScaleDuration).SetEase(Ease.OutBack);
@@ -164,6 +181,8 @@ public class DailyWheelUI : MonoBehaviour
             StopCoroutine(_sequenceCoroutine);
             _sequenceCoroutine = null;
         }
+
+        StopSpinAudio(false);
 
         _isSpinning = false;
 
@@ -238,6 +257,137 @@ public class DailyWheelUI : MonoBehaviour
             elapsed += Time.deltaTime;
             yield return null;
         }
+    }
+
+    private void StartSpinAudio()
+    {
+        StopSpinAudio(false);
+
+        if (!HasWheelSpinAudio() && !HasBallHitAudio())
+        {
+            return;
+        }
+
+        _lastWheelAngle = GetWheelAngle();
+        _accumulatedSpinDegrees = 0f;
+        _spinAudioCoroutine = StartCoroutine(SpinAudioRoutine());
+    }
+
+    private void StopSpinAudio(bool playFinishHit)
+    {
+        if (_spinAudioCoroutine != null)
+        {
+            StopCoroutine(_spinAudioCoroutine);
+            _spinAudioCoroutine = null;
+        }
+
+        _accumulatedSpinDegrees = 0f;
+        _lastWheelAngle = GetWheelAngle();
+
+        if (playFinishHit)
+        {
+            PlayUIAudio(_audioContext?.Audio?.finishBallHit);
+        }
+    }
+
+    private IEnumerator SpinAudioRoutine()
+    {
+        float nextBallHitDelay = GetNextBallHitDelay();
+        float ballHitTimer = 0f;
+
+        while (_isSpinning)
+        {
+            UpdateWheelTickAudio();
+            bool isWheelSpinning = IsAnimatorInState(_wheelAnimator, _wheelSpinState);
+
+            if (isWheelSpinning)
+            {
+                ballHitTimer += Time.deltaTime;
+
+                if (ballHitTimer >= nextBallHitDelay)
+                {
+                    PlayUIAudio(_audioContext?.Audio?.ballHit);
+                    ballHitTimer = 0f;
+                    nextBallHitDelay = GetNextBallHitDelay();
+                }
+            }
+            else
+            {
+                _lastWheelAngle = GetWheelAngle();
+            }
+
+            yield return null;
+        }
+    }
+
+    private void UpdateWheelTickAudio()
+    {
+        float currentAngle = GetWheelAngle();
+        float delta = Mathf.Abs(Mathf.DeltaAngle(_lastWheelAngle, currentAngle));
+        _lastWheelAngle = currentAngle;
+
+        if (delta <= 0f || _tickEveryDegrees <= 0f)
+        {
+            return;
+        }
+
+        _accumulatedSpinDegrees += delta;
+        while (_accumulatedSpinDegrees >= _tickEveryDegrees)
+        {
+            PlayUIAudio(_audioContext?.Audio?.wheelSpin);
+            _accumulatedSpinDegrees -= _tickEveryDegrees;
+        }
+    }
+
+    private bool IsAnimatorInState(Animator animator, string stateName)
+    {
+        return animator != null
+            && !string.IsNullOrEmpty(stateName)
+            && animator.GetCurrentAnimatorStateInfo(0).IsName(stateName);
+    }
+
+    private float GetWheelAngle()
+    {
+        if (_wheelAnimator == null)
+        {
+            return 0f;
+        }
+
+        return _wheelAnimator.transform.localEulerAngles.z;
+    }
+
+    private float GetNextBallHitDelay()
+    {
+        float min = Mathf.Max(0.01f, Mathf.Min(_ballHitIntervalRange.x, _ballHitIntervalRange.y));
+        float max = Mathf.Max(min, Mathf.Max(_ballHitIntervalRange.x, _ballHitIntervalRange.y));
+        return UnityEngine.Random.Range(min, max);
+    }
+
+    private bool HasWheelSpinAudio()
+    {
+        return _audioContext != null && _audioContext.Audio != null && _audioContext.Audio.wheelSpin != null;
+    }
+
+    private bool HasBallHitAudio()
+    {
+        return _audioContext != null
+            && _audioContext.Audio != null
+            && (_audioContext.Audio.ballHit != null || _audioContext.Audio.finishBallHit != null);
+    }
+
+    private void PlayUIAudio(AudioEvent audioEvent)
+    {
+        if (audioEvent == null || AudioService.Instance == null)
+        {
+            return;
+        }
+
+        AudioService.Instance.PlaySFX(audioEvent);
+    }
+
+    public void AnimationEvent_PlayBallBounce()
+    {
+        PlayUIAudio(_audioContext.Audio._ballBounceAudio);
     }
 
     private void StartTimerUpdate()
