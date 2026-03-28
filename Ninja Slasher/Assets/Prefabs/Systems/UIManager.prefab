@@ -589,14 +589,19 @@ MonoBehaviour:
   rewardNameText: {fileID: 5660718922210818036}
   rewardQuantityText: {fileID: 3047013473040862589}
   rewardIconImage: {fileID: 6724960482610192731}
-  _spinCount: 3
-  _spinDuration: 3.15
-  _wheelSettleDuration: 1
-  _revealToOpenDuration: 1
-  _spinTrigger: Spin
-  _ejectTrigger: Eject
-  _openTrigger: Open
-  _resetTrigger: Reset
+  _spinLoopCount: 3
+  _wheelToRevealDelay: 0.08
+  _revealToOpenDelay: 0.08
+  _openToPopupDelay: 0.1
+  _rewardPopupScaleDuration: 0.4
+  _wheelSpinTrigger: Spin
+  _wheelIdleState: GaraponIdle
+  _wheelSpinState: GaraponSpin
+  _ballEjectTrigger: Eject
+  _ballOpenTrigger: Open
+  _ballHiddenState: BallHidden
+  _ballRevealState: BallReveal
+  _ballOpenState: OpenBall
 --- !u!114 &6146392794090672321
 MonoBehaviour:
   m_ObjectHideFlags: 0

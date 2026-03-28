@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using DG.Tweening;
 using TMPro;
 using UnityEngine;
@@ -6,17 +7,6 @@ using UnityEngine.UI;
 
 public class DailyWheelUI : MonoBehaviour
 {
-    private enum SequenceStage
-    {
-        Idle,
-        WheelStarting,
-        WheelLooping,
-        WheelStopping,
-        BallRevealing,
-        BallOpening,
-        RewardVisible
-    }
-
     [Header("Animators")]
     [SerializeField] private Animator _wheelAnimator;
     [SerializeField] private Animator _ballAnimator;
@@ -37,28 +27,21 @@ public class DailyWheelUI : MonoBehaviour
     [SerializeField] private int _spinLoopCount = 3;
     [SerializeField] private float _rewardPopupScaleDuration = 0.4f;
 
-    [Header("Wheel Animator Parameters")]
-    [SerializeField] private string _wheelStartTrigger = "StartSpin";
-    [SerializeField] private string _wheelLoopTrigger = "SpinLoop";
-    [SerializeField] private string _wheelStopTrigger = "StopSpin";
-    [SerializeField] private string _wheelResetTrigger = "Reset";
+    [Header("Wheel Controller")]
+    [SerializeField] private string _wheelSpinTrigger = "Spin";
+    [SerializeField] private string _wheelIdleState = "GaraponIdle";
+    [SerializeField] private string _wheelSpinState = "GaraponSpin";
 
-    [Header("Ball Animator Parameters")]
-    [SerializeField] private string _ballRevealTrigger = "Reveal";
-    [SerializeField] private string _ballOpenTrigger = "Open";
-    [SerializeField] private string _ballResetTrigger = "Reset";
+    [Header("Ball Controller")]
+    [SerializeField] private string _ballEjectTrigger = "Eject";
+    [SerializeField] private string _ballHiddenState = "BallHidden";
+    [SerializeField] private string _ballRevealState = "BallReveal";
+    [SerializeField] private string _ballOpenState = "OpenBall";
 
     private bool _isSpinning;
-    private int _remainingSpinLoops;
-    private SequenceStage _stage = SequenceStage.Idle;
     private Coroutine _timerCoroutine;
-    private UIAudioContext _audioContext;
+    private Coroutine _sequenceCoroutine;
     private WheelReward _currentReward;
-
-    private void Awake()
-    {
-        _audioContext = GetComponentInParent<UIAudioContext>();
-    }
 
     private void OnEnable()
     {
@@ -70,9 +53,11 @@ public class DailyWheelUI : MonoBehaviour
     {
         if (_wheelLever != null) _wheelLever.OnLeverActivated -= OnLeverPulled;
         if (_timerCoroutine != null) StopCoroutine(_timerCoroutine);
+        if (_sequenceCoroutine != null) StopCoroutine(_sequenceCoroutine);
+
         _timerCoroutine = null;
+        _sequenceCoroutine = null;
         _isSpinning = false;
-        _stage = SequenceStage.Idle;
     }
 
     private void Start()
@@ -94,23 +79,57 @@ public class DailyWheelUI : MonoBehaviour
             return;
         }
 
-        BeginSequence();
+        if (_sequenceCoroutine != null)
+        {
+            StopCoroutine(_sequenceCoroutine);
+        }
+
+        _sequenceCoroutine = StartCoroutine(PlaySequence());
     }
 
-    private void BeginSequence()
+    private IEnumerator PlaySequence()
     {
         _isSpinning = true;
-        _remainingSpinLoops = Mathf.Max(1, _spinLoopCount);
-        _stage = SequenceStage.WheelStarting;
-
         PrepareRewardVisuals();
         UpdateUIState(false);
 
         if (rewardPopup != null) rewardPopup.SetActive(false);
         if (_closeButton != null) _closeButton.gameObject.SetActive(false);
 
-        TriggerAnimator(_wheelAnimator, _wheelResetTrigger, _wheelStartTrigger);
-        AudioService.Instance?.PlaySFX(_audioContext.Audio.wheelSpin);
+        int spinCount = Mathf.Max(1, _spinLoopCount);
+        for (int i = 0; i < spinCount; i++)
+        {
+            TriggerWheelSpin();
+            yield return WaitForStateToStart(_wheelAnimator, _wheelSpinState);
+            yield return WaitForStateToExit(_wheelAnimator, _wheelSpinState);
+        }
+
+        yield return WaitForState(_wheelAnimator, _wheelIdleState);
+
+        TriggerBallReveal();
+        yield return WaitForStateToStart(_ballAnimator, _ballRevealState);
+        yield return WaitForStateToExit(_ballAnimator, _ballRevealState);
+        yield return WaitForStateToStart(_ballAnimator, _ballOpenState);
+        yield return WaitForStateToExit(_ballAnimator, _ballOpenState);
+
+        ShowRewardPopup();
+        _sequenceCoroutine = null;
+    }
+
+    private void TriggerWheelSpin()
+    {
+        if (_wheelAnimator == null || string.IsNullOrEmpty(_wheelSpinTrigger)) return;
+
+        _wheelAnimator.ResetTrigger(_wheelSpinTrigger);
+        _wheelAnimator.SetTrigger(_wheelSpinTrigger);
+    }
+
+    private void TriggerBallReveal()
+    {
+        if (_ballAnimator == null || string.IsNullOrEmpty(_ballEjectTrigger)) return;
+
+        _ballAnimator.ResetTrigger(_ballEjectTrigger);
+        _ballAnimator.SetTrigger(_ballEjectTrigger);
     }
 
     private void PrepareRewardVisuals()
@@ -127,72 +146,9 @@ public class DailyWheelUI : MonoBehaviour
         if (rewardIconImage != null) rewardIconImage.sprite = _currentReward.icon;
     }
 
-    public void AnimationEvent_OnWheelLoopComplete()
-    {
-        if (_stage != SequenceStage.WheelStarting && _stage != SequenceStage.WheelLooping) return;
-
-        _remainingSpinLoops--;
-        if (_remainingSpinLoops > 0)
-        {
-            _stage = SequenceStage.WheelLooping;
-            TriggerAnimator(_wheelAnimator, _wheelStopTrigger, _wheelLoopTrigger);
-            return;
-        }
-
-        _stage = SequenceStage.WheelStopping;
-        TriggerAnimator(_wheelAnimator, _wheelLoopTrigger, _wheelStopTrigger);
-    }
-
-    public void AnimationEvent_OnWheelStopped()
-    {
-        if (_stage != SequenceStage.WheelStopping) return;
-
-        _stage = SequenceStage.BallRevealing;
-        TriggerAnimator(_ballAnimator, _ballOpenTrigger, _ballRevealTrigger);
-        AudioService.Instance?.PlaySFX(_audioContext.Audio.leverPull);
-    }
-
-    public void AnimationEvent_OnBallRevealFinished()
-    {
-        if (_stage != SequenceStage.BallRevealing) return;
-
-        _stage = SequenceStage.BallOpening;
-        TriggerAnimator(_ballAnimator, _ballRevealTrigger, _ballOpenTrigger);
-        AudioService.Instance?.PlaySFX(_audioContext.Audio.rewardPrize);
-        CandyCoded.HapticFeedback.HapticFeedback.HeavyFeedback();
-    }
-
-    public void AnimationEvent_OnBallOpenFinished()
-    {
-        if (_stage != SequenceStage.BallOpening) return;
-
-        ShowRewardPopup();
-    }
-
-    public void AnimationEvent_PlayBallHit()
-    {
-        if (!_isSpinning) return;
-
-        AudioService.Instance?.PlaySFX(_audioContext.Audio.ballHit);
-        CandyCoded.HapticFeedback.HapticFeedback.LightFeedback();
-    }
-
-    public void AnimationEvent_PlayFinishBallHit()
-    {
-        AudioService.Instance?.PlaySFX(_audioContext.Audio.finishBallHit);
-        CandyCoded.HapticFeedback.HapticFeedback.MediumFeedback();
-    }
-
-    public void AnimationEvent_PlayLeverPull()
-    {
-        AudioService.Instance?.PlaySFX(_audioContext.Audio.leverPull);
-    }
-
     private void ShowRewardPopup()
     {
         if (_currentReward == null || rewardPopup == null) return;
-
-        _stage = SequenceStage.RewardVisible;
 
         rewardPopup.SetActive(true);
         rewardPopup.transform.localScale = Vector3.zero;
@@ -203,8 +159,13 @@ public class DailyWheelUI : MonoBehaviour
 
     public void CloseRewardPopup()
     {
+        if (_sequenceCoroutine != null)
+        {
+            StopCoroutine(_sequenceCoroutine);
+            _sequenceCoroutine = null;
+        }
+
         _isSpinning = false;
-        _stage = SequenceStage.Idle;
 
         if (rewardPopup != null) rewardPopup.SetActive(false);
         if (_closeButton != null) _closeButton.gameObject.SetActive(false);
@@ -216,27 +177,66 @@ public class DailyWheelUI : MonoBehaviour
 
     public void ResetVisualState()
     {
-        TriggerAnimator(_wheelAnimator, _wheelStartTrigger, _wheelResetTrigger, _wheelLoopTrigger, _wheelStopTrigger);
-        TriggerAnimator(_ballAnimator, _ballRevealTrigger, _ballResetTrigger, _ballOpenTrigger);
+        ForceState(_wheelAnimator, _wheelIdleState);
+        ForceState(_ballAnimator, _ballHiddenState);
     }
 
-    private void TriggerAnimator(Animator animator, params string[] triggerNames)
+    private void ForceState(Animator animator, string stateName)
     {
-        if (animator == null) return;
+        if (animator == null || string.IsNullOrEmpty(stateName)) return;
 
-        for (int i = 0; i < triggerNames.Length; i++)
+        animator.Play(stateName, 0, 0f);
+        animator.Update(0f);
+    }
+
+    private IEnumerator WaitForState(Animator animator, string stateName, float timeout = 2f)
+    {
+        if (animator == null || string.IsNullOrEmpty(stateName))
         {
-            string triggerName = triggerNames[i];
-            if (string.IsNullOrEmpty(triggerName)) continue;
-            animator.ResetTrigger(triggerName);
+            yield break;
         }
 
-        if (triggerNames.Length == 0) return;
-
-        string finalTrigger = triggerNames[triggerNames.Length - 1];
-        if (!string.IsNullOrEmpty(finalTrigger))
+        float elapsed = 0f;
+        while (elapsed < timeout)
         {
-            animator.SetTrigger(finalTrigger);
+            if (animator.GetCurrentAnimatorStateInfo(0).IsName(stateName))
+            {
+                yield break;
+            }
+
+            elapsed += Time.deltaTime;
+            yield return null;
+        }
+    }
+
+    private IEnumerator WaitForStateToStart(Animator animator, string stateName, float timeout = 2f)
+    {
+        yield return WaitForState(animator, stateName, timeout);
+    }
+
+    private IEnumerator WaitForStateToExit(Animator animator, string stateName, float timeout = 5f)
+    {
+        if (animator == null || string.IsNullOrEmpty(stateName))
+        {
+            yield break;
+        }
+
+        float elapsed = 0f;
+        while (elapsed < timeout)
+        {
+            AnimatorStateInfo state = animator.GetCurrentAnimatorStateInfo(0);
+            if (!state.IsName(stateName))
+            {
+                yield break;
+            }
+
+            if (state.normalizedTime >= 1f && !animator.IsInTransition(0))
+            {
+                yield break;
+            }
+
+            elapsed += Time.deltaTime;
+            yield return null;
         }
     }
 
@@ -246,7 +246,7 @@ public class DailyWheelUI : MonoBehaviour
         _timerCoroutine = StartCoroutine(UpdateTimerRoutine());
     }
 
-    private System.Collections.IEnumerator UpdateTimerRoutine()
+    private IEnumerator UpdateTimerRoutine()
     {
         var wait = new WaitForSeconds(1f);
 
