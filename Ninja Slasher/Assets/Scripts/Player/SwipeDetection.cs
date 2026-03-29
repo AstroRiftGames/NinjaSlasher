@@ -3,6 +3,7 @@ using UnityEngine.InputSystem;
 
 public class SwipeDetection : MonoBehaviour
 {
+    private NewController _player;
     public delegate void ActionEvent();
     public event ActionEvent OnSwipeCanceled;
     public event ActionEvent OnSwipeResumed;
@@ -16,7 +17,8 @@ public class SwipeDetection : MonoBehaviour
     public delegate void Tap(Vector2 position);
     public event Tap OnTap;
 
-    public bool IsPressing => press != null && press.IsPressed();
+    private bool _isPressing = false;
+    public bool IsPressing => _isPressing;
     [HideInInspector] public Vector2 Direction = Vector2.zero;
 
     private InputActions _controls;
@@ -34,12 +36,13 @@ public class SwipeDetection : MonoBehaviour
     private float pressTime;
 
     private bool isCanceled;
-    private bool wasCanceled;
 
     private void Awake()
     {
         _controls = new InputActions();
         FindFirstObjectByType<SwipeFeedbackUI>().SetSwipeDetection(this);
+        TryGetComponent(out NewController player);
+        _player = player;
     }
 
     private void OnEnable()
@@ -68,22 +71,26 @@ public class SwipeDetection : MonoBehaviour
 
     private void OnPressStarted(InputAction.CallbackContext _)
     {
+        if (_player.IsDashing) return;
         initialPos = currentPos;
         pressTime = Time.time;
 
         isCanceled = true;
+        _isPressing = true;
 
         OnInputStart?.Invoke(currentPos);
     }
 
     private void OnPressCanceled(InputAction.CallbackContext _)
     {
+        if (!_isPressing || _player.IsDashing) return;
         DetectInput();
+        _isPressing = false;
     }
 
     private void Update()
     {
-        if (IsPressing)
+        if (_isPressing)
         {
             Vector2 delta = initialPos - currentPos;
             float distance = delta.magnitude;
