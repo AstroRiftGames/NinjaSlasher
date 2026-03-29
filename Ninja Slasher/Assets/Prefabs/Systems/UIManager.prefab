@@ -745,6 +745,8 @@ MonoBehaviour:
   trail: {fileID: 1760151800911153224}
   canvas: {fileID: 7637417165717419691}
   trailThickness: 20
+  maxDistance: 300
+  resumeThreshold: 10
 --- !u!223 &1673082323075697075
 Canvas:
   m_ObjectHideFlags: 0
@@ -1365,7 +1367,6 @@ GameObject:
   m_Component:
   - component: {fileID: 3026885327374287077}
   - component: {fileID: 1325304541341288518}
-  - component: {fileID: 4808635105397305148}
   m_Layer: 0
   m_Name: SwipeFeedback
   m_TagString: Untagged
@@ -1412,29 +1413,8 @@ MonoBehaviour:
   trail: {fileID: 7758382544192452991}
   canvas: {fileID: 6332562037902727144}
   trailThickness: 20
---- !u!223 &4808635105397305148
-Canvas:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6087159432197505095}
-  m_Enabled: 1
-  serializedVersion: 3
-  m_RenderMode: 2
-  m_Camera: {fileID: 0}
-  m_PlaneDistance: 100
-  m_PixelPerfect: 0
-  m_ReceivesEvents: 1
-  m_OverrideSorting: 0
-  m_OverridePixelPerfect: 0
-  m_SortingBucketNormalizedSize: 0
-  m_VertexColorAlwaysGammaSpace: 0
-  m_AdditionalShaderChannelsFlag: 0
-  m_UpdateRectTransformForStandalone: 0
-  m_SortingLayerID: 0
-  m_SortingOrder: 0
-  m_TargetDisplay: 0
+  maxDistance: 300
+  resumeThreshold: 10
 --- !u!1 &6417830645651222520
 GameObject:
   m_ObjectHideFlags: 0

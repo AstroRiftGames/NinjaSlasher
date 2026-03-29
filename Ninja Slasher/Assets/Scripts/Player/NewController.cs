@@ -1,9 +1,11 @@
-using System;
-using UnityEngine;
 using CandyCoded.HapticFeedback;
-using System.Linq;
+using System;
 using System.Collections;
+using System.Linq;
+using UnityEngine;
+using UnityEngine.UIElements;
 using UnityEngine.VFX;
+using static UnityEditor.ShaderGraph.Internal.KeywordDependentCollection;
 
 public enum NinjaStates
 {
@@ -37,15 +39,20 @@ public class NewController : MonoBehaviour
     private float _lastParry;
     public Vector2 LastMoveDirection => _lastMoveDirection;
     private Vector2 _lastMoveDirection;
+    private Vector2 _wishedDirection = Vector2.zero;
+    private float minRange = 0;
+    private float maxRange = 180;
     public void SetLastMoveDirection(Vector2 dir)
     {
         _lastMoveDirection = dir;
     }
     private float _lastDash;
-    private Vector2 _lastNormal;
+    private Vector2 _lastNormal = Vector2.up;
+    public Vector2 LastNormal => _lastNormal;
     private PlatformBase _currentPlatform;
 
     [SerializeField] private LayerMask _proyectilesLayer;
+    [SerializeField] private LayerMask _obstaclesLayer;
 
     private string[] colMatrix = { "Obstacle", "Scenario", "Floor"};
     private string[] deadlyMatrix = { "Enemy", "Spikes", "EnemyShield", };
@@ -128,6 +135,7 @@ public class NewController : MonoBehaviour
         if (_swipeDetection == null) return;
 
         _swipeDetection.OnSwipe += TryDash;
+        _swipeDetection.OnInputStart += CalculateAngleRange;
         _swipeDetection.OnTap += TryParry;
     }
 
@@ -136,14 +144,60 @@ public class NewController : MonoBehaviour
         if (_swipeDetection == null) return;
 
         _swipeDetection.OnSwipe -= TryDash;
+        _swipeDetection.OnInputStart -= CalculateAngleRange;
         _swipeDetection.OnTap -= TryParry;
+    }
+
+    private Vector2 GetFinalDirection(Vector2 startDir)
+    {
+        float angle = Mathf.Atan2(startDir.y, startDir.x) * Mathf.Rad2Deg;
+
+        float clampedAngle = ClampAngle(angle, minRange, maxRange);
+        Debug.Log($"Angle: {NormalizeAngle(clampedAngle)}, Min: {NormalizeAngle(minRange)}, Max: {NormalizeAngle(maxRange)}");
+
+        float minRadians = minRange * Mathf.Deg2Rad;
+        Vector2 minRangeV = new Vector2(Mathf.Cos(minRadians), Mathf.Sin(minRadians));
+
+        float maxRadians = maxRange * Mathf.Deg2Rad;
+        Vector2 maxRangeV = new Vector2(Mathf.Cos(maxRadians), Mathf.Sin(maxRadians));
+
+        float radians = clampedAngle * Mathf.Deg2Rad;
+        Vector2 newDir = new Vector2(Mathf.Cos(radians), Mathf.Sin(radians));
+        Debug.DrawRay(transform.position, newDir, Color.red, 1f);
+        return newDir;
+    }
+
+    float ClampAngle(float angle, float min, float max)
+    {
+        angle = NormalizeAngle(angle);
+        min = NormalizeAngle(min);
+        max = NormalizeAngle(max);
+
+        float range = Mathf.DeltaAngle(min, max);
+        float delta = Mathf.DeltaAngle(min, angle);
+
+        if (range >= 0)
+        {
+            if (delta >= 0 && delta <= range)
+                return angle;
+        }
+        else
+        {
+            if (delta <= 0 && delta >= range)
+                return angle;
+        }
+
+        float distToMin = Mathf.Abs(Mathf.DeltaAngle(angle, min));
+        float distToMax = Mathf.Abs(Mathf.DeltaAngle(angle, max));
+
+        return distToMin < distToMax ? min : max;
     }
 
     private void Update()
     {
         if (_swipeDetection.IsPressing)
         {
-            _trajectoryRenderer.ShowTrajectory(transform.position, _swipeDetection.Direction);
+            _trajectoryRenderer.ShowTrajectory(transform.position, GetFinalDirection(_swipeDetection.Direction));
         }
         else
         {
@@ -165,7 +219,7 @@ public class NewController : MonoBehaviour
     {
         if (!_isKO && !_isDashing && !_isParrying && CheckDashCD())
         {
-            Dash(direction);
+            Dash(GetFinalDirection(_swipeDetection.Direction));
         }
     }
     private void Dash(Vector2 direction)
@@ -454,6 +508,44 @@ public class NewController : MonoBehaviour
 
 
     #region FOREIGN SYSTEM INTERACTIONS
+    public void CalculateAngleRange(Vector2 v)
+    {
+        Vector2 origin = (Vector2)transform.position;
+
+        Vector2 rayDir = Vector2.zero;
+        rayDir.x = -_lastNormal.y;
+        rayDir.y = _lastNormal.x;
+
+        float baseAngle = Mathf.Atan2(_lastNormal.y, _lastNormal.x) * Mathf.Rad2Deg;
+
+        RaycastHit2D hit = Physics2D.Raycast(origin, rayDir, .5f, _obstaclesLayer);
+
+        if (hit.collider != null)
+        {
+            minRange = NormalizeAngle(baseAngle);
+            maxRange = NormalizeAngle(baseAngle - 90f);
+            return;
+        }
+
+        hit = Physics2D.Raycast(origin, -rayDir, .5f, _obstaclesLayer);
+        
+        if (hit.collider != null)
+        {
+            minRange = NormalizeAngle(baseAngle); ;
+            maxRange = NormalizeAngle(baseAngle + 90f);
+            return;
+        }
+
+        minRange = NormalizeAngle(baseAngle - 90f);
+        maxRange = NormalizeAngle(baseAngle + 90f);
+    }
+    float NormalizeAngle(float angle)
+    {
+        angle = (angle + 180f) % 360f;
+        if (angle < 0) angle += 360f;
+        return angle - 180f;
+    }
+
     private void PlaySlashVFX(Vector2 pos, Vector3 dir)
     {
         Transform newVFX = Instantiate(_slashVFX, pos, Quaternion.identity).transform;
@@ -463,10 +555,10 @@ public class NewController : MonoBehaviour
 
     #endregion
 #if UNITY_EDITOR
-    private void OnDrawGizmos()
-    {
-        Gizmos.color = Color.red;
-        Gizmos.DrawWireSphere(transform.position, _model.ParryRange);
-    }
+    //private void OnDrawGizmos()
+    //{
+    //    Gizmos.color = Color.red;
+    //    Gizmos.DrawWireSphere(transform.position, _model.ParryRange);
+    //}
 #endif
 }
