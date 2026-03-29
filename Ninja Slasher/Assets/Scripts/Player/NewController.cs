@@ -150,21 +150,16 @@ public class NewController : MonoBehaviour
 
     private Vector2 GetFinalDirection(Vector2 startDir)
     {
+        Vector2 finalDir = startDir;
         float angle = Mathf.Atan2(startDir.y, startDir.x) * Mathf.Rad2Deg;
 
         float clampedAngle = ClampAngle(angle, minRange, maxRange);
-        Debug.Log($"Angle: {NormalizeAngle(clampedAngle)}, Min: {NormalizeAngle(minRange)}, Max: {NormalizeAngle(maxRange)}");
-
-        float minRadians = minRange * Mathf.Deg2Rad;
-        Vector2 minRangeV = new Vector2(Mathf.Cos(minRadians), Mathf.Sin(minRadians));
-
-        float maxRadians = maxRange * Mathf.Deg2Rad;
-        Vector2 maxRangeV = new Vector2(Mathf.Cos(maxRadians), Mathf.Sin(maxRadians));
 
         float radians = clampedAngle * Mathf.Deg2Rad;
-        Vector2 newDir = new Vector2(Mathf.Cos(radians), Mathf.Sin(radians));
-        Debug.DrawRay(transform.position, newDir, Color.red, 1f);
-        return newDir;
+
+        finalDir.x = Mathf.Cos(radians);
+        finalDir.y = Mathf.Sin(radians);
+        return finalDir;
     }
 
     float ClampAngle(float angle, float min, float max)
