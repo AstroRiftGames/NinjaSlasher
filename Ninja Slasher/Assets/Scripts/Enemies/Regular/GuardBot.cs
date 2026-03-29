@@ -20,6 +20,7 @@ public class GuardBot : Enemy
 
     private float _direction => transform.localScale.x > 0 ? 1 : -1;
     [SerializeField] float _resetDelay = 5f;
+    [SerializeField] private LayerMask _layerMask;
 
     public override void OnEnable()
     {
@@ -40,7 +41,8 @@ public class GuardBot : Enemy
 
     public override void CustomUpdate()
     {
-        if (!CheckDistanceToTarget(_target)) 
+        bool reachedTarget = CheckDistanceToTarget(_target);
+        if (!reachedTarget) 
         {
             TryMove();
         }
@@ -51,12 +53,12 @@ public class GuardBot : Enemy
             {
                 StartCoroutine(Push());
             }
-            else if (_target == Vector2.zero || CheckDistanceToTarget(_target))
+            else if (_target == Vector2.zero || reachedTarget)
             {
                 SetPatrolTarget();
             }
         }
-        else if (CheckDistanceToTarget(_target))
+        else if (reachedTarget)
         {
             _animator.SetTrigger("OnTargetReached");
             StopAllCoroutines();
@@ -70,8 +72,8 @@ public class GuardBot : Enemy
     {
         transform.localScale = new Vector3(_target.x > transform.localToWorldMatrix.GetPosition().x ? 1 : -1, transform.localScale.y, transform.localScale.z);
 
-
-        bool thereIsFloor = Physics2D.Raycast(_refPoint.position + transform.right * -_direction + Vector3.down, Vector3.down, .5f, _obstaclesLayer);
+        bool thereIsFloor = Physics2D.Raycast(_refPoint.position + transform.right * -_direction + Vector3.down, Vector3.down, .75f, _obstaclesLayer);
+        Debug.DrawRay(_refPoint.position + transform.right * -_direction + Vector3.down, Vector3.down * .75f, Color.blue);
 
         bool thereIsObstacleTop = Physics2D.Raycast(_refPoint.position + transform.up * .8f, transform.right * _direction, 1.5f, _obstaclesLayer);
         bool thereIsObstacleMid = Physics2D.Raycast(_refPoint.position, transform.right * _direction, 1.5f, _obstaclesLayer);
@@ -103,15 +105,33 @@ public class GuardBot : Enemy
 
     private bool CheckDistanceToTarget(Vector2 target)
     {
-        bool reached = Mathf.Abs(target.x - _refPoint.localToWorldMatrix.GetPosition().x) <= .5f;
+        float distance = Mathf.Abs(target.x - _refPoint.localToWorldMatrix.GetPosition().x);
+        bool reached =  distance <= .5f;
         return reached;
     }
 
     private bool CheckTarget()
     {
-        bool topHit = Physics2D.Raycast(_refPoint.position, transform.right * _direction, _data.Range, _playerLayer);
-        bool midHit = Physics2D.Raycast(_refPoint.position + transform.up, transform.right * _direction, _data.Range, _playerLayer);
-        bool bottomHit = Physics2D.Raycast(_refPoint.position + -transform.up, transform.right * _direction, _data.Range, _playerLayer);
+        bool topHit = false;
+        RaycastHit2D topRay = Physics2D.Raycast(_refPoint.position + transform.up, transform.right * _direction, _data.Range, _layerMask); 
+        if (topRay)
+        {
+            topHit = topRay.collider.CompareTag("Player");
+        }
+
+        bool midHit = false;
+        RaycastHit2D midRay = Physics2D.Raycast(_refPoint.position, transform.right * _direction, _data.Range, _layerMask);
+        if (midRay)
+        {
+            midHit = midRay.collider.CompareTag("Player");
+        }
+
+        bool bottomHit = false;
+        RaycastHit2D bottomRay = Physics2D.Raycast(_refPoint.position + -transform.up, transform.right * _direction, _data.Range, _layerMask);
+        if (bottomRay)
+        {
+            bottomHit = bottomRay.collider.CompareTag("Player");
+        }
         return topHit || midHit || bottomHit;
     }
 
