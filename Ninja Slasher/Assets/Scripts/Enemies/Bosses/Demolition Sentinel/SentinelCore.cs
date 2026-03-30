@@ -31,6 +31,7 @@ public class SentinelCore : MonoBehaviour
             _sentinel.Balls[n].Chain.enabled = false;
             _sentinel.Balls[n].enabled = false;
         }
+        _sentinel.Die();
         _sentinel.enabled = false;
     }
 
