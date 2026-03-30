@@ -22,7 +22,8 @@ public class NanoSwarm : FlyingEnemy
 
     public override void CustomUpdate()
     {
-        if(!_isDying)
+        if (GameManager.Instance.PlayerHasDied) return;
+        if (!_isDying)
         {
             base.CustomUpdate();
         }

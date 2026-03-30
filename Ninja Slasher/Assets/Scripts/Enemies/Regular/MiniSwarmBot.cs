@@ -22,6 +22,7 @@ public class MiniSwarmBot : FlyingEnemy
 
     public override void CustomUpdate()
     {
+        if (GameManager.Instance.PlayerHasDied) return;
         if (!_isDying)
         {
             base.CustomUpdate();

@@ -71,7 +71,7 @@ public class SwipeDetection : MonoBehaviour
 
     private void OnPressStarted(InputAction.CallbackContext _)
     {
-        if (_player.IsDashing) return;
+        if (_player.IsDashing || GameManager.Instance.IsVictory || GameManager.Instance.PlayerHasDied) return;
         initialPos = currentPos;
         pressTime = Time.time;
 
@@ -83,7 +83,7 @@ public class SwipeDetection : MonoBehaviour
 
     private void OnPressCanceled(InputAction.CallbackContext _)
     {
-        if (!_isPressing || _player.IsDashing) return;
+        if (!_isPressing || _player.IsDashing || GameManager.Instance.IsVictory || GameManager.Instance.PlayerHasDied) return;
         DetectInput();
         _isPressing = false;
     }

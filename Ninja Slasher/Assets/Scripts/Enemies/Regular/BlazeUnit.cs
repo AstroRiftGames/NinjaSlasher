@@ -10,6 +10,7 @@ public class BlazeUnit : RangeEnemy
 
     public override void CustomUpdate()
     {
+        if (GameManager.Instance.PlayerHasDied) return;
         base.CustomUpdate();
         bool canDetectPlayer = _isAlert || _hasLOS;
 

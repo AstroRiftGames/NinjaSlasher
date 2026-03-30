@@ -41,6 +41,7 @@ public class GuardBot : Enemy
 
     public override void CustomUpdate()
     {
+        if (GameManager.Instance.PlayerHasDied) return;
         bool reachedTarget = CheckDistanceToTarget(_target);
         if (!reachedTarget) 
         {

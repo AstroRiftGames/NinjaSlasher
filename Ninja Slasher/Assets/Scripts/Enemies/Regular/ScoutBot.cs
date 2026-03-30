@@ -10,6 +10,7 @@ public class ScoutBot : Enemy
 
     public override void CustomUpdate()
     {
+        if (GameManager.Instance.PlayerHasDied) return;
         bool hasLOS = CheckLOS(_player);
         bool canDetectPlayer = _isAlert || hasLOS;
 

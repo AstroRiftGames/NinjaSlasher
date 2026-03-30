@@ -20,9 +20,6 @@ public class Enemy : MonoBehaviour
 
     [SerializeField] protected Animator _animator;
     public Animator Animator => _animator;
-    //[SerializeField] protected EnemyBrokenPart[] _parts;
-
-    // Guard para garantizar que Die() y RegisterKill() se ejecutan una sola vez por enemigo
     protected bool _isDead = false;
 
     public virtual void OnEnable()
@@ -82,22 +79,10 @@ public class Enemy : MonoBehaviour
         StartCoroutine(BreakEnemy());
     }
 
-    //public void StartBreaking()
-    //{
-    //    StartCoroutine(BreakEnemy());
-    //}
-
     private IEnumerator BreakEnemy()
     {
-        //_rb.bodyType = RigidbodyType2D.Dynamic;
-        //foreach (var part in _parts)
-        //{
-        //    part.BreakAndThrow();
-        //}
         yield return new WaitForSeconds(1f);
         RegisterKill();
-        //yield return new WaitForSeconds(2f);
-        //Destroy(gameObject);
     }
 
     protected void RegisterKill()

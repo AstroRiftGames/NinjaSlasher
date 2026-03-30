@@ -21,6 +21,7 @@ public class KRUSH9 : Enemy
 
     public override void CustomUpdate()
     {
+        if (GameManager.Instance.PlayerHasDied) return;
         _animator.SetFloat("AttackSpeed", _attackSpeed);
         if(TargetClose() && CanAttack())
         {

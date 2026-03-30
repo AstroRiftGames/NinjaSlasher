@@ -38,7 +38,6 @@ public class ParrySense : MonoBehaviour
 
     private void SetIndicatorActive(bool shouldActivate)
     {
-        Debug.Log("Indicator: " +  shouldActivate);
         _indicator.SetActive(shouldActivate);
     }
 }

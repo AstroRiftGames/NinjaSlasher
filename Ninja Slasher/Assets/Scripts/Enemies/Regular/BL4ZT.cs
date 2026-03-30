@@ -410,8 +410,9 @@ public class BL4ZT : Enemy
             SetRandomDirection();
         }
     }
-    public void Update()
+    public override void CustomUpdate()
     {
+        if (GameManager.Instance.PlayerHasDied) return;
         if (isTurning)
         {
             UpdateTurn();
