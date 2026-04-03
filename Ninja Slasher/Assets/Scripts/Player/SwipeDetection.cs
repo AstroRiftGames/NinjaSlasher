@@ -126,14 +126,9 @@ public class SwipeDetection : MonoBehaviour
 
     private void DetectInput()
     {
-        if (isCanceled)
-        {
-            return;
-        }
-
         Vector2 direction = CalculateDirection();
 
-        if (direction != Vector2.zero)
+        if (!isCanceled && direction != Vector2.zero)
         {
             OnSwipe?.Invoke(direction);
         }
