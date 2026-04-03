@@ -62,7 +62,7 @@ public class PowerUpSlotUI : MonoBehaviour
             _quantityContainer.SetActive(!isActive);
 
         if (_quantityText != null && !isActive)
-            _quantityText.text = $"x{_item.quantity}";
+            _quantityText.text = $"{_item.quantity}";
 
         if (activeIndicator != null)
             activeIndicator.SetActive(isActive);

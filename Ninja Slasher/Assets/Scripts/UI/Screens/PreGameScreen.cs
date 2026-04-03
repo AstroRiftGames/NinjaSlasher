@@ -1,23 +1,31 @@
+using DG.Tweening;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 public class PreGameScreen : UIScreenBase
 {
-    [Header("Animation")]
-    [SerializeField] private Animator _panelAnimator;
-    [SerializeField] private float _closeAnimationDuration = 0.4f;
+    [Header("Tween Animation")]
+    [FormerlySerializedAs("_closeAnimationDuration")]
+    [SerializeField] private float _animationDuration = 0.4f;
+    [SerializeField] private Ease _openEase = Ease.OutBack;
+    [SerializeField] private Ease _closeEase = Ease.InCubic;
+    [SerializeField] private Vector2 _hiddenOffset = new(0f, -80f);
+    [SerializeField] private float _hiddenScale = 0.92f;
+    [SerializeField] [Range(0f, 1f)] private float _hiddenAlpha = 0f;
 
     [Header("Managers")]
     [SerializeField] private PreGameUIManager _preGameUIManager;
     [SerializeField] private ButtonManager _buttonManager;
 
+    private Tween _moveTween;
+    private Tween _scaleTween;
+    private Tween _fadeTween;
+    private Vector2 _shownAnchoredPosition;
+    private Vector3 _shownScale;
+
     protected override void Awake()
     {
         base.Awake();
-
-        if (_panelAnimator == null)
-        {
-            _panelAnimator = GetComponentInChildren<Animator>();
-        }
 
         if (_preGameUIManager == null)
         {
@@ -28,32 +36,35 @@ public class PreGameScreen : UIScreenBase
         {
             _buttonManager = UIManager.Instance?.GetComponent<ButtonManager>();
         }
+
+        if (_panelTransform == null)
+        {
+            _panelTransform = GetComponentInChildren<RectTransform>(true);
+        }
+
+        if (_panelTransform != null)
+        {
+            _shownAnchoredPosition = _panelTransform.anchoredPosition;
+            _shownScale = _panelTransform.localScale;
+        }
     }
 
     public override void Show()
     {
         if (_isVisible) return;
 
+        KillActiveTweens();
+
         gameObject.SetActive(true);
         _isVisible = true;
-
-        if (_canvasGroup != null)
-        {
-            _canvasGroup.alpha = 1f;
-        }
 
         if (_buttonManager != null)
         {
             _buttonManager.StopAllButtonAnimations();
         }
 
-        if (_panelAnimator != null)
-        {
-            _panelAnimator.SetTrigger("Open");
-        }
-
-        NotifyPanelShown();
-        OnShown();
+        ApplyHiddenState();
+        AnimateToShownState();
     }
 
     public override void Hide()
@@ -63,6 +74,7 @@ public class PreGameScreen : UIScreenBase
         _isVisible = false;
 
         SetPanelInputEnabled(false);
+        KillActiveTweens();
 
         if (_preGameUIManager != null)
         {
@@ -70,20 +82,103 @@ public class PreGameScreen : UIScreenBase
             _preGameUIManager.HidePowerUpConfirmationImmediate();
         }
 
-        if (_panelAnimator != null)
-        {
-            _panelAnimator.SetTrigger("Close");
-        }
-
         OnHidden();
-
-        StartCoroutine(DelayedHide());
+        AnimateToHiddenState();
     }
 
-    private System.Collections.IEnumerator DelayedHide()
+    protected override void OnDisable()
     {
-        yield return new WaitForSecondsRealtime(_closeAnimationDuration);
+        KillActiveTweens();
+        base.OnDisable();
+    }
 
-        gameObject.SetActive(false);
+    private void AnimateToShownState()
+    {
+        if (_panelTransform == null)
+        {
+            if (_canvasGroup != null)
+                _canvasGroup.alpha = 1f;
+
+            NotifyPanelShown();
+            OnShown();
+            return;
+        }
+
+        _moveTween = _panelTransform
+            .DOAnchorPos(_shownAnchoredPosition, _animationDuration)
+            .SetEase(_openEase)
+            .SetUpdate(true);
+
+        _scaleTween = _panelTransform
+            .DOScale(_shownScale, _animationDuration)
+            .SetEase(_openEase)
+            .SetUpdate(true);
+
+        if (_canvasGroup != null)
+        {
+            _fadeTween = _canvasGroup
+                .DOFade(1f, _animationDuration)
+                .SetEase(Ease.OutQuad)
+                .SetUpdate(true);
+        }
+
+        NotifyPanelShown();
+        OnShown();
+    }
+
+    private void AnimateToHiddenState()
+    {
+        if (_panelTransform == null)
+        {
+            if (_canvasGroup != null)
+                _canvasGroup.alpha = _hiddenAlpha;
+
+            gameObject.SetActive(false);
+            return;
+        }
+
+        _moveTween = _panelTransform
+            .DOAnchorPos(_shownAnchoredPosition + _hiddenOffset, _animationDuration)
+            .SetEase(_closeEase)
+            .SetUpdate(true)
+            .OnComplete(() => gameObject.SetActive(false));
+
+        _scaleTween = _panelTransform
+            .DOScale(_shownScale * _hiddenScale, _animationDuration)
+            .SetEase(_closeEase)
+            .SetUpdate(true);
+
+        if (_canvasGroup != null)
+        {
+            _fadeTween = _canvasGroup
+                .DOFade(_hiddenAlpha, _animationDuration)
+                .SetEase(Ease.InQuad)
+                .SetUpdate(true);
+        }
+    }
+
+    private void ApplyHiddenState()
+    {
+        if (_panelTransform != null)
+        {
+            _panelTransform.anchoredPosition = _shownAnchoredPosition + _hiddenOffset;
+            _panelTransform.localScale = _shownScale * _hiddenScale;
+        }
+
+        if (_canvasGroup != null)
+        {
+            _canvasGroup.alpha = _hiddenAlpha;
+        }
+    }
+
+    private void KillActiveTweens()
+    {
+        _moveTween?.Kill();
+        _scaleTween?.Kill();
+        _fadeTween?.Kill();
+
+        _moveTween = null;
+        _scaleTween = null;
+        _fadeTween = null;
     }
 }
