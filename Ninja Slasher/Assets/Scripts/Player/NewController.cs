@@ -22,7 +22,7 @@ public class NewController : MonoBehaviour
     public Model Model => _model;
     [SerializeField] Model _model;
 
-    [SerializeField] SwipeDetection _swipeDetection;
+    [SerializeField] InputDetection _swipeDetection;
     [SerializeField] TrajectoryRenderer _trajectoryRenderer;
     [SerializeField] private GameObject _slashVFX;
 

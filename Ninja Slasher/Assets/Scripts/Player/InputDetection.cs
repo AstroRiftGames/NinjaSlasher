@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-public class SwipeDetection : MonoBehaviour
+public class InputDetection : MonoBehaviour
 {
     private NewController _player;
     public delegate void ActionEvent();
@@ -40,7 +40,7 @@ public class SwipeDetection : MonoBehaviour
     private void Awake()
     {
         _controls = new InputActions();
-        FindFirstObjectByType<SwipeFeedbackUI>().SetSwipeDetection(this);
+        FindFirstObjectByType<InputFeedbackUI>().SetSwipeDetection(this);
         TryGetComponent(out NewController player);
         _player = player;
     }

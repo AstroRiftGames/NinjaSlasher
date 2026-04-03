@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-public class SwipeFeedbackUI : MonoBehaviour
+public class InputFeedbackUI : MonoBehaviour
 {
     [Header("UI Elements")]
     [SerializeField] private RectTransform startPoint;
@@ -14,7 +14,7 @@ public class SwipeFeedbackUI : MonoBehaviour
     [SerializeField] private float maxDistance = 300f;
     [SerializeField] private float resumeThreshold = 10f;
 
-    private SwipeDetection swipeDetection;
+    private InputDetection swipeDetection;
     private Camera cam;
     private Vector2 startScreenPos;
     private bool isCanceled;
@@ -24,7 +24,7 @@ public class SwipeFeedbackUI : MonoBehaviour
         cam = Camera.main;
     }
 
-    public void SetSwipeDetection(SwipeDetection newSwipeDetection)
+    public void SetSwipeDetection(InputDetection newSwipeDetection)
     {
         if (swipeDetection != null)
         {
