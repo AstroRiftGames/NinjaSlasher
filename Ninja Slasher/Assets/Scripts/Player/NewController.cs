@@ -450,8 +450,22 @@ public class NewController : MonoBehaviour
         }
     }
 
+    private Vector2 GetCardinalNormal(Vector2 rawNormal)
+    {
+        if (Mathf.Abs(rawNormal.x) > Mathf.Abs(rawNormal.y))
+        {
+            return rawNormal.x > 0 ? Vector2.right : Vector2.left;
+        }
+        else
+        {
+            return rawNormal.y > 0 ? Vector2.up : Vector2.down;
+        }
+    }
+
     private void ProcessSurfaceCollision(Collider2D col, Vector2 normal)
     {
+        Vector2 cleanNormal = GetCardinalNormal(normal);
+
         _view.TrailRendererComponent.emitting = false;
         col.TryGetComponent(out PlatformBase platform);
 
@@ -464,12 +478,12 @@ public class NewController : MonoBehaviour
         if (platform == null)
         {
             AudioService.Instance.PlaySFXAtPosition(_audio.landGeneral, transform.position);
-            Grab(normal);
+            Grab(cleanNormal);
         }
         else if (platform.Type != PlatformTypes.Elastic)
         {
             _currentPlatform = platform;
-            Grab(normal);
+            Grab(cleanNormal);
         }
     }
 
