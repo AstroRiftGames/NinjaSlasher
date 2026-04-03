@@ -83,9 +83,13 @@ public class InputDetection : MonoBehaviour
 
     private void OnPressCanceled(InputAction.CallbackContext _)
     {
-        if (!_isPressing || _player.IsDashing || GameManager.Instance.IsVictory || GameManager.Instance.PlayerHasDied) return;
-        DetectInput();
+        if (!_isPressing) return;
+        
         _isPressing = false;
+
+        if (_player.IsDashing || GameManager.Instance.IsVictory || GameManager.Instance.PlayerHasDied) return;
+        
+        DetectInput();
     }
 
     private void Update()

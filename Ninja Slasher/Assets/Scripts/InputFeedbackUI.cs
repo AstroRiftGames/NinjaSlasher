@@ -29,14 +29,12 @@ public class InputFeedbackUI : MonoBehaviour
         if (swipeDetection != null)
         {
             swipeDetection.OnInputStart -= HandleInputStart;
-            swipeDetection.OnInputEnd -= HandleInputEnd;
             swipeDetection.OnSwipeCanceled -= HandleSwipeCanceled;
         }
 
         swipeDetection = newSwipeDetection;
 
         swipeDetection.OnInputStart += HandleInputStart;
-        swipeDetection.OnInputEnd += HandleInputEnd;
         swipeDetection.OnSwipeCanceled += HandleSwipeCanceled;
     }
 
@@ -54,7 +52,7 @@ public class InputFeedbackUI : MonoBehaviour
     {
         if (swipeDetection == null) return;
 
-        if (!swipeDetection.IsPressing)
+        if (!swipeDetection.IsPressing || GameManager.Instance.IsVictory || GameManager.Instance.PlayerHasDied)
         {
             SetActive(false);
             return;
@@ -71,11 +69,6 @@ public class InputFeedbackUI : MonoBehaviour
         startScreenPos = position;
         SetActive(true);
         UpdateVisual(startScreenPos, startScreenPos);
-    }
-
-    private void HandleInputEnd(Vector2 _)
-    {
-        SetActive(false);
     }
 
     private void UpdateVisual(Vector2 start, Vector2 current)
