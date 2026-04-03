@@ -14,7 +14,6 @@ public class PreGameUIManager : MonoBehaviour
     [SerializeField] private string _pendingSceneName;
     [SerializeField] private Transform _powerUpsContainer;
     [SerializeField] private PowerUpSlotUI _powerUpSlotPrefab;
-    [SerializeField] private float _powerUpSpacing = 20f;
     [SerializeField] private PowerUpBase[] allPowerUpBases;
     [SerializeField] private PowerUpConfirmationPopUp _powerUpConfirmationPopUp;
     [SerializeField] private TextMeshProUGUI _title;
@@ -53,7 +52,6 @@ public class PreGameUIManager : MonoBehaviour
     private TextMeshProUGUI _titleRightRevealText;
     private Color _titleBaseColor;
     private bool _isLevelSelected;
-    private ScrollRect _powerUpsScrollRect;
 
     private void Awake()
     {
@@ -62,7 +60,6 @@ public class PreGameUIManager : MonoBehaviour
 
         CacheBaseVisualState();
         SetupButtonListeners();
-        EnsurePowerUpContainerLayout();
         InitializeTitleReveal();
         ResetVisualState();
     }
@@ -587,8 +584,6 @@ public class PreGameUIManager : MonoBehaviour
 
     public void ShowPreGamePowerUps()
     {
-        EnsurePowerUpContainerLayout();
-
         foreach (PowerUpSlotUI slot in _slots)
             Destroy(slot.gameObject);
         _slots.Clear();
@@ -605,8 +600,6 @@ public class PreGameUIManager : MonoBehaviour
             slot.Setup(item, powerUpBase, OnPowerUpInteractClicked);
             _slots.Add(slot);
         }
-
-        RefreshPowerUpContainerLayout();
     }
 
     private void OnPowerUpInteractClicked(PowerUpInventoryItem item, PowerUpBase powerUpBase)
@@ -771,53 +764,5 @@ public class PreGameUIManager : MonoBehaviour
     {
         if (PowerUpManager.Instance != null && PowerUpManager.Instance.ActivatePowerUpFromInventory(powerUpType))
             ShowPreGamePowerUps();
-    }
-
-    private void EnsurePowerUpContainerLayout()
-    {
-        if (_powerUpsContainer == null)
-            return;
-
-        RectTransform containerRect = _powerUpsContainer as RectTransform;
-        if (containerRect == null)
-            return;
-
-        HorizontalLayoutGroup layoutGroup = _powerUpsContainer.GetComponent<HorizontalLayoutGroup>();
-        if (layoutGroup == null)
-            layoutGroup = _powerUpsContainer.gameObject.AddComponent<HorizontalLayoutGroup>();
-
-        layoutGroup.spacing = _powerUpSpacing;
-        layoutGroup.childAlignment = TextAnchor.MiddleLeft;
-        layoutGroup.childControlWidth = false;
-        layoutGroup.childControlHeight = false;
-        layoutGroup.childScaleWidth = false;
-        layoutGroup.childScaleHeight = false;
-        layoutGroup.childForceExpandWidth = false;
-        layoutGroup.childForceExpandHeight = false;
-
-        ContentSizeFitter sizeFitter = _powerUpsContainer.GetComponent<ContentSizeFitter>();
-        if (sizeFitter == null)
-            sizeFitter = _powerUpsContainer.gameObject.AddComponent<ContentSizeFitter>();
-
-        sizeFitter.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
-        sizeFitter.verticalFit = ContentSizeFitter.FitMode.Unconstrained;
-
-        if (_powerUpsScrollRect == null)
-            _powerUpsScrollRect = _powerUpsContainer.GetComponentInParent<ScrollRect>(true);
-    }
-
-    private void RefreshPowerUpContainerLayout()
-    {
-        if (!(_powerUpsContainer is RectTransform containerRect))
-            return;
-
-        LayoutRebuilder.ForceRebuildLayoutImmediate(containerRect);
-
-        if (_powerUpsScrollRect != null)
-        {
-            Canvas.ForceUpdateCanvases();
-            _powerUpsScrollRect.horizontalNormalizedPosition = 0f;
-            LayoutRebuilder.ForceRebuildLayoutImmediate((RectTransform)_powerUpsScrollRect.transform);
-        }
     }
 }
