@@ -428,24 +428,48 @@ public class NewController : MonoBehaviour
         string colTag = collision.gameObject.tag;
         if (colMatrix.Contains(colTag))
         {
-            _view.TrailRendererComponent.emitting = false;
-            collision.collider.TryGetComponent(out PlatformBase platform);
+            ProcessSurfaceCollision(collision.collider, collision.contacts.Last().normal);
+        }
+    }
 
-            if(_currentPlatform != null)
+    private void OnCollisionStay2D(Collision2D collision)
+    {
+        if (!_isDashing) return;
+
+        string colTag = collision.gameObject.tag;
+        if (colMatrix.Contains(colTag))
+        {
+            foreach (ContactPoint2D contact in collision.contacts)
             {
-                _currentPlatform.OnPlayerExit(gameObject, true);
-                _currentPlatform = null;
+                if (Vector2.Dot(contact.normal, _lastMoveDirection) < -0.5f)
+                {
+                    ProcessSurfaceCollision(collision.collider, contact.normal);
+                    break;
+                }
             }
-            if(platform == null)
-            {
-                AudioService.Instance.PlaySFXAtPosition(_audio.landGeneral, transform.position);
-                Grab(collision.GetContact(0).normal);
-            }
-            else if(platform.Type != PlatformTypes.Elastic)
-            {
-                _currentPlatform = platform;
-                Grab(collision.GetContact(0).normal);
-            }
+        }
+    }
+
+    private void ProcessSurfaceCollision(Collider2D col, Vector2 normal)
+    {
+        _view.TrailRendererComponent.emitting = false;
+        col.TryGetComponent(out PlatformBase platform);
+
+        if (_currentPlatform != null)
+        {
+            _currentPlatform.OnPlayerExit(gameObject, true);
+            _currentPlatform = null;
+        }
+
+        if (platform == null)
+        {
+            AudioService.Instance.PlaySFXAtPosition(_audio.landGeneral, transform.position);
+            Grab(normal);
+        }
+        else if (platform.Type != PlatformTypes.Elastic)
+        {
+            _currentPlatform = platform;
+            Grab(normal);
         }
     }
 
