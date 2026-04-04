@@ -7,6 +7,11 @@ using UnityEngine.UI;
 
 public class DailyWheelUI : MonoBehaviour
 {
+    private const int NoSpinsPurchaseCost = 100;
+    private const int NoSpinsPurchaseSpinsAmount = 3;
+    private static readonly Color AvailableSpinsIncreaseColor = new Color(0.45f, 1f, 0.45f, 1f);
+    private static readonly Color AvailableSpinsDecreaseColor = new Color(1f, 0.45f, 0.45f, 1f);
+
     [Header("Animators")]
     [SerializeField] private Animator _wheelAnimator;
     [SerializeField] private Animator _ballAnimator;
@@ -15,7 +20,11 @@ public class DailyWheelUI : MonoBehaviour
     [SerializeField] private WheelLever _wheelLever;
     [SerializeField] private TextMeshProUGUI timerText;
     [SerializeField] private TextMeshProUGUI _availableSpinsText;
+    [SerializeField] private TextMeshProUGUI _nextFreeSpinPopupText;
     [SerializeField] private Button _closeButton;
+    [SerializeField] private GameObject _noSpinsPopup;
+    [SerializeField] private Button _noSpinsBuyButton;
+    [SerializeField] private Button _noSpinsCancelButton;
 
     [Header("Ball And Reward")]
     [SerializeField] private Image ballImage;
@@ -27,6 +36,10 @@ public class DailyWheelUI : MonoBehaviour
     [Header("Sequence")]
     [SerializeField] private int _spinLoopCount = 3;
     [SerializeField] private float _rewardPopupScaleDuration = 0.4f;
+    [SerializeField] private float _popupShowDuration = 0.32f;
+    [SerializeField] private float _noSpinsPopupOpenDelay = 0.25f;
+    [SerializeField] private float _availableSpinsPunchScale = 0.22f;
+    [SerializeField] private float _availableSpinsAnimationDuration = 0.25f;
 
     [Header("Spin Audio")]
     [SerializeField] private float _tickEveryDegrees = 30f;
@@ -47,10 +60,13 @@ public class DailyWheelUI : MonoBehaviour
     private Coroutine _timerCoroutine;
     private Coroutine _sequenceCoroutine;
     private Coroutine _spinAudioCoroutine;
+    private Coroutine _delayedNoSpinsPopupCoroutine;
     private WheelReward _currentReward;
     private UIAudioContext _audioContext;
     private float _lastWheelAngle;
     private float _accumulatedSpinDegrees;
+    private int _lastAvailableSpins = -1;
+    private Color _availableSpinsBaseColor = Color.white;
 
     private void Awake()
     {
@@ -61,28 +77,60 @@ public class DailyWheelUI : MonoBehaviour
     private void OnEnable()
     {
         if (_wheelLever != null) _wheelLever.OnLeverActivated += OnLeverPulled;
+        GameEvents.OnCoinsChanged += OnCoinsChanged;
         StartTimerUpdate();
+        RefreshWheelState();
+        RefreshNoSpinsPopupState();
     }
 
     private void OnDisable()
     {
         if (_wheelLever != null) _wheelLever.OnLeverActivated -= OnLeverPulled;
+        GameEvents.OnCoinsChanged -= OnCoinsChanged;
         if (_timerCoroutine != null) StopCoroutine(_timerCoroutine);
         if (_sequenceCoroutine != null) StopCoroutine(_sequenceCoroutine);
         StopSpinAudio(false);
 
         _timerCoroutine = null;
         _sequenceCoroutine = null;
+        _delayedNoSpinsPopupCoroutine = null;
         _isSpinning = false;
+
+        if (_noSpinsPopup != null)
+            _noSpinsPopup.SetActive(false);
+
+        if (_availableSpinsText != null)
+        {
+            DOTween.Kill(_availableSpinsText);
+            DOTween.Kill(_availableSpinsText.transform);
+            _availableSpinsText.color = _availableSpinsBaseColor;
+            _availableSpinsText.transform.localScale = Vector3.one;
+        }
     }
 
     private void Start()
     {
         if (rewardPopup != null) rewardPopup.SetActive(false);
         if (_closeButton != null) _closeButton.gameObject.SetActive(false);
+        if (_noSpinsPopup != null) _noSpinsPopup.SetActive(false);
 
         ResetVisualState();
-        UpdateUIState(DailyWheelSystem.Instance.CanSpinToday());
+        RefreshWheelState();
+        RefreshNoSpinsPopupState();
+    }
+
+    public void HandleModalShown()
+    {
+        if (_delayedNoSpinsPopupCoroutine != null)
+        {
+            StopCoroutine(_delayedNoSpinsPopupCoroutine);
+            _delayedNoSpinsPopupCoroutine = null;
+        }
+
+        if (DailyWheelSystem.Instance == null || DailyWheelSystem.Instance.GetAvailableSpinCount() > 0)
+            return;
+
+        _delayedNoSpinsPopupCoroutine = StartCoroutine(ShowNoSpinsPopupWithDelay());
     }
 
     private void OnLeverPulled()
@@ -92,8 +140,11 @@ public class DailyWheelUI : MonoBehaviour
 
         if (!DailyWheelSystem.Instance.SpinWheel(out _currentReward))
         {
+            ShowNoSpinsPopup();
             return;
         }
+
+        RefreshWheelState();
 
         if (_sequenceCoroutine != null)
         {
@@ -169,9 +220,7 @@ public class DailyWheelUI : MonoBehaviour
     {
         if (_currentReward == null || rewardPopup == null) return;
         PlayUIAudio(_audioContext?.Audio?._rewardPopupAudio);
-        rewardPopup.SetActive(true);
-        rewardPopup.transform.localScale = Vector3.zero;
-        rewardPopup.transform.DOScale(1f, _rewardPopupScaleDuration).SetEase(Ease.OutBack);
+        ShowPopupAnimated(rewardPopup, _rewardPopupScaleDuration);
 
         if (_closeButton != null) _closeButton.gameObject.SetActive(true);
     }
@@ -190,9 +239,10 @@ public class DailyWheelUI : MonoBehaviour
 
         if (rewardPopup != null) rewardPopup.SetActive(false);
         if (_closeButton != null) _closeButton.gameObject.SetActive(false);
+        HideNoSpinsPopup();
 
         ResetVisualState();
-        UpdateUIState(DailyWheelSystem.Instance != null && DailyWheelSystem.Instance.CanSpinToday());
+        RefreshWheelState();
         UIEvents.RaiseWheelSequenceCompleted();
     }
 
@@ -408,22 +458,7 @@ public class DailyWheelUI : MonoBehaviour
             {
                 bool canSpin = DailyWheelSystem.Instance.CanSpinToday();
                 int availableSpins = DailyWheelSystem.Instance.GetAvailableSpinCount();
-
-                if (timerText != null)
-                {
-                    if (!canSpin)
-                    {
-                        TimeSpan time = GetTimeUntilNextSpin();
-                        timerText.text = $"Next spin in {time.Hours:D2}:{time.Minutes:D2}:{time.Seconds:D2}";
-                    }
-                    else
-                    {
-                        timerText.text = availableSpins > 1
-                            ? $"Ready to spin! ({availableSpins} available)"
-                            : "Ready to spin!";
-                    }
-                }
-
+                UpdateSpinCountdownTexts(canSpin, availableSpins);
                 UpdateAvailableSpinsText(availableSpins);
             }
 
@@ -437,11 +472,27 @@ public class DailyWheelUI : MonoBehaviour
         return now.Date.AddDays(1) - now;
     }
 
+    private void RefreshWheelState()
+    {
+        if (DailyWheelSystem.Instance == null)
+        {
+            UpdateUIState(false);
+            return;
+        }
+
+        bool canSpin = DailyWheelSystem.Instance.CanSpinToday();
+        int availableSpins = DailyWheelSystem.Instance.GetAvailableSpinCount();
+        UpdateSpinCountdownTexts(canSpin, availableSpins);
+        UpdateAvailableSpinsText(availableSpins);
+        UpdateUIState(canSpin);
+    }
+
     private void UpdateUIState(bool canSpin)
     {
         if (_wheelLever != null)
         {
-            _wheelLever.SetInteractable(canSpin && !_isSpinning);
+            bool popupOpen = _noSpinsPopup != null && _noSpinsPopup.activeSelf;
+            _wheelLever.SetInteractable(canSpin && !_isSpinning && !popupOpen);
         }
     }
 
@@ -455,15 +506,11 @@ public class DailyWheelUI : MonoBehaviour
 
     private void CacheReferences()
     {
-        if (_availableSpinsText == null)
-        {
-            Transform textTransform = transform.Find("DailyWheelPanel/AvailablesSpins");
-            if (textTransform == null)
-                textTransform = FindChildByName(transform, "AvailablesSpins");
+        if (_availableSpinsText != null)
+            _availableSpinsBaseColor = _availableSpinsText.color;
 
-            if (textTransform != null)
-                _availableSpinsText = textTransform.GetComponent<TextMeshProUGUI>();
-        }
+        if (_availableSpinsText != null)
+            _availableSpinsBaseColor = _availableSpinsText.color;
     }
 
     private void UpdateAvailableSpinsText(int availableSpins)
@@ -471,20 +518,147 @@ public class DailyWheelUI : MonoBehaviour
         if (_availableSpinsText == null)
             return;
 
-        _availableSpinsText.text = Mathf.Max(0, availableSpins).ToString();
+        int clampedAvailableSpins = Mathf.Max(0, availableSpins);
+        _availableSpinsText.text = clampedAvailableSpins.ToString();
+
+        if (_lastAvailableSpins >= 0 && clampedAvailableSpins != _lastAvailableSpins)
+            AnimateAvailableSpinsChange(clampedAvailableSpins > _lastAvailableSpins);
+
+        _lastAvailableSpins = clampedAvailableSpins;
     }
 
-    private Transform FindChildByName(Transform root, string childName)
+    private void UpdateSpinCountdownTexts(bool canSpin, int availableSpins)
     {
-        if (root == null)
-            return null;
+        TimeSpan timeUntilNextSpin = GetTimeUntilNextSpin();
 
-        foreach (Transform child in root.GetComponentsInChildren<Transform>(true))
+        if (timerText != null)
         {
-            if (child.name == childName)
-                return child;
+            if (!canSpin)
+            {
+                timerText.text = $"Proximo giro gratis en {timeUntilNextSpin.Hours:D2}:{timeUntilNextSpin.Minutes:D2}:{timeUntilNextSpin.Seconds:D2}";
+            }
+            else
+            {
+                timerText.text = availableSpins > 1
+                    ? $"Buena suerte!)"
+                    : "Buena suerte!";
+            }
         }
 
-        return null;
+        if (_nextFreeSpinPopupText != null)
+            _nextFreeSpinPopupText.text = $"Proximo giro en: {timeUntilNextSpin.Hours:D2}:{timeUntilNextSpin.Minutes:D2}:{timeUntilNextSpin.Seconds:D2}";
+    }
+
+    public void ShowNoSpinsPopup()
+    {
+        if (_noSpinsPopup == null)
+            return;
+
+        if (_delayedNoSpinsPopupCoroutine != null)
+        {
+            StopCoroutine(_delayedNoSpinsPopupCoroutine);
+            _delayedNoSpinsPopupCoroutine = null;
+        }
+
+        HideRewardPopupVisuals();
+        RefreshNoSpinsPopupState();
+        ShowPopupAnimated(_noSpinsPopup, _popupShowDuration);
+        UpdateUIState(false);
+    }
+
+    public void HideNoSpinsPopup()
+    {
+        if (_delayedNoSpinsPopupCoroutine != null)
+        {
+            StopCoroutine(_delayedNoSpinsPopupCoroutine);
+            _delayedNoSpinsPopupCoroutine = null;
+        }
+
+        if (_noSpinsPopup != null)
+            _noSpinsPopup.SetActive(false);
+
+        RefreshWheelState();
+    }
+
+    public void TryPurchaseNoSpinsOffer()
+    {
+        if (SaveManager.Instance == null || DailyWheelSystem.Instance == null)
+            return;
+
+        if (!SaveManager.Instance.SpendCoins(NoSpinsPurchaseCost))
+        {
+            RefreshNoSpinsPopupState();
+            return;
+        }
+
+        DailyWheelSystem.Instance.GrantFreeSpins(NoSpinsPurchaseSpinsAmount);
+        HideNoSpinsPopup();
+        RefreshWheelState();
+        RefreshNoSpinsPopupState();
+    }
+
+    private void RefreshNoSpinsPopupState()
+    {
+        if (_noSpinsBuyButton != null && SaveManager.Instance != null)
+            _noSpinsBuyButton.interactable = SaveManager.Instance.GetCoins() >= NoSpinsPurchaseCost;
+    }
+
+    private IEnumerator ShowNoSpinsPopupWithDelay()
+    {
+        yield return new WaitForSecondsRealtime(Mathf.Max(0f, _noSpinsPopupOpenDelay));
+        _delayedNoSpinsPopupCoroutine = null;
+
+        if (!isActiveAndEnabled || DailyWheelSystem.Instance == null || DailyWheelSystem.Instance.GetAvailableSpinCount() > 0)
+            yield break;
+
+        ShowNoSpinsPopup();
+    }
+
+    private void HideRewardPopupVisuals()
+    {
+        if (rewardPopup != null)
+        {
+            DOTween.Kill(rewardPopup.transform);
+            rewardPopup.SetActive(false);
+        }
+
+        if (_closeButton != null)
+            _closeButton.gameObject.SetActive(false);
+    }
+
+    private void OnCoinsChanged(int _)
+    {
+        RefreshNoSpinsPopupState();
+    }
+
+    private void AnimateAvailableSpinsChange(bool increased)
+    {
+        if (_availableSpinsText == null)
+            return;
+
+        DOTween.Kill(_availableSpinsText);
+        DOTween.Kill(_availableSpinsText.transform);
+
+        _availableSpinsText.color = _availableSpinsBaseColor;
+        _availableSpinsText.transform.localScale = Vector3.one;
+
+        Color targetColor = increased ? AvailableSpinsIncreaseColor : AvailableSpinsDecreaseColor;
+        Sequence sequence = DOTween.Sequence();
+        sequence.SetTarget(_availableSpinsText);
+        sequence.Join(_availableSpinsText.DOColor(targetColor, _availableSpinsAnimationDuration * 0.45f));
+        sequence.Join(_availableSpinsText.transform.DOPunchScale(Vector3.one * _availableSpinsPunchScale, _availableSpinsAnimationDuration, vibrato: 1, elasticity: 0.6f));
+        sequence.Append(_availableSpinsText.DOColor(_availableSpinsBaseColor, _availableSpinsAnimationDuration * 0.55f));
+    }
+
+    private void ShowPopupAnimated(GameObject popup, float duration)
+    {
+        if (popup == null)
+            return;
+
+        Transform popupTransform = popup.transform;
+        DOTween.Kill(popupTransform);
+        popup.SetActive(true);
+        popupTransform.localScale = new Vector3(0.82f, 0.82f, 1f);
+        popupTransform.DOScale(1f, duration).SetEase(Ease.OutBack);
     }
 }

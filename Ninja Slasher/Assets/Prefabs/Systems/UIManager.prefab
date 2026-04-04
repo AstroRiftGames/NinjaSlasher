@@ -584,7 +584,11 @@ MonoBehaviour:
   _wheelLever: {fileID: 3975613854395575057}
   timerText: {fileID: 535822689169619255}
   _availableSpinsText: {fileID: 6543557086509845132}
+  _nextFreeSpinPopupText: {fileID: 7460950781185681110}
   _closeButton: {fileID: 58995654950401064}
+  _noSpinsPopup: {fileID: 955162877051869239}
+  _noSpinsBuyButton: {fileID: 583094873043655724}
+  _noSpinsCancelButton: {fileID: 7993421855701546744}
   ballImage: {fileID: 2180769741733820532}
   rewardPopup: {fileID: 4799764065308629353}
   rewardNameText: {fileID: 5660718922210818036}
@@ -592,6 +596,10 @@ MonoBehaviour:
   rewardIconImage: {fileID: 6724960482610192731}
   _spinLoopCount: 3
   _rewardPopupScaleDuration: 0.4
+  _popupShowDuration: 0.32
+  _noSpinsPopupOpenDelay: 0.25
+  _availableSpinsPunchScale: 0.22
+  _availableSpinsAnimationDuration: 0.25
   _tickEveryDegrees: 30
   _ballHitIntervalRange: {x: 0.08, y: 0.2}
   _wheelSpinTrigger: Spin
@@ -10408,6 +10416,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 6303345843018173297, guid: dd95610116c1810488fcfc2e77a62807, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1491911290051804597}
+    - targetCorrespondingSourceObject: {fileID: 6303345843018173297, guid: dd95610116c1810488fcfc2e77a62807, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 7995864254865573555}
   m_SourcePrefab: {fileID: 100100000, guid: dd95610116c1810488fcfc2e77a62807, type: 3}
 --- !u!95 &45753167251780939 stripped
 Animator:
@@ -10436,11 +10447,38 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &583094873043655724 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 8304845480922855940, guid: dd95610116c1810488fcfc2e77a62807, type: 3}
+  m_PrefabInstance: {fileID: 8887622161313064488}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!95 &796365197529127053 stripped
 Animator:
   m_CorrespondingSourceObject: {fileID: 8095902756893720229, guid: dd95610116c1810488fcfc2e77a62807, type: 3}
   m_PrefabInstance: {fileID: 8887622161313064488}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &955162877051869239 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 8509066435927309855, guid: dd95610116c1810488fcfc2e77a62807, type: 3}
+  m_PrefabInstance: {fileID: 8887622161313064488}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1869316118059369314 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 7108378264542061898, guid: dd95610116c1810488fcfc2e77a62807, type: 3}
+  m_PrefabInstance: {fileID: 8887622161313064488}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3183718250927943001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!114 &2180769741733820532 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 7283600166966435420, guid: dd95610116c1810488fcfc2e77a62807, type: 3}
@@ -10480,6 +10518,50 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6e1109dce497fb4469d625a38c86546c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &7995864254865573555
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3183718250927943001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Navigation:
+    m_Mode: 3
+    m_WrapAround: 0
+    m_SelectOnUp: {fileID: 0}
+    m_SelectOnDown: {fileID: 0}
+    m_SelectOnLeft: {fileID: 0}
+    m_SelectOnRight: {fileID: 0}
+  m_Transition: 1
+  m_Colors:
+    m_NormalColor: {r: 1, g: 1, b: 1, a: 1}
+    m_HighlightedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
+    m_PressedColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 1}
+    m_SelectedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
+    m_DisabledColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 0.5019608}
+    m_ColorMultiplier: 1
+    m_FadeDuration: 0.1
+  m_SpriteState:
+    m_HighlightedSprite: {fileID: 0}
+    m_PressedSprite: {fileID: 0}
+    m_SelectedSprite: {fileID: 0}
+    m_DisabledSprite: {fileID: 0}
+  m_AnimationTriggers:
+    m_NormalTrigger: Normal
+    m_HighlightedTrigger: Highlighted
+    m_PressedTrigger: Pressed
+    m_SelectedTrigger: Selected
+    m_DisabledTrigger: Disabled
+  m_Interactable: 1
+  m_TargetGraphic: {fileID: 1869316118059369314}
+  m_OnClick:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!114 &3975613854395575057 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 5511028225727974713, guid: dd95610116c1810488fcfc2e77a62807, type: 3}
@@ -10543,5 +10625,27 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &7460950781185681110 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 2080014801211916542, guid: dd95610116c1810488fcfc2e77a62807, type: 3}
+  m_PrefabInstance: {fileID: 8887622161313064488}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &7993421855701546744 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 1565418238087221456, guid: dd95610116c1810488fcfc2e77a62807, type: 3}
+  m_PrefabInstance: {fileID: 8887622161313064488}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 

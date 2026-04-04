@@ -103,6 +103,37 @@ public class DailyWheelSystem : MonoBehaviourSingleton<DailyWheelSystem>
         return Mathf.Max(0, wheelData.pendingFreeSpins);
     }
 
+    public bool ShouldAutoShowToday()
+    {
+        if (!CanSpinToday())
+            return false;
+
+        return GetLastAutoShowDateSafe() < DateTime.UtcNow.Date;
+    }
+
+    public void MarkAutoShowShownToday()
+    {
+        if (debugInfiniteSpins)
+            return;
+
+        DateTime currentDate = DateTime.UtcNow.Date;
+        if (GetLastAutoShowDateSafe() == currentDate)
+            return;
+
+        wheelData.lastAutoShowDate = currentDate.ToString("yyyy-MM-dd");
+        SaveWheelData();
+    }
+
+    public void GrantFreeSpins(int quantity)
+    {
+        if (debugInfiniteSpins)
+            return;
+
+        AddFreeSpins(quantity);
+        SaveWheelData();
+        CheckWheelAvailability();
+    }
+
     private bool HasDailySpinAvailable()
     {
         DateTime lastSpin = GetLastSpinDateSafe();
@@ -190,6 +221,7 @@ public class DailyWheelSystem : MonoBehaviourSingleton<DailyWheelSystem>
         wheelData.consecutiveSpins  = saved.consecutiveSpins;
         wheelData.totalSpins        = saved.totalSpins;
         wheelData.pendingFreeSpins  = saved.pendingFreeSpins;
+        wheelData.lastAutoShowDate  = saved.lastAutoShowDateIso;
     }
 
     private void SaveWheelData()
@@ -201,6 +233,7 @@ public class DailyWheelSystem : MonoBehaviourSingleton<DailyWheelSystem>
             d.dailyWheelData.consecutiveSpins = wheelData.consecutiveSpins;
             d.dailyWheelData.totalSpins       = wheelData.totalSpins;
             d.dailyWheelData.pendingFreeSpins = wheelData.pendingFreeSpins;
+            d.dailyWheelData.lastAutoShowDateIso = wheelData.lastAutoShowDate;
         });
     }
 
@@ -209,6 +242,13 @@ public class DailyWheelSystem : MonoBehaviourSingleton<DailyWheelSystem>
         if (string.IsNullOrEmpty(wheelData.lastSpinDate)) return DateTime.MinValue;
         return DateTime.TryParse(wheelData.lastSpinDate, out DateTime result) ? result.Date : DateTime.MinValue;
     }
+
+    private DateTime GetLastAutoShowDateSafe()
+    {
+        if (string.IsNullOrEmpty(wheelData.lastAutoShowDate)) return DateTime.MinValue;
+        return DateTime.TryParse(wheelData.lastAutoShowDate, out DateTime result) ? result.Date : DateTime.MinValue;
+    }
+
 
     private void ApplyReward(WheelReward reward)
     {
@@ -262,6 +302,7 @@ public class DailyWheelSystem : MonoBehaviourSingleton<DailyWheelSystem>
 public class WheelData
 {
     public string lastSpinDate;
+    public string lastAutoShowDate;
     public int consecutiveSpins;
     public int totalSpins;
     public int pendingFreeSpins;

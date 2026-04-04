@@ -146,6 +146,7 @@ public static class GameDataMapper
                 consecutiveSpins = d.dailyWheelData?.consecutiveSpins ?? 0,
                 totalSpins       = d.dailyWheelData?.totalSpins ?? 0,
                 pendingFreeSpins = d.dailyWheelData?.pendingFreeSpins ?? 0,
+                lastAutoShowDateIso = d.dailyWheelData?.lastAutoShowDateIso ?? "",
             },
         };
 

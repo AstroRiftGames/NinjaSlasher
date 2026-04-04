@@ -79,8 +79,9 @@ public sealed class DailyStartupSequence : IDisposable
             return;
         }
 
-        if (DailyWheelSystem.Instance.CanSpinToday())
+        if (DailyWheelSystem.Instance.ShouldAutoShowToday())
         {
+            DailyWheelSystem.Instance.MarkAutoShowShownToday();
             _isWaitingForWheel = true;
             UIEvents.RequestShowDailyWheelModal();
             return;

@@ -35,6 +35,7 @@ public class DailyWheelModal : UIModalBase
 
         NotifyPanelShown();
         OnShown();
+        _dailyWheelUI?.HandleModalShown();
     }
 
     public override void Hide()
@@ -63,6 +64,27 @@ public class DailyWheelModal : UIModalBase
             return;
         }
 
+        Hide();
+    }
+
+    public void CloseNoSpinsPopup()
+    {
+        if (_dailyWheelUI != null)
+        {
+            _dailyWheelUI.HideNoSpinsPopup();
+            return;
+        }
+
+        Hide();
+    }
+
+    public void BuyNoSpinsPopupOffer()
+    {
+        _dailyWheelUI?.TryPurchaseNoSpinsOffer();
+    }
+
+    public void CloseModal()
+    {
         Hide();
     }
 
