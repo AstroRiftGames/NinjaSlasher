@@ -73,13 +73,13 @@ public class PowerUpContext
     {
         var names = new List<string>();
 
-        if (ExtraTimeActive) names.Add("Extra Time");
-        if (DashTurboActive) names.Add("Dash Turbo");
-        if (ParryPerfectActive) names.Add("Parry Perfect");
-        if (ComboMasterActive) names.Add("Combo Master");
-        if (SecondChanceActive) names.Add("Second Chance");
-        if (HawkVisionActive) names.Add("Trajectory Guide");
-        if (EnhancedParryActive) names.Add("Enhanced Parry");
+        if (ExtraTimeActive) names.Add("Tiempo extra");
+        if (DashTurboActive) names.Add("Turbo de dash");
+        if (ParryPerfectActive) names.Add("Parry perfecto");
+        if (ComboMasterActive) names.Add("Maestro del combo");
+        if (SecondChanceActive) names.Add("Segunda oportunidad");
+        if (HawkVisionActive) names.Add("Vision de halcon");
+        if (EnhancedParryActive) names.Add("Parry potenciado");
 
         return string.Join(", ", names);
     }

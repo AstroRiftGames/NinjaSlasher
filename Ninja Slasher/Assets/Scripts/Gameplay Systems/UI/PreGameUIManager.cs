@@ -645,7 +645,7 @@ public class PreGameUIManager : MonoBehaviour
         {
             if (_primaryGoalText != null)
             {
-                _primaryGoalText.text = "Goals not configured.";
+                _primaryGoalText.text = "Objetivos no configurados.";
                 SetObjectiveCompletionVisual(_primaryGoalText, 0, false);
             }
 

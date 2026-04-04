@@ -186,7 +186,7 @@ public class DailyRewardUIManager : MonoBehaviourSingleton<DailyRewardUIManager>
 
         if (claimButtonText != null)
         {
-            claimButtonText.text = canClaim ? "CLAIM" : "CLAIMED";
+            claimButtonText.text = canClaim ? "RECLAMAR" : "RECLAMADO";
         }
     }
 
@@ -195,7 +195,7 @@ public class DailyRewardUIManager : MonoBehaviourSingleton<DailyRewardUIManager>
         if (nextRewardTimeText != null && dailyRewardSystem != null)
         {
             string timeText = dailyRewardSystem.GetTimeUntilNextReward();
-            nextRewardTimeText.text = timeText.Contains("AVAILABLE") ? timeText : $"Next reward: {timeText}";
+            nextRewardTimeText.text = timeText.Contains("DISPONIBLE") ? timeText : $"Próxima recompensa: {timeText}";
         }
     }
 
@@ -290,19 +290,19 @@ public class DailyRewardUIManager : MonoBehaviourSingleton<DailyRewardUIManager>
         {
             if (hasDoubledToday)
             {
-                _doubleRewardButtonText.text = "DOUBLED!";
+                _doubleRewardButtonText.text = "¡DUPLICADA!";
             }
             else if (canDouble)
             {
-                _doubleRewardButtonText.text = "WATCH AD x2";
+                _doubleRewardButtonText.text = "VER ANUNCIO x2";
             }
             else if (AdsManager.Instance != null && !AdsManager.Instance.IsRewardedAdReady())
             {
-                _doubleRewardButtonText.text = "LOADING...";
+                _doubleRewardButtonText.text = "CARGANDO...";
             }
             else
             {
-                _doubleRewardButtonText.text = "UNAVAILABLE";
+                _doubleRewardButtonText.text = "NO DISPONIBLE";
             }
         }
     }
@@ -437,7 +437,7 @@ public class DailyRewardDayUI
 
     string GetDayName(int dayIndex)
     {
-        string[] dayNames = { "DAY 1", "DAY 2", "DAY 3", "DAY 4", "DAY 5", "DAY 6", "DAY 7" };
-        return dayIndex < dayNames.Length ? dayNames[dayIndex] : $"DAY {dayIndex + 1}";
+        string[] dayNames = { "DÍA 1", "DÍA 2", "DÍA 3", "DÍA 4", "DÍA 5", "DÍA 6", "DÍA 7" };
+        return dayIndex < dayNames.Length ? dayNames[dayIndex] : $"DÍA {dayIndex + 1}";
     }
 }

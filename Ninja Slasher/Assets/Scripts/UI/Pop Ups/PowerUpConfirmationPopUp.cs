@@ -34,7 +34,7 @@ public class PowerUpConfirmationPopUp : UIPopupBase
     [SerializeField] private Image _buyButtonIcon;
 
     [Header("LABELS")]
-    [SerializeField] private string _activateButtonLabel = "Activate";
+    [SerializeField] private string _activateButtonLabel = "Activar";
     [SerializeField] private string _buyButtonLabelFormat = "{0}";
 
     private Action _confirmAction;

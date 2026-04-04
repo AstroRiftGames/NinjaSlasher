@@ -25,7 +25,7 @@ public class LoadManager : MonoBehaviour
     private void Start()
     {
         SceneLoad(SceneManager.GetActiveScene().buildIndex);
-        _text.text = "LOADING...";
+        _text.text = "CARGANDO...";
     }
 
     public void SceneLoad(int sceneIndex)
@@ -49,7 +49,7 @@ public class LoadManager : MonoBehaviour
 
             if (_loadbar.value >= 1)
             {
-                _text.text = "TAP TO CONTINUE";
+                _text.text = "PRESIONA PARA CONTINUAR";
                 _textAnim.SetTrigger("Tap");
 
                 if (Input.touchCount > 0)
@@ -57,14 +57,11 @@ public class LoadManager : MonoBehaviour
                     Touch touch = Input.GetTouch(0);
                     if (touch.phase == TouchPhase.Began)
                     {
-                        //AudioManager.Instance.PlaySFX(SFXClip.UI_TapSplashScreen);
                         AudioService.Instance.PlaySFX(_audioContext.Audio.tapSplash);
 
-                        //UIManager.Instance.ShowLevelSelector();
                         UIEvents.RequestShowLevelSelector();
                         yield return new WaitForSeconds(2);
                         
-                        //AudioManager.Instance.PlaySFX(SFXClip.UI_TransitionSlash);
                         AudioService.Instance.PlaySFX(_audioContext.Audio.transitionSlash);
 
                         asyncOperation.allowSceneActivation = true;
@@ -73,10 +70,8 @@ public class LoadManager : MonoBehaviour
 #if UNITY_EDITOR
                 if (Input.anyKeyDown)
                 {
-                    //AudioManager.Instance.PlaySFX(SFXClip.UI_TapSplashScreen);
                     AudioService.Instance.PlaySFX(_audioContext.Audio.tapSplash);
 
-                    //UIManager.Instance.ShowLevelSelector();
                     UIEvents.RequestShowLevelSelector();
 
                     yield return new WaitForSeconds(2);

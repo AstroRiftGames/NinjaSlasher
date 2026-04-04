@@ -462,9 +462,9 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
     string message,
     Action onConfirm,
     Action onCancel = null,
-    string title = "Confirmation",
-    string confirmText = "Confirm",
-    string cancelText = "Cancel")
+    string title = "Confirmación",
+    string confirmText = "Confirmar",
+    string cancelText = "Cancelar")
     {
         if (_confirmationPanel == null)
         {
@@ -478,28 +478,28 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
     private void OnQuitButtonPressed()
     {
         ShowConfirmation(
-            message: "Are you sure you want to exit? You will lose your progress in this level?",
+            message: "¿Seguro que quieres salir? Perderás el progreso de este nivel.",
             onConfirm: () => {
                 UIEvents.RaiseQuitToMenuPressed();
             },
-            onCancel: () => Debug.Log("Cancelled"),
-            title: "Exit level",
-            confirmText: "Exit",
-            cancelText: "Continue"
+            onCancel: () => Debug.Log("Cancelado"),
+            title: "Salir del nivel",
+            confirmText: "Salir",
+            cancelText: "Continuar"
         );
     }
 
     private void OnBuyItemPressed(string itemName, int cost)
     {
         ShowConfirmation(
-            message: $"Buy {itemName} for {cost} coins?",
+            message: $"¿Comprar {itemName} por {cost} monedas?",
             onConfirm: () =>
             {
                 Debug.Log($"Buying {itemName}");
             },
-            title: "Confirm Purchase",
-            confirmText: "Buy",
-            cancelText: "Cancel"
+            title: "Confirmar compra",
+            confirmText: "Comprar",
+            cancelText: "Cancelar"
         );
     }
 

@@ -96,7 +96,7 @@ public class NoLivesOverlay : UIOverlayBase
         int currentLives = LifeManager.Instance?.CurrentLives ?? 0;
         int maxLives = GameConfigManager.Config?.maxLives ?? 5;
 
-        _messageText.text = $"No lives available\n{currentLives}/{maxLives}";
+        _messageText.text = $"Sin vidas disponibles\n{currentLives}/{maxLives}";
     }
 
     private void UpdateTimer()
@@ -113,7 +113,7 @@ public class NoLivesOverlay : UIOverlayBase
 
         if (timeUntilNextLife.TotalSeconds <= 0)
         {
-            _timerText.text = "Available life";
+            _timerText.text = "Vida disponible";
             UpdateButtons();
             return;
         }
@@ -121,7 +121,7 @@ public class NoLivesOverlay : UIOverlayBase
         int minutes = timeUntilNextLife.Minutes;
         int seconds = timeUntilNextLife.Seconds;
 
-        _timerText.text = $"Next life in: {minutes:00}:{seconds:00}";
+        _timerText.text = $"Próxima vida en: {minutes:00}:{seconds:00}";
     }
 
     private void UpdateButtons()

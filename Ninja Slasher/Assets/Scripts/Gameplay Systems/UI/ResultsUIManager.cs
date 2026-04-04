@@ -61,7 +61,7 @@ public class ResultsUIManager : MonoBehaviourSingleton<ResultsUIManager>
 
         if (config == null)
         {
-            if (_primaryGoalText) _primaryGoalText.text = "Goals not configured.";
+            if (_primaryGoalText) _primaryGoalText.text = "Objetivos no configurados.";
             foreach (var t in _secondaryGoalTexts) if (t) t.text = string.Empty;
             return;
         }

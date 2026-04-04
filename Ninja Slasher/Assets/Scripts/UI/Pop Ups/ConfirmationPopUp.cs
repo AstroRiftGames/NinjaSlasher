@@ -35,9 +35,9 @@ public class ConfirmationPopUp : UIPopupBase
         string message,
         Action onConfirm,
         Action onCancel = null,
-        string title = "Confirmatin",
-        string confirmText = "Confirm",
-        string cancelText = "Cancel")
+        string title = "Confirmación",
+        string confirmText = "Confirmar",
+        string cancelText = "Cancelar")
     {
         if (_titleText != null)
             _titleText.text = title;

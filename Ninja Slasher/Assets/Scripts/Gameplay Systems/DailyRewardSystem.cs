@@ -322,13 +322,13 @@ public class DailyRewardSystem : MonoBehaviourSingleton<DailyRewardSystem>
     {
         var last = GetLastClaimDateSafe();
         if (last == DateTime.MinValue.Date)
-            return "AVAILABLE NOW";
+            return "DISPONIBLE AHORA";
 
         DateTime nextAvailable = last.AddDays(1);
         TimeSpan timeUntilNext = nextAvailable - DateTime.UtcNow;
 
         if (timeUntilNext.TotalSeconds <= 0)
-            return "AVAILABLE NOW";
+            return "DISPONIBLE AHORA";
 
         return $"{timeUntilNext.Hours:D2}:{timeUntilNext.Minutes:D2}:{timeUntilNext.Seconds:D2}";
     }
