@@ -10,4 +10,12 @@ public class BreakablePlatformCol : MonoBehaviour
             _platform.OnPlayerEnter(collision.gameObject);
         }
     }
+
+    private void OnTriggerEnter2D(Collider2D collision)
+    {
+        if (collision.gameObject.CompareTag("Player") && !collision.isTrigger)
+        {
+            _platform.OnPlayerEnter(collision.gameObject);
+        }
+    }
 }

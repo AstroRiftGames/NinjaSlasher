@@ -22,6 +22,19 @@ public class BreakablePlatform : PlatformBase
     protected override void InitializePlatform()
     {
         _remainingUses = _maxUses;
+        if (_remainingUses == 1)
+        {
+            SetAsTrigger();
+        }
+    }
+
+    private void SetAsTrigger()
+    {
+        var colliders = _tilemap.GetComponentsInChildren<Collider2D>();
+        foreach (var col in colliders)
+        {
+            col.isTrigger = true;
+        }
     }
 
     public override void OnPlayerExit(GameObject player, bool isForced = false) { }
@@ -38,6 +51,10 @@ public class BreakablePlatform : PlatformBase
         if (_remainingUses <= 0)
         {
             Break();
+        }
+        else if (_remainingUses == 1)
+        {
+            SetAsTrigger();
         }
     }
 
@@ -62,7 +79,6 @@ public class BreakablePlatform : PlatformBase
     private IEnumerator DestroyAfterParticles()
     {
         yield return null;
-        _playerController.ForceDash(Vector2.down);
         Destroy(gameObject, 1f);
     }
 }
