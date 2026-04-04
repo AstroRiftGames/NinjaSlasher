@@ -418,5 +418,21 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
         return panel != null && panel.IsVisible;
     }
 
+    public bool HasBlockingPanelForLevelSelection()
+    {
+        return IsPanelVisible(_pauseOverlay)
+            || IsPanelVisible(_noLivesOverlay)
+            || IsPanelVisible(_defeatOverlay)
+            || IsPanelVisible(_emergencyBundleOverlay)
+            || IsPanelVisible(_splashScreen)
+            || IsPanelVisible(_preGameScreen)
+            || IsPanelVisible(_creditsModal)
+            || IsPanelVisible(_profileModal)
+            || IsPanelVisible(_dailyRewardModal)
+            || IsPanelVisible(_dailyWheelModal)
+            || IsPanelVisible(_storeModal)
+            || IsPanelVisible(_victoryModal);
+    }
+
     #endregion
 }

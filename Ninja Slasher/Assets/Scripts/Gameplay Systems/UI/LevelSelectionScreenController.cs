@@ -20,11 +20,15 @@ public class LevelSelectionScreenController : MonoBehaviour
     [SerializeField] private Image _unlimitedLivesFillImage;
     [SerializeField] private TextMeshProUGUI _livesAmountText;
     [SerializeField] private TextMeshProUGUI _livesTimerText;
+    [SerializeField] private Button _dailyWheelButton;
+    [SerializeField] private GameObject _infoRoot;
+    [SerializeField] private GameObject _buttonsRoot;
 
     private void Awake()
     {
         Instance = this;
         CacheLivesWidgetReferences();
+        CacheDailyWheelButton();
         StoreRewardFeedbackController.EnsureFor(this);
     }
 
@@ -32,10 +36,13 @@ public class LevelSelectionScreenController : MonoBehaviour
     {
         Instance = this;
         CacheLivesWidgetReferences();
+        CacheDailyWheelButton();
         StoreRewardFeedbackController.EnsureFor(this);
         RefreshAll();
         UpdateTotalStarsDisplay();
         RefreshLivesWidget();
+        RegisterButtonListeners();
+        UpdateForegroundVisibility();
 
         if (LevelProgressionManager.Instance != null)
         {
@@ -66,11 +73,14 @@ public class LevelSelectionScreenController : MonoBehaviour
             if (area != null)
                 area.OnUnlocked -= OnAreaUnlockAnimationComplete;
         }
+
+        UnregisterButtonListeners();
     }
 
     private void Update()
     {
         RefreshLivesWidget();
+        UpdateForegroundVisibility();
     }
 
     public RectTransform GetUnlimitedLivesFeedbackTarget()
@@ -148,6 +158,20 @@ public class LevelSelectionScreenController : MonoBehaviour
 
     private void CacheLivesWidgetReferences()
     {
+        if (_infoRoot == null)
+        {
+            Transform infoTransform = transform.Find("Info");
+            if (infoTransform != null)
+                _infoRoot = infoTransform.gameObject;
+        }
+
+        if (_buttonsRoot == null)
+        {
+            Transform buttonsTransform = transform.Find("Buttons");
+            if (buttonsTransform != null)
+                _buttonsRoot = buttonsTransform.gameObject;
+        }
+
         if (_livesWidgetRoot == null)
             _livesWidgetRoot = FindRectTransformByName("Lives");
 
@@ -165,6 +189,52 @@ public class LevelSelectionScreenController : MonoBehaviour
             _livesTimerText = FindTextByName("CounterText");
 
         EnsureUnlimitedLivesFillImage();
+    }
+
+    private void CacheDailyWheelButton()
+    {
+        if (_dailyWheelButton != null)
+            return;
+
+        RectTransform buttonRect = FindRectTransformByName("DailyWheelButton");
+        if (buttonRect != null)
+            _dailyWheelButton = buttonRect.GetComponent<Button>();
+    }
+
+    private void RegisterButtonListeners()
+    {
+        if (_dailyWheelButton == null)
+            return;
+
+        _dailyWheelButton.onClick.RemoveListener(OnDailyWheelButtonClicked);
+        _dailyWheelButton.onClick.AddListener(OnDailyWheelButtonClicked);
+    }
+
+    private void UnregisterButtonListeners()
+    {
+        if (_dailyWheelButton == null)
+            return;
+
+        _dailyWheelButton.onClick.RemoveListener(OnDailyWheelButtonClicked);
+    }
+
+    private void OnDailyWheelButtonClicked()
+    {
+        UIEvents.RequestShowDailyWheelModal();
+    }
+
+    private void UpdateForegroundVisibility()
+    {
+        bool shouldShow = true;
+
+        if (UIManager.Instance != null)
+            shouldShow = !UIManager.Instance.HasBlockingPanelForLevelSelection();
+
+        if (_infoRoot != null && _infoRoot.activeSelf != shouldShow)
+            _infoRoot.SetActive(shouldShow);
+
+        if (_buttonsRoot != null && _buttonsRoot.activeSelf != shouldShow)
+            _buttonsRoot.SetActive(shouldShow);
     }
 
     private RectTransform FindRectTransformByName(string objectName)

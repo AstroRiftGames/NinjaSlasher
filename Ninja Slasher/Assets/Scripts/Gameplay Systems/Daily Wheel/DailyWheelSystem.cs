@@ -53,6 +53,7 @@ public class DailyWheelSystem : MonoBehaviourSingleton<DailyWheelSystem>
             return false;
         }
 
+        bool consumePendingFreeSpin = ShouldConsumePendingFreeSpin();
         reward = GetCalculatedReward();
 
         if (reward == null)
@@ -60,11 +61,11 @@ public class DailyWheelSystem : MonoBehaviourSingleton<DailyWheelSystem>
             return false;
         }
 
-        AddPowerUpToInventory(reward);
+        ApplyReward(reward);
 
         if (!debugInfiniteSpins)
         {
-            UpdateSpinProgress();
+            UpdateSpinProgress(consumePendingFreeSpin);
             SaveWheelData();
         }
 
@@ -80,10 +81,44 @@ public class DailyWheelSystem : MonoBehaviourSingleton<DailyWheelSystem>
     {
         if (debugInfiniteSpins) return true;
 
+        if (HasPendingFreeSpins())
+            return true;
+
+        return HasDailySpinAvailable();
+    }
+
+    public int GetAvailableSpinCount()
+    {
+        if (debugInfiniteSpins)
+            return 1;
+
+        return (HasDailySpinAvailable() ? 1 : 0) + wheelData.pendingFreeSpins;
+    }
+
+    public int GetPendingFreeSpins()
+    {
+        if (debugInfiniteSpins)
+            return 0;
+
+        return Mathf.Max(0, wheelData.pendingFreeSpins);
+    }
+
+    private bool HasDailySpinAvailable()
+    {
         DateTime lastSpin = GetLastSpinDateSafe();
         DateTime currentDate = DateTime.UtcNow.Date;
 
         return lastSpin < currentDate;
+    }
+
+    private bool HasPendingFreeSpins()
+    {
+        return wheelData.pendingFreeSpins > 0;
+    }
+
+    private bool ShouldConsumePendingFreeSpin()
+    {
+        return !HasDailySpinAvailable() && HasPendingFreeSpins();
     }
 
     private WheelReward GetCalculatedReward()
@@ -120,8 +155,15 @@ public class DailyWheelSystem : MonoBehaviourSingleton<DailyWheelSystem>
         return rewards[rewards.Length - 1];
     }
 
-    private void UpdateSpinProgress()
+    private void UpdateSpinProgress(bool consumePendingFreeSpin)
     {
+        if (consumePendingFreeSpin)
+        {
+            wheelData.pendingFreeSpins = Mathf.Max(0, wheelData.pendingFreeSpins - 1);
+            wheelData.totalSpins++;
+            return;
+        }
+
         DateTime lastSpin = GetLastSpinDateSafe();
         DateTime currentDate = DateTime.UtcNow.Date;
 
@@ -147,6 +189,7 @@ public class DailyWheelSystem : MonoBehaviourSingleton<DailyWheelSystem>
         wheelData.lastSpinDate      = saved.lastSpinDateIso;
         wheelData.consecutiveSpins  = saved.consecutiveSpins;
         wheelData.totalSpins        = saved.totalSpins;
+        wheelData.pendingFreeSpins  = saved.pendingFreeSpins;
     }
 
     private void SaveWheelData()
@@ -157,6 +200,7 @@ public class DailyWheelSystem : MonoBehaviourSingleton<DailyWheelSystem>
             d.dailyWheelData.lastSpinDateIso  = wheelData.lastSpinDate;
             d.dailyWheelData.consecutiveSpins = wheelData.consecutiveSpins;
             d.dailyWheelData.totalSpins       = wheelData.totalSpins;
+            d.dailyWheelData.pendingFreeSpins = wheelData.pendingFreeSpins;
         });
     }
 
@@ -166,8 +210,39 @@ public class DailyWheelSystem : MonoBehaviourSingleton<DailyWheelSystem>
         return DateTime.TryParse(wheelData.lastSpinDate, out DateTime result) ? result.Date : DateTime.MinValue;
     }
 
+    private void ApplyReward(WheelReward reward)
+    {
+        if (reward == null)
+            return;
+
+        switch (reward.rewardType)
+        {
+            case WheelRewardType.FreeSpin:
+                AddFreeSpins(reward.quantity);
+                break;
+
+            case WheelRewardType.PowerUp:
+            default:
+                AddPowerUpToInventory(reward);
+                break;
+        }
+    }
+
+    private void AddFreeSpins(int quantity)
+    {
+        int spinsToAdd = Mathf.Max(0, quantity);
+        if (spinsToAdd <= 0)
+            return;
+
+        wheelData.pendingFreeSpins += spinsToAdd;
+        Debug.Log($"[DailyWheel] Granted {spinsToAdd} free spin(s). Pending={wheelData.pendingFreeSpins}");
+    }
+
     private void AddPowerUpToInventory(WheelReward reward)
     {
+        if (reward.quantity <= 0)
+            return;
+
         if (AutoSaveManager.Instance != null)
         {
             AutoSaveManager.Instance.OnPowerUpObtained(reward.powerUpType, reward.quantity);
@@ -189,4 +264,5 @@ public class WheelData
     public string lastSpinDate;
     public int consecutiveSpins;
     public int totalSpins;
+    public int pendingFreeSpins;
 }

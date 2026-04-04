@@ -14,6 +14,7 @@ public class DailyWheelUI : MonoBehaviour
     [Header("References")]
     [SerializeField] private WheelLever _wheelLever;
     [SerializeField] private TextMeshProUGUI timerText;
+    [SerializeField] private TextMeshProUGUI _availableSpinsText;
     [SerializeField] private Button _closeButton;
 
     [Header("Ball And Reward")]
@@ -54,6 +55,7 @@ public class DailyWheelUI : MonoBehaviour
     private void Awake()
     {
         _audioContext = GetComponentInParent<UIAudioContext>();
+        CacheReferences();
     }
 
     private void OnEnable()
@@ -402,18 +404,27 @@ public class DailyWheelUI : MonoBehaviour
 
         while (true)
         {
-            if (DailyWheelSystem.Instance != null && timerText != null)
+            if (DailyWheelSystem.Instance != null)
             {
                 bool canSpin = DailyWheelSystem.Instance.CanSpinToday();
-                if (!canSpin)
+                int availableSpins = DailyWheelSystem.Instance.GetAvailableSpinCount();
+
+                if (timerText != null)
                 {
-                    TimeSpan time = GetTimeUntilNextSpin();
-                    timerText.text = $"Next spin in {time.Hours:D2}:{time.Minutes:D2}:{time.Seconds:D2}";
+                    if (!canSpin)
+                    {
+                        TimeSpan time = GetTimeUntilNextSpin();
+                        timerText.text = $"Next spin in {time.Hours:D2}:{time.Minutes:D2}:{time.Seconds:D2}";
+                    }
+                    else
+                    {
+                        timerText.text = availableSpins > 1
+                            ? $"Ready to spin! ({availableSpins} available)"
+                            : "Ready to spin!";
+                    }
                 }
-                else
-                {
-                    timerText.text = "Ready to spin!";
-                }
+
+                UpdateAvailableSpinsText(availableSpins);
             }
 
             yield return wait;
@@ -440,5 +451,40 @@ public class DailyWheelUI : MonoBehaviour
         int index = Array.IndexOf(allRewards, reward);
         Color[] colors = { Color.white, Color.cyan, Color.green, Color.red, Color.yellow };
         return colors[Mathf.Clamp(index, 0, colors.Length - 1)];
+    }
+
+    private void CacheReferences()
+    {
+        if (_availableSpinsText == null)
+        {
+            Transform textTransform = transform.Find("DailyWheelPanel/AvailablesSpins");
+            if (textTransform == null)
+                textTransform = FindChildByName(transform, "AvailablesSpins");
+
+            if (textTransform != null)
+                _availableSpinsText = textTransform.GetComponent<TextMeshProUGUI>();
+        }
+    }
+
+    private void UpdateAvailableSpinsText(int availableSpins)
+    {
+        if (_availableSpinsText == null)
+            return;
+
+        _availableSpinsText.text = Mathf.Max(0, availableSpins).ToString();
+    }
+
+    private Transform FindChildByName(Transform root, string childName)
+    {
+        if (root == null)
+            return null;
+
+        foreach (Transform child in root.GetComponentsInChildren<Transform>(true))
+        {
+            if (child.name == childName)
+                return child;
+        }
+
+        return null;
     }
 }

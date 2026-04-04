@@ -291,4 +291,5 @@ public class DailyWheelSaveData
     public string lastSpinDateIso;
     public int consecutiveSpins;
     public int totalSpins;
+    public int pendingFreeSpins;
 }
