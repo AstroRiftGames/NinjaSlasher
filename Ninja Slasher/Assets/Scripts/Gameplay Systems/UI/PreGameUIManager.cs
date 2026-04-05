@@ -549,6 +549,7 @@ public class PreGameUIManager : MonoBehaviour
     {
         if (!LifeManager.Instance.CanPlay())
         {
+            AbortPendingLevelSelectionForLifeWall();
             UIEvents.RequestShowNoLivesOverlay();
             return;
         }
@@ -562,6 +563,15 @@ public class PreGameUIManager : MonoBehaviour
     private void CancelLevelSelection()
     {
         StopAllAnimations();
+        _isLevelSelected = false;
+        _pendingSceneName = null;
+        UIEvents.RequestHidePreGameScreen();
+    }
+
+    private void AbortPendingLevelSelectionForLifeWall()
+    {
+        StopAllAnimations();
+        HidePowerUpConfirmationImmediate();
         _isLevelSelected = false;
         _pendingSceneName = null;
         UIEvents.RequestHidePreGameScreen();
