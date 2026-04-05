@@ -8,6 +8,7 @@ public class PauseOverlay : UIOverlayBase
     [SerializeField] private Button _restartButton;
     [SerializeField] private Button _quitButton;
     [SerializeField] private RestartConfirmationPopUp _restartConfirmationPopUp;
+    [SerializeField] private BackToLevelSelectionConfirmationPopUp _backToLevelSelectionConfirmationPopUp;
 
     private bool _wasPausedBeforeShow = false;
 
@@ -43,6 +44,7 @@ public class PauseOverlay : UIOverlayBase
     protected override void OnHidden()
     {
         _restartConfirmationPopUp?.HideImmediate();
+        _backToLevelSelectionConfirmationPopUp?.HideImmediate();
 
         if (!_wasPausedBeforeShow)
             Time.timeScale = 1f;
@@ -76,8 +78,14 @@ public class PauseOverlay : UIOverlayBase
 
     private void OnQuitClicked()
     {
-        Time.timeScale = 1f;
-        UIEvents.RaiseQuitToMenuPressed();
+        if (_backToLevelSelectionConfirmationPopUp != null)
+        {
+            _backToLevelSelectionConfirmationPopUp.ShowConfirmation(ConfirmQuitToLevelSelection);
+            return;
+        }
+
+        Debug.LogWarning("[PauseOverlay] BackToLevelSelectionConfirmationPopUp not found. Falling back to direct quit.");
+        ConfirmQuitToLevelSelection();
     }
 
     private void ResolvePopupReferences()
@@ -91,6 +99,22 @@ public class PauseOverlay : UIOverlayBase
 
         if (_restartConfirmationPopUp == null)
             _restartConfirmationPopUp = GetComponentInChildren<RestartConfirmationPopUp>(true);
+
+        if (_backToLevelSelectionConfirmationPopUp != null)
+            return;
+
+        if (uiManager != null)
+            _backToLevelSelectionConfirmationPopUp = uiManager.GetComponentInChildren<BackToLevelSelectionConfirmationPopUp>(true);
+
+        if (_backToLevelSelectionConfirmationPopUp == null)
+            _backToLevelSelectionConfirmationPopUp = GetComponentInChildren<BackToLevelSelectionConfirmationPopUp>(true);
+    }
+
+    private void ConfirmQuitToLevelSelection()
+    {
+        Hide();
+        Time.timeScale = 1f;
+        UIEvents.RaiseQuitToMenuPressed();
     }
 
     private void OnDestroy()
