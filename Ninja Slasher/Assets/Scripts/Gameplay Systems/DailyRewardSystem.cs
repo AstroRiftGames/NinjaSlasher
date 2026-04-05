@@ -17,6 +17,7 @@ public class DailyRewardSaveData
 {
     public bool[] claimedDays = new bool[7];
     public string lastClaimDate;
+    public string lastAutoShowDate;
     public int currentWeekDay;
     public int consecutiveDays;
 
@@ -24,6 +25,7 @@ public class DailyRewardSaveData
     {
         claimedDays = new bool[7];
         lastClaimDate = "";
+        lastAutoShowDate = "";
         currentWeekDay = 0;
         consecutiveDays = 0;
     }
@@ -96,17 +98,17 @@ public class DailyRewardSystem : MonoBehaviourSingleton<DailyRewardSystem>
         }
     }
 
-    void SaveRewardData()
+    void SaveRewardData(bool updateLastRewardTimestamp = true)
     {
         string jsonData = JsonUtility.ToJson(rewardData);
 
         if (AutoSaveManager.Instance != null)
         {
-            AutoSaveManager.Instance.OnDailyRewardClaimed(jsonData);
+            AutoSaveManager.Instance.SaveDailyRewardData(jsonData, updateLastRewardTimestamp);
         }
         else
         {
-            SaveManager.Instance.SaveDailyRewardData(jsonData);
+            SaveManager.Instance.SaveDailyRewardData(jsonData, updateLastRewardTimestamp);
         }
     }
 
@@ -204,6 +206,27 @@ public class DailyRewardSystem : MonoBehaviourSingleton<DailyRewardSystem>
     public bool HasDoubledToday()
     {
         return _hasDoubledToday;
+    }
+
+    public bool ShouldAutoShowToday()
+    {
+        if (!CanClaimToday())
+            return false;
+
+        return GetLastAutoShowDateSafe() < DateTime.UtcNow.Date;
+    }
+
+    public void MarkAutoShowShownToday()
+    {
+        if (rewardData == null)
+            return;
+
+        DateTime currentDate = DateTime.UtcNow.Date;
+        if (GetLastAutoShowDateSafe() == currentDate)
+            return;
+
+        rewardData.lastAutoShowDate = currentDate.ToString("yyyy-MM-dd");
+        SaveRewardData(updateLastRewardTimestamp: false);
     }
 
     void AdvanceDay()
@@ -341,6 +364,14 @@ public class DailyRewardSystem : MonoBehaviourSingleton<DailyRewardSystem>
         var gd = SaveManager.Instance.GetGameData();
         if (!string.IsNullOrEmpty(gd.lastRewardTimestamp) && TryParseISO(gd.lastRewardTimestamp, out var iso))
             return iso.Date;
+
+        return DateTime.MinValue.Date;
+    }
+
+    private DateTime GetLastAutoShowDateSafe()
+    {
+        if (!string.IsNullOrEmpty(rewardData?.lastAutoShowDate) && TryParseYMD(rewardData.lastAutoShowDate, out var ymd))
+            return ymd.Date;
 
         return DateTime.MinValue.Date;
     }

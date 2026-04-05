@@ -130,10 +130,15 @@ public class AutoSaveManager : MonoBehaviourSingleton<AutoSaveManager>
 
     public void OnDailyRewardClaimed(string rewardData)
     {
+        SaveDailyRewardData(rewardData, updateLastRewardTimestamp: true);
+    }
+
+    public void SaveDailyRewardData(string rewardData, bool updateLastRewardTimestamp)
+    {
         if (!CheckSaveManager()) return;
 
         ShowSaveIndicator("SAVING...");
-        saveManager.SaveDailyRewardData(rewardData);
+        saveManager.SaveDailyRewardData(rewardData, updateLastRewardTimestamp);
     }
 
     public void OnLivesChanged(int newLives, System.DateTime lastRegenTime, bool canRegen)

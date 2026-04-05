@@ -85,6 +85,12 @@ public class DailyWheelModal : UIModalBase
 
     public void CloseModal()
     {
+        if (_dailyWheelUI != null && !_dailyWheelUI.CanCloseModal())
+        {
+            return;
+        }
+
+        _dailyWheelUI?.CloseRewardPopup();
         Hide();
     }
 

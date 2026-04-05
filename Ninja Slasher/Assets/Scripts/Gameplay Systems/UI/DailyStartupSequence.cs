@@ -4,6 +4,8 @@ using UnityEngine;
 
 public sealed class DailyStartupSequence : IDisposable
 {
+    public static bool IsSequenceRunning { get; private set; }
+
     private bool _isLevelSelectorReady;
     private bool _isWaitingForWheel;
     private bool _isWaitingForReward;
@@ -38,6 +40,7 @@ public sealed class DailyStartupSequence : IDisposable
     {
         _isLevelSelectorReady = true;
         _isRunning = true;
+        IsSequenceRunning = true;
         _isWaitingForWheel = false;
         _isWaitingForReward = false;
 
@@ -87,8 +90,9 @@ public sealed class DailyStartupSequence : IDisposable
             return;
         }
 
-        if (DailyRewardSystem.Instance.CanClaimToday())
+        if (DailyRewardSystem.Instance.ShouldAutoShowToday())
         {
+            DailyRewardSystem.Instance.MarkAutoShowShownToday();
             _isWaitingForReward = true;
             UIEvents.RequestShowDailyRewardModal();
             return;
@@ -102,6 +106,7 @@ public sealed class DailyStartupSequence : IDisposable
         if (!_isRunning) return;
 
         _isRunning = false;
+        IsSequenceRunning = false;
         _isWaitingForWheel = false;
         _isWaitingForReward = false;
 

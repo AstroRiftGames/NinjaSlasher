@@ -6,6 +6,8 @@ using UnityEngine.UI;
 public class LevelsScreen : UIScreenBase
 {
     [SerializeField] private float _delayBeforeAnimation = 0.3f;
+    [SerializeField] private GameObject _infoRoot;
+    [SerializeField] private GameObject _buttonsRoot;
     [SerializeField] private AreaSectionController[] _areaSections;
 
     private bool _hasPlayedIntroAnimation = false;
@@ -58,11 +60,13 @@ public class LevelsScreen : UIScreenBase
         if (!_hasPlayedIntroAnimation)
         {
             _isWaitingForStartupSequence = true;
+            SetStartupSequenceVisualsVisible(false);
             HideLevelButtons();
         }
         else
         {
             _isWaitingForStartupSequence = false;
+            SetStartupSequenceVisualsVisible(true);
             ShowLevelButtonsInstantly();
         }
 
@@ -92,6 +96,7 @@ public class LevelsScreen : UIScreenBase
 
         _isWaitingForStartupSequence = false;
         _hasPlayedIntroAnimation = true;
+        SetStartupSequenceVisualsVisible(true);
         StartCoroutine(AnimateLevelButtonsSequence());
     }
 
@@ -154,6 +159,16 @@ public class LevelsScreen : UIScreenBase
     public void ResetAnimationStateForScreenReturn()
     {
         _isWaitingForStartupSequence = false;
+        SetStartupSequenceVisualsVisible(true);
         ShowLevelButtonsInstantly();
+    }
+
+    private void SetStartupSequenceVisualsVisible(bool visible)
+    {
+        if (_infoRoot != null)
+            _infoRoot.SetActive(visible);
+
+        if (_buttonsRoot != null)
+            _buttonsRoot.SetActive(visible);
     }
 }

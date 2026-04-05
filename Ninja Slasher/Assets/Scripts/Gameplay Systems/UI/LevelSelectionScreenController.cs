@@ -230,6 +230,9 @@ public class LevelSelectionScreenController : MonoBehaviour
         if (UIManager.Instance != null)
             shouldShow = !UIManager.Instance.HasBlockingPanelForLevelSelection();
 
+        if (DailyStartupSequence.IsSequenceRunning)
+            shouldShow = false;
+
         if (_infoRoot != null && _infoRoot.activeSelf != shouldShow)
             _infoRoot.SetActive(shouldShow);
 

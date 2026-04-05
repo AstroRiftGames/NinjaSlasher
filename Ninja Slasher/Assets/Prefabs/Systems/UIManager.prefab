@@ -585,18 +585,16 @@ MonoBehaviour:
   timerText: {fileID: 535822689169619255}
   _availableSpinsText: {fileID: 6543557086509845132}
   _nextFreeSpinPopupText: {fileID: 7460950781185681110}
-  _closeButton: {fileID: 58995654950401064}
-  _noSpinsPopup: {fileID: 955162877051869239}
+  _closeButton: {fileID: 7993421855701546744}
   _noSpinsBuyButton: {fileID: 583094873043655724}
-  _noSpinsCancelButton: {fileID: 7993421855701546744}
+  _lotteryPanel: {fileID: 4878613107618335126}
+  _sharedRewardInfoPanel: {fileID: 7545903421460804911}
+  _sharedNoSpinsInfoPanel: {fileID: 4680234415551286766}
   ballImage: {fileID: 2180769741733820532}
-  rewardPopup: {fileID: 4799764065308629353}
   rewardNameText: {fileID: 5660718922210818036}
   rewardQuantityText: {fileID: 3047013473040862589}
   rewardIconImage: {fileID: 6724960482610192731}
   _spinLoopCount: 3
-  _rewardPopupScaleDuration: 0.4
-  _popupShowDuration: 0.32
   _noSpinsPopupOpenDelay: 0.25
   _availableSpinsPunchScale: 0.22
   _availableSpinsAnimationDuration: 0.25
@@ -10425,17 +10423,6 @@ Animator:
   m_CorrespondingSourceObject: {fileID: 8932222488462512995, guid: dd95610116c1810488fcfc2e77a62807, type: 3}
   m_PrefabInstance: {fileID: 8887622161313064488}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &58995654950401064 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 8901001240786784768, guid: dd95610116c1810488fcfc2e77a62807, type: 3}
-  m_PrefabInstance: {fileID: 8887622161313064488}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!114 &535822689169619255 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 8951100667254595359, guid: dd95610116c1810488fcfc2e77a62807, type: 3}
@@ -10461,11 +10448,6 @@ MonoBehaviour:
 --- !u!95 &796365197529127053 stripped
 Animator:
   m_CorrespondingSourceObject: {fileID: 8095902756893720229, guid: dd95610116c1810488fcfc2e77a62807, type: 3}
-  m_PrefabInstance: {fileID: 8887622161313064488}
-  m_PrefabAsset: {fileID: 0}
---- !u!1 &955162877051869239 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 8509066435927309855, guid: dd95610116c1810488fcfc2e77a62807, type: 3}
   m_PrefabInstance: {fileID: 8887622161313064488}
   m_PrefabAsset: {fileID: 0}
 --- !u!114 &1869316118059369314 stripped
@@ -10578,9 +10560,14 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 4661281191317841837, guid: dd95610116c1810488fcfc2e77a62807, type: 3}
   m_PrefabInstance: {fileID: 8887622161313064488}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &4799764065308629353 stripped
+--- !u!1 &4680234415551286766 stripped
 GameObject:
-  m_CorrespondingSourceObject: {fileID: 4164425273633390401, guid: dd95610116c1810488fcfc2e77a62807, type: 3}
+  m_CorrespondingSourceObject: {fileID: 4297741515008666566, guid: dd95610116c1810488fcfc2e77a62807, type: 3}
+  m_PrefabInstance: {fileID: 8887622161313064488}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &4878613107618335126 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 4099258081573318590, guid: dd95610116c1810488fcfc2e77a62807, type: 3}
   m_PrefabInstance: {fileID: 8887622161313064488}
   m_PrefabAsset: {fileID: 0}
 --- !u!114 &5057061615747161171 stripped
@@ -10638,6 +10625,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!1 &7545903421460804911 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 1436439832668082951, guid: dd95610116c1810488fcfc2e77a62807, type: 3}
+  m_PrefabInstance: {fileID: 8887622161313064488}
+  m_PrefabAsset: {fileID: 0}
 --- !u!114 &7993421855701546744 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 1565418238087221456, guid: dd95610116c1810488fcfc2e77a62807, type: 3}

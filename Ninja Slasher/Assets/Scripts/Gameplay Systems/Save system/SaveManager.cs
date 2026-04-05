@@ -685,11 +685,12 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
         SaveData();
     }
 
-    public void SaveDailyRewardData(string dailyRewardJson)
+    public void SaveDailyRewardData(string dailyRewardJson, bool updateLastRewardTimestamp = true)
     {
         var data = GetGameData();
         data.dailyRewardData = dailyRewardJson;
-        data.lastRewardTimestamp = DateTime.Now.ToString("o");
+        if (updateLastRewardTimestamp)
+            data.lastRewardTimestamp = DateTime.Now.ToString("o");
         SaveData();
     }
 
