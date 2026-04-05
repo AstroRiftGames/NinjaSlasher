@@ -7,12 +7,14 @@ public class PauseOverlay : UIOverlayBase
     [SerializeField] private Button _resumeButton;
     [SerializeField] private Button _restartButton;
     [SerializeField] private Button _quitButton;
+    [SerializeField] private RestartConfirmationPopUp _restartConfirmationPopUp;
 
     private bool _wasPausedBeforeShow = false;
 
     protected override void Awake()
     {
         base.Awake();
+        ResolvePopupReferences();
         SetupButtons();
     }
 
@@ -40,6 +42,8 @@ public class PauseOverlay : UIOverlayBase
 
     protected override void OnHidden()
     {
+        _restartConfirmationPopUp?.HideImmediate();
+
         if (!_wasPausedBeforeShow)
             Time.timeScale = 1f;
 
@@ -53,6 +57,19 @@ public class PauseOverlay : UIOverlayBase
 
     private void OnRestartClicked()
     {
+        if (_restartConfirmationPopUp != null)
+        {
+            _restartConfirmationPopUp.ShowConfirmation(ConfirmRestartLevel);
+            return;
+        }
+
+        Debug.LogWarning("[PauseOverlay] RestartConfirmationPopUp not found. Falling back to direct restart.");
+        ConfirmRestartLevel();
+    }
+
+    private void ConfirmRestartLevel()
+    {
+        Hide();
         Time.timeScale = 1f;
         UIEvents.RequestRestartLevel();
     }
@@ -61,6 +78,19 @@ public class PauseOverlay : UIOverlayBase
     {
         Time.timeScale = 1f;
         UIEvents.RaiseQuitToMenuPressed();
+    }
+
+    private void ResolvePopupReferences()
+    {
+        if (_restartConfirmationPopUp != null)
+            return;
+
+        UIManager uiManager = GetComponentInParent<UIManager>(true);
+        if (uiManager != null)
+            _restartConfirmationPopUp = uiManager.GetComponentInChildren<RestartConfirmationPopUp>(true);
+
+        if (_restartConfirmationPopUp == null)
+            _restartConfirmationPopUp = GetComponentInChildren<RestartConfirmationPopUp>(true);
     }
 
     private void OnDestroy()

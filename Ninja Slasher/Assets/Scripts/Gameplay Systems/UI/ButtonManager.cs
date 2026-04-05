@@ -180,7 +180,6 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
     {
         _pauseButton.onClick.AddListener(() => UIEvents.RequestTogglePauseOverlay());
         _resumeButton.onClick.AddListener(() => UIEvents.RequestTogglePauseOverlay());
-        _restartButton.onClick.AddListener(OnRestartPressed);
 
         _musicPausePanelButton.onClick.AddListener(_configToggles.MusicButtonPushed);
         _sfxPausePanelButton.onClick.AddListener(_configToggles.SFXButtonPushed);
