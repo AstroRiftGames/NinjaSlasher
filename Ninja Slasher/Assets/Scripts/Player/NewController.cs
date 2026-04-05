@@ -1,11 +1,7 @@
 using CandyCoded.HapticFeedback;
 using System;
-using System.Collections;
 using System.Linq;
 using UnityEngine;
-using UnityEngine.UIElements;
-using UnityEngine.VFX;
-using static UnityEditor.ShaderGraph.Internal.KeywordDependentCollection;
 
 public enum NinjaStates
 {
