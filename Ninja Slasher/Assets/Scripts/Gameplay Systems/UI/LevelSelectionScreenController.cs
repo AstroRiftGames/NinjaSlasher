@@ -6,8 +6,6 @@ using UnityEngine.UI;
 
 public class LevelSelectionScreenController : MonoBehaviour
 {
-    private static readonly Color UnlimitedLivesOverlayColor = new Color(1f, 0.95f, 0.5f, 0.8f);
-
     public static LevelSelectionScreenController Instance { get; private set; }
 
     [Header("Areas")]
@@ -16,8 +14,6 @@ public class LevelSelectionScreenController : MonoBehaviour
     [Header("UI")]
     [SerializeField] private TextMeshProUGUI _totalStarsText;
     [SerializeField] private RectTransform _livesWidgetRoot;
-    [SerializeField] private Image _lifeIconImage;
-    [SerializeField] private Image _unlimitedLivesFillImage;
     [SerializeField] private TextMeshProUGUI _livesAmountText;
     [SerializeField] private TextMeshProUGUI _livesTimerText;
     [SerializeField] private Button _dailyWheelButton;
@@ -175,20 +171,11 @@ public class LevelSelectionScreenController : MonoBehaviour
         if (_livesWidgetRoot == null)
             _livesWidgetRoot = FindRectTransformByName("Lives");
 
-        if (_lifeIconImage == null)
-        {
-            RectTransform iconRect = FindRectTransformByName("LifeIcon");
-            if (iconRect != null)
-                _lifeIconImage = iconRect.GetComponent<Image>();
-        }
-
         if (_livesAmountText == null)
             _livesAmountText = FindTextByName("LivesAmount");
 
         if (_livesTimerText == null)
             _livesTimerText = FindTextByName("CounterText");
-
-        EnsureUnlimitedLivesFillImage();
     }
 
     private void CacheDailyWheelButton()
@@ -268,13 +255,6 @@ public class LevelSelectionScreenController : MonoBehaviour
             _livesAmountText.text = lifeManager.GetDisplayLives().ToString();
 
         bool hasUnlimitedLives = lifeManager.HasTimedUnlimitedLives;
-        if (_unlimitedLivesFillImage != null)
-        {
-            _unlimitedLivesFillImage.gameObject.SetActive(hasUnlimitedLives);
-            if (hasUnlimitedLives)
-                _unlimitedLivesFillImage.fillAmount = lifeManager.GetUnlimitedLivesFillAmount();
-        }
-
         if (_livesTimerText != null)
         {
             if (hasUnlimitedLives)
@@ -289,37 +269,6 @@ public class LevelSelectionScreenController : MonoBehaviour
                     : string.Empty;
             }
         }
-    }
-
-    private void EnsureUnlimitedLivesFillImage()
-    {
-        if (_lifeIconImage == null)
-            return;
-
-        if (_unlimitedLivesFillImage == null)
-        {
-            GameObject overlayObject = new GameObject("UnlimitedLivesFill", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
-            overlayObject.transform.SetParent(_lifeIconImage.transform, false);
-
-            RectTransform overlayRect = overlayObject.GetComponent<RectTransform>();
-            overlayRect.anchorMin = Vector2.zero;
-            overlayRect.anchorMax = Vector2.one;
-            overlayRect.offsetMin = Vector2.zero;
-            overlayRect.offsetMax = Vector2.zero;
-            overlayRect.SetAsLastSibling();
-
-            _unlimitedLivesFillImage = overlayObject.GetComponent<Image>();
-        }
-
-        _unlimitedLivesFillImage.raycastTarget = false;
-        _unlimitedLivesFillImage.sprite = _lifeIconImage.sprite;
-        _unlimitedLivesFillImage.color = UnlimitedLivesOverlayColor;
-        _unlimitedLivesFillImage.type = Image.Type.Filled;
-        _unlimitedLivesFillImage.fillMethod = Image.FillMethod.Radial360;
-        _unlimitedLivesFillImage.fillOrigin = (int)Image.Origin360.Top;
-        _unlimitedLivesFillImage.fillClockwise = false;
-        _unlimitedLivesFillImage.fillAmount = 0f;
-        _unlimitedLivesFillImage.gameObject.SetActive(false);
     }
 
     private string FormatUnlimitedLivesTime(TimeSpan remaining)
