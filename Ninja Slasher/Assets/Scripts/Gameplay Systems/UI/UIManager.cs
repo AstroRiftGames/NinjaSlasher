@@ -375,6 +375,12 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
             HideGameplayHUD();
     }
 
+    public void SetGameplayHUDTopRightInfoVisible(bool visible)
+    {
+        if (_gameplayHUD != null)
+            _gameplayHUD.SetTopRightInfoVisible(visible);
+    }
+
     #endregion
 
     #region LEVEL PREVIEW

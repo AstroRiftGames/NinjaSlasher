@@ -54,6 +54,7 @@ public class PauseOverlay : UIOverlayBase
             Time.timeScale = 0f;
 
         RefreshInfo();
+        UIManager.Instance?.SetGameplayHUDTopRightInfoVisible(false);
         UIEvents.RaisePause(true);
     }
 
@@ -65,6 +66,7 @@ public class PauseOverlay : UIOverlayBase
         if (!_wasPausedBeforeShow)
             Time.timeScale = 1f;
 
+        UIManager.Instance?.SetGameplayHUDTopRightInfoVisible(true);
         UIEvents.RaisePause(false);
     }
 
