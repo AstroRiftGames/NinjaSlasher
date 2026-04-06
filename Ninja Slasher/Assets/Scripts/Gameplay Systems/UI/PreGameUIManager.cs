@@ -39,6 +39,7 @@ public class PreGameUIManager : MonoBehaviour
     [SerializeField] private int objectiveBurstSize = 2;
 
     private readonly Dictionary<TextMeshProUGUI, Color> _baseTextColors = new();
+    private readonly Dictionary<TextMeshProUGUI, bool> _objectiveCompletionStates = new();
     private readonly Dictionary<Image, Vector2> _objectiveSlashBasePositions = new();
     private readonly Dictionary<Image, Color> _objectiveSlashBaseColors = new();
     private readonly Dictionary<Image, bool> _objectiveSlashBaseEnabled = new();
@@ -50,6 +51,7 @@ public class PreGameUIManager : MonoBehaviour
     private RectTransform _titleRightMaskRect;
     private TextMeshProUGUI _titleLeftRevealText;
     private TextMeshProUGUI _titleRightRevealText;
+    private UIAudioContext _audioContext;
     private Color _titleBaseColor;
     private bool _isLevelSelected;
 
@@ -57,6 +59,8 @@ public class PreGameUIManager : MonoBehaviour
     {
         if (_powerUpConfirmationPopUp == null)
             _powerUpConfirmationPopUp = GetComponentInChildren<PowerUpConfirmationPopUp>(true);
+
+        _audioContext = GetComponentInParent<UIAudioContext>();
 
         CacheBaseVisualState();
         SetupButtonListeners();
@@ -202,12 +206,14 @@ public class PreGameUIManager : MonoBehaviour
 
         ShowPreGameTitle();
         SetGoals();
-        ShowPreGamePowerUps();
         RefreshObjectiveSlashBaselines();
         ResetVisualState();
+        ShowPreGamePowerUps();
 
         if (useNinjaAnimations)
             StartCoroutine(DelayedAnimations());
+        else
+            ApplyObjectiveCompletionVisuals();
     }
 
     private IEnumerator DelayedAnimations()
@@ -311,7 +317,8 @@ public class PreGameUIManager : MonoBehaviour
         Sequence flashSequence = DOTween.Sequence();
         flashSequence.Append(objectiveText.DOFade(baseColor.a, objectiveFlashDuration).SetEase(Ease.OutQuad));
 
-        if (slashImage != null && slashImage.enabled)
+        bool shouldShowSlash = _objectiveCompletionStates.TryGetValue(objectiveText, out bool isCompleted) && isCompleted;
+        if (slashImage != null && shouldShowSlash)
         {
             if (!_objectiveSlashBasePositions.TryGetValue(slashImage, out Vector2 basePosition))
                 basePosition = slashImage.rectTransform.anchoredPosition;
@@ -322,10 +329,11 @@ public class PreGameUIManager : MonoBehaviour
             slashImage.rectTransform.anchoredPosition = basePosition + new Vector2(-18f, 0f);
             slashImage.color = new Color(baseSlashColor.r, baseSlashColor.g, baseSlashColor.b, 0f);
 
+            flashSequence.AppendCallback(PlayObjectiveStrokeSfx);
             flashSequence.Join(slashImage.DOFade(baseSlashColor.a, slashEffectDuration * 0.45f).SetEase(Ease.OutQuad));
             flashSequence.Join(slashImage.rectTransform.DOAnchorPos(basePosition, slashEffectDuration).SetEase(Ease.OutCubic));
-            flashSequence.OnKill(() => RestoreObjectiveSlashBaseline(slashImage));
-            flashSequence.OnComplete(() => RestoreObjectiveSlashBaseline(slashImage));
+            flashSequence.OnKill(() => ApplyObjectiveSlashCompletionState(objectiveText, slashImage));
+            flashSequence.OnComplete(() => ApplyObjectiveSlashCompletionState(objectiveText, slashImage));
         }
 
         return flashSequence;
@@ -492,8 +500,36 @@ public class PreGameUIManager : MonoBehaviour
 
             Image slashImage = objectiveText.GetComponentInChildren<Image>(true);
             if (slashImage != null)
+            {
                 RestoreObjectiveSlashBaseline(slashImage);
+                slashImage.enabled = false;
+            }
         }
+    }
+
+    private void ApplyObjectiveCompletionVisuals()
+    {
+        foreach (TextMeshProUGUI objectiveText in GetObjectiveTexts())
+        {
+            Image slashImage = objectiveText.GetComponentInChildren<Image>(true);
+            ApplyObjectiveSlashCompletionState(objectiveText, slashImage);
+        }
+    }
+
+    private void ApplyObjectiveSlashCompletionState(TextMeshProUGUI objectiveText, Image slashImage)
+    {
+        if (slashImage == null)
+            return;
+
+        RestoreObjectiveSlashBaseline(slashImage);
+        bool shouldShowSlash = _objectiveCompletionStates.TryGetValue(objectiveText, out bool isCompleted) && isCompleted;
+        slashImage.enabled = shouldShowSlash;
+    }
+
+    private void PlayObjectiveStrokeSfx()
+    {
+        if (_audioContext?.Audio?.tapSplash != null)
+            AudioService.Instance?.PlaySFX(_audioContext.Audio.tapSplash);
     }
 
     private void RestoreObjectiveSlashBaseline(Image slashImage)
@@ -710,9 +746,7 @@ public class PreGameUIManager : MonoBehaviour
         if (objectiveText == null)
             return;
 
-        Image slashImage = objectiveText.GetComponentInChildren<Image>(true);
-        if (slashImage != null)
-            slashImage.enabled = isComplete;
+        _objectiveCompletionStates[objectiveText] = isComplete;
 
         SetStar(starIndex, isComplete);
     }
