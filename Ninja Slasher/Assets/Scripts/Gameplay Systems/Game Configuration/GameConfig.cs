@@ -13,9 +13,9 @@ public class GameConfig : ScriptableObject
     public int lifeRechargeSeconds = 1800;
 
     [Header("PROGRESSION SYSTEM")]
-    [Tooltip("Niveles por �rea (normalmente 10)")]
+    [Tooltip("Niveles por area (normalmente 10)")]
     public int levelsPerArea = 10;
-    [Tooltip("Total de �reas en el juego")]
+    [Tooltip("Total de areas en el juego")]
     public int totalAreas = 5;
     [Tooltip("Estrellas requeridas para desbloquear cada boss (indice 0 = boss area 1)")]
     public int[] starsRequiredPerBoss = { 5, 15, 30, 50, 75 };
@@ -75,7 +75,7 @@ public class GameConfig : ScriptableObject
     [Header("POWER-UPS - EFECTIVIDAD")]
 
     [Range(0.1f, 2f)]
-    [Tooltip("Extra Time: Porcentaje de tiempo bonus (0.5 = 50% m�s tiempo)")]
+    [Tooltip("Extra Time: Porcentaje de tiempo bonus (0.5 = 50% mas tiempo)")]
     public float extraTimeBonus = 0.5f;
 
     [Range(0.1f, 1f)]
@@ -87,7 +87,7 @@ public class GameConfig : ScriptableObject
     public float parryPerfectBonusWindow = 0.2f;
 
     [Range(0.1f, 2f)]
-    [Tooltip("Combo Master: Porcentaje bonus de puntos (0.5 = 50% m�s puntos)")]
+    [Tooltip("Combo Master: Porcentaje bonus de puntos (0.5 = 50% mas puntos)")]
     public float comboMasterBonusPercent = 0.5f;
 
     [Range(2, 10)]
@@ -95,21 +95,25 @@ public class GameConfig : ScriptableObject
     public int enhancedParryBounces = 3;
 
     [Range(0.5f, 1f)]
-    [Tooltip("Enhanced Parry: Retenci�n de velocidad por rebote")]
+    [Tooltip("Enhanced Parry: Retencion de velocidad por rebote")]
     public float enhancedParryVelocityRetention = 0.9f;
 
     [Header("MONETIZATION - ADS")]
-    [Tooltip("P�rdidas consecutivas necesarias para mostrar ad de vida extra")]
+    [Tooltip("Perdidas consecutivas necesarias para mostrar ad de vida extra")]
     public int lossesRequiredForAd = 2;
     [Tooltip("Niveles consecutivos completados para mostrar ad")]
     public int levelsRequiredForAd = 3;
-    [Tooltip("Habilitar ads despu�s de p�rdidas consecutivas")]
+    [Tooltip("Partidas jugadas en la sesion actual para mostrar un interstitial automatico")]
+    public int gamesRequiredForInterstitialAd = 3;
+    [Tooltip("Habilitar el contador de interstitials automaticos por partidas de la sesion")]
+    public bool enableSessionGameplayInterstitialAds = true;
+    [Tooltip("Habilitar ads despues de perdidas consecutivas")]
     public bool enableConsecutiveLossAds = true;
-    [Tooltip("Habilitar ads despu�s de victorias consecutivas")]
+    [Tooltip("Habilitar ads despues de victorias consecutivas")]
     public bool enableConsecutiveLevelAds = true;
     [Tooltip("Habilitar ads cuando se queda sin vidas")]
     public bool enableNoLivesAds = true;
-    [Tooltip("Habilitar ads al desbloquear nueva �rea")]
+    [Tooltip("Habilitar ads al desbloquear nueva area")]
     public bool enableAreaUnlockAds = true;
 
     [Header("DAILY SYSTEMS")]
@@ -125,7 +129,7 @@ public class GameConfig : ScriptableObject
     public int maxComboLevel = 5;
     [Tooltip("Ventana de tiempo para hacer parry exitoso (segundos)")]
     public float parryWindow = 0.3f;
-    [Tooltip("Multiplicador de da�o por parry perfecto")]
+    [Tooltip("Multiplicador de daño por parry perfecto")]
     public float parryDamageMultiplier = 2f;
 
     [Header("ECONOMY")]

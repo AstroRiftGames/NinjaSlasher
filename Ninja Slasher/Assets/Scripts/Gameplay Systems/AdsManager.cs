@@ -26,13 +26,24 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
     private bool _isLevelPlayInitialized = false;
     private bool _levelPlayInitFailed = false;
     private bool _isInitializingLevelPlay = false;
+    private int _sessionGamesSinceLastInterstitial = 0;
 
     public event Action OnRewardedAdReadinessChanged;
     public event Action<string, bool> OnRewardedAdFlowCompleted;
 
+    private int GamesRequiredForInterstitialAd =>
+        GameConfigManager.IsReady()
+            ? Mathf.Max(1, GameConfigManager.Config.gamesRequiredForInterstitialAd)
+            : 3;
+
+    private bool EnableSessionGameplayInterstitialAds =>
+        !GameConfigManager.IsReady() || GameConfigManager.Config.enableSessionGameplayInterstitialAds;
+
     void Start()
     {
         GameEvents.OnAdsRemoved += OnAdsRemoved;
+        GameEvents.OnLevelCompleted += OnLevelCompleted;
+        GameEvents.OnLevelFailed += OnLevelFailed;
         UIEvents.OnRetryButtonPressed += OnResultsActionTaken;
         UIEvents.OnQuitToMenuPressed  += OnResultsActionTaken;
 
@@ -162,6 +173,31 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         Debug.Log($"[AdsManager] Interstitial deferred | placement={placement}");
 #endif
+    }
+
+    private void OnLevelCompleted(LevelStats stats)
+    {
+        RegisterSessionGameForInterstitial("level_completed");
+    }
+
+    private void OnLevelFailed(LevelFailedContext context)
+    {
+        RegisterSessionGameForInterstitial("level_failed");
+    }
+
+    private void RegisterSessionGameForInterstitial(string placement)
+    {
+        if (!EnableSessionGameplayInterstitialAds || AreAdsRemoved())
+            return;
+
+        _sessionGamesSinceLastInterstitial++;
+        Debug.Log($"[AdsManager] Session game counter | placement={placement} | count={_sessionGamesSinceLastInterstitial}/{GamesRequiredForInterstitialAd}");
+
+        if (_sessionGamesSinceLastInterstitial < GamesRequiredForInterstitialAd)
+            return;
+
+        _sessionGamesSinceLastInterstitial = 0;
+        ShowInterstitialAd(placement);
     }
 
     private void OnResultsActionTaken()
@@ -512,6 +548,8 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
     void OnDestroy()
     {
         GameEvents.OnAdsRemoved -= OnAdsRemoved;
+        GameEvents.OnLevelCompleted -= OnLevelCompleted;
+        GameEvents.OnLevelFailed -= OnLevelFailed;
         UIEvents.OnRetryButtonPressed -= OnResultsActionTaken;
         UIEvents.OnQuitToMenuPressed  -= OnResultsActionTaken;
 

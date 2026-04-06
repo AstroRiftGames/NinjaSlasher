@@ -81,10 +81,6 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
     [SerializeField] private bool addRotationEffect = true;
     [SerializeField] private bool addImpactEffect = true;
 
-#if UNITY_EDITOR
-    [SerializeField] private Button deleteSaveButton;
-#endif
-
     private AudioSettingsUI _configToggles;
     private ConfigDropdown _configPanelManager;
 
@@ -98,7 +94,6 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
     [Header("POP UPS")]
     [SerializeField] private UserIconsPopUp _userIconsPanel;
     [SerializeField] private UserNicknameEditPopUp _userNicknameEditPanel;
-    [SerializeField] private ConfirmationPopUp _confirmationPanel;
 
     public override void Awake()
     {
@@ -170,10 +165,6 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
         SetupGameplayButtons();
         SetupLevelProgression();
         UpdateButtonProgression();
-
-#if UNITY_EDITOR
-        SetupDebugButtons();
-#endif
     }
 
     private void SetupGameplayButtons()
@@ -457,51 +448,6 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
         UIEvents.RequestTogglePauseOverlay();
     }
 
-    public void ShowConfirmation(
-    string message,
-    Action onConfirm,
-    Action onCancel = null,
-    string title = "Confirmación",
-    string confirmText = "Confirmar",
-    string cancelText = "Cancelar")
-    {
-        if (_confirmationPanel == null)
-        {
-            Debug.LogWarning("[UIManager] ConfirmationPanel no asignado");
-            return;
-        }
-
-        _confirmationPanel.ShowConfirmation(message, onConfirm, onCancel, title, confirmText, cancelText);
-    }
-
-    private void OnQuitButtonPressed()
-    {
-        ShowConfirmation(
-            message: "¿Seguro que quieres salir? Perderás el progreso de este nivel.",
-            onConfirm: () => {
-                UIEvents.RaiseQuitToMenuPressed();
-            },
-            onCancel: () => Debug.Log("Cancelado"),
-            title: "Salir del nivel",
-            confirmText: "Salir",
-            cancelText: "Continuar"
-        );
-    }
-
-    private void OnBuyItemPressed(string itemName, int cost)
-    {
-        ShowConfirmation(
-            message: $"¿Comprar {itemName} por {cost} monedas?",
-            onConfirm: () =>
-            {
-                Debug.Log($"Buying {itemName}");
-            },
-            title: "Confirmar compra",
-            confirmText: "Comprar",
-            cancelText: "Cancelar"
-        );
-    }
-
     private bool IsLevelUnlocked(int levelId)
     {
         if (LevelProgressionManager.Instance == null)
@@ -672,18 +618,4 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
     {
         return levelButtons;
     }
-
-#if UNITY_EDITOR
-    private void SetupDebugButtons()
-    {
-        if (deleteSaveButton != null)
-        {
-            deleteSaveButton.onClick.AddListener(() =>
-            {
-                SaveManager.Instance.ResetAllLocalSaves(notify: true);
-                RefreshLevelProgression();
-            });
-        }
-    }
-#endif
 }

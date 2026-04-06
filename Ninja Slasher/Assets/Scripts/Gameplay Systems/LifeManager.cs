@@ -19,9 +19,6 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
     private int? _cachedMaxLives;
     private int? _cachedStartingLives;
     private int? _cachedLifeRechargeSeconds;
-    private int? _cachedLossesRequiredForAd;
-    private bool? _cachedEnableConsecutiveLossAds;
-    private bool? _cachedEnableNoLivesAds;
 
     private int MaxLives
     {
@@ -74,57 +71,6 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
         }
     }
 
-    private int LossesRequiredForAd
-    {
-        get
-        {
-            if (_cachedLossesRequiredForAd.HasValue)
-                return _cachedLossesRequiredForAd.Value;
-
-            if (GameConfigManager.IsReady())
-            {
-                _cachedLossesRequiredForAd = GameConfigManager.Config.lossesRequiredForAd;
-                return _cachedLossesRequiredForAd.Value;
-            }
-
-            return 2;
-        }
-    }
-
-    private bool EnableConsecutiveLossAds
-    {
-        get
-        {
-            if (_cachedEnableConsecutiveLossAds.HasValue)
-                return _cachedEnableConsecutiveLossAds.Value;
-
-            if (GameConfigManager.IsReady())
-            {
-                _cachedEnableConsecutiveLossAds = GameConfigManager.Config.enableConsecutiveLossAds;
-                return _cachedEnableConsecutiveLossAds.Value;
-            }
-
-            return true;
-        }
-    }
-
-    private bool EnableNoLivesAds
-    {
-        get
-        {
-            if (_cachedEnableNoLivesAds.HasValue)
-                return _cachedEnableNoLivesAds.Value;
-
-            if (GameConfigManager.IsReady())
-            {
-                _cachedEnableNoLivesAds = GameConfigManager.Config.enableNoLivesAds;
-                return _cachedEnableNoLivesAds.Value;
-            }
-
-            return true;
-        }
-    }
-
     private int totalLivesLostThisSession = 0;
     private int currentConsecutiveLosses = 0;
     private bool _levelInProgress = false;
@@ -155,7 +101,6 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
         yield return null;
 
         InitializeFromSave();
-        LoadAdsProgress();
 
         _isInitialized = true;
 
@@ -512,7 +457,7 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
                 );
             }
 
-            CheckLifeLossAds();
+            IncrementLossCounter();
 
             Persist("Vida perdida (confirmada)");
             EmitDisplayLivesChanged();
@@ -542,7 +487,7 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
                 );
             }
 
-            CheckLifeLossAds();
+            IncrementLossCounter();
 
             Persist("Vida perdida (directa)");
             EmitDisplayLivesChanged();
@@ -743,54 +688,9 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
 
     #region ADS
 
-    private void LoadAdsProgress()
+    private void IncrementLossCounter()
     {
-        if (SaveManager.Instance != null)
-            currentConsecutiveLosses = SaveManager.Instance.GetGameData().consecutiveLosses;
-        else
-            currentConsecutiveLosses = PlayerPrefs.GetInt("ConsecutiveLosses", 0);
-    }
-
-    private void SaveAdsProgress()
-    {
-        if (SaveManager.Instance != null)
-            SaveManager.Instance.Modify(d => d.consecutiveLosses = currentConsecutiveLosses);
-        else
-        {
-            PlayerPrefs.SetInt("ConsecutiveLosses", currentConsecutiveLosses);
-            PlayerPrefs.Save();
-        }
-    }
-
-    private void CheckLifeLossAds()
-    {
-        if (EnableNoLivesAds && CurrentLives == 0)
-        {
-            ShowNoLivesAd();
-            ResetLossCounter();
-        }
-        else if (EnableConsecutiveLossAds)
-        {
-            currentConsecutiveLosses++;
-
-            if (currentConsecutiveLosses >= LossesRequiredForAd)
-            {
-                ShowConsecutiveLossAd();
-                ResetLossCounter();
-            }
-        }
-
-        SaveAdsProgress();
-    }
-
-    private void ShowConsecutiveLossAd()
-    {
-        AdsManager.Instance?.ShowInterstitialAd("consecutive_loss");
-    }
-
-    private void ShowNoLivesAd()
-    {
-        AdsManager.Instance?.ShowInterstitialAd("no_lives");
+        currentConsecutiveLosses++;
     }
 
     private void ResetLossCounter()
@@ -800,7 +700,6 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
             Debug.Log($"[LifeManager] Contador de derrotas reseteado (era: {currentConsecutiveLosses})");
         }
         currentConsecutiveLosses = 0;
-        SaveAdsProgress();
     }
 
     private static LifeWallOutcome WallOutcomeFromSource(LifeRestoreSource source) => source switch

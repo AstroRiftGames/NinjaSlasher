@@ -14,9 +14,6 @@ public class LevelProgressionManager : MonoBehaviourSingleton<LevelProgressionMa
 {
     private int LevelsPerArea => GameConfigManager.Config.levelsPerArea;
     private int TotalAreas => GameConfigManager.Config.totalAreas;
-    private int LevelsRequiredForAd => GameConfigManager.Config.levelsRequiredForAd;
-    private bool EnableConsecutiveLevelAds => GameConfigManager.Config.enableConsecutiveLevelAds;
-    private bool EnableAreaUnlockAds => GameConfigManager.Config.enableAreaUnlockAds;
 
     private bool isInitialized = false;
 
@@ -57,63 +54,6 @@ public class LevelProgressionManager : MonoBehaviourSingleton<LevelProgressionMa
     private void HandleDataLoaded(GameData _)
     {
         OnProgressionUpdated?.Invoke();
-    }
-
-    private void CheckConsecutiveLevelAd(int levelId, int starsEarned)
-    {
-        if (!EnableConsecutiveLevelAds || SaveManager.Instance == null)
-            return;
-
-        var gameData = SaveManager.Instance.GetGameData();
-        int currentConsecutiveWins = gameData.consecutiveLevelWins;
-        int lastCompletedLevel = gameData.lastCompletedLevel;
-
-        if (lastCompletedLevel == -1 || levelId == lastCompletedLevel + 1)
-        {
-            currentConsecutiveWins++;
-            gameData.consecutiveLevelWins = currentConsecutiveWins;
-            gameData.lastCompletedLevel = levelId;
-
-            if (currentConsecutiveWins >= LevelsRequiredForAd)
-            {
-                ShowConsecutiveLevelAd();
-                ResetConsecutiveCounter();
-            }
-        }
-        else
-        {
-            ResetConsecutiveCounter();
-            gameData.consecutiveLevelWins = 1;
-            gameData.lastCompletedLevel = levelId;
-        }
-
-        SaveManager.Instance.SaveData();
-    }
-
-    private void ShowConsecutiveLevelAd()
-    {
-        AdsManager.Instance?.ShowInterstitialAd("consecutive_level_win");
-    }
-
-    private void ShowAreaUnlockAd(int newAreaId)
-    {
-        AdsManager.Instance?.ShowInterstitialAd("area_unlock");
-    }
-
-    private void ResetConsecutiveCounter()
-    {
-        if (SaveManager.Instance == null) return;
-
-        var gameData = SaveManager.Instance.GetGameData();
-
-        if (gameData.consecutiveLevelWins > 0)
-        {
-            Debug.Log($"[LevelProgressionManager] Contador consecutivo reseteado (era: {gameData.consecutiveLevelWins})");
-        }
-
-        gameData.consecutiveLevelWins = 0;
-        gameData.lastCompletedLevel = -1;
-        SaveManager.Instance.SaveData();
     }
 
     public bool IsLevelUnlocked(int levelId)
@@ -179,10 +119,6 @@ public class LevelProgressionManager : MonoBehaviourSingleton<LevelProgressionMa
             _pendingAreaUnlockAnimationId = newAreaId;
             OnNewAreaUnlocked?.Invoke(newAreaId);
 
-            if (EnableAreaUnlockAds)
-            {
-                ShowAreaUnlockAd(newAreaId);
-            }
         }
     }
 
@@ -228,8 +164,6 @@ public class LevelProgressionManager : MonoBehaviourSingleton<LevelProgressionMa
     public void HandleLevelCompletion(int levelId, int starsEarned)
     {
         SaveManager.Instance?.UpdateLevelProgression(levelId, starsEarned);
-
-        CheckConsecutiveLevelAd(levelId, starsEarned);
 
         var (currentHighest, currentArea, totalStars) = SaveManager.Instance?.GetProgressionData() ?? (1, 1, 0);
 
