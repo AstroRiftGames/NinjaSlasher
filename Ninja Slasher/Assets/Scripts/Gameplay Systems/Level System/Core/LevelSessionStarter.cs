@@ -22,7 +22,8 @@ public class LevelSessionStarter : MonoBehaviour
         {
             if (LevelSessionManager.Instance != null &&
                 LevelSessionManager.Instance.CurrentSession != null &&
-                LevelSessionManager.Instance.CurrentSession.State == LevelSessionState.Ready)
+                LevelSessionManager.Instance.CurrentSession.State == LevelSessionState.Ready &&
+                (TutorialManager.Instance == null || !TutorialManager.Instance.IsTutorialActive()))
             {
                 StartLevelSession();
                 yield break;

@@ -45,6 +45,8 @@ public static class UIEvents
 
     public static event Action<EmergencyBundleOffer> OnShowEmergencyBundleOverlayRequested;
     public static event Action OnHideEmergencyBundleOverlayRequested;
+    public static event Action OnShowTutorialOverlayRequested;
+    public static event Action OnHideTutorialOverlayRequested;
 
     public static void RequestShowEmergencyBundleOverlay(EmergencyBundleOffer offer)
         => OnShowEmergencyBundleOverlayRequested?.Invoke(offer);
@@ -54,6 +56,21 @@ public static class UIEvents
 
     public static bool HasEmergencyBundleOverlayListener()
         => OnShowEmergencyBundleOverlayRequested != null;
+
+    public static void RequestShowTutorialOverlay()
+    {
+        OnShowTutorialOverlayRequested?.Invoke();
+    }
+
+    public static void RequestHideTutorialOverlay()
+    {
+        OnHideTutorialOverlayRequested?.Invoke();
+    }
+
+    public static bool HasTutorialOverlayListener()
+    {
+        return OnShowTutorialOverlayRequested != null && OnHideTutorialOverlayRequested != null;
+    }
 
     public static void RequestShowPauseOverlay()
     {
@@ -484,6 +501,8 @@ public static class UIEvents
         OnShowDefeatOverlayRequested = null;
         OnShowEmergencyBundleOverlayRequested = null;
         OnHideEmergencyBundleOverlayRequested = null;
+        OnShowTutorialOverlayRequested = null;
+        OnHideTutorialOverlayRequested = null;
     }
 
     public static void ClearScreenEvents()

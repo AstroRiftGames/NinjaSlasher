@@ -14,6 +14,7 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
     [SerializeField] private NoLivesOverlay _noLivesOverlay;
     [SerializeField] private DefeatOverlay _defeatOverlay;
     [SerializeField] private EmergencyBundleOverlay _emergencyBundleOverlay;
+    [SerializeField] private TutorialUIOverlay _tutorialOverlay;
 
     [Header("SCREENS")]
     [SerializeField] private SplashScreen _splashScreen;
@@ -83,6 +84,7 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
         _buttonManager = GetComponent<ButtonManager>();
         _gameplayUIManager = GetComponent<GameplayUIManager>();
         _preGameUIManager = GetComponent<PreGameUIManager>();
+        ResolveTutorialOverlay();
 
         if (_buttonManager == null)
             Debug.LogError("[UIManager] ButtonManager no encontrado");
@@ -151,6 +153,8 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
 
         UIEvents.OnShowEmergencyBundleOverlayRequested += ShowEmergencyBundleOverlay;
         UIEvents.OnHideEmergencyBundleOverlayRequested += HideEmergencyBundleOverlay;
+        UIEvents.OnShowTutorialOverlayRequested += ShowTutorialOverlay;
+        UIEvents.OnHideTutorialOverlayRequested += HideTutorialOverlay;
 
         UIEvents.OnShowSplashScreenRequested += ShowSplashScreen;
         UIEvents.OnHideSplashScreenRequested += HideSplashScreen;
@@ -205,6 +209,8 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
 
         UIEvents.OnShowEmergencyBundleOverlayRequested -= ShowEmergencyBundleOverlay;
         UIEvents.OnHideEmergencyBundleOverlayRequested -= HideEmergencyBundleOverlay;
+        UIEvents.OnShowTutorialOverlayRequested -= ShowTutorialOverlay;
+        UIEvents.OnHideTutorialOverlayRequested -= HideTutorialOverlay;
 
         UIEvents.OnShowSplashScreenRequested -= ShowSplashScreen;
         UIEvents.OnHideSplashScreenRequested -= HideSplashScreen;
@@ -289,6 +295,9 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
     {
         HidePanel(_emergencyBundleOverlay);
     }
+
+    private void ShowTutorialOverlay() => ShowPanel(ResolveTutorialOverlay());
+    private void HideTutorialOverlay() => HidePanel(ResolveTutorialOverlay());
 
     #endregion
 
@@ -424,12 +433,28 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
         return panel != null && panel.IsVisible;
     }
 
+    private TutorialUIOverlay ResolveTutorialOverlay()
+    {
+        if (_tutorialOverlay != null)
+            return _tutorialOverlay;
+
+        _tutorialOverlay = GetComponentInChildren<TutorialUIOverlay>(true);
+
+        return _tutorialOverlay;
+    }
+
+    public TutorialUIOverlay GetTutorialOverlay()
+    {
+        return ResolveTutorialOverlay();
+    }
+
     public bool HasBlockingPanelForLevelSelection()
     {
         return IsPanelVisible(_pauseOverlay)
             || IsPanelVisible(_noLivesOverlay)
             || IsPanelVisible(_defeatOverlay)
             || IsPanelVisible(_emergencyBundleOverlay)
+            || IsPanelVisible(ResolveTutorialOverlay())
             || IsPanelVisible(_splashScreen)
             || IsPanelVisible(_preGameScreen)
             || IsPanelVisible(_creditsModal)

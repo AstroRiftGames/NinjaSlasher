@@ -12,6 +12,7 @@ public class LevelSessionManager : MonoBehaviourSingleton<LevelSessionManager>
     private ObjectiveService objectiveService;
 
     private bool isLevelActive;
+    private bool gameplayMusicStarted;
 
     public LevelSession CurrentSession => currentSession;
     public bool HasActiveSession => currentSession != null && !currentSession.IsComplete && !currentSession.IsFailed;
@@ -120,6 +121,7 @@ public class LevelSessionManager : MonoBehaviourSingleton<LevelSessionManager>
 
         timerService.Initialize();
         currentSession.Initialize();
+        EnsureGameplayMusicStarted();
 
         isLevelActive = true;
     }
@@ -139,7 +141,7 @@ public class LevelSessionManager : MonoBehaviourSingleton<LevelSessionManager>
         currentSession.Start();
         timerService.Start();
 
-        PlayGameplayMusic();
+        EnsureGameplayMusicStarted();
 
         if (AnalyticsManager.Instance != null)
         {
@@ -166,6 +168,14 @@ public class LevelSessionManager : MonoBehaviourSingleton<LevelSessionManager>
 
         currentSession.Resume();
         timerService.Resume();
+    }
+
+    public void EnsureGameplayMusicStarted()
+    {
+        if (gameplayMusicStarted)
+            return;
+
+        gameplayMusicStarted = TryPlayGameplayMusic();
     }
 
     private void OnAllEnemiesDefeated(LevelStats stats)
@@ -423,31 +433,35 @@ public class LevelSessionManager : MonoBehaviourSingleton<LevelSessionManager>
             objectiveService = null;
 
             isLevelActive = false;
+            gameplayMusicStarted = false;
         }
     }
 
-    private void PlayGameplayMusic()
+    private bool TryPlayGameplayMusic()
     {
         var config = currentSession?.Configuration;
-        if (config == null) return;
+        if (config == null || AudioService.Instance == null)
+            return false;
 
         if (config.unlockRequirements.isBossLevel)
         {
             if (config.bossMusic == null)
             {
-                return;
+                return false;
             }
 
             AudioService.Instance.PlayMusic(config.bossMusic);
+            return true;
         }
         else
         {
             if (config.gameplayMusic == null)
             {
-                return;
+                return false;
             }
 
             AudioService.Instance.PlayMusic(config.gameplayMusic);
+            return true;
         }
     }
 

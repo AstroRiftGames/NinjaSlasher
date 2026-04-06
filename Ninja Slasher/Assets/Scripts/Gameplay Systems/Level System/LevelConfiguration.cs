@@ -37,6 +37,9 @@ public class LevelConfiguration : ScriptableObject
     public AudioEvent gameplayMusic;
     public AudioEvent bossMusic;
 
+    [Header("TUTORIAL")]
+    public TutorialPanelData tutorialPanelData;
+
     private void OnValidate()
     {
         bool hasPrimary = false;
