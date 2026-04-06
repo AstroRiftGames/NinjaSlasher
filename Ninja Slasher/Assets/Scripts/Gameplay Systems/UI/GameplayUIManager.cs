@@ -13,7 +13,6 @@ public class GameplayUIManager : MonoBehaviour
     [SerializeField] private TextMeshProUGUI _noLivesTimerText;
     [SerializeField] private TextMeshProUGUI _levelTimerText;
     [SerializeField] private TextMeshProUGUI _bonusTimeText;
-    [SerializeField] private TextMeshProUGUI _puRemainingTime;
 
     private UIAudioContext _audioContext;
 
@@ -35,14 +34,6 @@ public class GameplayUIManager : MonoBehaviour
 
         if (_bonusTimeText != null)
             _bonusTimeText.gameObject.SetActive(false);
-
-        if (_puRemainingTime != null)
-        {
-            _puRemainingTime.text = "";
-            _puRemainingTime.gameObject.SetActive(true);
-        }
-
-        UpdatePowerUpsUI();
     }
 
     public void OnSceneLoaded()
@@ -95,16 +86,6 @@ public class GameplayUIManager : MonoBehaviour
 
         if (_livesTimerText != null)
             _livesTimerText.text = formatted;
-    }
-
-    private void UpdatePowerUpsUI()
-    {
-        if (_puRemainingTime == null || PowerUpManager.Instance == null)
-        {
-            if (_puRemainingTime != null)
-                _puRemainingTime.text = "";
-            return;
-        }
     }
 
     public void ShowNoLivesPanel()

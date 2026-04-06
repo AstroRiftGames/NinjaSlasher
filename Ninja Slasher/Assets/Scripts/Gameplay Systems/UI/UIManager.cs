@@ -36,6 +36,7 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
     private bool _isHapticFeedbackActive = true;
 
     private bool _isInitialized = false;
+    private bool _shouldGameplayHUDBeVisible;
 
 
     #region INITIALIZATION
@@ -61,8 +62,10 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
         if (this != Instance) return;
 
         SceneManager.sceneLoaded += OnSceneLoaded;
+        UIPanel.OnBlockingPanelVisibilityChanged += RefreshGameplayHUDVisibility;
         StartCoroutine(SafeSubscribeToCustomUpdate());
         SubscribeToUIEvents();
+        RefreshGameplayHUDVisibility();
     }
 
     private void OnDisable()
@@ -70,6 +73,7 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
         if (this != Instance) return;
 
         SceneManager.sceneLoaded -= OnSceneLoaded;
+        UIPanel.OnBlockingPanelVisibilityChanged -= RefreshGameplayHUDVisibility;
 
         if (CustomUpdateManager.Instance != null)
         {
@@ -374,8 +378,18 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
 
     #region HUD
 
-    private void ShowGameplayHUD() => ShowPanel(_gameplayHUD);
-    private void HideGameplayHUD() => HidePanel(_gameplayHUD);
+    private void ShowGameplayHUD()
+    {
+        _shouldGameplayHUDBeVisible = true;
+        RefreshGameplayHUDVisibility();
+    }
+
+    private void HideGameplayHUD()
+    {
+        _shouldGameplayHUDBeVisible = false;
+        HidePanel(_gameplayHUD);
+    }
+
     public void SetGameplayHUDEnabled(bool enabled)
     {
         if (enabled)
@@ -431,6 +445,19 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
     private bool IsPanelVisible(UIPanel panel)
     {
         return panel != null && panel.IsVisible;
+    }
+
+    private void RefreshGameplayHUDVisibility()
+    {
+        if (_gameplayHUD == null)
+            return;
+
+        bool shouldShowHUD = _shouldGameplayHUDBeVisible && !UIPanel.HasVisibleBlockingPanel;
+
+        if (shouldShowHUD)
+            ShowPanel(_gameplayHUD);
+        else
+            HidePanel(_gameplayHUD);
     }
 
     private TutorialUIOverlay ResolveTutorialOverlay()

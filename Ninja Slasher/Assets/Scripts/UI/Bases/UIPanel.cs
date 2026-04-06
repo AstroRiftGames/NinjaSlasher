@@ -5,6 +5,7 @@ using UnityEngine.EventSystems;
 public abstract class UIPanel : MonoBehaviour
 {
     private static readonly List<UIPanel> BlockingPanels = new();
+    public static event System.Action OnBlockingPanelVisibilityChanged;
 
     [SerializeField] protected CanvasGroup _canvasGroup;
     [SerializeField] protected RectTransform _panelTransform;
@@ -135,7 +136,10 @@ public abstract class UIPanel : MonoBehaviour
 
         if (topIndex >= 0 && EventSystem.current != null)
             EventSystem.current.SetSelectedGameObject(null);
+
+        OnBlockingPanelVisibilityChanged?.Invoke();
     }
 
     public bool IsVisible => _isVisible;
+    public static bool HasVisibleBlockingPanel => BlockingPanels.Count > 0;
 }
