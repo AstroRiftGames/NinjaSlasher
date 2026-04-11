@@ -176,6 +176,9 @@ public class GuardBot : Enemy
     {
         _isDying = true;
         _currentSpeed = 0;
+        StopAllCoroutines();
+        AudioService.Instance.StopSFX(_audioContext.Audio.detection);
+        AudioService.Instance.StopSFX(_audioContext.Audio.charge);
         FrontCol.SetActive(false);
         base.Die();
     }
