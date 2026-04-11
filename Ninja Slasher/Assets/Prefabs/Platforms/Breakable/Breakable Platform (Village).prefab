@@ -4959,6 +4959,7 @@ GameObject:
   - component: {fileID: 4747078729460291624}
   - component: {fileID: 1875761467515056210}
   - component: {fileID: 7260104740980129635}
+  - component: {fileID: 3659091808069726590}
   m_Layer: 6
   m_Name: Tilemap
   m_TagString: Obstacle
@@ -5282,61 +5283,59 @@ CompositeCollider2D:
         Y: -19317998
       - X: 101475008
         Y: -19317998
-    - - X: 77165000
-        Y: -17498000
-      - X: 77165000
-        Y: -14482000
-      - X: 78705008
-        Y: -14482000
-      - X: 78705008
-        Y: -17498000
-    - - X: 83930008
-        Y: -17498000
-      - X: 83930008
-        Y: -14482000
-      - X: 85470000
-        Y: -14482000
-      - X: 85470000
-        Y: -17498000
-    - - X: 90695000
-        Y: -17498000
-      - X: 90695000
-        Y: -14482000
-      - X: 92234992
-        Y: -14482000
-      - X: 92234992
-        Y: -17498000
-    - - X: 97460016
-        Y: -17498000
-      - X: 97460016
-        Y: -14482000
-      - X: 99000008
-        Y: -14482000
-      - X: 99000008
-        Y: -17498000
   m_CompositePaths:
     m_Paths:
     - - {x: 10.147471, y: -1.9317998}
       - {x: 10.147471, y: -1.2662001}
       - {x: 7.4415, y: -1.2662294}
       - {x: 7.4415298, y: -1.9317998}
-    - - {x: 9.900001, y: -1.7497706}
-      - {x: 9.746001, y: -1.7497706}
-      - {x: 9.746032, y: -1.4482}
-      - {x: 9.900001, y: -1.4482294}
-    - - {x: 9.223499, y: -1.7497706}
-      - {x: 9.0695, y: -1.7497706}
-      - {x: 9.06953, y: -1.4482}
-      - {x: 9.223499, y: -1.4482294}
-    - - {x: 8.547, y: -1.7497706}
-      - {x: 8.393001, y: -1.7497706}
-      - {x: 8.39303, y: -1.4482}
-      - {x: 8.547, y: -1.4482294}
-    - - {x: 7.870501, y: -1.7497706}
-      - {x: 7.7165003, y: -1.7497706}
-      - {x: 7.71653, y: -1.4482}
-      - {x: 7.870501, y: -1.4482294}
   m_VertexDistance: 0.0005
   m_OffsetDistance: 0.00005
   m_UseDelaunayMesh: 0
   m_CompositeGameObject: {fileID: 8287803281622865990}
+--- !u!61 &3659091808069726590
+BoxCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8287803281622865990}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_ForceSendLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ForceReceiveLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ContactCaptureLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_CallbackLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_IsTrigger: 1
+  m_UsedByEffector: 0
+  m_CompositeOperation: 0
+  m_CompositeOrder: 0
+  m_Offset: {x: 16.004421, y: -3.0750003}
+  m_SpriteTilingProperty:
+    border: {x: 0, y: 0, z: 0, w: 0}
+    pivot: {x: 0, y: 0}
+    oldSize: {x: 0, y: 0}
+    newSize: {x: 0, y: 0}
+    adaptiveTilingThreshold: 0
+    drawMode: 0
+    adaptiveTiling: 0
+  m_AutoTiling: 0
+  m_Size: {x: 4.9092016, y: 1.2630572}
+  m_EdgeRadius: 0

@@ -24,23 +24,37 @@ public class BreakablePlatform : PlatformBase
         _remainingUses = _maxUses;
         if (_remainingUses == 1)
         {
-            SetAsTrigger();
+            SetFinalUseState();
         }
     }
 
-    private void SetAsTrigger()
+    private void SetFinalUseState()
     {
-        var colliders = _tilemap.GetComponentsInChildren<Collider2D>();
+        GameObject player = GameObject.FindGameObjectWithTag("Player");
+        Collider2D[] playerColliders = player != null ? player.GetComponentsInChildren<Collider2D>() : new Collider2D[0];
+
+        var colliders = _tilemap.GetComponentsInChildren<Collider2D>(true);
         foreach (var col in colliders)
         {
-            col.isTrigger = true;
+            if (!col.isTrigger && playerColliders.Length > 0)
+            {
+                foreach (var pCol in playerColliders)
+                {
+                    Physics2D.IgnoreCollision(col, pCol, true);
+                }
+            }
         }
     }
 
     public override void OnPlayerExit(GameObject player, bool isForced = false) { }
 
+    private float _lastEnterTime;
+
     public override void OnPlayerEnter(GameObject player)
     {
+        if (Time.time < _lastEnterTime + 0.1f) return;
+        _lastEnterTime = Time.time;
+
         player.TryGetComponent(out NewController controller);
         _playerController = controller;
         if (!isActive) return;
@@ -54,7 +68,7 @@ public class BreakablePlatform : PlatformBase
         }
         else if (_remainingUses == 1)
         {
-            SetAsTrigger();
+            SetFinalUseState();
         }
     }
 
