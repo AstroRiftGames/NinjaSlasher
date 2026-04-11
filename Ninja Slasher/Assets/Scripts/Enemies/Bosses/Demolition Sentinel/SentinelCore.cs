@@ -39,9 +39,19 @@ public class SentinelCore : MonoBehaviour
     {
         if (collision.CompareTag("Player"))
         {
-            _sentinel.Animator.SetTrigger("onHit");
-            StartCoroutine(_sentinel.SentinelAudio.DefeatedFeedbackSequence(3f));
-            KillSentinel();
+            if(_sentinel.IsVulnerable)
+            {
+                _sentinel.Animator.SetTrigger("onHit");
+                StartCoroutine(_sentinel.SentinelAudio.DefeatedFeedbackSequence(3f));
+                KillSentinel();
+            }
+            else
+            {
+                if(collision.TryGetComponent(out NewController controller))
+                {
+                    controller.Die();
+                }
+            }
         }
     }
 }

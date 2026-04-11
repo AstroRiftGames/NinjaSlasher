@@ -6,7 +6,7 @@ public class BreakablePlatformCol : MonoBehaviour
 
     private bool IsValidInteraction(GameObject obj, bool isTriggerHit)
     {
-        if (obj.CompareTag("Player"))
+        if (obj.CompareTag("Player") || obj.layer == LayerMask.NameToLayer("Ball"))
         {
             return !isTriggerHit;
         }

@@ -127,6 +127,10 @@ public class DemolitionBall : MonoBehaviour
             _heavyAttack = false;
             CreateDamageArea(collision.transform.position);
         }
+        if(collision.gameObject.TryGetComponent(out NewController controller))
+        {
+            controller.Die();
+        }
         Stop();
         if(!_isReturning) _sentinel.ReturnOneBall(this);
     }

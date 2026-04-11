@@ -36,6 +36,7 @@ public class DemolitionSentinel : BossEnemy
         }
     }
     private bool _isVulnerable;
+    public bool IsVulnerable => _isVulnerable;
     private float _vulnerableEntryTime;
     [SerializeField] float _vulnerableTime;
     public void SetJustAttacked(bool value) => _justAttacked = value;
