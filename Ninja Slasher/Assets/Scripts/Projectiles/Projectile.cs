@@ -146,9 +146,7 @@ public class Projectile : MonoBehaviour, IPoolable
         if (!collision.CompareTag("Enemy"))
             return;
 
-        TryDamageEnemy(collision);
-
-        AudioService.Instance.PlaySFXAtPosition(_audioContext.Audio.parried, transform.position);
+        Collide(collision);
     }
 
     protected void HandleEnhancedParryBounce(Collision2D collision)
