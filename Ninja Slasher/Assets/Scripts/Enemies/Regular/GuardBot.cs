@@ -16,6 +16,9 @@ public class GuardBot : Enemy
     public bool IsPushing => _isPushing;
     private Vector2 _target;
 
+    private float _timeToReachTarget;
+    private float _patrolTimer;
+
     private bool _isDying = false;
 
     private float _direction => transform.localScale.x > 0 ? 1 : -1;
@@ -42,6 +45,12 @@ public class GuardBot : Enemy
     public override void CustomUpdate()
     {
         if (GameManager.Instance.PlayerHasDied) return;
+
+        if (!_isPushing)
+        {
+            _patrolTimer += Time.deltaTime;
+        }
+
         bool reachedTarget = CheckDistanceToTarget(_target);
         if (!reachedTarget) 
         {
@@ -65,6 +74,7 @@ public class GuardBot : Enemy
             StopAllCoroutines();
             _currentSpeed = _speed;
             _isPushing = false;
+            _animator.SetBool("IsIdle", true);
             SetPatrolTarget();
         }
     }
@@ -83,12 +93,25 @@ public class GuardBot : Enemy
         if (!_isDying && thereIsFloor && !(thereIsObstacleTop || thereIsObstacleMid || thereIsObstacleBottom))
         {
             _rb.linearVelocityX = _direction * _currentSpeed;
+            if (!_isPushing)
+            {
+                _animator.SetBool("IsIdle", false);
+            }
         }
         else
         {
             if(_isPushing)
             {
                 _animator.SetTrigger("OnFloorEnd");
+                _animator.SetBool("IsIdle", true);
+            }
+            else 
+            {
+                _animator.SetBool("IsIdle", true);
+                if (_patrolTimer >= _timeToReachTarget && _timeToReachTarget > 0)
+                {
+                    SetPatrolTarget();
+                }
             }
             _rb.linearVelocityX = 0;
         }
@@ -151,6 +174,7 @@ public class GuardBot : Enemy
         _isPushing = false;
         _currentSpeed = _speed;
         _animator.SetTrigger("OnPushEnd");
+        _animator.SetBool("IsIdle", true);
         SetPatrolTarget();
     }
 
@@ -165,6 +189,10 @@ public class GuardBot : Enemy
         {
             _target = _nodes[0].localToWorldMatrix.GetPosition();
         }
+
+        float distance = Mathf.Abs(_target.x - _refPoint.localToWorldMatrix.GetPosition().x);
+        _timeToReachTarget = (distance / _speed) + 0.5f;
+        _patrolTimer = 0f;
     }
 
     private Vector2 GetPlayerPos()
