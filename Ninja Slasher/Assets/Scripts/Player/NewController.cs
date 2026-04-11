@@ -309,22 +309,14 @@ public class NewController : MonoBehaviour
     {
         if (!_isKO && !_isDashing && !_isParrying && CheckParryCD())
         {
-            Vector2 dir = CalculateDirection(tapPos);
-            Parry(dir);
+            Vector2 worldTapPos = Camera.main.ScreenToWorldPoint(tapPos);
+            Parry(worldTapPos);
         }
-
-    }
-
-    private Vector2 CalculateDirection(Vector2 tapPos)
-    {
-        Vector2 worldTapPos = Camera.main.ScreenToWorldPoint(tapPos);
-        Vector2 direction = (worldTapPos - (Vector2)transform.position).normalized;
-        return direction;
     }
 
     private bool CheckParryCD() => Time.time >= _lastParry + _model.ParryCD;
 
-    private void Parry(Vector2 dirToParry)
+    private void Parry(Vector2 worldTapPos)
     {
         if (_isDashing || _isKO)
         {
@@ -346,6 +338,7 @@ public class NewController : MonoBehaviour
                 && projectile.Shooter != transform
                 && projectile.IsParryable)
             {
+                Vector2 dirToParry = (worldTapPos - (Vector2)projectile.transform.position).normalized;
                 projectile.ReflectBackwards(transform, dirToParry);
                 HapticFeedback.LightFeedback();
                 AudioService.Instance.PlaySFXAtPosition(_audio.projectileParried, transform.position);
