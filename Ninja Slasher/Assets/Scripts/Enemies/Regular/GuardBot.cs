@@ -83,8 +83,8 @@ public class GuardBot : Enemy
     {
         transform.localScale = new Vector3(_target.x > transform.localToWorldMatrix.GetPosition().x ? 1 : -1, transform.localScale.y, transform.localScale.z);
 
-        bool thereIsFloor = Physics2D.Raycast(_refPoint.position + transform.right * -_direction + Vector3.down, Vector3.down, .75f, _obstaclesLayer);
-        Debug.DrawRay(_refPoint.position + transform.right * -_direction + Vector3.down, Vector3.down * .75f, Color.blue);
+        bool thereIsFloor = Physics2D.Raycast(_refPoint.position + transform.right * _direction + Vector3.down, Vector3.down, .75f, _obstaclesLayer);
+        Debug.DrawRay(_refPoint.position + transform.right * _direction + Vector3.down, Vector3.down * .75f, Color.blue);
 
         bool thereIsObstacleTop = Physics2D.Raycast(_refPoint.position + transform.up * .8f, transform.right * _direction, 1.5f, _obstaclesLayer);
         bool thereIsObstacleMid = Physics2D.Raycast(_refPoint.position, transform.right * _direction, 1.5f, _obstaclesLayer);
