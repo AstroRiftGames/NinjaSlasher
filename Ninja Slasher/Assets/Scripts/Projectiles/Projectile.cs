@@ -45,7 +45,6 @@ public class Projectile : MonoBehaviour, IPoolable
         SetOwner(owner);
         SetDirection(direction);
         transform.parent = null;
-        transform.localScale = Vector3.one;
     }
 
     public void Initialize(Transform owner)
@@ -54,7 +53,6 @@ public class Projectile : MonoBehaviour, IPoolable
         SetOwner(owner);
         SetDirection(transform.up);
         transform.parent = null;
-        transform.localScale = Vector3.one;
     }
 
     public virtual void Update() { }
