@@ -44,7 +44,7 @@ public class GuardBot : Enemy
 
     public override void CustomUpdate()
     {
-        if (GameManager.Instance.PlayerHasDied) return;
+        if (_isDying || GameManager.Instance.PlayerHasDied) return;
 
         if (!_isPushing)
         {
@@ -119,6 +119,7 @@ public class GuardBot : Enemy
 
     private void ManageCollision(GameObject other)
     {
+        if (_isDying) return;
         AudioService.Instance.PlaySFXAtPosition(_audioContext.Audio.collision, transform.position);
         if(other.tag == "Player")
         {
