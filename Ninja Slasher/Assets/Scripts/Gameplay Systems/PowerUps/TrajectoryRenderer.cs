@@ -39,23 +39,20 @@ public class TrajectoryRenderer : MonoBehaviour
         RaycastHit2D hit = CalculateHit(startPosition, direction);
 
         float distance;
-        Vector3 hitPoint;
 
         if (hit.collider != null)
         {
             distance = hit.distance;
-            hitPoint = hit.point;
 
             if (_hitMarker != null)
             {
                 _hitMarker.enabled = true;
-                _hitMarker.transform.position = hitPoint;
+                _hitMarker.transform.position = hit.point;
             }
         }
         else
         {
             distance = maxDist;
-            hitPoint = startPosition + (Vector3)(direction.normalized * maxDist);
 
             if (_hitMarker != null)
             {
@@ -63,9 +60,10 @@ public class TrajectoryRenderer : MonoBehaviour
             }
         }
 
-        //UpdateArrowTransform(startPosition, direction, distance);
+        UpdateArrowTransform(startPosition, direction, distance);
+        UpdateHitMarkerRotation(hit.normal);
 
-        //_indicator.enabled = true;
+        _indicator.enabled = true;
     }
 
     private RaycastHit2D CalculateHit(Vector3 startPos, Vector2 direction)
@@ -74,24 +72,36 @@ public class TrajectoryRenderer : MonoBehaviour
             startPos,
             _playerRadius * transform.parent.localScale.x,
             direction.normalized,
-            20f,
+            100f,
             _collisionLayers
         );
     }
 
     private void UpdateArrowTransform(Vector3 startPos, Vector2 direction, float distance)
     {
+        if (_indicator == null) return;
         _indicator.transform.position = startPos;
 
         float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
         _indicator.transform.rotation = Quaternion.Euler(0, 0, angle - 90f);
-
+        
         _indicator.size = new Vector2(_fixedWidth, distance);
+    }
+
+    private void UpdateHitMarkerRotation(Vector2 surfaceNormal)
+    {
+        if (_hitMarker == null) return;
+
+        if (surfaceNormal != Vector2.zero)
+        {
+            _hitMarker.transform.up = surfaceNormal;
+            _hitMarker.transform.Rotate(0, 0, 90f);
+        }
     }
 
     public void HideTrajectory()
     {
-        //if (_indicator != null) _indicator.enabled = false;
+        if (_indicator != null) _indicator.enabled = false;
         if (_hitMarker != null) _hitMarker.enabled = false;
     }
 }
