@@ -92,8 +92,6 @@ public class StoreService : MonoBehaviourSingleton<StoreService>
         if (_catalog == null)
             return;
 
-        int count = 0;
-
         foreach (var product in _catalog.products)
         {
             if (product.productIds == null) continue;
@@ -106,6 +104,9 @@ public class StoreService : MonoBehaviourSingleton<StoreService>
         }
 
         IsIAPReady = true;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        Debug.Log("[StoreService] Store products registered. UI can refresh localized prices now.");
+#endif
         OnIAPReady?.Invoke();
     }
 
@@ -203,7 +204,15 @@ public class StoreService : MonoBehaviourSingleton<StoreService>
             return;
         }
 
-        var product = _catalog?.GetByProductId(productId);
+        string resolvedProductId = ResolveProductId(productId);
+        var product = _catalog?.GetByProductId(resolvedProductId);
+
+        if (product == null)
+        {
+            Debug.LogWarning($"[StoreService] Buy requested for unknown product id '{productId}'.");
+            return;
+        }
+
         if (product != null &&
             product.rewardType == RewardType.RemoveAds &&
             SaveManager.Instance != null &&
@@ -213,25 +222,42 @@ public class StoreService : MonoBehaviourSingleton<StoreService>
             return;
         }
 
-        _pendingVisualProductId = productId;
+        _pendingVisualProductId = resolvedProductId;
         _pendingRewardFeedbackOrigin = feedbackOrigin;
 
-        string category = product != null
-            ? AnalyticsManager.ProductCategoryStr(product.category)
-            : "unknown";
-        AnalyticsManager.Instance?.RecordPurchaseStarted(productId, category, "shop");
+        string category = AnalyticsManager.ProductCategoryStr(product.category);
+        AnalyticsManager.Instance?.RecordPurchaseStarted(resolvedProductId, category, "shop");
 
-        IAPManager.Instance?.PurchaseProduct(productId);
+        IAPManager.Instance?.PurchaseProduct(resolvedProductId);
     }
 
     public string GetPrice(string productId)
     {
         if (string.IsNullOrEmpty(productId)) return "N/A";
-        return IAPManager.Instance?.GetProductPrice(productId) ?? "N/A";
+
+        string resolvedProductId = ResolveProductId(productId);
+        return IAPManager.Instance?.GetProductPrice(resolvedProductId) ?? "N/A";
     }
 
     public StoreProductDefinition GetProduct(string productId)
-        => _catalog?.GetByProductId(productId);
+        => _catalog?.GetByProductId(ResolveProductId(productId));
+
+    private string ResolveProductId(string productId)
+    {
+        if (_catalog == null)
+            return productId;
+
+        string resolvedProductId = _catalog.NormalizeProductId(productId);
+
+        if (!string.Equals(resolvedProductId, productId, StringComparison.Ordinal))
+        {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            Debug.Log($"[StoreService] Remapped legacy product id '{productId}' -> '{resolvedProductId}'.");
+#endif
+        }
+
+        return resolvedProductId;
+    }
 
     private void TryRaisePurchaseFeedback(StoreProductDefinition product, string purchasedProductId)
     {

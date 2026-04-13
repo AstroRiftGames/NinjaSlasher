@@ -10,12 +10,22 @@ public enum ProductCategory
 [CreateAssetMenu(fileName = "StoreCatalog", menuName = "Store/Store Catalog")]
 public class StoreCatalog : ScriptableObject
 {
+    private static readonly Dictionary<string, string> LegacyProductIdAliases = new()
+    {
+        { "bento_medium", "medium_bento" },
+        { "ninja_coins_bronze", "coins_small" },
+        { "ninja_coins_silver", "coins_medium" },
+        { "ninja_coins_gold", "coins_large" },
+    };
+
     public List<StoreProductDefinition> products = new();
 
     public StoreProductDefinition GetByProductId(string productId)
     {
+        string normalizedProductId = NormalizeProductId(productId);
+
         foreach (var p in products)
-            if (p != null && p.MatchesProductId(productId)) return p;
+            if (p != null && p.MatchesProductId(normalizedProductId)) return p;
         return null;
     }
 
@@ -33,6 +43,16 @@ public class StoreCatalog : ScriptableObject
             foreach (var id in p.productIds)
                 if (!string.IsNullOrEmpty(id)) yield return id;
         }
+    }
+
+    public string NormalizeProductId(string productId)
+    {
+        if (string.IsNullOrWhiteSpace(productId))
+            return string.Empty;
+
+        return LegacyProductIdAliases.TryGetValue(productId, out string normalizedProductId)
+            ? normalizedProductId
+            : productId;
     }
 
     private void OnValidate()

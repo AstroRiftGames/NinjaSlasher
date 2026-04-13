@@ -93,7 +93,7 @@ public class IAPManager : MonoBehaviourSingleton<IAPManager>, IDetailedStoreList
         _isInitialized = true;
         _isInitializing = false;
 
-        Debug.Log("[IAPManager] IAP initialized");
+        Debug.Log($"[IAPManager] IAP initialized with {controller.products.all.Length} store products.");
         OnIAPInitialized?.Invoke();
     }
 
@@ -203,7 +203,10 @@ public class IAPManager : MonoBehaviourSingleton<IAPManager>, IDetailedStoreList
     public void PurchaseProduct(string productId)
     {
         if (!_isInitialized)
+        {
+            Debug.LogWarning($"[IAPManager] Purchase requested before initialization for '{productId}'.");
             return;
+        }
 
         var product = _storeController.products.WithID(productId);
 
@@ -216,6 +219,10 @@ public class IAPManager : MonoBehaviourSingleton<IAPManager>, IDetailedStoreList
             _purchaseState = PurchaseState.Processing;
             _storeController.InitiatePurchase(product);
         }
+        else
+        {
+            Debug.LogWarning($"[IAPManager] Product '{productId}' is missing from the store response or not available to purchase.");
+        }
     }
 
     public Product GetProduct(string productId)
@@ -226,13 +233,32 @@ public class IAPManager : MonoBehaviourSingleton<IAPManager>, IDetailedStoreList
             return null;
         }
 
-        return _storeController.products.WithID(productId);
+        Product product = _storeController.products.WithID(productId);
+
+        if (product == null)
+        {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            Debug.LogWarning($"[IAPManager] Store product not found for id '{productId}'.");
+#endif
+            return null;
+        }
+
+        return product;
     }
 
     public string GetProductPrice(string productId)
     {
         var product = GetProduct(productId);
-        return product?.metadata.localizedPriceString ?? "N/A";
+
+        if (product?.metadata == null || string.IsNullOrEmpty(product.metadata.localizedPriceString))
+        {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            Debug.LogWarning($"[IAPManager] Localized price unavailable for '{productId}'.");
+#endif
+            return "N/A";
+        }
+
+        return product.metadata.localizedPriceString;
     }
 
     public void RestorePurchases(Action<bool, string> callback = null)
