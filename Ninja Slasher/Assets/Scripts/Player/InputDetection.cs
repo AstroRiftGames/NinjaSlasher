@@ -37,6 +37,8 @@ public class InputDetection : MonoBehaviour
 
     private bool isCanceled;
 
+    private bool IsInputBlocked => Time.timeScale == 0f || (TutorialManager.Instance != null && TutorialManager.Instance.IsTutorialActive());
+
     private void Awake()
     {
         _controls = new InputActions();
@@ -71,7 +73,7 @@ public class InputDetection : MonoBehaviour
 
     private void OnPressStarted(InputAction.CallbackContext _)
     {
-        if (_player.IsDashing || GameManager.Instance.IsVictory || GameManager.Instance.PlayerHasDied) return;
+        if (IsInputBlocked || _player.IsDashing || GameManager.Instance.IsVictory || GameManager.Instance.PlayerHasDied) return;
         initialPos = currentPos;
         pressTime = Time.time;
 
@@ -87,13 +89,15 @@ public class InputDetection : MonoBehaviour
         
         _isPressing = false;
 
-        if (_player.IsDashing || GameManager.Instance.IsVictory || GameManager.Instance.PlayerHasDied) return;
+        if (IsInputBlocked || _player.IsDashing || GameManager.Instance.IsVictory || GameManager.Instance.PlayerHasDied) return;
         
         DetectInput();
     }
 
     private void Update()
     {
+        if (IsInputBlocked) return;
+
         if (_isPressing)
         {
             Vector2 delta = initialPos - currentPos;
