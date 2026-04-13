@@ -33,12 +33,6 @@ public class Lamp : MonoBehaviour
     {
         if(_isFalling)
         {
-            if (collision.CompareTag("Player"))
-            {
-                collision.TryGetComponent(out NewController controller);
-                controller.Die();
-            }
-
             if (collision.CompareTag("Enemy"))
             {
                 collision.TryGetComponent(out Enemy enemy);
