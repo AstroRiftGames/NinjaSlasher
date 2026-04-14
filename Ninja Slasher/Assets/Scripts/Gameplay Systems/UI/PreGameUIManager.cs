@@ -62,6 +62,7 @@ public class PreGameUIManager : MonoBehaviour
 
         _audioContext = GetComponentInParent<UIAudioContext>();
 
+        ResolveGoalTextReferencesIfNeeded();
         CacheBaseVisualState();
         SetupButtonListeners();
         InitializeTitleReveal();
@@ -108,6 +109,72 @@ public class PreGameUIManager : MonoBehaviour
             _baseTextColors[goalText] = goalText.color;
             CacheObjectiveSlashBaseline(goalText);
         }
+    }
+
+    private void ResolveGoalTextReferencesIfNeeded()
+    {
+        PreGameScreen preGameScreen = GetComponentInChildren<PreGameScreen>(true);
+        if (preGameScreen == null)
+            return;
+
+        if (_title == null)
+            _title = FindNamedText(preGameScreen.transform, "LevelTitle");
+
+        if (_starsContainer == null)
+        {
+            Transform starsTransform = FindDescendantByName(preGameScreen.transform, "StarsContainer");
+            if (starsTransform != null)
+                _starsContainer = starsTransform;
+        }
+
+        Transform goalsRoot = _primaryGoalText != null
+            ? _primaryGoalText.transform.parent
+            : FindDescendantByName(preGameScreen.transform, "Goals");
+
+        if (goalsRoot == null)
+            return;
+
+        List<TextMeshProUGUI> objectiveTexts = goalsRoot
+            .GetComponentsInChildren<TextMeshProUGUI>(true)
+            .Where(text => text != null && text.transform.parent == goalsRoot)
+            .OrderByDescending(text => text.rectTransform.anchoredPosition.y)
+            .ToList();
+
+        if (objectiveTexts.Count == 0)
+            return;
+
+        if (_primaryGoalText == null)
+            _primaryGoalText = objectiveTexts[0];
+
+        int secondaryCount = Mathf.Max(0, objectiveTexts.Count - 1);
+        if (_secondaryGoalTexts == null || _secondaryGoalTexts.Length != secondaryCount)
+            _secondaryGoalTexts = new TextMeshProUGUI[secondaryCount];
+
+        for (int i = 0; i < _secondaryGoalTexts.Length; i++)
+        {
+            if (_secondaryGoalTexts[i] == null && i + 1 < objectiveTexts.Count)
+                _secondaryGoalTexts[i] = objectiveTexts[i + 1];
+        }
+    }
+
+    private static TextMeshProUGUI FindNamedText(Transform root, string objectName)
+    {
+        Transform target = FindDescendantByName(root, objectName);
+        return target != null ? target.GetComponent<TextMeshProUGUI>() : null;
+    }
+
+    private static Transform FindDescendantByName(Transform root, string objectName)
+    {
+        if (root == null)
+            return null;
+
+        foreach (Transform child in root.GetComponentsInChildren<Transform>(true))
+        {
+            if (child.name == objectName)
+                return child;
+        }
+
+        return null;
     }
 
     private void CacheObjectiveSlashBaseline(TextMeshProUGUI objectiveText)
@@ -198,6 +265,8 @@ public class PreGameUIManager : MonoBehaviour
     {
         StopAllAnimations();
         HidePowerUpConfirmationImmediate();
+
+        ResolveGoalTextReferencesIfNeeded();
 
         _pendingSceneName = sceneName;
         _isLevelSelected = true;

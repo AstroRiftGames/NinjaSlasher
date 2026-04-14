@@ -66,6 +66,8 @@ public class DailyWheelUI : MonoBehaviour
     private int _lastAvailableSpins = -1;
     private Color _availableSpinsBaseColor = Color.white;
     private Button _sharedNoSpinsBuyButton;
+    private Button _lotteryCloseButton;
+    private DailyWheelLotteryPopup _lotteryPopup;
 
     private void Awake()
     {
@@ -518,6 +520,34 @@ public class DailyWheelUI : MonoBehaviour
         }
 
         _sharedNoSpinsBuyButton = _noSpinsBuyButton;
+        _lotteryCloseButton = ResolveLotteryCloseButton();
+
+        if (_lotteryPanel != null)
+        {
+            _lotteryPopup = _lotteryPanel.GetComponent<DailyWheelLotteryPopup>();
+            if (_lotteryPopup == null)
+                _lotteryPopup = _lotteryPanel.AddComponent<DailyWheelLotteryPopup>();
+
+            _lotteryPopup.Initialize(_sharedRewardInfoPanel, _sharedNoSpinsInfoPanel, _sharedNoSpinsBuyButton != null
+                ? _sharedNoSpinsBuyButton.gameObject
+                : null, _lotteryCloseButton != null ? _lotteryCloseButton.gameObject : null);
+        }
+
+    }
+
+    private Button ResolveLotteryCloseButton()
+    {
+        if (_lotteryPanel == null)
+            return null;
+
+        Button[] buttons = _lotteryPanel.GetComponentsInChildren<Button>(true);
+        for (int i = 0; i < buttons.Length; i++)
+        {
+            if (buttons[i] != null && buttons[i].name == "CancelButton")
+                return buttons[i];
+        }
+
+        return null;
     }
 
     private void UpdateAvailableSpinsText(int availableSpins)
@@ -659,6 +689,12 @@ public class DailyWheelUI : MonoBehaviour
 
     private void HideLotteryInfo()
     {
+        if (_lotteryPopup != null)
+        {
+            _lotteryPopup.HideImmediate();
+            return;
+        }
+
         if (_sharedRewardInfoPanel != null)
             _sharedRewardInfoPanel.SetActive(false);
 
@@ -671,6 +707,15 @@ public class DailyWheelUI : MonoBehaviour
 
     private void SetSharedPopupSection(bool showRewardInfo, bool showNoSpinsInfo)
     {
+        bool showBuyButton = showNoSpinsInfo && !showRewardInfo;
+
+        if (_lotteryPopup != null)
+        {
+            _lotteryPopup.ShowSection(showRewardInfo, showNoSpinsInfo, showBuyButton);
+            UpdateBuyButtonInteractable(showBuyButton);
+            return;
+        }
+
         if (_lotteryPanel != null)
             _lotteryPanel.SetActive(showRewardInfo || showNoSpinsInfo);
 
@@ -680,7 +725,7 @@ public class DailyWheelUI : MonoBehaviour
         if (_sharedNoSpinsInfoPanel != null)
             _sharedNoSpinsInfoPanel.SetActive(showNoSpinsInfo);
 
-        UpdateBuyButtonVisibility(showNoSpinsInfo && !showRewardInfo);
+        UpdateBuyButtonInteractable(showBuyButton);
     }
 
     private bool IsAnyPopupOpen()
@@ -716,6 +761,14 @@ public class DailyWheelUI : MonoBehaviour
             return;
 
         _sharedNoSpinsBuyButton.gameObject.SetActive(shouldBeInteractable);
+        UpdateBuyButtonInteractable(shouldBeInteractable);
+    }
+
+    private void UpdateBuyButtonInteractable(bool shouldBeInteractable)
+    {
+        if (_sharedNoSpinsBuyButton == null)
+            return;
+
         _sharedNoSpinsBuyButton.interactable = shouldBeInteractable && SaveManager.Instance != null && SaveManager.Instance.GetCoins() >= NoSpinsPurchaseCost;
     }
 }

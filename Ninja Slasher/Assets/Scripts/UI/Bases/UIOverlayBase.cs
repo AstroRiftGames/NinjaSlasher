@@ -13,6 +13,12 @@ public abstract class UIOverlayBase : UIPanel
     [SerializeField] protected float _backgroundFadeDuration = 0.2f;
     [SerializeField] protected float _contentFadeDuration = 0.3f;
     [SerializeField] protected Ease _fadeEase = Ease.OutQuad;
+    [SerializeField] protected bool _useContentScaleAnimation = false;
+    [SerializeField] protected float _contentShowScaleDuration = 0.22f;
+    [SerializeField] protected float _contentHideScaleDuration = 0.18f;
+    [SerializeField] protected Ease _contentShowScaleEase = Ease.OutBack;
+    [SerializeField] protected Ease _contentHideScaleEase = Ease.InBack;
+    [SerializeField] protected float _hiddenContentScaleMultiplier = 0.94f;
 
     [Header("Animator Settings")]
     [SerializeField] protected Animator _panelAnimator;
@@ -70,8 +76,11 @@ public abstract class UIOverlayBase : UIPanel
     {
         DOTween.Kill(_backgroundImage);
         DOTween.Kill(_canvasGroup);
+        DOTween.Kill(_panelTransform);
 
         float maxFadeDuration = Mathf.Max(_backgroundFadeDuration, _contentFadeDuration);
+        if (_useContentScaleAnimation)
+            maxFadeDuration = Mathf.Max(maxFadeDuration, _contentShowScaleDuration);
 
         Sequence showSequence = DOTween.Sequence();
 
@@ -86,6 +95,13 @@ public abstract class UIOverlayBase : UIPanel
             _canvasGroup.alpha = 0f;
             showSequence.Insert(0f, _canvasGroup.DOFade(1f, _contentFadeDuration)
                 .SetEase(_fadeEase));
+        }
+
+        if (_panelTransform != null && _useContentScaleAnimation)
+        {
+            _panelTransform.localScale = Vector3.one * _hiddenContentScaleMultiplier;
+            showSequence.Insert(0f, _panelTransform.DOScale(1f, _contentShowScaleDuration)
+                .SetEase(_contentShowScaleEase));
         }
 
         if (_panelAnimator != null)
@@ -103,6 +119,7 @@ public abstract class UIOverlayBase : UIPanel
     {
         DOTween.Kill(_backgroundImage);
         DOTween.Kill(_canvasGroup);
+        DOTween.Kill(_panelTransform);
 
         // Deshabilitar raycasts al inicio del cierre, no al final de la animación
         if (!_blockRaycastsWhenHidden)
@@ -128,6 +145,12 @@ public abstract class UIOverlayBase : UIPanel
                 .SetEase(Ease.InQuad));
         }
 
+        if (_panelTransform != null && _useContentScaleAnimation)
+        {
+            hideSequence.Insert(currentTime, _panelTransform.DOScale(_hiddenContentScaleMultiplier, _contentHideScaleDuration)
+                .SetEase(_contentHideScaleEase));
+        }
+
         if (_backgroundImage != null)
         {
             hideSequence.Insert(currentTime, _backgroundImage.DOFade(0f, _backgroundFadeDuration)
@@ -140,6 +163,9 @@ public abstract class UIOverlayBase : UIPanel
 
             if (_canvasGroup != null)
                 _canvasGroup.alpha = 1f;
+
+            if (_panelTransform != null)
+                _panelTransform.localScale = Vector3.one;
 
             if (_backgroundImage != null)
             {
@@ -155,11 +181,15 @@ public abstract class UIOverlayBase : UIPanel
         hideSequence.SetUpdate(true);
     }
 
-    protected virtual void OnDisable()
+    protected override void OnDisable()
     {
         base.OnDisable();
         DOTween.Kill(_backgroundImage);
         DOTween.Kill(_canvasGroup);
+        DOTween.Kill(_panelTransform);
+
+        if (_panelTransform != null)
+            _panelTransform.localScale = Vector3.one;
 
         if (!_blockRaycastsWhenHidden)
             SetPanelInputEnabled(false);

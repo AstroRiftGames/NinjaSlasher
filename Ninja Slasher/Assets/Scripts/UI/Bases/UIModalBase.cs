@@ -11,15 +11,23 @@ public abstract class UIModalBase : UIPanel
     [Header("Modal Animation")]
     [SerializeField] protected Animator _modalAnimator;
     [SerializeField] protected bool _useCanvasGroupFadeWhenNoAnimator = true;
+    [SerializeField] protected bool _useContentScaleWhenNoAnimator = true;
+    [SerializeField] protected RectTransform _animatedContentTransform;
+    [SerializeField] protected CanvasGroup _animatedContentCanvasGroup;
     [SerializeField] protected float _fadeAnimationDuration = 0.2f;
     [SerializeField] protected Ease _showFadeEase = Ease.OutQuad;
     [SerializeField] protected Ease _hideFadeEase = Ease.InQuad;
+    [SerializeField] protected float _showScaleDuration = 0.22f;
+    [SerializeField] protected float _hideScaleDuration = 0.18f;
+    [SerializeField] protected Ease _showScaleEase = Ease.OutBack;
+    [SerializeField] protected Ease _hideScaleEase = Ease.InBack;
+    [SerializeField] protected float _hiddenScaleMultiplier = 0.94f;
     [SerializeField] protected string _openTrigger = "Open";
     [SerializeField] protected string _closeTrigger = "Close";
 
     protected override bool BlocksUnderlyingUI => true;
 
-    private Tween _canvasGroupTween;
+    private Sequence _contentAnimationSequence;
     private Coroutine _delayedDeactivateCoroutine;
 
     protected virtual float HideAnimationDuration => 0.4f;
@@ -37,6 +45,12 @@ public abstract class UIModalBase : UIPanel
         if (_modalAnimator == null)
             _modalAnimator = GetComponent<Animator>();
 
+        if (_animatedContentTransform == null)
+            _animatedContentTransform = _panelTransform;
+
+        if (_animatedContentCanvasGroup == null)
+            _animatedContentCanvasGroup = ResolveAnimatedContentCanvasGroup();
+
         _isVisible = gameObject.activeSelf;
     }
 
@@ -45,7 +59,7 @@ public abstract class UIModalBase : UIPanel
         if (_isVisible) return;
 
         CancelPendingDeactivate();
-        KillActiveTween();
+        KillActiveAnimation();
 
         gameObject.SetActive(true);
         _isVisible = true;
@@ -81,15 +95,14 @@ public abstract class UIModalBase : UIPanel
     {
         base.OnDisable();
         CancelPendingDeactivate();
-        KillActiveTween();
+        KillActiveAnimation();
     }
 
     private void PlayShowAnimation()
     {
         if (_modalAnimator != null)
         {
-            if (_canvasGroup != null)
-                _canvasGroup.alpha = 1f;
+            ResetContentVisualState();
 
             if (!string.IsNullOrEmpty(_closeTrigger))
                 _modalAnimator.ResetTrigger(_closeTrigger);
@@ -100,20 +113,29 @@ public abstract class UIModalBase : UIPanel
             return;
         }
 
-        if (_canvasGroup == null)
+        ResetContentVisualState();
+
+        if (!_useCanvasGroupFadeWhenNoAnimator && !_useContentScaleWhenNoAnimator)
             return;
 
-        if (!_useCanvasGroupFadeWhenNoAnimator)
+        _contentAnimationSequence = DOTween.Sequence()
+            .SetUpdate(true);
+
+        if (_animatedContentCanvasGroup != null && _useCanvasGroupFadeWhenNoAnimator)
         {
-            _canvasGroup.alpha = 1f;
-            return;
+            _animatedContentCanvasGroup.alpha = 0f;
+            _contentAnimationSequence.Join(
+                _animatedContentCanvasGroup.DOFade(1f, _fadeAnimationDuration)
+                    .SetEase(_showFadeEase));
         }
 
-        _canvasGroup.alpha = 0f;
-        _canvasGroupTween = _canvasGroup
-            .DOFade(1f, _fadeAnimationDuration)
-            .SetEase(_showFadeEase)
-            .SetUpdate(true);
+        if (_animatedContentTransform != null && _useContentScaleWhenNoAnimator)
+        {
+            _animatedContentTransform.localScale = Vector3.one * _hiddenScaleMultiplier;
+            _contentAnimationSequence.Join(
+                _animatedContentTransform.DOScale(1f, _showScaleDuration)
+                    .SetEase(_showScaleEase));
+        }
     }
 
     private void PlayHideAnimation()
@@ -130,17 +152,35 @@ public abstract class UIModalBase : UIPanel
             return;
         }
 
-        if (_canvasGroup == null || !_useCanvasGroupFadeWhenNoAnimator)
+        if (!_useCanvasGroupFadeWhenNoAnimator && !_useContentScaleWhenNoAnimator)
         {
+            ResetContentVisualState();
             gameObject.SetActive(false);
             return;
         }
 
-        _canvasGroupTween = _canvasGroup
-            .DOFade(0f, _fadeAnimationDuration)
-            .SetEase(_hideFadeEase)
-            .SetUpdate(true)
-            .OnComplete(() => gameObject.SetActive(false));
+        _contentAnimationSequence = DOTween.Sequence()
+            .SetUpdate(true);
+
+        if (_animatedContentCanvasGroup != null && _useCanvasGroupFadeWhenNoAnimator)
+        {
+            _contentAnimationSequence.Join(
+                _animatedContentCanvasGroup.DOFade(0f, _fadeAnimationDuration)
+                    .SetEase(_hideFadeEase));
+        }
+
+        if (_animatedContentTransform != null && _useContentScaleWhenNoAnimator)
+        {
+            _contentAnimationSequence.Join(
+                _animatedContentTransform.DOScale(_hiddenScaleMultiplier, _hideScaleDuration)
+                    .SetEase(_hideScaleEase));
+        }
+
+        _contentAnimationSequence.OnComplete(() =>
+        {
+            ResetContentVisualState();
+            gameObject.SetActive(false);
+        });
     }
 
     private IEnumerator DeactivateAfterDelay(float delay)
@@ -159,12 +199,36 @@ public abstract class UIModalBase : UIPanel
         _delayedDeactivateCoroutine = null;
     }
 
-    private void KillActiveTween()
+    private CanvasGroup ResolveAnimatedContentCanvasGroup()
     {
-        if (_canvasGroupTween == null)
+        if (_animatedContentTransform == null)
+            return _canvasGroup;
+
+        CanvasGroup contentCanvasGroup = _animatedContentTransform.GetComponent<CanvasGroup>();
+        if (contentCanvasGroup != null)
+            return contentCanvasGroup;
+
+        if (_animatedContentTransform == _panelTransform)
+            return _canvasGroup;
+
+        return _animatedContentTransform.gameObject.AddComponent<CanvasGroup>();
+    }
+
+    private void ResetContentVisualState()
+    {
+        if (_animatedContentCanvasGroup != null)
+            _animatedContentCanvasGroup.alpha = 1f;
+
+        if (_animatedContentTransform != null)
+            _animatedContentTransform.localScale = Vector3.one;
+    }
+
+    private void KillActiveAnimation()
+    {
+        if (_contentAnimationSequence == null)
             return;
 
-        _canvasGroupTween.Kill();
-        _canvasGroupTween = null;
+        _contentAnimationSequence.Kill();
+        _contentAnimationSequence = null;
     }
 }

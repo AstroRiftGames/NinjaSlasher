@@ -1,4 +1,5 @@
 using System;
+using DG.Tweening;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -21,6 +22,13 @@ public class TutorialUIOverlay : UIOverlayBase, IPointerClickHandler
 
     protected override void Awake()
     {
+        _useContentScaleAnimation = true;
+        _contentShowScaleDuration = 0.24f;
+        _contentHideScaleDuration = 0.18f;
+        _contentShowScaleEase = Ease.OutBack;
+        _contentHideScaleEase = Ease.InBack;
+        _hiddenContentScaleMultiplier = 0.94f;
+
         base.Awake();
         ResolveReferences();
     }
