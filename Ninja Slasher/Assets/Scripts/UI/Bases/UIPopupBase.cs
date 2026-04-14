@@ -44,6 +44,22 @@ public abstract class UIPopupBase : UIPanel
         OnHidden();
     }
 
+    public virtual void HideImmediate()
+    {
+        DOTween.Kill(_panelTransform);
+
+        _isVisible = false;
+        SetPanelInputEnabled(false);
+
+        if (_canvasGroup != null)
+            _canvasGroup.alpha = 1f;
+
+        if (_panelTransform != null)
+            _panelTransform.localScale = Vector3.one;
+
+        gameObject.SetActive(false);
+    }
+
     protected virtual void AnimateShow()
     {
         DOTween.Kill(_panelTransform);
@@ -88,7 +104,7 @@ public abstract class UIPopupBase : UIPanel
             .SetUpdate(true);
     }
 
-    protected virtual void OnDisable()
+    protected override void OnDisable()
     {
         base.OnDisable();
         DOTween.Kill(_panelTransform);

@@ -1,4 +1,3 @@
-using DG.Tweening;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -46,21 +45,10 @@ public class StorePurchaseConfirmationPopUp : UIPopupBase
         Show();
     }
 
-    public void HideImmediate()
+    public override void HideImmediate()
     {
-        DOTween.Kill(_panelTransform);
-
-        _isVisible = false;
-        SetPanelInputEnabled(false);
-
-        if (_canvasGroup != null)
-            _canvasGroup.alpha = 1f;
-
-        if (_panelTransform != null)
-            _panelTransform.localScale = Vector3.one;
-
         ResetViewState();
-        gameObject.SetActive(false);
+        base.HideImmediate();
     }
 
     protected override void OnHidden()

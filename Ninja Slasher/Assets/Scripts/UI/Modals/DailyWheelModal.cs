@@ -2,9 +2,10 @@ using UnityEngine;
 
 public class DailyWheelModal : UIModalBase
 {
-    [Header("Animation")]
     [SerializeField] private float _closeAnimationDuration = 0.3f;
     [SerializeField] private DailyWheelUI _dailyWheelUI;
+
+    protected override float HideAnimationDuration => _closeAnimationDuration;
 
     protected override void Awake()
     {
@@ -16,44 +17,10 @@ public class DailyWheelModal : UIModalBase
         }
     }
 
-    public override void Show()
+    protected override void OnShown()
     {
-        if (_isVisible) return;
-
-        gameObject.SetActive(true);
-        _isVisible = true;
-
-        if (_canvasGroup != null)
-        {
-            _canvasGroup.alpha = 1f;
-        }
-
-        if (_hasBackground && _backgroundImage != null)
-        {
-            _backgroundImage.raycastTarget = true;
-        }
-
-        NotifyPanelShown();
-        OnShown();
+        base.OnShown();
         _dailyWheelUI?.HandleModalShown();
-    }
-
-    public override void Hide()
-    {
-        if (!_isVisible) return;
-
-        _isVisible = false;
-
-        SetPanelInputEnabled(false);
-
-        if (_hasBackground && _backgroundImage != null)
-        {
-            _backgroundImage.raycastTarget = false;
-        }
-
-        OnHidden();
-
-        StartCoroutine(DelayedHide());
     }
 
     public void CloseRewardPopup()
@@ -92,11 +59,5 @@ public class DailyWheelModal : UIModalBase
 
         _dailyWheelUI?.CloseRewardPopup();
         Hide();
-    }
-
-    private System.Collections.IEnumerator DelayedHide()
-    {
-        yield return new WaitForSecondsRealtime(_closeAnimationDuration);
-        gameObject.SetActive(false);
     }
 }
