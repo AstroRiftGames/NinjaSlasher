@@ -6,10 +6,45 @@ using TMPro;
 using Unity.Services.Authentication;
 using Unity.Services.Core;
 using UnityEngine;
+using UnityEngine.Networking;
 using UnityEngine.UI;
+
+public sealed class PlayerProfileData
+{
+    public static readonly PlayerProfileData Guest = new PlayerProfileData("Guest", string.Empty, string.Empty, null, false, false);
+
+    public string DisplayName { get; }
+    public string PlayerId { get; }
+    public string AvatarUrl { get; }
+    public Texture2D AvatarTexture { get; }
+    public bool IsSignedIn { get; }
+    public bool IsGooglePlayGamesAuthenticated { get; }
+
+    public bool HasAvatar => AvatarTexture != null && AvatarTexture != Texture2D.blackTexture;
+
+    public PlayerProfileData(
+        string displayName,
+        string playerId,
+        string avatarUrl,
+        Texture2D avatarTexture,
+        bool isSignedIn,
+        bool isGooglePlayGamesAuthenticated)
+    {
+        DisplayName = string.IsNullOrWhiteSpace(displayName) ? Guest.DisplayName : displayName;
+        PlayerId = playerId ?? string.Empty;
+        AvatarUrl = avatarUrl ?? string.Empty;
+        AvatarTexture = avatarTexture;
+        IsSignedIn = isSignedIn;
+        IsGooglePlayGamesAuthenticated = isGooglePlayGamesAuthenticated;
+    }
+}
 
 public class LoginManager : MonoBehaviourSingleton<LoginManager>
 {
+    private const string GuestPlayerName = "Guest";
+    private const string DefaultAuthenticatedPlayerName = "Player";
+    private const float AvatarLoadTimeoutSeconds = 10f;
+
     [Header("Authentication Settings")]
     [SerializeField] private bool autoSignIn = true;
     [SerializeField] private bool debugMode = true;
@@ -17,16 +52,23 @@ public class LoginManager : MonoBehaviourSingleton<LoginManager>
     public static event Action<bool> OnAuthenticationStateChanged;
     public static event Action<string> OnSignInCompleted;
     public static event Action<string> OnSignInFailed;
+    public static event Action<PlayerProfileData> OnPlayerProfileChanged;
 
     public bool IsSignedIn =>
         UnityServices.State == ServicesInitializationState.Initialized &&
         AuthenticationService.Instance.IsSignedIn;
     public string PlayerId => IsSignedIn ? AuthenticationService.Instance.PlayerId : "";
     public string PlayerName { get; private set; } = "";
+    public string PlayerAvatarUrl { get; private set; } = "";
+    public Texture2D PlayerAvatarTexture { get; private set; }
+    public PlayerProfileData CurrentPlayerProfile { get; private set; } = PlayerProfileData.Guest;
 
     private bool isInitialized = false;
     private bool isInitializing = false;
     private string authToken = "";
+    private Coroutine avatarLoadCoroutine;
+    private string loadedAvatarUrl = "";
+    private bool ownsPlayerAvatarTexture = false;
 
 #if UNITY_EDITOR
     [Header("Debug UI")]
@@ -41,6 +83,12 @@ public class LoginManager : MonoBehaviourSingleton<LoginManager>
         DontDestroyOnLoad(gameObject);
 
         InitializeServices();
+    }
+
+    protected override void OnDestroy()
+    {
+        StopAvatarLoading();
+        base.OnDestroy();
     }
 
     async void InitializeServices()
@@ -71,6 +119,13 @@ public class LoginManager : MonoBehaviourSingleton<LoginManager>
 
             if (autoSignIn && !AuthenticationService.Instance.IsSignedIn)
             {
+                bool gpgSuccess = await TryAutoSignInWithGooglePlayGames();
+
+                if (gpgSuccess)
+                {
+                    return;
+                }
+
                 bool cachedSuccess = await TrySignInCachedUser();
 
                 if (!cachedSuccess)
@@ -83,7 +138,7 @@ public class LoginManager : MonoBehaviourSingleton<LoginManager>
             }
             else if (AuthenticationService.Instance.IsSignedIn)
             {
-                PlayerName = GetPlayerName();
+                RefreshPlayerProfile();
                 if (debugMode)
                     Debug.Log($"[LoginManager] User already authenticated: {PlayerId}");
 
@@ -140,7 +195,7 @@ public class LoginManager : MonoBehaviourSingleton<LoginManager>
             }
             if (lastNetworkException != null) throw lastNetworkException;
 
-            PlayerName = GetPlayerName();
+            RefreshPlayerProfile();
 
             if (debugMode)
                 Debug.Log($"[LoginManager] Sign-in successful! Player: {PlayerId}");
@@ -185,7 +240,7 @@ public class LoginManager : MonoBehaviourSingleton<LoginManager>
 
             await AuthenticationService.Instance.SignInAnonymouslyAsync();
 
-            PlayerName = "Guest";
+            RefreshPlayerProfile(GuestPlayerName);
 
             if (debugMode)
                 Debug.Log($"[LoginManager] Anonymous sign-in successful! Player: {PlayerId}");
@@ -226,7 +281,7 @@ public class LoginManager : MonoBehaviourSingleton<LoginManager>
 
             await AuthenticationService.Instance.LinkWithGooglePlayGamesAsync(authToken);
 
-            PlayerName = GetPlayerName();
+            RefreshPlayerProfile();
 
             if (debugMode)
                 Debug.Log("[LoginManager] Account linking successful!");
@@ -254,8 +309,8 @@ public class LoginManager : MonoBehaviourSingleton<LoginManager>
         try
         {
             AuthenticationService.Instance.SignOut();
-            PlayerName = "";
             authToken = "";
+            ResetPlayerProfile();
 
             if (debugMode)
                 Debug.Log("[LoginManager] User signed out");
@@ -274,8 +329,8 @@ public class LoginManager : MonoBehaviourSingleton<LoginManager>
         {
             await AuthenticationService.Instance.DeleteAccountAsync();
 
-            PlayerName = "";
             authToken = "";
+            ResetPlayerProfile();
 
             if (debugMode)
                 Debug.Log("[LoginManager] Account deleted successfully");
@@ -306,7 +361,7 @@ public class LoginManager : MonoBehaviourSingleton<LoginManager>
 
                 await AuthenticationService.Instance.SignInAnonymouslyAsync();
 
-                PlayerName = GetPlayerName();
+                RefreshPlayerProfile();
 
                 if (debugMode)
                     Debug.Log($"[LoginManager] Cached user signed in: {PlayerId}");
@@ -324,6 +379,29 @@ public class LoginManager : MonoBehaviourSingleton<LoginManager>
         }
 
         return false;
+    }
+
+    private async Task<bool> TryAutoSignInWithGooglePlayGames()
+    {
+        try
+        {
+            if (debugMode)
+                Debug.Log("[LoginManager] Attempting Google Play Games auto sign-in...");
+
+            bool signInSucceeded = await SignInWithGooglePlayGames();
+
+            if (debugMode)
+                Debug.Log($"[LoginManager] Google Play Games auto sign-in result: {signInSucceeded}");
+
+            return signInSucceeded;
+        }
+        catch (Exception ex)
+        {
+            if (debugMode)
+                Debug.Log($"[LoginManager] Google Play Games auto sign-in failed: {ex.Message}");
+
+            return false;
+        }
     }
 
     private async Task<bool> AuthenticateWithGooglePlayGames()
@@ -369,21 +447,228 @@ public class LoginManager : MonoBehaviourSingleton<LoginManager>
         return tcs.Task;
     }
 
-    private string GetPlayerName()
+    private void RefreshPlayerProfile(string fallbackName = null)
+    {
+        PlayerName = ResolvePlayerName(fallbackName);
+        RefreshPlayerAvatar();
+        PublishPlayerProfile();
+    }
+
+    private void ResetPlayerProfile()
+    {
+        StopAvatarLoading();
+        ReleaseOwnedAvatarTexture();
+
+        PlayerName = string.Empty;
+        PlayerAvatarUrl = string.Empty;
+        PlayerAvatarTexture = null;
+        loadedAvatarUrl = string.Empty;
+
+        PublishPlayerProfile();
+    }
+
+    private void RefreshPlayerAvatar()
+    {
+        StopAvatarLoading();
+
+        ReleaseOwnedAvatarTexture();
+        PlayerAvatarUrl = string.Empty;
+        PlayerAvatarTexture = null;
+
+        if (!IsGooglePlayGamesAuthenticated())
+        {
+            return;
+        }
+
+        PlayGamesLocalUser localUser = PlayGamesPlatform.Instance.localUser as PlayGamesLocalUser;
+        PlayerAvatarUrl = NormalizeAvatarUrl(localUser?.AvatarURL ?? PlayGamesPlatform.Instance.GetUserImageUrl());
+
+        if (IsUsableAvatarTexture(localUser?.image))
+        {
+            AssignPlayerAvatarTexture(localUser.image, false, PlayerAvatarUrl);
+            return;
+        }
+
+        if (!string.IsNullOrEmpty(PlayerAvatarUrl))
+        {
+            avatarLoadCoroutine = StartCoroutine(ResolvePlayerAvatar(localUser, PlayerAvatarUrl));
+        }
+    }
+
+    private System.Collections.IEnumerator ResolvePlayerAvatar(PlayGamesLocalUser localUser, string avatarUrl)
+    {
+        float timeoutAt = Time.realtimeSinceStartup + AvatarLoadTimeoutSeconds;
+
+        while (Time.realtimeSinceStartup < timeoutAt)
+        {
+            if (!IsGooglePlayGamesAuthenticated())
+            {
+                avatarLoadCoroutine = null;
+                yield break;
+            }
+
+            Texture2D profileTexture = localUser?.image;
+            if (IsUsableAvatarTexture(profileTexture))
+            {
+                avatarLoadCoroutine = null;
+                AssignPlayerAvatarTexture(profileTexture, false, avatarUrl);
+                yield break;
+            }
+
+            yield return null;
+        }
+
+        avatarLoadCoroutine = null;
+
+        if (!string.IsNullOrEmpty(avatarUrl))
+        {
+            avatarLoadCoroutine = StartCoroutine(LoadPlayerAvatarFromUrl(avatarUrl));
+        }
+    }
+
+    private System.Collections.IEnumerator LoadPlayerAvatarFromUrl(string avatarUrl)
+    {
+        using UnityWebRequest request = UnityWebRequestTexture.GetTexture(avatarUrl);
+        request.timeout = Mathf.CeilToInt(AvatarLoadTimeoutSeconds);
+        yield return request.SendWebRequest();
+
+        avatarLoadCoroutine = null;
+
+        if (request.result != UnityWebRequest.Result.Success)
+        {
+            if (debugMode)
+            {
+                Debug.LogWarning($"[LoginManager] Failed to load avatar from '{avatarUrl}': {request.error}");
+            }
+
+            yield break;
+        }
+
+        Texture2D avatarTexture = DownloadHandlerTexture.GetContent(request);
+        if (!IsUsableAvatarTexture(avatarTexture))
+        {
+            if (debugMode)
+            {
+                Debug.LogWarning("[LoginManager] Avatar download completed but returned an invalid texture.");
+            }
+
+            yield break;
+        }
+
+        AssignPlayerAvatarTexture(avatarTexture, true, avatarUrl);
+    }
+
+    private void StopAvatarLoading()
+    {
+        if (avatarLoadCoroutine == null)
+        {
+            return;
+        }
+
+        StopCoroutine(avatarLoadCoroutine);
+        avatarLoadCoroutine = null;
+    }
+
+    private void AssignPlayerAvatarTexture(Texture2D avatarTexture, bool ownTexture, string avatarUrl)
+    {
+        if (!IsUsableAvatarTexture(avatarTexture))
+        {
+            return;
+        }
+
+        if (PlayerAvatarTexture == avatarTexture && ownsPlayerAvatarTexture == ownTexture)
+        {
+            loadedAvatarUrl = avatarUrl ?? string.Empty;
+            return;
+        }
+
+        ReleaseOwnedAvatarTexture();
+
+        PlayerAvatarTexture = avatarTexture;
+        ownsPlayerAvatarTexture = ownTexture;
+        loadedAvatarUrl = avatarUrl ?? string.Empty;
+        PublishPlayerProfile();
+    }
+
+    private void ReleaseOwnedAvatarTexture()
+    {
+        if (ownsPlayerAvatarTexture && PlayerAvatarTexture != null)
+        {
+            Destroy(PlayerAvatarTexture);
+        }
+
+        ownsPlayerAvatarTexture = false;
+    }
+
+    private void PublishPlayerProfile()
+    {
+        CurrentPlayerProfile = new PlayerProfileData(
+            PlayerName,
+            PlayerId,
+            PlayerAvatarUrl,
+            PlayerAvatarTexture,
+            IsSignedIn,
+            IsGooglePlayGamesAuthenticated());
+
+        OnPlayerProfileChanged?.Invoke(CurrentPlayerProfile);
+    }
+
+    private string ResolvePlayerName(string fallbackName)
+    {
+        if (IsGooglePlayGamesAuthenticated())
+        {
+            string displayName = PlayGamesPlatform.Instance.GetUserDisplayName();
+            if (!string.IsNullOrWhiteSpace(displayName))
+            {
+                return displayName;
+            }
+        }
+
+        if (!string.IsNullOrWhiteSpace(fallbackName))
+        {
+            return fallbackName;
+        }
+
+        if (!string.IsNullOrWhiteSpace(PlayerName))
+        {
+            return PlayerName;
+        }
+
+        return IsSignedIn && !string.IsNullOrEmpty(PlayerId)
+            ? DefaultAuthenticatedPlayerName
+            : GuestPlayerName;
+    }
+
+    private static bool IsUsableAvatarTexture(Texture2D texture)
+    {
+        return texture != null && texture != Texture2D.blackTexture;
+    }
+
+    private static string NormalizeAvatarUrl(string avatarUrl)
+    {
+        if (string.IsNullOrWhiteSpace(avatarUrl))
+        {
+            return string.Empty;
+        }
+
+        if (avatarUrl.StartsWith("http://", StringComparison.OrdinalIgnoreCase))
+        {
+            return "https://" + avatarUrl.Substring("http://".Length);
+        }
+
+        return avatarUrl;
+    }
+
+    private bool IsGooglePlayGamesAuthenticated()
     {
         try
         {
-            if (PlayGamesPlatform.Instance.IsAuthenticated())
-            {
-                return Social.localUser.userName ?? "Player";
-            }
+            return PlayGamesPlatform.Instance != null && PlayGamesPlatform.Instance.IsAuthenticated();
         }
         catch
         {
-            // Fallback if we can't get the name
+            return false;
         }
-
-        return IsSignedIn && !string.IsNullOrEmpty(PlayerId) ? "Player" : "Guest";
     }
 
     #endregion
