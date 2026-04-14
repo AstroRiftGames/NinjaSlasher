@@ -9,33 +9,41 @@ using System;
 
 public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
 {
+    private const string LinkedInLinkId = "linkedin";
+    private const string InstagramLinkId = "instagram";
+    private const string DiscordLinkId = "discord";
+    private const string SupportLinkId = "support";
+    private const string PrivacyPolicyLinkId = "privacy-policy";
+
+    private const string LinkedInUrl = "https://www.linkedin.com/company/astro-rift-games";
+    private const string InstagramUrl = "https://www.instagram.com/astroriftgames";
+    private const string DiscordUrl = "https://discord.gg/z3XsQPK5";
+    private const string SupportUrl = "https://www.astroriftgames.com/";
+    private const string PrivacyPolicyUrl = "https://sites.google.com/view/ninja-slasher-privacy-policy/inicio";
+
     [Header("LEVEL SELECTOR BUTTONS")]
     [SerializeField] private Button[] levelButtons;
     [SerializeField] private Button _configDropdownButton;
     [SerializeField] private Button _calendarButton;
     [SerializeField] private Button _storeButton;
 
-    [Header("CALENDAR BUTTON ICONS")]
+    [Header("CALENDAR ICONS")]
     [SerializeField] private Image _calendarButtonImage;
     [SerializeField] private Sprite _calendarAvailableIcon;
     [SerializeField] private Sprite _calendarClaimedIcon;
 
-    [Header("CONFIG DROPDOWN BUTTONS")]
+    [Header("CONFIG DROPDOWN COMPONENTS")]
     [SerializeField] private Button _musicButton;
     [SerializeField] private Button _sfxButton;
     [SerializeField] private Button _profileButton;
-    [SerializeField] private Image _profileButtonImage;
     [SerializeField] private Button _hapticButton;
+    [SerializeField] private Image _profileButtonImage;
 
     [Header("PROFILE BUTTONS")]
-    [SerializeField] private Button _userIconButton;
-    [SerializeField] private Button _userNicknameButton;
-    [SerializeField] private TextMeshProUGUI _userNicknameButtonText;
     [SerializeField] private Button _closeProfileButton;
     [SerializeField] private Button _creditsButton;
     [SerializeField] private Button _closeCreditsButton;
     [SerializeField] private Image _userIconImagePanel;
-    [SerializeField] private Button[] _userIconButtonGroup;
 
     [Header("DAILY REWARDS BUTTONS")]
     [SerializeField] private Button _closeCalendarButton;
@@ -91,10 +99,6 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
 
     private void OnSaveDataLoaded(GameData _) => RefreshLevelProgression();
 
-    [Header("POP UPS")]
-    [SerializeField] private UserIconsPopUp _userIconsPanel;
-    [SerializeField] private UserNicknameEditPopUp _userNicknameEditPanel;
-
     public override void Awake()
     {
         base.Awake();
@@ -129,8 +133,6 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
 
         GameEvents.OnRewardClaimed += OnRewardClaimed;
         GameEvents.OnRewardAvailabilityChanged += UpdateCalendarButtonIcon;
-        UIEvents.OnNicknameChanged += OnNicknameChanged;
-
         SaveManager.OnDataLoaded += OnSaveDataLoaded;
     }
 
@@ -143,9 +145,6 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
 
         GameEvents.OnRewardClaimed -= OnRewardClaimed;
         GameEvents.OnRewardAvailabilityChanged -= UpdateCalendarButtonIcon;
-
-        UIEvents.OnNicknameChanged -= OnNicknameChanged;
-
         SaveManager.OnDataLoaded -= OnSaveDataLoaded;
     }
 
@@ -177,14 +176,6 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
 
         _backToSelectionButton.onClick.AddListener(UIEvents.RaiseQuitToMenuPressed);
         _continueButton.onClick.AddListener(UIEvents.RaiseQuitToMenuPressed);
-    }
-
-    private void OnNicknameChanged(string newNickname)
-    {
-        if (_userNicknameButtonText != null)
-            _userNicknameButtonText.text = newNickname;
-
-        Debug.Log($"[ButtonManager] Nickname actualizado a: {newNickname}");
     }
 
     private IEnumerator InitializeCalendarIcon()
@@ -253,7 +244,25 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
 
     public void OpenURLButtonClicked(string url)
     {
-        Application.OpenURL(url);
+        string resolvedUrl = ResolveExternalUrl(url);
+
+        if (!string.IsNullOrWhiteSpace(resolvedUrl))
+        {
+            Application.OpenURL(resolvedUrl);
+        }
+    }
+
+    private static string ResolveExternalUrl(string url)
+    {
+        return url switch
+        {
+            LinkedInLinkId => LinkedInUrl,
+            InstagramLinkId => InstagramUrl,
+            DiscordLinkId => DiscordUrl,
+            SupportLinkId => SupportUrl,
+            PrivacyPolicyLinkId => PrivacyPolicyUrl,
+            _ => url
+        };
     }
 
     private void SetupLevelSelectorButtons()
@@ -267,28 +276,9 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
             _hapticButton.onClick.AddListener(_configToggles.HapticFeedbackPushed);
         }
 
-        _userIconButton.onClick.AddListener(ToggleUserIconsPanel);
-
-        _userNicknameButton.onClick.AddListener(ShowNicknameEditPopup);
-
         _creditsButton.onClick.AddListener(UIEvents.RequestShowCreditsModal);
         _closeProfileButton.onClick.AddListener(UIEvents.RequestHideProfileModal);
         _closeCreditsButton.onClick.AddListener(UIEvents.RequestHideCreditsModal);
-
-        foreach (var img in _userIconButtonGroup)
-        {
-            img.onClick.AddListener(() =>
-            {
-                Image icon = img.transform.GetChild(0).GetComponent<Image>();
-                _userIconImagePanel.sprite = icon.sprite;
-                _userIconImagePanel.color = icon.color;
-                _profileButtonImage.sprite = icon.sprite;
-                _profileButtonImage.color = icon.color;
-                if (_userIconsPanel != null)
-                    _userIconsPanel.Hide();
-            });
-        }
-
         _storeButton.onClick.AddListener(UIEvents.RequestShowStoreModal);
         _closeStoreButton.onClick.AddListener(UIEvents.RequestHideStoreModal);
         _calendarButton.onClick.AddListener(UIEvents.RequestShowDailyRewardModal);
@@ -311,32 +301,6 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
                 }
             });
         }
-    }
-
-    private void ToggleUserIconsPanel()
-    {
-        if (_userIconsPanel == null)
-        {
-            Debug.LogWarning("[ButtonManager] UserIconsPanel no asignado");
-            return;
-        }
-
-        if (_userIconsPanel.IsVisible)
-            _userIconsPanel.Hide();
-        else
-            _userIconsPanel.Show();
-    }
-
-    private void ShowNicknameEditPopup()
-    {
-        if (_userNicknameEditPanel == null)
-        {
-            Debug.LogWarning("[ButtonManager] UserNicknameEditPanel no asignado");
-            return;
-        }
-
-        _userNicknameEditPanel.SetNickname(_userNicknameButtonText.text);
-        _userNicknameEditPanel.Show();
     }
 
     void UpdateStars(Button levelButton, int levelId)
