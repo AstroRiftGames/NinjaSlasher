@@ -113,6 +113,7 @@ public class InputFeedbackUI : MonoBehaviour
 
         float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
         trail.rotation = Quaternion.Euler(0, 0, angle);
+        startPoint.rotation = Quaternion.Euler(0, 0, angle + 180);
     }
 
     private Vector2 ScreenToCanvasPosition(Vector2 screenPos)
