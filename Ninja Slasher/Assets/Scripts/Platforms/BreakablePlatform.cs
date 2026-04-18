@@ -1,7 +1,6 @@
 using UnityEngine;
 using System.Collections.Generic;
 using System.Collections;
-using UnityEngine.Tilemaps;
 
 public class BreakablePlatform : PlatformBase
 {
@@ -10,7 +9,7 @@ public class BreakablePlatform : PlatformBase
     private NewController _playerController;
     private int _remainingUses;
 
-    [SerializeField] GameObject _tilemap;
+    [SerializeField] List<GameObject> _tilemap = new List<GameObject>();
     [SerializeField] ParticleSystem _particleSystem;
 
     public override void Awake()
@@ -33,7 +32,7 @@ public class BreakablePlatform : PlatformBase
         GameObject player = GameObject.FindGameObjectWithTag("Player");
         Collider2D[] playerColliders = player != null ? player.GetComponentsInChildren<Collider2D>() : new Collider2D[0];
 
-        var colliders = _tilemap.GetComponentsInChildren<Collider2D>(true);
+        var colliders = _tilemap[_maxUses-1].GetComponentsInChildren<Collider2D>(true);
         foreach (var col in colliders)
         {
             if (!col.isTrigger && playerColliders.Length > 0)
@@ -59,8 +58,8 @@ public class BreakablePlatform : PlatformBase
         _playerController = controller;
         if (!isActive) return;
 
-
-        _remainingUses--;
+        ChangeTilemap();
+        _particleSystem.Play();
         AudioService.Instance.PlaySFXAtPosition(_audioContext.Audio.Interaction, transform.position);
         if (_remainingUses <= 0)
         {
@@ -85,9 +84,16 @@ public class BreakablePlatform : PlatformBase
         StartCoroutine(DestroyAfterParticles());
     }
 
+    private void ChangeTilemap()
+    {
+        _tilemap[_maxUses - _remainingUses].SetActive(false);
+        _remainingUses--;
+        _tilemap[_maxUses - _remainingUses].SetActive(true);
+    }
+
     private void DeactivateWhole()
     {
-        _tilemap.SetActive(false);
+        _tilemap[_maxUses-1].SetActive(false);
     }
 
     private IEnumerator DestroyAfterParticles()
