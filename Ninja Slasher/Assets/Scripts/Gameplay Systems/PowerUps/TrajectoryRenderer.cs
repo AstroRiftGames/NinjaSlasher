@@ -95,7 +95,6 @@ public class TrajectoryRenderer : MonoBehaviour
         if (surfaceNormal != Vector2.zero)
         {
             _hitMarker.transform.up = surfaceNormal;
-            _hitMarker.transform.Rotate(0, 0, 90f);
         }
     }
 
