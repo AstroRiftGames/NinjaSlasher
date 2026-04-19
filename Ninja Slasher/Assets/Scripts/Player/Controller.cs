@@ -456,7 +456,6 @@ public class Controller : MonoBehaviour
 //            return;
 //        }
 //        SetIsDashing(true);
-//        AudioManager.Instance.PlaySFXAtPosition(SFXClip.P_Movement, transform.position);
 
 //        MoveTracker.RegisterMove();
 //        _lastDashDirection = _wishedDirection;
@@ -480,14 +479,12 @@ public class Controller : MonoBehaviour
 
 //        Collider2D[] hits = Physics2D.OverlapCircleAll(transform.position, 2f, LayerMask.GetMask("Projectiles"));
 
-//        AudioManager.Instance.PlaySFXAtPosition(SFXClip.P_ParrySwing, transform.position);
 //        foreach (var hit in hits)
 //        {
 //            Projectile proj = hit.GetComponent<Projectile>();
 //            if (proj != null && proj.IsParryable)
 //            {
 //                _parryInputDetected = true;
-//                AudioManager.Instance.PlaySFXAtPosition(SFXClip.P_ProjectileParried, transform.position);
 //            }
 //        }
 //    }
@@ -548,7 +545,6 @@ public class Controller : MonoBehaviour
 
 //        SetGrabbingAnimation();
 //        RotateSprites(colTag == "Ceiling" ? Vector2.left : Vector2.right);
-//        AudioManager.Instance.PlaySFXAtPosition(SFXClip.P_Landing_General, transform.position);
 
 //        hit.collider.TryGetComponent(out ElasticPlatform elasticComponent);
 //        _lastSurfaceWasElastic = elasticComponent != null;
@@ -578,7 +574,6 @@ public class Controller : MonoBehaviour
 
 //    //        SetGrabbingAnimation();
 //    //        RotateSprites(colTag == "Ceiling" ? Vector2.left : Vector2.right);
-//    //        AudioManager.Instance.PlaySFXAtPosition(SFXClip.P_Landing_General, transform.position);
 
 //    //        ElasticPlatform elasticPlatform = collision.gameObject.GetComponent<ElasticPlatform>();
 //    //        _lastSurfaceWasElastic = elasticPlatform != null;
@@ -610,7 +605,6 @@ public class Controller : MonoBehaviour
 //        {
 //            if (_isDashing)
 //            {
-//                AudioManager.Instance.PlaySFXAtPosition(SFXClip.P_Attack, transform.position);
 //                if (UIManager.Instance.IsHapticFeedbackActive) HapticFeedback.MediumFeedback();
 //                collision.GetComponent<Enemy>().Die();
 //                StartCoroutine(SlashEffectCoroutine());

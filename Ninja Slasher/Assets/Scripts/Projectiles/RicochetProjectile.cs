@@ -3,6 +3,7 @@ using UnityEngine;
 public class RicochetProjectile : Projectile
 {
     [SerializeField] private int _maxBounces;
+    [SerializeField] private AudioEvent _ricochetSfx;
     private int _currentBounces;
 
     public override void OnCollisionEnter2D(Collision2D collision)
@@ -36,7 +37,9 @@ public class RicochetProjectile : Projectile
         Vector2 newDir = Vector2.Reflect(CurrentDir, surfaceNormal);
         SetDirection(newDir);
 
-        //TODO: Use AudioService instead of AudioManager and add ricochet sound
-        //AudioManager.Instance.PlaySFXAtPosition(SFXClip.Proj_Ricochet_Bounce, transform.position);
+        if (_ricochetSfx != null)
+        {
+            AudioService.Instance?.PlaySFXAtPosition(_ricochetSfx, transform.position);
+        }
     }
 }

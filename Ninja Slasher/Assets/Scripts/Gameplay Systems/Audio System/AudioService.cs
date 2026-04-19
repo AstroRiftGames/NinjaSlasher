@@ -1,9 +1,13 @@
 using System.Collections;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class AudioService : MonoBehaviour
 {
     public static AudioService Instance { get; private set; }
+
+    private const string BootstrapPrefabResourcePath = "Systems/AudioService";
+    private const string SplashSceneName = "SplashScreen";
 
     [Header("AUDIO SETTINGS")]
     [SerializeField] private AudioSettingsSO audioSettings;
@@ -21,6 +25,36 @@ public class AudioService : MonoBehaviour
     private SFXPlayer _sfxPlayer;
 
     private bool _splashMusicPlayed = false;
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    private static void ResetStaticState()
+    {
+        Instance = null;
+    }
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+    private static void EnsureBootstrapInstance()
+    {
+        if (Instance != null)
+        {
+            return;
+        }
+
+        AudioService existingInstance = Object.FindFirstObjectByType<AudioService>();
+        if (existingInstance != null)
+        {
+            return;
+        }
+
+        AudioService prefab = Resources.Load<AudioService>(BootstrapPrefabResourcePath);
+        if (prefab == null)
+        {
+            Debug.LogError($"[AudioService] No se encontró el prefab en Resources/{BootstrapPrefabResourcePath}.");
+            return;
+        }
+
+        Object.Instantiate(prefab);
+    }
 
     private void Awake()
     {
@@ -96,9 +130,15 @@ public class AudioService : MonoBehaviour
 
     private void TryPlaySplashMusic()
     {
-        if (_splashMusicPlayed) return;
+        if (_splashMusicPlayed || !IsSplashSceneActive()) return;
         _splashMusicPlayed = true;
         MusicEvents.OnEnterSplash?.Invoke();
+    }
+
+    private static bool IsSplashSceneActive()
+    {
+        Scene activeScene = SceneManager.GetActiveScene();
+        return activeScene.IsValid() && activeScene.name == SplashSceneName;
     }
 
     private void UnsubscribeAuthCallbacks()

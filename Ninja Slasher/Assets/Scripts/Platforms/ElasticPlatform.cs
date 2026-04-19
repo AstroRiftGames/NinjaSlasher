@@ -26,7 +26,11 @@ public class ElasticPlatform : PlatformBase
         Rigidbody2D rb = view.RB;
         if (rb == null) return;
 
-        //AudioService.Instance.PlaySFXAtPosition(_audioContext.Audio.Interaction, player.transform.position);
+        AudioEvent interactionSfx = _audioContext != null ? _audioContext.Audio?.Interaction : null;
+        if (interactionSfx != null)
+        {
+            AudioService.Instance?.PlaySFXAtPosition(interactionSfx, player.transform.position);
+        }
 
         if (_animator != null && _animator.enabled)
         {

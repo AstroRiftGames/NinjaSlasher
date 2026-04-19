@@ -161,9 +161,6 @@ public class ResultsUIManager : MonoBehaviourSingleton<ResultsUIManager>
         seq.AppendCallback(() =>
         {
             slashImage.transform.DOPunchScale(Vector3.one * 0.1f, 0.1f, 1, 0.8f);
-
-            //AudioManager.Instance?.PlaySFX(SFXClip.UI_TapSplashScreen);
-
             AudioService.Instance?.PlaySFX(_audioContext.Audio.tapSplash);
         });
     }

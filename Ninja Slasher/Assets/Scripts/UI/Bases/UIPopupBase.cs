@@ -79,7 +79,6 @@ public abstract class UIPopupBase : UIPanel
 
         showSequence.SetUpdate(true);
 
-        //AudioManager.Instance?.PlaySFX(SFXClip.UI_Select);
         if (_audioContext != null && _audioContext.Audio != null)
         {
             AudioService.Instance?.PlaySFX(_audioContext.Audio.panelOpen);
