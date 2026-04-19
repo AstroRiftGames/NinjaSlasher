@@ -148,6 +148,9 @@ public class PowerUpConfirmationPopUp : UIPopupBase
         Action confirmAction = _confirmAction;
 
         Hide();
+        if (_audioContext != null && _audioContext.Audio != null)
+            AudioService.Instance?.PlaySFX(_audioContext.Audio.powerUp);
+
         confirmAction?.Invoke();
     }
 

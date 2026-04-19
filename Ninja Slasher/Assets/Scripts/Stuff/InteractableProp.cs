@@ -3,14 +3,26 @@ using UnityEngine;
 public class InteractableProp : MonoBehaviour
 {
     [SerializeField] Animator _anim;
-    [SerializeField] SFXClip[] _clips;
+    [SerializeField] AudioEvent[] _audioEvents;
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
         _anim.SetTrigger("OnHit");
-        if(_clips.Length > 0)
+
+        AudioEvent audioEvent = GetRandomAudioEvent();
+        if (audioEvent != null)
         {
-            AudioManager.Instance.PlaySFXAtPosition(_clips[Random.Range(0, _clips.Length)], transform.position);
+            AudioService.Instance?.PlaySFXAtPosition(audioEvent, transform.position);
         }
+    }
+
+    private AudioEvent GetRandomAudioEvent()
+    {
+        if (_audioEvents == null || _audioEvents.Length == 0)
+        {
+            return null;
+        }
+
+        return _audioEvents[Random.Range(0, _audioEvents.Length)];
     }
 }
