@@ -16,9 +16,6 @@ public class PauseOverlay : UIOverlayBase
     [SerializeField] private GameObject _infoRoot;
     [SerializeField] private TextMeshProUGUI _totalStarsText;
     [SerializeField] private TextMeshProUGUI _livesAmountText;
-
-    private bool _wasPausedBeforeShow = false;
-
     protected override void Awake()
     {
         base.Awake();
@@ -48,11 +45,7 @@ public class PauseOverlay : UIOverlayBase
 
     protected override void OnShown()
     {
-        _wasPausedBeforeShow = Time.timeScale == 0f;
-
-        if (!_wasPausedBeforeShow)
-            Time.timeScale = 0f;
-
+        PauseController.Instance.RequestPause(PauseSource.PauseOverlay);
         RefreshInfo();
         UIManager.Instance?.SetGameplayHUDTopRightInfoVisible(false);
         UIEvents.RaisePause(true);
@@ -63,9 +56,7 @@ public class PauseOverlay : UIOverlayBase
         _restartConfirmationPopUp?.HideImmediate();
         _backToLevelSelectionConfirmationPopUp?.HideImmediate();
 
-        if (!_wasPausedBeforeShow)
-            Time.timeScale = 1f;
-
+        PauseController.Instance.ReleasePause(PauseSource.PauseOverlay);
         UIManager.Instance?.SetGameplayHUDTopRightInfoVisible(true);
         UIEvents.RaisePause(false);
     }
@@ -90,7 +81,6 @@ public class PauseOverlay : UIOverlayBase
     private void ConfirmRestartLevel()
     {
         Hide();
-        Time.timeScale = 1f;
         UIEvents.RequestRestartLevel();
     }
 
@@ -131,7 +121,6 @@ public class PauseOverlay : UIOverlayBase
     private void ConfirmQuitToLevelSelection()
     {
         Hide();
-        Time.timeScale = 1f;
         UIEvents.RaiseQuitToMenuPressed();
     }
 

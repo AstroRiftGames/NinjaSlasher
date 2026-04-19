@@ -232,11 +232,8 @@ public class Projectile : MonoBehaviour, IPoolable
 
     protected void ResetTime()
     {
-        if (Time.timeScale != 1f)
-        {
-            Time.timeScale = 1f;
+        if (Time.fixedDeltaTime != 0.02f)
             Time.fixedDeltaTime = 0.02f;
-        }
     }
 
     public virtual void ReflectBackwards(Transform newShooter, Vector2 newDir)

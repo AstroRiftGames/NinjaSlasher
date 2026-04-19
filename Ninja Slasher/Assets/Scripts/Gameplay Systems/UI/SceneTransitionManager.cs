@@ -81,7 +81,6 @@ public class SceneTransitionManager : MonoBehaviour
     private IEnumerator LoadLevelSelectorSceneCo()
     {
         _isLoadingLevelSelectorScene = true;
-        Time.timeScale = 1f;
 
         SetHUDActive(false);
 
@@ -116,8 +115,6 @@ public class SceneTransitionManager : MonoBehaviour
 
     private IEnumerator ShowLevelSelectorCo()
     {
-        Time.timeScale = 1;
-
         SetHUDActive(false);
 
         UIEvents.RequestHideVictoryModal();
@@ -135,7 +132,7 @@ public class SceneTransitionManager : MonoBehaviour
         }
 
         _transitionAnim.SetTrigger("OpeningStart");
-        yield return new WaitForSeconds(_transitionTime);
+        yield return new WaitForSecondsRealtime(_transitionTime);
 
         UIEvents.RequestHideSplashScreen();
         UIManager.Instance.SetLevelsScreenEnabled(true);

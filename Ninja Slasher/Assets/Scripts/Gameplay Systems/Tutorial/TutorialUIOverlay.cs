@@ -18,7 +18,6 @@ public class TutorialUIOverlay : UIOverlayBase, IPointerClickHandler
     [SerializeField] private bool closeOnBackgroundTap = false;
 
     public event Action Dismissed;
-    private bool _wasPausedBeforeShow;
 
     protected override void Awake()
     {
@@ -66,11 +65,7 @@ public class TutorialUIOverlay : UIOverlayBase, IPointerClickHandler
     protected override void OnShown()
     {
         base.OnShown();
-
-        _wasPausedBeforeShow = Time.timeScale == 0f;
-
-        if (!_wasPausedBeforeShow)
-            Time.timeScale = 0f;
+        PauseController.Instance.RequestPause(PauseSource.Tutorial);
 
         UIEvents.RaisePause(true);
 
@@ -85,9 +80,7 @@ public class TutorialUIOverlay : UIOverlayBase, IPointerClickHandler
     protected override void OnHidden()
     {
         base.OnHidden();
-
-        if (!_wasPausedBeforeShow)
-            Time.timeScale = 1f;
+        PauseController.Instance.ReleasePause(PauseSource.Tutorial);
 
         UIEvents.RaisePause(false);
 

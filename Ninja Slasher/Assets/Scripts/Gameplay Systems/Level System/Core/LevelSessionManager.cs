@@ -409,8 +409,6 @@ public class LevelSessionManager : MonoBehaviourSingleton<LevelSessionManager>
 
     private void CloseSessionForSceneChange()
     {
-        Time.timeScale = 1f;
-
         if (LifeManager.Instance != null && LifeManager.Instance.HasPendingDeduction())
         {
             LifeManager.Instance.OnLevelExit();

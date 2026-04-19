@@ -41,13 +41,13 @@ public class DefeatOverlay : UIOverlayBase
 
     protected override void OnShown()
     {
-        Time.timeScale = 0f;
+        PauseController.Instance.RequestPause(PauseSource.Defeat);
         UIEvents.RaisePause(true);
     }
 
     protected override void OnHidden()
     {
-        Time.timeScale = 1f;
+        PauseController.Instance.ReleasePause(PauseSource.Defeat);
         UIEvents.RaisePause(false);
     }
 
@@ -82,7 +82,7 @@ public class DefeatOverlay : UIOverlayBase
 
     private void OnQuitClicked()
     {
-        Time.timeScale = 1f;
+        PauseController.Instance.ReleasePause(PauseSource.Defeat);
         UIEvents.RaisePause(false);
         UIEvents.RaiseQuitToMenuPressed();
     }

@@ -48,8 +48,6 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        Time.timeScale = 1f;
-
         if (scene.name.Contains("Level"))
         {
             ResetLevelState();
@@ -246,10 +244,12 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
     {
         if (LevelSessionManager.Instance == null || !LevelSessionManager.Instance.IsSessionRunning) return;
 
-        if (Time.timeScale > 0f)
+        bool isManagedBackgroundPauseActive = PauseController.Instance.IsPauseSourceActive(PauseSource.ApplicationBackground);
+
+        if (!isManagedBackgroundPauseActive)
         {
             LevelSessionManager.Instance.PauseLevel();
-            Time.timeScale = 0f;
+            PauseController.Instance.RequestPause(PauseSource.ApplicationBackground);
             _pausedByFocusLoss = true;
         }
     }
@@ -259,7 +259,7 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
         if (!_pausedByFocusLoss) return;
 
         LevelSessionManager.Instance?.ResumeLevel();
-        Time.timeScale = 1f;
+        PauseController.Instance.ReleasePause(PauseSource.ApplicationBackground);
         _pausedByFocusLoss = false;
     }
 }
