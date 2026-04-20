@@ -1,6 +1,7 @@
 using UnityEngine;
 using Unity.Services.LevelPlay;
 using System;
+using System.Collections.Generic;
 
 public class AdsManager : MonoBehaviourSingleton<AdsManager>
 {
@@ -26,7 +27,10 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
     private bool _isLevelPlayInitialized = false;
     private bool _levelPlayInitFailed = false;
     private bool _isInitializingLevelPlay = false;
+    private bool _adUnitsCreated = false;
     private int _sessionGamesSinceLastInterstitial = 0;
+    private readonly Queue<string> _pendingImpressionLogs = new();
+    private readonly object _pendingImpressionLogsLock = new();
 
     public event Action OnRewardedAdReadinessChanged;
     public event Action<string, bool> OnRewardedAdFlowCompleted;
@@ -46,8 +50,15 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
         GameEvents.OnLevelFailed += OnLevelFailed;
         UIEvents.OnRetryButtonPressed += OnResultsActionTaken;
         UIEvents.OnQuitToMenuPressed  += OnResultsActionTaken;
+        LevelPlay.OnImpressionDataReady -= OnImpressionDataReady;
+        LevelPlay.OnImpressionDataReady += OnImpressionDataReady;
 
         InitializeLevelPlay();
+    }
+
+    private void Update()
+    {
+        FlushPendingImpressionLogs();
     }
 
     private bool AreAdsRemoved()
@@ -61,6 +72,9 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
             return;
 
         _isInitializingLevelPlay = true;
+
+        LevelPlay.OnInitSuccess -= OnInitSuccess;
+        LevelPlay.OnInitFailed -= OnInitFailed;
         LevelPlay.OnInitSuccess += OnInitSuccess;
         LevelPlay.OnInitFailed += OnInitFailed;
 
@@ -73,7 +87,16 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
         _isInitializingLevelPlay = false;
         _isLevelPlayInitialized = true;
         _levelPlayInitFailed = false;
-        Debug.Log("[AdsManager] LevelPlay initialized");
+
+        LevelPlay.OnInitSuccess -= OnInitSuccess;
+        LevelPlay.OnInitFailed -= OnInitFailed;
+
+        Debug.Log($"[AdsManager] LevelPlay initialized | appKey={_appKey} | rewardedUnit={_rewardedAdUnitId} | interstitialUnit={_interstitialAdUnitId}");
+
+        if (_adUnitsCreated)
+            return;
+
+        _adUnitsCreated = true;
         CreateAdUnits();
     }
 
@@ -286,7 +309,7 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
 
     private void OnRewardedAdLoaded(LevelPlayAdInfo adInfo)
     {
-        Debug.Log($"[AdsManager] Rewarded ad loaded. Network: {adInfo.AdNetwork}");
+        Debug.Log($"[AdsManager] Rewarded ad loaded | context={_pendingRewardContext} | {FormatAdInfo(adInfo)}");
         OnRewardedAdReadinessChanged?.Invoke();
 
         if (_pendingRewardShowRequest && _rewardedAd != null && _rewardedAd.IsAdReady())
@@ -309,7 +332,7 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
         _rewardedAdShowing = true;
         _interstitialPending = false;
         ClearPendingInterstitial();
-        Debug.Log($"[AdsManager] Rewarded ad displayed | context={_pendingRewardContext}");
+        Debug.Log($"[AdsManager] Rewarded ad displayed | context={_pendingRewardContext} | {FormatAdInfo(adInfo)}");
         AnalyticsManager.Instance?.RecordRewardedAdShown(_pendingRewardContext);
     }
 
@@ -319,7 +342,7 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
         _rewardedAdShowing = false;
         _rewardGrantedForCurrentAd = false;
         _awaitingRewardAfterClose = false;
-        Debug.LogError($"[AdsManager] Rewarded ad display failed | context={_pendingRewardContext} | error={error.ErrorMessage}");
+        Debug.LogError($"[AdsManager] Rewarded ad display failed | context={_pendingRewardContext} | error={error.ErrorMessage} | {FormatAdInfo(adInfo)}");
         AnalyticsManager.Instance?.RecordRewardedAdFailed(_pendingRewardContext, error.ErrorMessage);
         CancelPendingRewardedRequest("display failed");
         OnRewardedAdFlowCompleted?.Invoke(context, false);
@@ -332,7 +355,7 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
         _rewardGrantedForCurrentAd = true;
         _awaitingRewardAfterClose = false;
         CancelInvoke(nameof(FinalizePendingRewardedClose));
-        Debug.Log($"[AdsManager] Reward received | context={_pendingRewardContext} | reward={reward.Name} x{reward.Amount}");
+        Debug.Log($"[AdsManager] Reward received | context={_pendingRewardContext} | reward={reward.Name} x{reward.Amount} | {FormatAdInfo(adInfo)}");
         AnalyticsManager.Instance?.RecordRewardedAdCompleted(_pendingRewardContext);
         _pendingRewardCallback?.Invoke();
         _pendingRewardCallback = null;
@@ -350,7 +373,7 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
         string context = _pendingRewardContext;
         bool rewardGranted = _rewardGrantedForCurrentAd;
         _rewardedAdShowing = false;
-        Debug.Log($"[AdsManager] Rewarded ad closed | context={_pendingRewardContext}");
+        Debug.Log($"[AdsManager] Rewarded ad closed | context={_pendingRewardContext} | {FormatAdInfo(adInfo)}");
         AnalyticsManager.Instance?.RecordRewardedAdClosed(_pendingRewardContext);
         _rewardedAd?.LoadAd();
 
@@ -370,12 +393,12 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
 
     private void OnRewardedAdClicked(LevelPlayAdInfo adInfo)
     {
-        Debug.Log($"[AdsManager] Rewarded ad clicked | context={_pendingRewardContext}");
+        Debug.Log($"[AdsManager] Rewarded ad clicked | context={_pendingRewardContext} | {FormatAdInfo(adInfo)}");
     }
 
     private void OnInterstitialAdLoaded(LevelPlayAdInfo adInfo)
     {
-        Debug.Log($"[AdsManager] Interstitial ad loaded. Network: {adInfo.AdNetwork}");
+        Debug.Log($"[AdsManager] Interstitial ad loaded | placement={_pendingInterstitialPlacement} | {FormatAdInfo(adInfo)}");
     }
 
     private void OnInterstitialAdLoadFailed(LevelPlayAdError error)
@@ -386,14 +409,14 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
 
     private void OnInterstitialAdDisplayed(LevelPlayAdInfo adInfo)
     {
-        Debug.Log($"[AdsManager] Interstitial displayed | placement={_pendingInterstitialPlacement}");
+        Debug.Log($"[AdsManager] Interstitial displayed | placement={_pendingInterstitialPlacement} | {FormatAdInfo(adInfo)}");
         AnalyticsManager.Instance?.RecordInterstitialShown(
             _pendingInterstitialPlacement, _pendingInterstitialLevelId);
     }
 
     private void OnInterstitialAdDisplayFailed(LevelPlayAdInfo adInfo, LevelPlayAdError error)
     {
-        Debug.LogError($"[AdsManager] Interstitial display failed | placement={_pendingInterstitialPlacement} | error={error.ErrorMessage}");
+        Debug.LogError($"[AdsManager] Interstitial display failed | placement={_pendingInterstitialPlacement} | error={error.ErrorMessage} | {FormatAdInfo(adInfo)}");
         AnalyticsManager.Instance?.RecordInterstitialFailed(
             _pendingInterstitialPlacement, error.ErrorMessage, _pendingInterstitialLevelId);
         ClearPendingInterstitial();
@@ -401,7 +424,7 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
 
     private void OnInterstitialAdClosed(LevelPlayAdInfo adInfo)
     {
-        Debug.Log($"[AdsManager] Interstitial closed | placement={_pendingInterstitialPlacement}");
+        Debug.Log($"[AdsManager] Interstitial closed | placement={_pendingInterstitialPlacement} | {FormatAdInfo(adInfo)}");
         AnalyticsManager.Instance?.RecordInterstitialClosed(
             _pendingInterstitialPlacement, _pendingInterstitialLevelId);
         ClearPendingInterstitial();
@@ -412,7 +435,7 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
 
     private void OnInterstitialAdClicked(LevelPlayAdInfo adInfo)
     {
-        Debug.Log("[AdsManager] Interstitial ad clicked");
+        Debug.Log($"[AdsManager] Interstitial ad clicked | {FormatAdInfo(adInfo)}");
     }
 
     private void ClearPendingInterstitial()
@@ -537,6 +560,66 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
         InitializeLevelPlay();
     }
 
+    private void OnImpressionDataReady(LevelPlayImpressionData impressionData)
+    {
+        string message =
+            $"[AdsManager] Impression data | network={SafeValue(impressionData?.AdNetwork)}" +
+            $" | instance={SafeValue(impressionData?.InstanceName)}" +
+            $" | format={SafeValue(impressionData?.AdFormat)}" +
+            $" | placement={SafeValue(impressionData?.Placement)}" +
+            $" | adUnitId={SafeValue(impressionData?.MediationAdUnitId)}" +
+            $" | adUnitName={SafeValue(impressionData?.MediationAdUnitName)}" +
+            $" | auctionId={SafeValue(impressionData?.AuctionId)}" +
+            $" | revenue={SafeValue(impressionData?.Revenue?.ToString())}" +
+            $" | precision={SafeValue(impressionData?.Precision)}";
+
+        lock (_pendingImpressionLogsLock)
+        {
+            _pendingImpressionLogs.Enqueue(message);
+        }
+    }
+
+    private void FlushPendingImpressionLogs()
+    {
+        while (true)
+        {
+            string message = null;
+
+            lock (_pendingImpressionLogsLock)
+            {
+                if (_pendingImpressionLogs.Count > 0)
+                    message = _pendingImpressionLogs.Dequeue();
+            }
+
+            if (string.IsNullOrEmpty(message))
+                return;
+
+            Debug.Log(message);
+        }
+    }
+
+    private static string FormatAdInfo(LevelPlayAdInfo adInfo)
+    {
+        if (adInfo == null)
+            return "adInfo=null";
+
+        return
+            $"network={SafeValue(adInfo.AdNetwork)}" +
+            $" | instance={SafeValue(adInfo.InstanceName)}" +
+            $" | format={SafeValue(adInfo.AdFormat)}" +
+            $" | placement={SafeValue(adInfo.PlacementName)}" +
+            $" | adUnitId={SafeValue(adInfo.AdUnitId)}" +
+            $" | adUnitName={SafeValue(adInfo.AdUnitName)}" +
+            $" | auctionId={SafeValue(adInfo.AuctionId)}" +
+            $" | revenue={SafeValue(adInfo.Revenue?.ToString())}" +
+            $" | precision={SafeValue(adInfo.Precision)}";
+    }
+
+    private static string SafeValue(string value)
+    {
+        return string.IsNullOrEmpty(value) ? "n/a" : value;
+    }
+
     void OnDestroy()
     {
         GameEvents.OnAdsRemoved -= OnAdsRemoved;
@@ -547,6 +630,7 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
 
         LevelPlay.OnInitSuccess -= OnInitSuccess;
         LevelPlay.OnInitFailed -= OnInitFailed;
+        LevelPlay.OnImpressionDataReady -= OnImpressionDataReady;
 
         if (_rewardedAd != null)
         {
