@@ -433,7 +433,7 @@ public class PlayerController : MonoBehaviour
     #region COLLISION DETECTION
     private void OnCollisionEnter2D(Collision2D collision)
     {
-        if (LevelSessionManager.Instance != null && !LevelSessionManager.Instance.CanProcessGameplay)
+        if (!CanResolveActionOnSurface())
             return;
 
         string colTag = collision.gameObject.tag;
@@ -445,7 +445,7 @@ public class PlayerController : MonoBehaviour
 
     private void OnCollisionStay2D(Collision2D collision)
     {
-        if (LevelSessionManager.Instance != null && !LevelSessionManager.Instance.CanProcessGameplay)
+        if (!CanResolveActionOnSurface())
             return;
 
         if (!_isDashing) return;
@@ -499,6 +499,22 @@ public class PlayerController : MonoBehaviour
             _currentPlatform = platform;
             Grab(cleanNormal);
         }
+    }
+
+    private bool IsActionInProgress()
+    {
+        if (_isKO)
+            return false;
+
+        return _isDashing;
+    }
+
+    private bool CanResolveActionOnSurface()
+    {
+        if (LevelSessionManager.Instance == null || LevelSessionManager.Instance.CanProcessGameplay)
+            return !_isKO;
+
+        return IsActionInProgress();
     }
 
     private void OnTriggerEnter2D(Collider2D collision)
@@ -612,24 +628,6 @@ public class PlayerController : MonoBehaviour
             return;
 
         _hasHandledGameplayClosed = true;
-
-        if (_currentPlatform != null)
-        {
-            _currentPlatform.OnPlayerExit(gameObject, true);
-            _currentPlatform = null;
-        }
-
-        _isDashing = false;
-        _isParrying = false;
-
-        if (_view != null)
-        {
-            if (_view.RB != null)
-                _view.RB.linearVelocity = Vector2.zero;
-
-            if (_view.TrailRendererComponent != null)
-                _view.TrailRendererComponent.emitting = false;
-        }
     }
 
     #endregion
