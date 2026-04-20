@@ -6,7 +6,6 @@ public class VictoryModal : UIModalBase
     [SerializeField] private float _closeAnimationDuration = 0.4f;
     [SerializeField] private float _delayBeforeShowingResults = 0.1f;
 
-    private bool _isVictory = false;
     private Coroutine _showResultsCoroutine;
 
     protected override float HideAnimationDuration => _closeAnimationDuration;
@@ -19,29 +18,10 @@ public class VictoryModal : UIModalBase
             _modalAnimator = GetComponentInChildren<Animator>();
     }
 
-    protected override void OnEnable()
-    {
-        base.OnEnable();
-        GameEvents.OnLevelCompleted += OnLevelCompleted;
-        GameEvents.OnLevelFailed += OnLevelFailed;
-    }
-
     protected override void OnDisable()
     {
         base.OnDisable();
         StopShowResultsCoroutine();
-        GameEvents.OnLevelCompleted -= OnLevelCompleted;
-        GameEvents.OnLevelFailed -= OnLevelFailed;
-    }
-
-    private void OnLevelCompleted(LevelStats stats)
-    {
-        _isVictory = true;
-    }
-
-    private void OnLevelFailed(LevelFailedContext ctx)
-    {
-        _isVictory = false;
     }
 
     protected override void OnShown()
@@ -79,18 +59,6 @@ public class VictoryModal : UIModalBase
 
         if (clip != null)
             AudioService.Instance.PlaySFX(clip);
-    }
-
-    public void ShowVictory()
-    {
-        _isVictory = true;
-        Show();
-    }
-
-    public void ShowDefeat()
-    {
-        _isVictory = false;
-        Show();
     }
 
     private void StopShowResultsCoroutine()

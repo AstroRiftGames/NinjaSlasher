@@ -65,6 +65,7 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
         UIPanel.OnBlockingPanelVisibilityChanged += RefreshGameplayHUDVisibility;
         StartCoroutine(SafeSubscribeToCustomUpdate());
         SubscribeToUIEvents();
+        SubscribeToGameEvents();
         RefreshGameplayHUDVisibility();
     }
 
@@ -81,6 +82,7 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
         }
 
         UnsubscribeFromUIEvents();
+        UnsubscribeFromGameEvents();
     }
 
     private void InitializeManagers()
@@ -200,6 +202,11 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
         UIEvents.OnLevelPreviewRequested += HandleLevelPreviewRequested;
     }
 
+    private void SubscribeToGameEvents()
+    {
+        GameEvents.OnLevelResultReady += OnLevelResultReady;
+    }
+
     private void UnsubscribeFromUIEvents()
     {
         UIEvents.OnShowPauseOverlayRequested -= ShowPauseOverlay;
@@ -256,7 +263,28 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
         UIEvents.OnLevelPreviewRequested -= HandleLevelPreviewRequested;
     }
 
+    private void UnsubscribeFromGameEvents()
+    {
+        GameEvents.OnLevelResultReady -= OnLevelResultReady;
+    }
+
     #endregion
+
+    private void OnLevelResultReady(LevelResult result)
+    {
+        switch (result)
+        {
+            case LevelResult.Victory:
+                ShowVictoryModal();
+                break;
+            case LevelResult.NoLives:
+                ShowNoLivesOverlay();
+                break;
+            case LevelResult.Defeat:
+                ShowDefeatOverlay(LifeManager.Instance != null ? LifeManager.Instance.GetRealLives() : 0);
+                break;
+        }
+    }
 
     #region OVERLAYS
 

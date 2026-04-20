@@ -1,6 +1,14 @@
 using System;
 using UnityEngine;
 
+public enum LevelResult
+{
+    None = 0,
+    Victory = 1,
+    Defeat = 2,
+    NoLives = 3,
+}
+
 public static class GameEvents
 {
     #region LIFE SYSTEM EVENTS
@@ -32,6 +40,8 @@ public static class GameEvents
     public static event Action OnLevelStarted;
     public static event Action<LevelStats> OnLevelCompleted;
     public static event Action<LevelFailedContext> OnLevelFailed;
+    public static event Action<LevelResult> OnLevelEnded;
+    public static event Action<LevelResult> OnLevelResultReady;
     public static event Action<float> OnLevelTimeChanged;
     public static event Action OnLevelTimeExpired;
 
@@ -48,6 +58,16 @@ public static class GameEvents
     public static void RaiseLevelFailed(LevelFailedContext context)
     {
         OnLevelFailed?.Invoke(context);
+    }
+
+    public static void RaiseLevelEnded(LevelResult result)
+    {
+        OnLevelEnded?.Invoke(result);
+    }
+
+    public static void RaiseLevelResultReady(LevelResult result)
+    {
+        OnLevelResultReady?.Invoke(result);
     }
 
     public static void RaiseLevelTimeChanged(float currentTime)
@@ -308,6 +328,8 @@ public static class GameEvents
         OnLevelStarted = null;
         OnLevelCompleted = null;
         OnLevelFailed = null;
+        OnLevelEnded = null;
+        OnLevelResultReady = null;
         OnLevelTimeChanged = null;
         OnLevelTimeExpired = null;
     }

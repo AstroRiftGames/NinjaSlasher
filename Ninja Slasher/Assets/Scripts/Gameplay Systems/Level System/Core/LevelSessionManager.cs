@@ -226,6 +226,7 @@ public class LevelSessionManager : MonoBehaviourSingleton<LevelSessionManager>
         };
 
         GameEvents.RaiseLevelFailed(context);
+        GameEvents.RaiseLevelEnded(LevelResult.Defeat);
     }
 
     private void EvaluateAndSave()
@@ -278,6 +279,7 @@ public class LevelSessionManager : MonoBehaviourSingleton<LevelSessionManager>
         }
 
         GameEvents.RaiseLevelCompleted(stats);
+        GameEvents.RaiseLevelEnded(LevelResult.Victory);
     }
 
     private void OnComboTimeBonus(float bonusSeconds)

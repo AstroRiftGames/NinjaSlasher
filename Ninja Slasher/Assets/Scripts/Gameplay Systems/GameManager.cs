@@ -5,8 +5,8 @@ using UnityEngine.SceneManagement;
 
 public class GameManager : MonoBehaviourSingleton<GameManager>
 {
-    [Header("Testing")]
-    [SerializeField] private string[] testingScenes = { "TestScene" };
+    [Header("Presentation")]
+    [SerializeField] private float _endOfLevelSettleDelay = 0.45f;
 
     private LevelStats currentStats;
     private bool _playerHasDied;
@@ -16,6 +16,7 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
 
     private bool _isVictory = false;
     public bool IsVictory => _isVictory;
+    private Coroutine _endOfLevelPresentationCoroutine;
 
     public override void Awake()
     {
@@ -33,13 +34,16 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
     {
         GameEvents.OnLevelStarted += OnLevelStarted;
         GameEvents.OnLevelCompleted += OnLevelCompleted;
+        GameEvents.OnLevelEnded += OnLevelEnded;
         GameEvents.OnLevelFailed += OnLevelFailed;
         SceneManager.sceneLoaded += OnSceneLoaded;
     }
 
     private void OnDisable()
     {
+        StopEndOfLevelPresentation();
         GameEvents.OnLevelCompleted -= OnLevelCompleted;
+        GameEvents.OnLevelEnded -= OnLevelEnded;
         GameEvents.OnLevelFailed -= OnLevelFailed;
         GameEvents.OnLivesChanged -= OnLivesChanged;
         GameEvents.OnLevelStarted -= OnLevelStarted;
@@ -65,21 +69,16 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
     {
         _isVictory = true;
 
-        if (IsTestingScene()) return;
-
         GameEvents.RaiseLevelEndedConsumePowerUps();
 
         currentStats = stats;
         LifeManager.Instance.OnLevelCompleted();
 
-        StartCoroutine(HandleVictoryWithDelay());
     }
 
-    private IEnumerator HandleVictoryWithDelay()
+    private void OnLevelEnded(LevelResult result)
     {
-        yield return new WaitForSeconds(0.1f);
-
-        UIEvents.RequestShowVictoryModal();
+        StartEndOfLevelPresentation(result);
     }
 
     private void HandleLevelDefeat(string reason = "unknown")
@@ -124,29 +123,46 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
 
         LifeManager.Instance.UseLife();
 
-        StartCoroutine(HandleDefeatUIWithDelay());
     }
 
-    private IEnumerator HandleDefeatUIWithDelay()
+    private void StartEndOfLevelPresentation(LevelResult result)
     {
-        yield return new WaitForSeconds(0.1f);
+        StopEndOfLevelPresentation();
+        _endOfLevelPresentationCoroutine = StartCoroutine(HandleEndOfLevelPresentation(result));
+    }
+
+    private IEnumerator HandleEndOfLevelPresentation(LevelResult result)
+    {
+        yield return new WaitForSecondsRealtime(_endOfLevelSettleDelay);
+        _endOfLevelPresentationCoroutine = null;
+
+        if (result == LevelResult.Victory)
+        {
+            GameEvents.RaiseLevelResultReady(LevelResult.Victory);
+            yield break;
+        }
 
         if (EmergencyBundleService.Instance != null && EmergencyBundleService.Instance.HasActiveOffer)
             yield break;
 
-        int currentLives = LifeManager.Instance.GetRealLives();
-        bool canPlay = LifeManager.Instance.CanPlay();
+        LevelResult finalResult = LifeManager.Instance != null && !LifeManager.Instance.CanPlay()
+            ? LevelResult.NoLives
+            : LevelResult.Defeat;
+
+        int currentLives = LifeManager.Instance != null ? LifeManager.Instance.GetRealLives() : 0;
+        bool canPlay = LifeManager.Instance != null && LifeManager.Instance.CanPlay();
 
         Debug.Log($"[GameManager] Resolve defeat UI | realLives={currentLives} | canPlay={canPlay} | unlimitedLives={LifeManager.Instance.HasTimedUnlimitedLives}");
+        GameEvents.RaiseLevelResultReady(finalResult);
+    }
 
-        if (!canPlay)
-        {
-            UIEvents.RequestShowNoLivesOverlay();
-        }
-        else
-        {
-            UIEvents.RequestShowDefeatOverlay(currentLives);
-        }
+    private void StopEndOfLevelPresentation()
+    {
+        if (_endOfLevelPresentationCoroutine == null)
+            return;
+
+        StopCoroutine(_endOfLevelPresentationCoroutine);
+        _endOfLevelPresentationCoroutine = null;
     }
 
     public void TriggerLevelDefeat(string reason)
@@ -197,28 +213,18 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
 
     private void OnDestroy()
     {
+        StopEndOfLevelPresentation();
         GameEvents.OnLevelStarted -= OnLevelStarted;
         GameEvents.OnLevelCompleted -= OnLevelCompleted;
+        GameEvents.OnLevelEnded -= OnLevelEnded;
         GameEvents.OnLevelFailed -= OnLevelFailed;
         GameEvents.OnLivesChanged -= OnLivesChanged;
         SceneManager.sceneLoaded -= OnSceneLoaded;
     }
 
-    private bool IsTestingScene()
-    {
-        string currentScene = SceneManager.GetActiveScene().name;
-
-        foreach (string testScene in testingScenes)
-        {
-            if (currentScene == testScene)
-                return true;
-        }
-
-        return false;
-    }
-
     public void ResetLevelState()
     {
+        StopEndOfLevelPresentation();
         _playerHasDied = false;
         _pausedByFocusLoss = false;
         _isVictory = false;
