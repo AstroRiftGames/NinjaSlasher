@@ -64,9 +64,7 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
         LevelPlay.OnInitSuccess += OnInitSuccess;
         LevelPlay.OnInitFailed += OnInitFailed;
 
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
         Debug.Log("[AdsManager] Initializing LevelPlay");
-#endif
         LevelPlay.Init(_appKey);
     }
 
@@ -170,9 +168,7 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
         _pendingInterstitialLevelId   = levelId;
         _interstitialPending          = true;
 
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
         Debug.Log($"[AdsManager] Interstitial deferred | placement={placement}");
-#endif
     }
 
     private void OnLevelCompleted(LevelStats stats)
@@ -379,9 +375,7 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
 
     private void OnInterstitialAdLoaded(LevelPlayAdInfo adInfo)
     {
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
         Debug.Log($"[AdsManager] Interstitial ad loaded. Network: {adInfo.AdNetwork}");
-#endif
     }
 
     private void OnInterstitialAdLoadFailed(LevelPlayAdError error)
@@ -418,9 +412,7 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
 
     private void OnInterstitialAdClicked(LevelPlayAdInfo adInfo)
     {
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
         Debug.Log("[AdsManager] Interstitial ad clicked");
-#endif
     }
 
     private void ClearPendingInterstitial()
