@@ -5,7 +5,7 @@ public class ParrySense : MonoBehaviour
 {
     [SerializeField] private GameObject _indicator;
     [SerializeField] private CircleCollider2D _col;
-    [SerializeField] private NewController _playerController;
+    [SerializeField] private PlayerController _playerController;
 
     private void OnEnable()
     {

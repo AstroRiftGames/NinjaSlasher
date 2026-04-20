@@ -123,7 +123,7 @@ public class GuardBot : Enemy
         AudioService.Instance.PlaySFXAtPosition(_audioContext.Audio.collision, transform.position);
         if(other.tag == "Player")
         {
-            other.TryGetComponent(out NewController controller);
+            other.TryGetComponent(out PlayerController controller);
             controller.Die();
         }
     }

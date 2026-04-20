@@ -58,7 +58,7 @@ public class SpikePlatform : PlatformBase
 
         if (currentPlayer != null)
         {
-            NewController controller = currentPlayer.GetComponent<NewController>();
+            PlayerController controller = currentPlayer.GetComponent<PlayerController>();
             if (controller != null)
             {
                 controller.Die();

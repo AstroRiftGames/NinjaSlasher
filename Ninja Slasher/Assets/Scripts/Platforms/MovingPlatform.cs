@@ -36,7 +36,7 @@ public class MovingPlatform : PlatformBase
     public override void OnPlayerEnter(GameObject player)
     {
         _playerOnPlatform = player;
-        View view = player.GetComponent<View>();
+        PlayerView view = player.GetComponent<PlayerView>();
         if (view != null)
             _playerRB = view.RB;
 

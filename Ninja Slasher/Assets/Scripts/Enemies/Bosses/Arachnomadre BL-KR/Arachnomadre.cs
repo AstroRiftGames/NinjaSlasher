@@ -102,7 +102,7 @@ public class Arachnomadre : BossEnemy
             }
             else
             {
-                collision.gameObject.TryGetComponent(out NewController player);
+                collision.gameObject.TryGetComponent(out PlayerController player);
                 player.Die();
             }
         }
@@ -353,7 +353,7 @@ public class Arachnomadre : BossEnemy
     {
         Collider2D playerCol = Physics2D.OverlapCircle(_biteRefPoint.position, _biteRadius, _playerLayer);
         if (playerCol == null) return;
-        playerCol.TryGetComponent(out NewController controller);
+        playerCol.TryGetComponent(out PlayerController controller);
         controller.Die();
     }
 

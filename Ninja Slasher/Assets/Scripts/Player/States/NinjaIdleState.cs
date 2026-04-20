@@ -2,7 +2,7 @@ using UnityEngine;
 
 public class NinjaIdleState<NinjaStates> : State<NinjaStates>
 {
-    NewController _controller;
+    PlayerController _controller;
 
     public NinjaIdleState()
     {

@@ -3,12 +3,12 @@ using System.Collections.Generic;
 
 public class GeyserWater : MonoBehaviour
 {
-    NewController player;
+    PlayerController player;
     ParticleSystem ps;
 
     private void Awake()
     {
-        player = FindFirstObjectByType<NewController>();
+        player = FindFirstObjectByType<PlayerController>();
         ps = GetComponent<ParticleSystem>();
     }
     private void OnParticleTrigger()

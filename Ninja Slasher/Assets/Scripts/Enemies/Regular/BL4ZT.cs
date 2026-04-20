@@ -311,7 +311,7 @@ public class BL4ZT : Enemy
         {
             if (col.CompareTag("Player"))
             {
-                col.TryGetComponent(out NewController player);
+                col.TryGetComponent(out PlayerController player);
                 player.Die();
             }
             else if (col.CompareTag("Enemy") && col.TryGetComponent(out Enemy enemy) && enemy != this)

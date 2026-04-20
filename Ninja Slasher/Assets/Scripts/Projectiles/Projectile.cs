@@ -57,7 +57,11 @@ public class Projectile : MonoBehaviour, IPoolable
         transform.localScale = Vector3.one/2;
     }
 
-    public virtual void Update() { }
+    public virtual void Update()
+    {
+        if (TryHandleGameplayClosed())
+            return;
+    }
 
     public void OnSpawn()
     {
@@ -105,6 +109,9 @@ public class Projectile : MonoBehaviour, IPoolable
 
     public virtual void OnCollisionEnter2D(Collision2D collision)
     {
+        if (TryHandleGameplayClosed())
+            return;
+
         string colTag = collision.gameObject.tag;
 
         if (IsShooter(collision.transform))
@@ -137,6 +144,9 @@ public class Projectile : MonoBehaviour, IPoolable
 
     public void OnTriggerEnter2D(Collider2D collision)
     {
+        if (TryHandleGameplayClosed())
+            return;
+
         //if (!_isEnhancedParry)
         //    return;
 
@@ -172,6 +182,9 @@ public class Projectile : MonoBehaviour, IPoolable
 
     public virtual void Collide(Collider2D collision)
     {
+        if (TryHandleGameplayClosed())
+            return;
+
         if (collision.CompareTag("Player"))
         {
             DamagePlayer(collision.gameObject);
@@ -208,12 +221,18 @@ public class Projectile : MonoBehaviour, IPoolable
 
     protected void DamagePlayer(GameObject player)
     {
-        player.TryGetComponent(out NewController controller);
+        if (LevelSessionManager.Instance != null && !LevelSessionManager.Instance.CanProcessGameplay)
+            return;
+
+        player.TryGetComponent(out PlayerController controller);
         controller.Die();
     }
 
     protected void DamageEnemy(GameObject enemy)
     {
+        if (LevelSessionManager.Instance != null && !LevelSessionManager.Instance.CanProcessGameplay)
+            return;
+
         if (WasReflected)
         {
             ParryKillTracker.RegisterParryKill();
@@ -238,6 +257,9 @@ public class Projectile : MonoBehaviour, IPoolable
 
     public virtual void ReflectBackwards(Transform newShooter, Vector2 newDir)
     {
+        if (TryHandleGameplayClosed())
+            return;
+
         WasReflected = true;
         _animator.SetTrigger("OnParried");
         SetOwner(newShooter);
@@ -274,5 +296,25 @@ public class Projectile : MonoBehaviour, IPoolable
         _audioContext = GetComponent<ProjectileAudioContext>();
         if (_audioContext != null)
             _audioContext.Initialize(_audioSet);
+    }
+
+    protected bool TryHandleGameplayClosed()
+    {
+        if (LevelSessionManager.Instance == null || LevelSessionManager.Instance.CanProcessGameplay)
+            return false;
+
+        HandleGameplayClosed();
+        return true;
+    }
+
+    protected void HandleGameplayClosed()
+    {
+        if (_rb != null)
+            _rb.linearVelocity = Vector2.zero;
+
+        if (OnRequestDespawn != null)
+            OnRequestDespawn.Invoke(this);
+        else
+            Destroy(gameObject);
     }
 }

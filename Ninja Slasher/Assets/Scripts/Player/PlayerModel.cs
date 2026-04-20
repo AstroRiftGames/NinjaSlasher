@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class Model : MonoBehaviour
+public class PlayerModel : MonoBehaviour
 {
     public float DashForce => _dashForce;
     [SerializeField] float _dashForce;

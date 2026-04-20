@@ -17,10 +17,10 @@ public class ElasticPlatform : PlatformBase
     public override void OnPlayerEnter(GameObject player) { }
     public void OnPlayerEnter(GameObject player, ContactPoint2D contactPoint)
     {
-        NewController controller = player.GetComponent<NewController>();
+        PlayerController controller = player.GetComponent<PlayerController>();
         if (controller == null) return;     
 
-        View view = controller.View;
+        PlayerView view = controller.View;
         if (view == null) return;
 
         Rigidbody2D rb = view.RB;

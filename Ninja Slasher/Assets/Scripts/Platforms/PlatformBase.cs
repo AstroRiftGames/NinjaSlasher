@@ -54,6 +54,9 @@ public abstract class PlatformBase : MonoBehaviour, IPlatform
 
     protected virtual void CustomUpdate()
     {
+        if (LevelSessionManager.Instance != null && !LevelSessionManager.Instance.CanProcessGameplay)
+            return;
+
         if (!isActive) return;
         OnPlatformUpdate();
     }

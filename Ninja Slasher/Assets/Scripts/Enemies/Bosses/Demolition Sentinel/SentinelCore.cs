@@ -47,7 +47,7 @@ public class SentinelCore : MonoBehaviour
             }
             else
             {
-                if(collision.TryGetComponent(out NewController controller))
+                if(collision.TryGetComponent(out PlayerController controller))
                 {
                     controller.Die();
                 }

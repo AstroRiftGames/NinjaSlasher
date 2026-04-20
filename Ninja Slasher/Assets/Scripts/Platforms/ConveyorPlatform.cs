@@ -11,7 +11,7 @@ public class ConveyorPlatform : PlatformBase
 
     public override void OnPlayerEnter(GameObject player)
     {
-        View view = player.GetComponent<View>();
+        PlayerView view = player.GetComponent<PlayerView>();
         if (view != null)
             playerRb = view.RB;
 
@@ -20,7 +20,7 @@ public class ConveyorPlatform : PlatformBase
 
     public override void OnPlayerExit(GameObject player, bool isForced = false)
     {
-        if (player.GetComponent<View>()?.RB == playerRb)
+        if (player.GetComponent<PlayerView>()?.RB == playerRb)
         {
             if (playerRb != null)
             {

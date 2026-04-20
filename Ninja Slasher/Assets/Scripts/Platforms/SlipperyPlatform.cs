@@ -15,7 +15,7 @@ public class SlipperyPlatform : PlatformBase
     [SerializeField] private float upwardImpulse = 3f;
 
     private Rigidbody2D playerRb;
-    private NewController playerController;
+    private PlayerController playerController;
 
     // Slide horizontal
     private Vector2 slideDirection;
@@ -28,10 +28,10 @@ public class SlipperyPlatform : PlatformBase
 
     public override void OnPlayerEnter(GameObject player)
     {
-        playerController = player.GetComponent<NewController>();
+        playerController = player.GetComponent<PlayerController>();
         if (playerController == null) return;
 
-        View view = playerController.View;
+        PlayerView view = playerController.View;
         if (view == null) return;
 
         playerRb = view.RB;

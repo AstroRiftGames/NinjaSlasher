@@ -8,6 +8,9 @@ public class RicochetProjectile : Projectile
 
     public override void OnCollisionEnter2D(Collision2D collision)
     {
+        if (TryHandleGameplayClosed())
+            return;
+
         string colTag = collision.gameObject.tag;
         if (colTag is "Scenario" or "Ceiling" or "Floor" or "Obstacle")
         {

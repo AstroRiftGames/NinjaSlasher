@@ -11,12 +11,12 @@ public enum NinjaStates
     KO
 }
 
-public class NewController : MonoBehaviour
+public class PlayerController : MonoBehaviour
 {
-    public View View => _view;
-    [SerializeField] View _view;
-    public Model Model => _model;
-    [SerializeField] Model _model;
+    public PlayerView View => _view;
+    [SerializeField] PlayerView _view;
+    public PlayerModel Model => _model;
+    [SerializeField] PlayerModel _model;
 
     [SerializeField] InputDetection _swipeDetection;
     [SerializeField] TrajectoryRenderer _trajectoryRenderer;
@@ -31,6 +31,7 @@ public class NewController : MonoBehaviour
     public bool IsParrying => _isParrying;
     private bool _isParrying = false;
     private bool _isKO = false;
+    private bool _hasHandledGameplayClosed = false;
 
     private float _lastParry;
     public Vector2 LastMoveDirection => _lastMoveDirection;
@@ -186,6 +187,15 @@ public class NewController : MonoBehaviour
 
     private void Update()
     {
+        if (LevelSessionManager.Instance != null && !LevelSessionManager.Instance.CanProcessGameplay)
+        {
+            HandleGameplayClosed();
+            _trajectoryRenderer.HideTrajectory();
+            return;
+        }
+
+        _hasHandledGameplayClosed = false;
+
         if (_swipeDetection.IsPressing)
         {
             _trajectoryRenderer.ShowTrajectory(transform.position, GetFinalDirection(_swipeDetection.Direction));
@@ -201,6 +211,9 @@ public class NewController : MonoBehaviour
 
     public void ForceDash(Vector2 direction)
     {
+        if (LevelSessionManager.Instance != null && !LevelSessionManager.Instance.CanProcessGameplay)
+            return;
+
         if (!_isKO)
         {
             Dash(direction);
@@ -208,6 +221,9 @@ public class NewController : MonoBehaviour
     }
     private void TryDash(Vector2 direction)
     {
+        if (LevelSessionManager.Instance != null && !LevelSessionManager.Instance.CanProcessGameplay)
+            return;
+
         if (!_isKO && !_isDashing && !_isParrying && CheckDashCD())
         {
             Dash(GetFinalDirection(_swipeDetection.Direction));
@@ -307,6 +323,9 @@ public class NewController : MonoBehaviour
 
     private void TryParry(Vector2 tapPos)
     {
+        if (LevelSessionManager.Instance != null && !LevelSessionManager.Instance.CanProcessGameplay)
+            return;
+
         if (!_isKO && !_isDashing && !_isParrying && CheckParryCD())
         {
             Vector2 worldTapPos = Camera.main.ScreenToWorldPoint(tapPos);
@@ -414,6 +433,9 @@ public class NewController : MonoBehaviour
     #region COLLISION DETECTION
     private void OnCollisionEnter2D(Collision2D collision)
     {
+        if (LevelSessionManager.Instance != null && !LevelSessionManager.Instance.CanProcessGameplay)
+            return;
+
         string colTag = collision.gameObject.tag;
         if (colMatrix.Contains(colTag))
         {
@@ -423,6 +445,9 @@ public class NewController : MonoBehaviour
 
     private void OnCollisionStay2D(Collision2D collision)
     {
+        if (LevelSessionManager.Instance != null && !LevelSessionManager.Instance.CanProcessGameplay)
+            return;
+
         if (!_isDashing) return;
 
         string colTag = collision.gameObject.tag;
@@ -478,6 +503,9 @@ public class NewController : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
+        if (LevelSessionManager.Instance != null && !LevelSessionManager.Instance.CanProcessGameplay)
+            return;
+
         string colTag = collision.gameObject.tag;
 
         if (deadlyMatrix.Contains(colTag))
@@ -532,6 +560,9 @@ public class NewController : MonoBehaviour
     #region FOREIGN SYSTEM INTERACTIONS
     public void CalculateAngleRange(Vector2 v)
     {
+        if (LevelSessionManager.Instance != null && !LevelSessionManager.Instance.CanProcessGameplay)
+            return;
+
         Vector2 origin = (Vector2)transform.position;
 
         Vector2 rayDir = Vector2.zero;
@@ -573,6 +604,32 @@ public class NewController : MonoBehaviour
         Transform newVFX = Instantiate(_slashVFX, pos, Quaternion.identity).transform;
         Quaternion newRotation = Quaternion.Euler(0, 0, Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg);
         newVFX.rotation = newRotation;
+    }
+
+    private void HandleGameplayClosed()
+    {
+        if (_hasHandledGameplayClosed)
+            return;
+
+        _hasHandledGameplayClosed = true;
+
+        if (_currentPlatform != null)
+        {
+            _currentPlatform.OnPlayerExit(gameObject, true);
+            _currentPlatform = null;
+        }
+
+        _isDashing = false;
+        _isParrying = false;
+
+        if (_view != null)
+        {
+            if (_view.RB != null)
+                _view.RB.linearVelocity = Vector2.zero;
+
+            if (_view.TrailRendererComponent != null)
+                _view.TrailRendererComponent.emitting = false;
+        }
     }
 
     #endregion

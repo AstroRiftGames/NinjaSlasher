@@ -9,7 +9,7 @@ public class Portal : MonoBehaviour
     {
         if (!collision.CompareTag("Player")) return;
 
-        View view = collision.GetComponent<View>();
+        PlayerView view = collision.GetComponent<PlayerView>();
         if (view == null || connectedPortal == null) return;
 
         if (view.LastUsedPortal == this) return;
@@ -27,7 +27,7 @@ public class Portal : MonoBehaviour
     {
         if (collision.CompareTag("Player"))
         {
-            View view = collision.GetComponent<View>();
+            PlayerView view = collision.GetComponent<PlayerView>();
             if (view != null && view.LastUsedPortal == this)
                 view.LastUsedPortal = null;
         }

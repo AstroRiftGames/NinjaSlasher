@@ -19,6 +19,7 @@ public class LevelSessionManager : MonoBehaviourSingleton<LevelSessionManager>
     public bool IsSessionRunning => currentSession != null && currentSession.IsRunning;
     public bool IsSessionPaused => currentSession != null && currentSession.State == LevelSessionState.Paused;
     public bool IsLevelActive => isLevelActive;
+    public bool CanProcessGameplay => IsSessionRunning;
 
     public override void Awake()
     {

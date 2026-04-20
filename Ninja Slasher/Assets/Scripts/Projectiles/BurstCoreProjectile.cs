@@ -19,6 +19,9 @@ public class BurstCoreProjectile : Projectile
 
     public override void Update()
     {
+        if (TryHandleGameplayClosed())
+            return;
+
         if(Time.time >= _startTime + _timeToBurst)
         {
             Burst();

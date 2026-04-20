@@ -23,11 +23,11 @@ public class MagneticPlatform : PlatformBase
 
         foreach (var hit in hits)
         {
-            NewController playerController = hit.GetComponent<NewController>();
+            PlayerController playerController = hit.GetComponent<PlayerController>();
             if (playerController == null || !playerController.IsDashing || playerController.IsParrying)
                 continue;
 
-            View playerView = hit.GetComponent<View>();
+            PlayerView playerView = hit.GetComponent<PlayerView>();
             if (playerView == null) continue;
 
             Rigidbody2D rb = playerView.RB;

@@ -28,7 +28,7 @@ public class RangeEnemy : Enemy
     public override void OnEnable()
     {
         base.OnEnable();
-        _target = FindAnyObjectByType<NewController>().transform;
+        _target = FindAnyObjectByType<PlayerController>().transform;
     }
 
     public override void CustomUpdate()

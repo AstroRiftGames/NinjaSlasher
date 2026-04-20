@@ -11,7 +11,7 @@ public class KRUSH9_Weapon : MonoBehaviour
         AudioService.Instance.PlaySFXAtPosition(_bot.AudioContext.Audio.collision, transform.position);
         if (collision.CompareTag("Player"))
         {
-            collision.TryGetComponent(out NewController player);
+            collision.TryGetComponent(out PlayerController player);
             player.Die();
         }
     }

@@ -112,7 +112,7 @@ public class DemolitionBall : MonoBehaviour
         {
             if(col.gameObject.CompareTag("Player"))
             {
-                col.TryGetComponent(out NewController player);
+                col.TryGetComponent(out PlayerController player);
                 player.Die();
             }
         }
@@ -127,7 +127,7 @@ public class DemolitionBall : MonoBehaviour
             _heavyAttack = false;
             CreateDamageArea(collision.transform.position);
         }
-        if(collision.gameObject.TryGetComponent(out NewController controller))
+        if(collision.gameObject.TryGetComponent(out PlayerController controller))
         {
             controller.Die();
         }

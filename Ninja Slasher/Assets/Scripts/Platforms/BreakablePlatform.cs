@@ -7,7 +7,7 @@ public class BreakablePlatform : PlatformBase
 {
     [Header("SETTINGS")]
     [SerializeField] private int _maxUses;
-    private NewController _playerController;
+    private PlayerController _playerController;
     private int _remainingUses;
 
     [SerializeField] GameObject _tilemap;
@@ -55,7 +55,7 @@ public class BreakablePlatform : PlatformBase
         if (Time.time < _lastEnterTime + 0.1f) return;
         _lastEnterTime = Time.time;
 
-        player.TryGetComponent(out NewController controller);
+        player.TryGetComponent(out PlayerController controller);
         _playerController = controller;
         if (!isActive) return;
 

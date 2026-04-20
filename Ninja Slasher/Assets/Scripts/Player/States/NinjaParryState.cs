@@ -2,7 +2,7 @@ using UnityEngine;
 
 public class NinjaParryState<NinjaStates> : State<NinjaStates>
 {
-    private NewController _controller;
+    private PlayerController _controller;
     private float _currentParryTimer;
 
     public NinjaParryState()

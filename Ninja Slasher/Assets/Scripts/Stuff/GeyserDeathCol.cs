@@ -47,7 +47,7 @@ public class GeyserDeathCol : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
-        if (collision.TryGetComponent(out NewController player))
+        if (collision.TryGetComponent(out PlayerController player))
         {
             player.Die();
         }

@@ -3,7 +3,7 @@ using UnityEngine.InputSystem;
 
 public class InputDetection : MonoBehaviour
 {
-    private NewController _player;
+    private PlayerController _player;
     public delegate void ActionEvent();
     public event ActionEvent OnSwipeCanceled;
     public event ActionEvent OnSwipeResumed;
@@ -37,13 +37,15 @@ public class InputDetection : MonoBehaviour
 
     private bool isCanceled;
 
-    private bool IsInputBlocked => Time.timeScale == 0f || (TutorialManager.Instance != null && TutorialManager.Instance.IsTutorialActive());
+    private bool IsInputBlocked => (LevelSessionManager.Instance != null && !LevelSessionManager.Instance.CanProcessGameplay)
+        || Time.timeScale == 0f
+        || (TutorialManager.Instance != null && TutorialManager.Instance.IsTutorialActive());
 
     private void Awake()
     {
         _controls = new InputActions();
         FindFirstObjectByType<InputFeedbackUI>().SetSwipeDetection(this);
-        TryGetComponent(out NewController player);
+        TryGetComponent(out PlayerController player);
         _player = player;
     }
 

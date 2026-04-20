@@ -21,17 +21,18 @@ public class Enemy : MonoBehaviour
     [SerializeField] protected Animator _animator;
     public Animator Animator => _animator;
     protected bool _isDead = false;
+    private bool _hasHandledGameplayClosed = false;
 
     public virtual void OnEnable()
     {
         if (CustomUpdateManager.Instance != null)
-            CustomUpdateManager.Instance.SubscribeToUpdate(CustomUpdate);
+            CustomUpdateManager.Instance.SubscribeToUpdate(HandleCustomUpdate);
     }
 
     public virtual void OnDisable()
     {
         if (CustomUpdateManager.Instance != null)
-            CustomUpdateManager.Instance.UnsubscribeFromUpdate(CustomUpdate);
+            CustomUpdateManager.Instance.UnsubscribeFromUpdate(HandleCustomUpdate);
     }
 
     protected virtual void Awake()
@@ -48,7 +49,19 @@ public class Enemy : MonoBehaviour
 
         InitializeAudioContext();
 
-        _player = FindAnyObjectByType<NewController>().transform;
+        _player = FindAnyObjectByType<PlayerController>().transform;
+    }
+
+    private void HandleCustomUpdate()
+    {
+        if (LevelSessionManager.Instance != null && !LevelSessionManager.Instance.CanProcessGameplay)
+        {
+            HandleGameplayClosed();
+            return;
+        }
+
+        _hasHandledGameplayClosed = false;
+        CustomUpdate();
     }
 
     public virtual void CustomUpdate() { }
@@ -102,5 +115,16 @@ public class Enemy : MonoBehaviour
     {
         Die();
     }
-    
+
+    protected virtual void HandleGameplayClosed()
+    {
+        if (_hasHandledGameplayClosed)
+            return;
+
+        _hasHandledGameplayClosed = true;
+        StopAllCoroutines();
+
+        if (_rb != null)
+            _rb.linearVelocity = Vector2.zero;
+    }
 }

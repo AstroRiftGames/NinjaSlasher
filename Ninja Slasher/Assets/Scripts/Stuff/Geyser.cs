@@ -14,7 +14,7 @@ public class Geyser : MonoBehaviour
     
     private float _lastActivation;
     private bool _isActive;
-    private NewController _player;
+    private PlayerController _player;
     [SerializeField] private AudioSet _audioSet;
 
     protected ElementAudioContext _audioContext;
@@ -25,7 +25,7 @@ public class Geyser : MonoBehaviour
     private void OnEnable()
     {
         CustomUpdateManager.Instance.SubscribeToFixedUpdate(CustomUpdate);
-        _player = FindFirstObjectByType<NewController>();
+        _player = FindFirstObjectByType<PlayerController>();
         _lastActivation = Time.time - _cooldown/2 - _activeTime;
         _maxHeight = _platform.transform.localPosition.y;
         _platform.transform.localPosition = Vector2.zero;
