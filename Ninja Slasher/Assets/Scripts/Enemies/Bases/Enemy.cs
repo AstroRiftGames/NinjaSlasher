@@ -21,6 +21,7 @@ public class Enemy : MonoBehaviour
     [SerializeField] protected Animator _animator;
     public Animator Animator => _animator;
     protected bool _isDead = false;
+    private bool _hasRegisteredKill = false;
     private bool _hasHandledGameplayClosed = false;
 
     public virtual void OnEnable()
@@ -84,6 +85,7 @@ public class Enemy : MonoBehaviour
     {
         if (_isDead) return;
         _isDead = true;
+        RegisterKill();
 
         _animator.SetTrigger("OnHit");
         AudioService.Instance.PlaySFXAtPosition(_audioContext.Audio.hit, transform.position);
@@ -95,11 +97,13 @@ public class Enemy : MonoBehaviour
     private IEnumerator BreakEnemy()
     {
         yield return new WaitForSeconds(1f);
-        RegisterKill();
     }
 
     protected void RegisterKill()
     {
+        if (_hasRegisteredKill) return;
+        _hasRegisteredKill = true;
+
         if (LevelSessionManager.Instance != null)
             LevelSessionManager.Instance.RegisterEnemyKilled(this);
         else
