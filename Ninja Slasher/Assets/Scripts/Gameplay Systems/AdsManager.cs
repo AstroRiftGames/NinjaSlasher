@@ -5,9 +5,9 @@ using System;
 public class AdsManager : MonoBehaviourSingleton<AdsManager>
 {
     [Header("LevelPlay Configuration")]
-    [SerializeField] private string _appKey = "233038335";
-    [SerializeField] private string _rewardedAdUnitId = "88ic5ya7o0vd1t02";
-    [SerializeField] private string _interstitialAdUnitId = "y2is2h4ghz01hst6";
+    [SerializeField] private string _appKey = "26126460d";
+    [SerializeField] private string _rewardedAdUnitId = "yaociswpoabh9k1w";
+    [SerializeField] private string _interstitialAdUnitId = "pqtjob97lz95hfyr";
 
     private LevelPlayRewardedAd _rewardedAd;
     private LevelPlayInterstitialAd _interstitialAd;
