@@ -127,7 +127,10 @@ public class DemolitionBall : MonoBehaviour
             _heavyAttack = false;
             CreateDamageArea(collision.transform.position);
         }
-        if(collision.gameObject.TryGetComponent(out PlayerController controller))
+        PlayerController controller = collision.gameObject.GetComponentInParent<PlayerController>();
+        if (controller == null) controller = collision.gameObject.GetComponentInChildren<PlayerController>();
+        
+        if(controller != null)
         {
             controller.Die();
         }

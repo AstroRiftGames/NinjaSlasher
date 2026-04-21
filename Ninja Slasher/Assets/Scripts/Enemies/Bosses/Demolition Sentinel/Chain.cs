@@ -114,7 +114,7 @@ public class Chain : RezisableObject
         rb.mass = 1;
 
         _ballT.TryGetComponent(out Collider2D col);
-        col.includeLayers = LayerMask.GetMask("Player");
+        if (col != null) col.excludeLayers = 0;
 
         _ballT.transform.SetParent(_anchor);
 
