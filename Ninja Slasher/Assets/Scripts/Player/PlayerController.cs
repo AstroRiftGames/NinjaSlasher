@@ -366,6 +366,7 @@ public class PlayerController : MonoBehaviour
                 break;
             }
         }
+
         _isParrying = false;
     }
 
@@ -409,6 +410,9 @@ public class PlayerController : MonoBehaviour
     {
         Debug.Log("Player Died");
         if (_isKO) return;
+
+        PlayKnockOutSfx();
+
         _isKO = true;
         OnHit?.Invoke(false);
 
@@ -417,6 +421,7 @@ public class PlayerController : MonoBehaviour
         _view.RB.bodyType = RigidbodyType2D.Dynamic;
         _view.RB.gravityScale = 1f;
 
+
         _view.Animator.SetTrigger("OnKO");
 
         if (CameraShake.Instance != null)
@@ -424,9 +429,39 @@ public class PlayerController : MonoBehaviour
             CameraShake.Instance.TriggerShake(0.4f, 0.5f);
         }
 
-        if (UIManager.Instance.IsHapticFeedbackActive) HapticFeedback.HeavyFeedback();
+        if (UIManager.Instance.IsHapticFeedbackActive)
+        {
+            HapticFeedback.HeavyFeedback();
+        }
 
         GameManager.Instance?.OnPlayerLose();
+    }
+
+    private void PlayKnockOutSfx()
+    {
+        if (_audio == null)
+        {
+            return;
+        }
+
+        AudioEvent selectedEvent = GetRandomKnockOutEvent();
+        if (selectedEvent == null)
+        {
+            return;
+        }
+
+        AudioService.Instance.PlaySFXAtPosition(selectedEvent, transform.position);
+    }
+
+    private AudioEvent GetRandomKnockOutEvent()
+    {
+        if (_audio.koVariants != null && _audio.koVariants.Length > 0)
+        {
+            int randomIndex = UnityEngine.Random.Range(0, _audio.koVariants.Length);
+            return _audio.koVariants[randomIndex];
+        }
+
+        return _audio.die;
     }
     #endregion
 

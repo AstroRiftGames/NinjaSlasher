@@ -9,4 +9,5 @@ public class PlatformAudioSet : AudioSet
     public AudioEvent DestroyPlatform;
     public AudioEvent Idle;
     public AudioEvent Idle2;
+    public AudioEvent SlideLoop;
 }

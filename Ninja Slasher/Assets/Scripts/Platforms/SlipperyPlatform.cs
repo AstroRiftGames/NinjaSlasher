@@ -66,7 +66,7 @@ public class SlipperyPlatform : PlatformBase
 
         _isSliding = true;
 
-        AudioService.Instance.PlaySFXAtPosition(_audioContext.Audio.Interaction, player.transform.position);
+        AudioService.Instance.PlaySFXAtPosition(_audioContext.Audio.SlideLoop, player.transform.position);
     }
 
     public override void OnPlayerExit(GameObject player, bool isForced = false)
