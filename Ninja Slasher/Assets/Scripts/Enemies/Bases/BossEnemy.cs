@@ -5,6 +5,8 @@ public class BossEnemy : Enemy
 {
     [SerializeField] protected float _waitTime;
     protected bool _isWaiting = false;
+
+    public virtual bool IsVulnerable { get; protected set; }
     public override void OnEnable()
     {
         base.OnEnable();

@@ -60,7 +60,7 @@ public class Arachnomadre : BossEnemy
     [Space]
     [Header("Vulnerability")]
     [SerializeField] float _vulnerabilityTime;
-    private bool _isVulnerable;
+    [SerializeField] ArachnomadreCore _core;
 
     #endregion
 
@@ -94,18 +94,7 @@ public class Arachnomadre : BossEnemy
     #region COLLISION DETECTION
     private void OnTriggerEnter2D(Collider2D collision)
     {
-        if (collision.gameObject.CompareTag("Player"))
-        {
-            if (_isVulnerable)
-            {
-                Die();
-            }
-            else
-            {
-                collision.gameObject.TryGetComponent(out PlayerController player);
-                player.Die();
-            }
-        }
+        // Player collision is now handled by ArachnomadreCore
     }
     #endregion
 
@@ -428,7 +417,11 @@ public class Arachnomadre : BossEnemy
     #endregion
 
     #region VULNERABILITY MANAGEMENT
-    private bool SetVulnerability(bool value) => _isVulnerable = value;
+    private void SetVulnerability(bool value)
+    {
+        IsVulnerable = value;
+        if (_core != null) _core.enabled = value;
+    }
 
     public IEnumerator GetVulnerable()
     {
@@ -451,7 +444,7 @@ public class Arachnomadre : BossEnemy
     }
     public override void CustomUpdate()
     {
-        if (!_isVulnerable && !_isWaiting)
+        if (!IsVulnerable && !_isWaiting)
         {
             if (isTurning)
             {

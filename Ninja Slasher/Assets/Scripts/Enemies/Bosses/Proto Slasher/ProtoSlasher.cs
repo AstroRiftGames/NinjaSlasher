@@ -46,7 +46,7 @@ public class ProtoSlasher : BossEnemy
     [SerializeField] CircleCollider2D _parryZone;
     bool _isStunned;
     [SerializeField] float _stunTime;
-    bool _isVulnerable;
+    [SerializeField] ProtoSlasherCore _core;
     [SerializeField] float _vulnerableTime;
 
     protected override void Awake()
@@ -213,10 +213,11 @@ public class ProtoSlasher : BossEnemy
 
     private IEnumerator SetVulnerable()
     {
-        _isVulnerable = true;
+        IsVulnerable = true;
+        if (_core != null) _core.enabled = true;
         yield return new WaitForSeconds(_vulnerableTime);
-        _isVulnerable = false;
-
+        IsVulnerable = false;
+        if (_core != null) _core.enabled = false;
     }
     #endregion
 
@@ -252,15 +253,7 @@ public class ProtoSlasher : BossEnemy
                 }
                 break;
             case "Player":
-                if(!_isVulnerable)
-                {
-                    collision.gameObject.TryGetComponent(out PlayerController player);
-                    player.Die();
-                }
-                else
-                {
-                    Die();
-                }
+                // Handled by ProtoSlasherCore
                 break;
         }
     }

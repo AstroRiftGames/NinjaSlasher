@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using UnityEngine;
 
@@ -28,15 +28,13 @@ public class DemolitionSentinel : BossEnemy
     public SentinelCore Core => _core;
     public void SetIsVulnerable(bool value)
     {
-        _isVulnerable = value;
+        IsVulnerable = value;
         _animator.SetBool("isVulnerable", value);
         if(value)
         {
             _vulnerableEntryTime = Time.time;
         }
     }
-    private bool _isVulnerable;
-    public bool IsVulnerable => _isVulnerable;
     private float _vulnerableEntryTime;
     [SerializeField] float _vulnerableTime;
     public void SetJustAttacked(bool value) => _justAttacked = value;
@@ -106,7 +104,7 @@ public class DemolitionSentinel : BossEnemy
         _root.Execute();
         _animator.SetBool("hasRightArm", _rightChain.IsActive);
         _animator.SetBool("hasLeftArm", _leftChain.IsActive);
-        if(_isVulnerable)
+        if(IsVulnerable)
         {
             CheckVulnerableTime();
         }
@@ -180,7 +178,7 @@ public class DemolitionSentinel : BossEnemy
     public void AimArm( Transform arm)
     {
         float angle = (Mathf.Atan2(_targetDir.y, _targetDir.x) * Mathf.Rad2Deg);
-        Debug.Log($"Aiming {arm.name} at {angle}�");
+        Debug.Log($"Aiming {arm.name} at {angle}°");
         arm.transform.rotation = Quaternion.Euler(0, 0, angle);
     }
 
@@ -331,7 +329,7 @@ public class DemolitionSentinel : BossEnemy
     bool QDoubleAttack() =>!_justAttacked && _balls.Length >= 2 && (_isDoubleAttacking || (!_isAttacking && _nextAttack == SentinelAttacks.Double));
     bool QHeavyAttack() => !_justAttacked && (_isHeavyAttacking || (!_isAttacking && _nextAttack == SentinelAttacks.Heavy));
     bool QSweepAttack() => !_justAttacked && (_isSweepAttacking || (!_isAttacking && _nextAttack == SentinelAttacks.Sweep));
-    bool QVulnerable() => _isVulnerable;
+    bool QVulnerable() => IsVulnerable;
 
     #endregion
 

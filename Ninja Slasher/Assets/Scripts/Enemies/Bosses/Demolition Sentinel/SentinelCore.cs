@@ -1,24 +1,14 @@
 using System.Collections;
 using UnityEngine;
 
-public class SentinelCore : MonoBehaviour
+public class SentinelCore : BossCore
 {
-    DemolitionSentinel _sentinel;
-    Collider2D _collider;
-    private void Awake()
-    {
-        TryGetComponent(out Collider2D collider);
-        _collider = collider;
-        _sentinel = GetComponentInParent<DemolitionSentinel>();
-    }
-    private void OnEnable()
-    {
-        _collider.enabled = true;
-    }
-    private void OnDisable()
-    {
-        _collider.enabled = false;
+    private DemolitionSentinel _sentinel;
 
+    protected override void Awake()
+    {
+        base.Awake();
+        _sentinel = _boss as DemolitionSentinel;
     }
 
     private void KillSentinel()
@@ -35,23 +25,16 @@ public class SentinelCore : MonoBehaviour
         _sentinel.enabled = false;
     }
 
-    private void OnTriggerEnter2D(Collider2D collision)
+    protected override void OnVulnerableHit(Collider2D collision)
     {
-        if (collision.CompareTag("Player"))
+        if (_sentinel.Animator != null)
         {
-            if(_sentinel.IsVulnerable)
-            {
-                _sentinel.Animator.SetTrigger("onHit");
-                StartCoroutine(_sentinel.SentinelAudio.DefeatedFeedbackSequence(3f));
-                KillSentinel();
-            }
-            else
-            {
-                if(collision.TryGetComponent(out PlayerController controller))
-                {
-                    controller.Die();
-                }
-            }
+            _sentinel.Animator.SetTrigger("onHit");
         }
+        if (_sentinel.SentinelAudio != null)
+        {
+            StartCoroutine(_sentinel.SentinelAudio.DefeatedFeedbackSequence(3f));
+        }
+        KillSentinel();
     }
 }

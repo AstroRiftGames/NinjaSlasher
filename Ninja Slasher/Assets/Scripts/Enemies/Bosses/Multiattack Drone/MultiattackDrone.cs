@@ -20,7 +20,6 @@ public class MultiattackDrone : BossEnemy
     private Vector2 _playerPos;
     private bool _flyingAway;
     [SerializeField] BoxCollider2D _boxCol;
-    [SerializeField] BoxCollider2D _boxTrigger;
     [SerializeField] CapsuleCollider2D _capsuleCol;
 
     [Header("Bullet Prefabs")]
@@ -43,7 +42,7 @@ public class MultiattackDrone : BossEnemy
 
     [Header("Vulnerability Parameters")]
     [SerializeField] float _vulnerabilityTime;
-    private bool _isVulnerable;
+    [SerializeField] DroneCore _core;
 
     private bool _isActive = false;
 
@@ -72,7 +71,7 @@ public class MultiattackDrone : BossEnemy
 
     public override void CustomUpdate()
     {
-        if (_isActive && !_isVulnerable)
+        if (_isActive && !IsVulnerable)
         {
             SetLookingDirection();
 
@@ -110,7 +109,11 @@ public class MultiattackDrone : BossEnemy
     private bool CheckCooldown() => Time.time >= _lastAttack + _cooldown;
 
     #region VULNERABILITY MANAGEMENT
-    private bool SetVulnerability(bool value) => _isVulnerable = value;
+    private void SetVulnerability(bool value)
+    {
+        IsVulnerable = value;
+        if (_core != null) _core.enabled = value;
+    }
 
     private IEnumerator Activate()
     {
@@ -120,25 +123,21 @@ public class MultiattackDrone : BossEnemy
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
-        if (collision.gameObject.CompareTag("Projectile") && !_isVulnerable)
+        if (collision.gameObject.CompareTag("Projectile") && !IsVulnerable)
         {
             collision.TryGetComponent(out Projectile projectile);
-            if (projectile.Shooter.gameObject.CompareTag("Player"))
+            if (projectile != null && projectile.Shooter != null && projectile.Shooter.gameObject.CompareTag("Player"))
             {
                 StopAllCoroutines();
                 StartCoroutine(GetVulnerable());
             }
         }
-        else if (collision.gameObject.CompareTag("Player") && _isVulnerable)
-        {
-            StopAllCoroutines();
-            Die();
-        }
     }
 
     private void OnCollisionEnter2D(Collision2D collision)
     {
-        if(collision.gameObject.CompareTag("Scenario") && _isVulnerable)
+        if (!IsVulnerable) return;
+        if(collision.gameObject.CompareTag("Scenario"))
         {
             AudioService.Instance.PlaySFXAtPosition(_droneAudioContext.Audio.hitByGround, transform.position);
         }
@@ -150,11 +149,9 @@ public class MultiattackDrone : BossEnemy
         SetVulnerability(true);
         _rb.gravityScale = 1;
         _boxCol.enabled = true;
-        _boxTrigger.enabled = true;
         yield return new WaitForSeconds(_vulnerabilityTime);
         _animator.SetTrigger("OnRecover");
         _boxCol.enabled = false;
-        _boxTrigger.enabled = false;
         _rb.gravityScale = 0;
         yield return new WaitForSeconds(1.75f);
 
@@ -166,7 +163,6 @@ public class MultiattackDrone : BossEnemy
     {
         base.Die();
         _boxCol.enabled = false;
-        _boxTrigger.enabled = false;
         _capsuleCol.enabled = false;
         _rb.bodyType = RigidbodyType2D.Static;
     }
