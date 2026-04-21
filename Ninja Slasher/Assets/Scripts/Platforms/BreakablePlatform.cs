@@ -58,9 +58,12 @@ public class BreakablePlatform : PlatformBase
         _playerController = controller;
         if (!isActive) return;
 
-        ChangeTilemap();
-        _particleSystem.Play();
-        AudioService.Instance.PlaySFXAtPosition(_audioContext.Audio.Interaction, transform.position);
+        if(_remainingUses >= 1)
+        {
+            ChangeTilemap();
+            _particleSystem.Play();
+            AudioService.Instance.PlaySFXAtPosition(_audioContext.Audio.Interaction, transform.position);
+        }
         if (_remainingUses <= 0)
         {
             Break();
@@ -80,7 +83,6 @@ public class BreakablePlatform : PlatformBase
         GameEvents.RaiseBreakablePlatformBroken();
         AudioService.Instance.PlaySFXAtPosition(_audioContext.Audio.DestroyPlatform, transform.position);
         DeactivateWhole();
-        _particleSystem.Play();
         StartCoroutine(DestroyAfterParticles());
     }
 
@@ -88,7 +90,10 @@ public class BreakablePlatform : PlatformBase
     {
         _tilemap[_maxUses - _remainingUses].SetActive(false);
         _remainingUses--;
-        _tilemap[_maxUses - _remainingUses].SetActive(true);
+        if(_remainingUses> 0)
+        {
+            _tilemap[_maxUses - _remainingUses].SetActive(true);
+        }
     }
 
     private void DeactivateWhole()
