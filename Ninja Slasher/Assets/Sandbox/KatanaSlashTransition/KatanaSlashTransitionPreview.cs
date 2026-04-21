@@ -8,7 +8,6 @@ public sealed class KatanaSlashTransitionPreview : MonoBehaviour
     private const string BackdropName = "DemoBackdrop";
     private const string OverlayName = "SlashOverlay";
     private const float MaxAperture = 2.35f;
-    private const float TravelPadding = 1.65f;
 
     [Header("References")]
     [SerializeField] private Material _baseMaterial;
@@ -22,14 +21,15 @@ public sealed class KatanaSlashTransitionPreview : MonoBehaviour
     [SerializeField] private float _delayAfterSlash = 0f;
     [SerializeField] private AnimationCurve _fadeCurve = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
     [SerializeField] private AnimationCurve _slashTravelCurve = new AnimationCurve(
-        new Keyframe(0f, 0f, 0f, 2.8f),
-        new Keyframe(0.28f, 0.62f, 1.7f, 0.85f),
+        new Keyframe(0f, 0f, 0f, 3.6f),
+        new Keyframe(0.22f, 0.58f, 2.1f, 0.9f),
         new Keyframe(1f, 1f, 0.18f, 0f));
 
     [Header("Slash Path")]
-    [SerializeField, Range(-180f, 180f)] private float _slashTravelDirection = -135f;
+    [SerializeField, Range(-180f, 180f)] private float _slashTravelDirection = 45f;
     [SerializeField, Range(-180f, 180f)] private float _cutAngle = -45f;
     [SerializeField, Range(-1.25f, 1.25f)] private float _cutPosition = 0f;
+    [SerializeField, Min(1.5f)] private float _travelOverscan = 2.2f;
     [SerializeField, Min(0f)] private float _slashFrontWidth = 0.055f;
     [SerializeField, Min(0f)] private float _trailLength = 0.22f;
     [SerializeField, Range(0f, 0.6f)] private float _openFollowDelay = 0.08f;
@@ -112,6 +112,7 @@ public sealed class KatanaSlashTransitionPreview : MonoBehaviour
 
         _fadeToBlackDuration = Mathf.Max(0.01f, _fadeToBlackDuration);
         _slashTravelDuration = Mathf.Max(0.01f, _slashTravelDuration);
+        _travelOverscan = Mathf.Max(1.5f, _travelOverscan);
         _slashFrontWidth = Mathf.Max(0.0001f, _slashFrontWidth);
         _trailLength = Mathf.Max(0f, _trailLength);
         _openWidthBehindSlash = Mathf.Max(0f, _openWidthBehindSlash);
@@ -296,7 +297,7 @@ public sealed class KatanaSlashTransitionPreview : MonoBehaviour
 
         _runtimeMaterial.SetFloat("_Opacity", Mathf.Clamp01(blackAmount));
         _runtimeMaterial.SetFloat("_Travel", Mathf.Clamp01(slashTravel));
-        _runtimeMaterial.SetFloat("_TravelPosition", Mathf.Lerp(TravelPadding, -TravelPadding, Mathf.Clamp01(slashTravel)));
+        _runtimeMaterial.SetFloat("_TravelPosition", Mathf.Lerp(_travelOverscan, -_travelOverscan, Mathf.Clamp01(slashTravel)));
         _runtimeMaterial.SetFloat("_OpenProgress", EvaluateOpenProgress(slashTravel));
         _runtimeMaterial.SetFloat("_TravelDirection", _slashTravelDirection);
         _runtimeMaterial.SetFloat("_Angle", _cutAngle);
