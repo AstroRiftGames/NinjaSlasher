@@ -8,10 +8,9 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
 {
     [Header("Save Settings")]
     //[SerializeField] private bool debugMode = true;
-    [SerializeField] private bool autoMigration = true;
 
     private static string SaveFileName = "ninja_save.json";
-    private const string USER_DATA_FOLDER = "UserData";
+    private const string LocalUserId = "local_device";
     private const int MAX_POWERUP_STACK = 99;
     private const int MAX_POWERUP_USES  = 99;
     private const int DEFAULT_MAX_LIVES = 5;
@@ -22,7 +21,6 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
     private string currentUserId = "";
     private bool isDataLoaded = false;
     public bool IsDataLoaded => isDataLoaded;
-    private bool hasAuthIntegration = false;
 
     private bool _resetInProgress;
     public bool ResetInProgress => _resetInProgress;
@@ -40,55 +38,13 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
         base.Awake();
 
         InitializeOfflineMode();
-
-        StartCoroutine(WaitForAuthIntegration());
-    }
-
-    private System.Collections.IEnumerator WaitForAuthIntegration()
-    {
-        while (LoginManager.Instance == null)
-            yield return null;
-
-        TrySetupAuthIntegration();
     }
 
     private void InitializeOfflineMode()
     {
-        currentUserId = "local_" + SystemInfo.deviceUniqueIdentifier;
+        currentUserId = LocalUserId;
         saveFilePath = Path.Combine(Application.persistentDataPath, SaveFileName);
         LoadData();
-    }
-
-    private void TrySetupAuthIntegration()
-    {
-        if (LoginManager.Instance != null)
-        {
-            LoginManager.OnAuthenticationStateChanged += OnAuthenticationChanged;
-            LoginManager.OnSignInCompleted += OnUserSignedIn;
-            hasAuthIntegration = true;
-
-            if (IsUserAuthenticated())
-            {
-                MigrateToAuthenticatedUser();
-            }
-
-            //if (debugMode)
-            //    Debug.Log("[SaveManager] Authentication integration enabled");
-        }
-        //else
-        //{
-        //    if (debugMode)
-        //        Debug.Log("[SaveManager] No authentication available, using offline mode");
-        //}
-    }
-
-    void OnDestroy()
-    {
-        if (hasAuthIntegration && LoginManager.Instance != null)
-        {
-            LoginManager.OnAuthenticationStateChanged -= OnAuthenticationChanged;
-            LoginManager.OnSignInCompleted -= OnUserSignedIn;
-        }
     }
 
     #region Data Loading and Migration
@@ -169,258 +125,6 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
         catch (Exception e)
         {
             Debug.LogError($"[SaveManager] Failed to load '{path}': {e.Message}");
-            return false;
-        }
-    }
-
-    private void MigrateToAuthenticatedUser()
-    {
-        string authenticatedUserId = GetAuthenticatedUserId();
-        if (authenticatedUserId == currentUserId) return;
-
-        //if (debugMode)
-        //    Debug.Log($"[SaveManager] Migrating from {currentUserId} to {authenticatedUserId}");
-
-        GameData offlineData = gameData;
-
-        currentUserId = authenticatedUserId;
-        string userFolder = Path.Combine(Application.persistentDataPath, USER_DATA_FOLDER, currentUserId);
-        if (!Directory.Exists(userFolder)) Directory.CreateDirectory(userFolder);
-        saveFilePath = Path.Combine(userFolder, SaveFileName);
-
-        if (TryLoadFromCurrentPath())
-        {
-            //if (debugMode) Debug.Log("[SaveManager] Loaded existing authenticated user data");
-            if (offlineData != null)
-            {
-                MergeGameData(offlineData, gameData);
-                SaveData();
-                //if (debugMode) Debug.Log("[SaveManager] Merged offline changes into authenticated save");
-            }
-        }
-        else if (autoMigration && offlineData != null)
-        {
-            // Si no existe, migramos el estado actual tal cual
-            gameData = offlineData;
-            SaveData();
-            //if (debugMode) Debug.Log("[SaveManager] Migrated data to authenticated user");
-        }
-
-        OnDataLoaded?.Invoke(gameData);
-        PowerUpManager.Instance?.ReloadFromSave();
-    }
-
-    [Serializable]
-    private class DailyRewardMirror
-    {
-        public string lastClaimDate;
-    }
-
-    private DateTime ParseIsoOrDefault(string iso)
-    {
-        if (string.IsNullOrEmpty(iso)) return DateTime.MinValue;
-        if (DateTime.TryParse(iso, null,
-            System.Globalization.DateTimeStyles.RoundtripKind, out var dt)) return dt;
-        if (DateTime.TryParse(iso, out dt)) return dt;
-        return DateTime.MinValue;
-    }
-
-    private void MergeGameData(GameData source, GameData target)
-    {
-        if (source == null || target == null) return;
-
-        target.highestUnlockedLevel = Mathf.Max(target.highestUnlockedLevel, source.highestUnlockedLevel);
-        target.highestUnlockedArea = Mathf.Max(target.highestUnlockedArea, source.highestUnlockedArea);
-        target.currentArea = Mathf.Max(target.currentArea, source.currentArea);
-
-        if (source.levelStars != null)
-        {
-            if (target.levelStars == null) target.levelStars = new Dictionary<int, int>();
-            foreach (var kv in source.levelStars)
-            {
-                if (!target.levelStars.ContainsKey(kv.Key))
-                    target.levelStars[kv.Key] = kv.Value;
-                else
-                    target.levelStars[kv.Key] = Mathf.Max(target.levelStars[kv.Key], kv.Value);
-            }
-        }
-        target.totalStars = 0;
-        if (target.levelStars != null)
-            foreach (var kv in target.levelStars) target.totalStars += Mathf.Max(0, kv.Value);
-
-        if (source.unlockedAreas != null)
-        {
-            if (target.unlockedAreas == null) target.unlockedAreas = new List<int>();
-            foreach (var a in source.unlockedAreas)
-                if (!target.unlockedAreas.Contains(a)) target.unlockedAreas.Add(a);
-        }
-
-        if (source.powerUpInventory != null)
-        {
-            if (target.powerUpInventory == null) target.powerUpInventory = new List<PowerUpInventoryItem>();
-            foreach (var item in source.powerUpInventory)
-            {
-                var dst = target.powerUpInventory.Find(i => i.type == item.type);
-                if (dst == null)
-                {
-                    target.powerUpInventory.Add(new PowerUpInventoryItem(item.type, item.quantity)
-                    {
-                        lastUpdated = item.lastUpdated
-                    });
-                }
-                else
-                {
-                    dst.quantity += item.quantity;
-                    if (item.lastUpdated > dst.lastUpdated) dst.lastUpdated = item.lastUpdated;
-                }
-            }
-        }
-
-        if (source.activePowerUps != null)
-        {
-            if (target.activePowerUps == null) target.activePowerUps = new List<PowerUpData>();
-            foreach (var p in source.activePowerUps)
-            {
-                var existing = target.activePowerUps.Find(x => x.type == p.type);
-                if (existing == null || p.activationTime > existing.activationTime)
-                {
-                    if (existing != null) target.activePowerUps.Remove(existing);
-                    target.activePowerUps.Add(p);
-                }
-            }
-        }
-
-        try
-        {
-            var src = string.IsNullOrEmpty(source.dailyRewardData) ? null : JsonUtility.FromJson<DailyRewardMirror>(source.dailyRewardData);
-            var dst = string.IsNullOrEmpty(target.dailyRewardData) ? null : JsonUtility.FromJson<DailyRewardMirror>(target.dailyRewardData);
-            var srcDate = src != null ? ParseIsoOrDefault(src.lastClaimDate) : DateTime.MinValue;
-            var dstDate = dst != null ? ParseIsoOrDefault(dst.lastClaimDate) : DateTime.MinValue;
-            if (srcDate > dstDate) target.dailyRewardData = source.dailyRewardData;
-        }
-        catch { /* si falla parse, dejamos el existente */ }
-
-        target.adsRemoved = target.adsRemoved || source.adsRemoved;
-
-        if (source.lastPlayDate > target.lastPlayDate) target.lastPlayDate = source.lastPlayDate;
-
-        if (source.levelObjectives != null)
-        {
-            if (target.levelObjectives == null) target.levelObjectives = new Dictionary<int, List<int>>();
-            foreach (var kv in source.levelObjectives)
-            {
-                if (!target.levelObjectives.ContainsKey(kv.Key))
-                    target.levelObjectives[kv.Key] = new List<int>(kv.Value);
-                else
-                    foreach (var id in kv.Value)
-                        if (!target.levelObjectives[kv.Key].Contains(id))
-                            target.levelObjectives[kv.Key].Add(id);
-            }
-        }
-
-        if (source.levelProgressData != null)
-        {
-            if (target.levelProgressData == null) target.levelProgressData = new Dictionary<int, LevelProgressData>();
-            foreach (var kv in source.levelProgressData)
-            {
-                if (!target.levelProgressData.ContainsKey(kv.Key))
-                {
-                    target.levelProgressData[kv.Key] = kv.Value;
-                }
-                else
-                {
-                    var dst = target.levelProgressData[kv.Key];
-                    var s   = kv.Value;
-                    if (s.maxStarsEarned > dst.maxStarsEarned) dst.maxStarsEarned = s.maxStarsEarned;
-                    if (s.isCompleted) dst.isCompleted = true;
-                    if (s.firstCompletedDate != DateTime.MinValue &&
-                        (dst.firstCompletedDate == DateTime.MinValue || s.firstCompletedDate < dst.firstCompletedDate))
-                        dst.firstCompletedDate = s.firstCompletedDate;
-                    if (s.bestTimeSeconds < dst.bestTimeSeconds) dst.bestTimeSeconds = s.bestTimeSeconds;
-                    if (s.bestMoves < dst.bestMoves) dst.bestMoves = s.bestMoves;
-                    if (s.parryKillAchieved) dst.parryKillAchieved = true;
-                    foreach (var objId in s.completedObjectiveIds)
-                        if (!dst.completedObjectiveIds.Contains(objId))
-                            dst.completedObjectiveIds.Add(objId);
-                }
-            }
-        }
-
-        if (source.tutorialStates != null)
-        {
-            if (target.tutorialStates == null) target.tutorialStates = new Dictionary<string, int>();
-            foreach (var kv in source.tutorialStates)
-            {
-                if (!target.tutorialStates.ContainsKey(kv.Key))
-                    target.tutorialStates[kv.Key] = kv.Value;
-                else
-                    target.tutorialStates[kv.Key] = Mathf.Max(target.tutorialStates[kv.Key], kv.Value);
-            }
-        }
-
-        if (source.tutorialStepIndices != null)
-        {
-            if (target.tutorialStepIndices == null) target.tutorialStepIndices = new Dictionary<string, int>();
-            foreach (var kv in source.tutorialStepIndices)
-            {
-                if (!target.tutorialStepIndices.ContainsKey(kv.Key))
-                    target.tutorialStepIndices[kv.Key] = kv.Value;
-                else
-                    target.tutorialStepIndices[kv.Key] = Mathf.Max(target.tutorialStepIndices[kv.Key], kv.Value);
-            }
-        }
-
-        target.totalGamesPlayed  += source.totalGamesPlayed;
-        target.totalEnemiesKilled += source.totalEnemiesKilled;
-        target.totalPlayTime     += source.totalPlayTime;
-        target.bestCombo          = Mathf.Max(target.bestCombo, source.bestCombo);
-
-        target.consecutiveLevelWins = Mathf.Max(target.consecutiveLevelWins, source.consecutiveLevelWins);
-        target.lastCompletedLevel   = Mathf.Max(target.lastCompletedLevel, source.lastCompletedLevel);
-    }
-
-    #endregion
-
-    #region Authentication Integration
-
-    private void OnAuthenticationChanged(bool isAuthenticated)
-    {
-        //if (debugMode)
-        //    Debug.Log($"[SaveManager] Authentication state changed: {isAuthenticated}");
-
-        if (isAuthenticated)
-        {
-            MigrateToAuthenticatedUser();
-        }
-    }
-
-    private void OnUserSignedIn(string playerId)
-    {
-        //if (debugMode)
-        //    Debug.Log($"[SaveManager] User signed in with ID: {playerId}");
-
-        MigrateToAuthenticatedUser();
-    }
-
-    private string GetAuthenticatedUserId()
-    {
-        if (IsUserAuthenticated())
-        {
-            return LoginManager.Instance.PlayerId;
-        }
-        return currentUserId;
-    }
-
-    private bool IsUserAuthenticated()
-    {
-        try
-        {
-            return hasAuthIntegration &&
-                   LoginManager.Instance != null &&
-                   LoginManager.Instance.IsSignedIn;
-        }
-        catch
-        {
             return false;
         }
     }
@@ -1081,7 +785,6 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
         var data = GetGameData();
         Debug.Log($"[SaveManager] ESTADO ACTUAL:\n" +
                   $"- Usuario: {currentUserId}\n" +
-                  $"- Autenticado: {IsUserAuthenticated()}\n" +
                   $"- Nivel m�s alto: {data.highestUnlockedLevel}\n" +
                   $"- �rea m�s alta: {data.highestUnlockedArea}\n" +
                   $"- Estrellas totales: {data.totalStars}\n" +
@@ -1101,10 +804,8 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
     public void DebugPrintUserInfo()
     {
         Debug.Log($"Current User ID: {currentUserId}");
-        Debug.Log($"Is Authenticated: {IsUserAuthenticated()}");
         Debug.Log($"Save File Path: {saveFilePath}");
         Debug.Log($"Data Loaded: {isDataLoaded}");
-        Debug.Log($"Auth Integration: {hasAuthIntegration}");
     }
 
     [ContextMenu("Force Reload Data")]
@@ -1150,30 +851,10 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
             SafeDeleteFile(rootFile + ".bak");
             SafeDeleteFile(rootFile + ".tmp");
 
-            string userDataRoot = Path.Combine(Application.persistentDataPath, USER_DATA_FOLDER);
-            if (Directory.Exists(userDataRoot))
-            {
-                foreach (var dir in Directory.GetDirectories(userDataRoot))
-                {
-                    string f = Path.Combine(dir, SaveFileName);
-                    SafeDeleteFile(f);
-                    SafeDeleteFile(f + ".bak");
-                    SafeDeleteFile(f + ".tmp");
-
-                    TryDeleteDirectoryIfEmpty(dir);
-                }
-            }
-                     
             gameData = new GameData();
             InitializeNewGameData();
             isDataLoaded = true;
             SaveData();
-
-            //if (debugMode)
-            //{
-            //    Debug.Log($"[SaveManager] Deep local reset completed.\n" +
-            //              $"Root: {rootFile}\nUserData: {userDataRoot}\nCurrentPath: {saveFilePath}");
-            //}
 
             if (notify)
             {
@@ -1199,22 +880,6 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
         catch (Exception e)
         {
             Debug.LogError($"[SaveManager] Failed to delete '{path}': {e.Message}");
-        }
-    }
-
-    private void TryDeleteDirectoryIfEmpty(string dir)
-    {
-        try
-        {
-            if (!Directory.Exists(dir)) return;
-            bool noFiles = Directory.GetFiles(dir).Length == 0;
-            bool noDirs = Directory.GetDirectories(dir).Length == 0;
-            if (noFiles && noDirs)
-                Directory.Delete(dir, recursive: false);
-        }
-        catch (Exception e)
-        {
-            //if (debugMode) Debug.Log($"[SaveManager] Could not clean empty dir '{dir}': {e.Message}");
         }
     }
 

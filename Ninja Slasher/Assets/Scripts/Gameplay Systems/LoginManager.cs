@@ -54,10 +54,12 @@ public class LoginManager : MonoBehaviourSingleton<LoginManager>
     public static event Action<string> OnSignInFailed;
     public static event Action<PlayerProfileData> OnPlayerProfileChanged;
 
-    public bool IsSignedIn =>
+    public bool HasAuthSession =>
         UnityServices.State == ServicesInitializationState.Initialized &&
         AuthenticationService.Instance.IsSignedIn;
-    public string PlayerId => IsSignedIn ? AuthenticationService.Instance.PlayerId : "";
+    public bool IsSignedIn => HasAuthSession;
+    public bool IsGooglePlayGamesSignedIn => IsGooglePlayGamesAuthenticated();
+    public string PlayerId => HasAuthSession ? AuthenticationService.Instance.PlayerId : "";
     public string PlayerName { get; private set; } = "";
     public string PlayerAvatarUrl { get; private set; } = "";
     public Texture2D PlayerAvatarTexture { get; private set; }

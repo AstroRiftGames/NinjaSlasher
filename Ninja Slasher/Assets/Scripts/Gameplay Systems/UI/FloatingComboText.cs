@@ -22,7 +22,10 @@ public class FloatingComboText : MonoBehaviour, IPoolable
     [SerializeField] private bool _addPunchEffect = true;
     [SerializeField] private float _punchStrength = 0.3f;
 
+    private RectTransform _rectTransform;
     private Sequence _animationSequence;
+    private Vector3 _baseScale;
+    private bool _baseScaleCached;
 
     public event Action<FloatingComboText> OnRequestDespawn;
 
@@ -33,10 +36,17 @@ public class FloatingComboText : MonoBehaviour, IPoolable
 
         if (_canvasGroup == null)
             _canvasGroup = GetComponent<CanvasGroup>();
+
+        _rectTransform = transform as RectTransform;
+        CacheBaseScaleIfNeeded();
+        ResetVisualState();
     }
 
     public void Show(string message, Vector3 worldPosition, Color color)
     {
+        CacheBaseScaleIfNeeded();
+        ResetVisualState();
+
         _text.text = message;
         _text.color = color;
 
@@ -92,46 +102,88 @@ public class FloatingComboText : MonoBehaviour, IPoolable
         localPoint.x = Mathf.Clamp(localPoint.x, -halfW + marginX, halfW - marginX);
         localPoint.y = Mathf.Clamp(localPoint.y, -halfH + marginY, halfH - marginY);
 
-        transform.localPosition = localPoint;
+        _rectTransform.localPosition = localPoint;
 
         PlayAnimation();
     }
 
     private void PlayAnimation()
     {
-        if (_animationSequence != null && _animationSequence.IsActive())
-            _animationSequence.Kill();
+        ResetVisualState();
 
-        _canvasGroup.alpha = 1f;
+        Vector3 startScale = _baseScale * _startScale;
+        Vector3 maxScale = _baseScale * _maxScale;
+        Vector3 finalScale = _baseScale * _finalScale;
 
-        Vector3 startScale = Vector3.one * _startScale;
-        Vector3 maxScale = Vector3.one * _maxScale;
-        Vector3 finalScale = Vector3.one * _finalScale;
+        _rectTransform.localScale = startScale;
 
-        transform.localScale = startScale;
-
-        Vector3 startPos = transform.localPosition;
+        Vector3 startPos = _rectTransform.localPosition;
 
         _animationSequence = DOTween.Sequence();
 
-        _animationSequence.Append(transform.DOScale(maxScale, _duration * 0.15f)
+        _animationSequence.Append(_rectTransform.DOScale(maxScale, _duration * 0.15f)
             .SetEase(Ease.OutBack, 1.5f));
 
         if (_addPunchEffect)
         {
-            _animationSequence.Join(transform.DOPunchScale(Vector3.one * _punchStrength, _duration * 0.15f, 5, 0.5f));
+            _animationSequence.Join(_rectTransform.DOPunchScale(_baseScale * _punchStrength, _duration * 0.15f, 5, 0.5f));
         }
 
-        _animationSequence.Append(transform.DOScale(finalScale, _duration * 0.1f)
+        _animationSequence.Append(_rectTransform.DOScale(finalScale, _duration * 0.1f)
             .SetEase(Ease.OutQuad));
 
-        _animationSequence.Join(transform.DOLocalMoveY(startPos.y + _moveDistance, _duration)
+        _animationSequence.Join(_rectTransform.DOLocalMoveY(startPos.y + _moveDistance, _duration)
             .SetEase(_moveCurve));
 
         _animationSequence.Append(_canvasGroup.DOFade(0f, _duration * 0.35f)
             .SetEase(Ease.InQuad));
 
         _animationSequence.OnComplete(RequestDespawn);
+    }
+
+    private void CacheBaseScaleIfNeeded()
+    {
+        if (_baseScaleCached)
+            return;
+
+        _baseScale = _rectTransform != null ? _rectTransform.localScale : transform.localScale;
+        _baseScaleCached = true;
+    }
+
+    private void ResetVisualState()
+    {
+        KillActiveTweens();
+
+        if (_rectTransform != null)
+        {
+            _rectTransform.localScale = _baseScaleCached ? _baseScale : _rectTransform.localScale;
+        }
+
+        if (_canvasGroup != null)
+        {
+            _canvasGroup.alpha = 1f;
+        }
+    }
+
+    private void KillActiveTweens()
+    {
+        if (_animationSequence != null)
+        {
+            if (_animationSequence.IsActive())
+                _animationSequence.Kill();
+
+            _animationSequence = null;
+        }
+
+        if (_rectTransform != null)
+        {
+            DOTween.Kill(_rectTransform);
+        }
+
+        if (_canvasGroup != null)
+        {
+            DOTween.Kill(_canvasGroup);
+        }
     }
 
     private void RequestDespawn()
@@ -141,21 +193,18 @@ public class FloatingComboText : MonoBehaviour, IPoolable
 
     private void OnDestroy()
     {
-        if (_animationSequence != null && _animationSequence.IsActive())
-            _animationSequence.Kill();
+        KillActiveTweens();
     }
 
     public void OnSpawn()
     {
-        if (_animationSequence != null && _animationSequence.IsActive())
-            _animationSequence.Kill();
-
-        _canvasGroup.alpha = 1f;
+        CacheBaseScaleIfNeeded();
+        ResetVisualState();
     }
 
     public void OnDespawn()
     {
-        if (_animationSequence != null && _animationSequence.IsActive())
-            _animationSequence.Kill();
+        CacheBaseScaleIfNeeded();
+        ResetVisualState();
     }
 }
