@@ -54,6 +54,12 @@ public sealed class KatanaSlashTransitionPreview : MonoBehaviour
     [SerializeField, Range(0f, 1f)] private float _cutCurvatureBias = 0.58f;
     [SerializeField, Min(0.01f)] private float _cutCurvatureFalloff = 1.8f;
 
+    [Header("Cut Sharpness")]
+    [SerializeField, Min(0.05f)] private float _cutBodyWidthScale = 1f;
+    [SerializeField, Range(0.05f, 1f)] private float _cutTipTaper = 0.2f;
+    [SerializeField, Range(0.05f, 1f)] private float _cutTailTaper = 0.45f;
+    [SerializeField, Min(0.01f)] private float _cutTaperSharpness = 1.35f;
+
     [Header("Sandbox")]
     [SerializeField] private bool _showDemoBackdrop = true;
     [SerializeField] private Color _backdropColor = new Color(0.11f, 0.13f, 0.16f, 1f);
@@ -131,6 +137,8 @@ public sealed class KatanaSlashTransitionPreview : MonoBehaviour
         _postTraceIntensity = Mathf.Max(0f, _postTraceIntensity);
         _cutCurvatureAmount = Mathf.Max(0f, _cutCurvatureAmount);
         _cutCurvatureFalloff = Mathf.Max(0.01f, _cutCurvatureFalloff);
+        _cutBodyWidthScale = Mathf.Max(0.05f, _cutBodyWidthScale);
+        _cutTaperSharpness = Mathf.Max(0.01f, _cutTaperSharpness);
         _sortingOrder = Mathf.Max(0, _sortingOrder);
 
         if (Application.isPlaying)
@@ -325,6 +333,10 @@ public sealed class KatanaSlashTransitionPreview : MonoBehaviour
         _runtimeMaterial.SetFloat("_CutCurvatureAmount", _cutCurvatureAmount);
         _runtimeMaterial.SetFloat("_CutCurvatureBias", _cutCurvatureBias);
         _runtimeMaterial.SetFloat("_CutCurvatureFalloff", _cutCurvatureFalloff);
+        _runtimeMaterial.SetFloat("_CutBodyWidthScale", _cutBodyWidthScale);
+        _runtimeMaterial.SetFloat("_CutTipTaper", _cutTipTaper);
+        _runtimeMaterial.SetFloat("_CutTailTaper", _cutTailTaper);
+        _runtimeMaterial.SetFloat("_CutTaperSharpness", _cutTaperSharpness);
         _runtimeMaterial.SetColor("_TintColor", Color.black);
         _runtimeMaterial.SetColor("_HighlightColor", _highlightColor);
         _runtimeMaterial.SetColor("_CoreLineColor", _coreLineColor);

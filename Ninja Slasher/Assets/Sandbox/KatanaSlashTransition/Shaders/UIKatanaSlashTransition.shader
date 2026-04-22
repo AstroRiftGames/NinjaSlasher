@@ -29,6 +29,10 @@ Shader "UI/Katana Slash Transition Preview"
         _CutCurvatureAmount ("Cut Curvature Amount", Float) = 0
         _CutCurvatureBias ("Cut Curvature Bias", Range(0,1)) = 0.58
         _CutCurvatureFalloff ("Cut Curvature Falloff", Float) = 1.8
+        _CutBodyWidthScale ("Cut Body Width Scale", Float) = 1
+        _CutTipTaper ("Cut Tip Taper", Range(0.05,1)) = 0.2
+        _CutTailTaper ("Cut Tail Taper", Range(0.05,1)) = 0.45
+        _CutTaperSharpness ("Cut Taper Sharpness", Float) = 1.35
     }
 
     SubShader
@@ -98,6 +102,10 @@ Shader "UI/Katana Slash Transition Preview"
             float _CutCurvatureAmount;
             float _CutCurvatureBias;
             float _CutCurvatureFalloff;
+            float _CutBodyWidthScale;
+            float _CutTipTaper;
+            float _CutTailTaper;
+            float _CutTaperSharpness;
 
             v2f vert(appdata_t v)
             {
@@ -122,6 +130,10 @@ Shader "UI/Katana Slash Transition Preview"
                 float curvatureArch = 1.0 - saturate(abs(slashAxis - curvatureBias) / curvatureSpan);
                 float curvatureOffset = _CutCurvatureAmount * pow(curvatureArch, max(_CutCurvatureFalloff, 0.01));
                 float curvedTravelPosition = _TravelPosition + curvatureOffset;
+                float centerProfile = sin(slashAxis * UNITY_PI);
+                float taperProfile = pow(saturate(centerProfile), max(_CutTaperSharpness, 0.01));
+                float endTaper = lerp(_CutTailTaper, _CutTipTaper, slashAxis);
+                float cutWidthProfile = lerp(endTaper, _CutBodyWidthScale, taperProfile);
 
                 float microVariation =
                     sin((travelCoord * _IrregularityFrequency) + (_Travel * 7.3)) * 0.65 +
@@ -132,8 +144,8 @@ Shader "UI/Katana Slash Transition Preview"
                 float distanceFromCut = abs(signedDistance);
 
                 float softness = max(_EdgeSoftness, 0.0005);
-                float lineThickness = max(_LineThickness, 0.0001);
-                float glowThickness = max(_GlowThickness, lineThickness + 0.0001);
+                float lineThickness = max(_LineThickness * cutWidthProfile, 0.0001);
+                float glowThickness = max(_GlowThickness * lerp(0.75, 1.0, cutWidthProfile), lineThickness + 0.0001);
                 float frontWidth = max(_FrontWidth, lineThickness);
 
                 float frontDistance = abs(travelCoord - curvedTravelPosition);
@@ -144,7 +156,7 @@ Shader "UI/Katana Slash Transition Preview"
 
                 float openAnchor = curvedTravelPosition + (_OpenProgress * _TrailLength * 0.85);
                 float openedBand = smoothstep(travelCoord, travelCoord + softness, openAnchor);
-                float aperture = _OpenWidth * _OpenProgress * _MaxAperture;
+                float aperture = _OpenWidth * _OpenProgress * _MaxAperture * cutWidthProfile;
                 float openMask = openedBand * (1.0 - smoothstep(aperture, aperture + softness, distanceFromCut));
                 float blackMask = saturate(_Opacity * (1.0 - openMask));
 
