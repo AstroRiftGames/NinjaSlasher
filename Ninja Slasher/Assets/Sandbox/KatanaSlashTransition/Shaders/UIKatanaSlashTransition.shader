@@ -26,6 +26,9 @@ Shader "UI/Katana Slash Transition Preview"
         _Energy ("Energy", Range(0,1)) = 1
         _PostTraceIntensity ("Post Trace Intensity", Float) = 0.55
         _MaxAperture ("Max Aperture", Float) = 2.35
+        _CutCurvatureAmount ("Cut Curvature Amount", Float) = 0
+        _CutCurvatureBias ("Cut Curvature Bias", Range(0,1)) = 0.58
+        _CutCurvatureFalloff ("Cut Curvature Falloff", Float) = 1.8
     }
 
     SubShader
@@ -92,6 +95,9 @@ Shader "UI/Katana Slash Transition Preview"
             float _Energy;
             float _PostTraceIntensity;
             float _MaxAperture;
+            float _CutCurvatureAmount;
+            float _CutCurvatureBias;
+            float _CutCurvatureFalloff;
 
             v2f vert(appdata_t v)
             {
@@ -110,6 +116,12 @@ Shader "UI/Katana Slash Transition Preview"
                 float travelRadians = radians(_TravelDirection);
                 float2 travelDir = normalize(float2(cos(travelRadians), sin(travelRadians)));
                 float travelCoord = dot(centeredUv, travelDir);
+                float slashAxis = saturate(0.5 - (travelCoord * 0.5));
+                float curvatureBias = saturate(_CutCurvatureBias);
+                float curvatureSpan = max(max(curvatureBias, 1.0 - curvatureBias), 0.001);
+                float curvatureArch = 1.0 - saturate(abs(slashAxis - curvatureBias) / curvatureSpan);
+                float curvatureOffset = _CutCurvatureAmount * pow(curvatureArch, max(_CutCurvatureFalloff, 0.01));
+                float curvedTravelPosition = _TravelPosition + curvatureOffset;
 
                 float microVariation =
                     sin((travelCoord * _IrregularityFrequency) + (_Travel * 7.3)) * 0.65 +
@@ -124,13 +136,13 @@ Shader "UI/Katana Slash Transition Preview"
                 float glowThickness = max(_GlowThickness, lineThickness + 0.0001);
                 float frontWidth = max(_FrontWidth, lineThickness);
 
-                float frontDistance = abs(travelCoord - _TravelPosition);
+                float frontDistance = abs(travelCoord - curvedTravelPosition);
                 float frontBand = 1.0 - smoothstep(frontWidth, frontWidth + softness, frontDistance);
-                float trailBand = smoothstep(_TravelPosition - _TrailLength, _TravelPosition, travelCoord);
-                trailBand *= 1.0 - smoothstep(_TravelPosition, _TravelPosition + frontWidth, travelCoord);
+                float trailBand = smoothstep(curvedTravelPosition - _TrailLength, curvedTravelPosition, travelCoord);
+                trailBand *= 1.0 - smoothstep(curvedTravelPosition, curvedTravelPosition + frontWidth, travelCoord);
                 float slashPresence = saturate(frontBand + trailBand);
 
-                float openAnchor = _TravelPosition + (_OpenProgress * _TrailLength * 0.85);
+                float openAnchor = curvedTravelPosition + (_OpenProgress * _TrailLength * 0.85);
                 float openedBand = smoothstep(travelCoord, travelCoord + softness, openAnchor);
                 float aperture = _OpenWidth * _OpenProgress * _MaxAperture;
                 float openMask = openedBand * (1.0 - smoothstep(aperture, aperture + softness, distanceFromCut));

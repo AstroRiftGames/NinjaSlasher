@@ -49,6 +49,11 @@ public sealed class KatanaSlashTransitionPreview : MonoBehaviour
     [Header("Afterglow")]
     [SerializeField, Min(0f)] private float _postTraceIntensity = 0.22f;
 
+    [Header("Cut Curvature")]
+    [SerializeField, Min(0f)] private float _cutCurvatureAmount = 0.045f;
+    [SerializeField, Range(0f, 1f)] private float _cutCurvatureBias = 0.58f;
+    [SerializeField, Min(0.01f)] private float _cutCurvatureFalloff = 1.8f;
+
     [Header("Sandbox")]
     [SerializeField] private bool _showDemoBackdrop = true;
     [SerializeField] private Color _backdropColor = new Color(0.11f, 0.13f, 0.16f, 1f);
@@ -124,6 +129,8 @@ public sealed class KatanaSlashTransitionPreview : MonoBehaviour
         _lineIrregularity = Mathf.Max(0f, _lineIrregularity);
         _irregularityFrequency = Mathf.Max(0f, _irregularityFrequency);
         _postTraceIntensity = Mathf.Max(0f, _postTraceIntensity);
+        _cutCurvatureAmount = Mathf.Max(0f, _cutCurvatureAmount);
+        _cutCurvatureFalloff = Mathf.Max(0.01f, _cutCurvatureFalloff);
         _sortingOrder = Mathf.Max(0, _sortingOrder);
 
         if (Application.isPlaying)
@@ -315,6 +322,9 @@ public sealed class KatanaSlashTransitionPreview : MonoBehaviour
         _runtimeMaterial.SetFloat("_Energy", Mathf.Clamp01(energyAmount));
         _runtimeMaterial.SetFloat("_PostTraceIntensity", _postTraceIntensity);
         _runtimeMaterial.SetFloat("_MaxAperture", MaxAperture);
+        _runtimeMaterial.SetFloat("_CutCurvatureAmount", _cutCurvatureAmount);
+        _runtimeMaterial.SetFloat("_CutCurvatureBias", _cutCurvatureBias);
+        _runtimeMaterial.SetFloat("_CutCurvatureFalloff", _cutCurvatureFalloff);
         _runtimeMaterial.SetColor("_TintColor", Color.black);
         _runtimeMaterial.SetColor("_HighlightColor", _highlightColor);
         _runtimeMaterial.SetColor("_CoreLineColor", _coreLineColor);
