@@ -13,6 +13,7 @@ public class BreakablePlatform : PlatformBase
     [SerializeField] ParticleSystem _particleSystem;
     [SerializeField] bool _hasSpikes;
     [SerializeField] GameObject _spikes;
+    [SerializeField] ParticleSystem _spikesParticles;
 
     public override void Awake()
     {
@@ -85,7 +86,11 @@ public class BreakablePlatform : PlatformBase
         GameEvents.RaiseBreakablePlatformBroken();
         AudioService.Instance.PlaySFXAtPosition(_audioContext.Audio.DestroyPlatform, transform.position);
         DeactivateWhole();
-        if (_hasSpikes) _spikes.SetActive(false);
+        if (_hasSpikes)
+        {
+            _spikes.SetActive(false);
+            _spikesParticles.Play();
+        }
         StartCoroutine(DestroyAfterParticles());
     }
 
