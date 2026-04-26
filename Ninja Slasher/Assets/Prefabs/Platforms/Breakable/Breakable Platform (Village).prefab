@@ -57,6 +57,8 @@ MonoBehaviour:
   - {fileID: 6393488162840164827}
   - {fileID: 7559305783388975580}
   _particleSystem: {fileID: 6983406492978155434}
+  _hasSpikes: 0
+  _spikes: {fileID: 0}
 --- !u!114 &-1876976753949574712
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -292,7 +294,7 @@ ParticleSystem:
       serializedVersion: 2
       minMaxState: 0
       minColor: {r: 1, g: 1, b: 1, a: 1}
-      maxColor: {r: 0.3207547, g: 0.2537656, b: 0.15886435, a: 1}
+      maxColor: {r: 1, g: 1, b: 1, a: 1}
       maxGradient:
         serializedVersion: 2
         key0: {r: 1, g: 1, b: 1, a: 1}
@@ -356,8 +358,8 @@ ParticleSystem:
     startSize:
       serializedVersion: 2
       minMaxState: 3
-      scalar: 0.25
-      minScalar: 0.125
+      scalar: 0.5
+      minScalar: 0.25
       maxCurve:
         serializedVersion: 2
         m_Curve:
@@ -1437,15 +1439,15 @@ ParticleSystem:
         m_NumAlphaKeys: 2
   UVModule:
     serializedVersion: 2
-    enabled: 0
-    mode: 0
+    enabled: 1
+    mode: 1
     timeMode: 0
     fps: 30
     frameOverTime:
       serializedVersion: 2
-      minMaxState: 1
-      scalar: 0.9999
-      minScalar: 0.9999
+      minMaxState: 3
+      scalar: 0.8
+      minScalar: 0
       maxCurve:
         serializedVersion: 2
         m_Curve:
@@ -1496,8 +1498,8 @@ ParticleSystem:
         m_RotationOrder: 4
     startFrame:
       serializedVersion: 2
-      minMaxState: 0
-      scalar: 0
+      minMaxState: 3
+      scalar: 0.8
       minScalar: 0
       maxCurve:
         serializedVersion: 2
@@ -1556,7 +1558,11 @@ ParticleSystem:
     uvChannelMask: -1
     rowMode: 1
     sprites:
-    - sprite: {fileID: 0}
+    - sprite: {fileID: -1055781805791541418, guid: b393d68601b615e4e8ac8b3d5de0de1f, type: 3}
+    - sprite: {fileID: 6276214442350718842, guid: b393d68601b615e4e8ac8b3d5de0de1f, type: 3}
+    - sprite: {fileID: 5168626990037919028, guid: b393d68601b615e4e8ac8b3d5de0de1f, type: 3}
+    - sprite: {fileID: 647959089919477423, guid: b393d68601b615e4e8ac8b3d5de0de1f, type: 3}
+    - sprite: {fileID: -1960138667885608818, guid: b393d68601b615e4e8ac8b3d5de0de1f, type: 3}
     flipU: 0
     flipV: 0
   VelocityModule:
@@ -5774,7 +5780,7 @@ Tilemap:
     second:
       serializedVersion: 2
       m_TileIndex: 1
-      m_TileSpriteIndex: 1
+      m_TileSpriteIndex: 0
       m_TileMatrixIndex: 0
       m_TileColorIndex: 0
       m_TileObjectToInstantiateIndex: 65535
@@ -5784,7 +5790,7 @@ Tilemap:
     second:
       serializedVersion: 2
       m_TileIndex: 1
-      m_TileSpriteIndex: 1
+      m_TileSpriteIndex: 0
       m_TileMatrixIndex: 0
       m_TileColorIndex: 0
       m_TileObjectToInstantiateIndex: 65535
@@ -5794,7 +5800,7 @@ Tilemap:
     second:
       serializedVersion: 2
       m_TileIndex: 9
-      m_TileSpriteIndex: 1
+      m_TileSpriteIndex: 0
       m_TileMatrixIndex: 0
       m_TileColorIndex: 0
       m_TileObjectToInstantiateIndex: 65535
@@ -5823,24 +5829,6 @@ Tilemap:
   - m_RefCount: 4
     m_Data: {fileID: 11400000, guid: 6a5f78c07d4fda44d80f75ac4e863375, type: 2}
   m_TileSpriteArray:
-  - m_RefCount: 0
-    m_Data: {fileID: 0}
-  - m_RefCount: 3
-    m_Data: {fileID: -4857229626792621450, guid: 89f8457a94c98884b9ed84c003fef8f8, type: 3}
-  - m_RefCount: 1
-    m_Data: {fileID: -3983151970367051978, guid: 89f8457a94c98884b9ed84c003fef8f8, type: 3}
-  - m_RefCount: 0
-    m_Data: {fileID: 0}
-  - m_RefCount: 0
-    m_Data: {fileID: 0}
-  - m_RefCount: 0
-    m_Data: {fileID: 0}
-  - m_RefCount: 0
-    m_Data: {fileID: 0}
-  - m_RefCount: 0
-    m_Data: {fileID: 0}
-  - m_RefCount: 0
-    m_Data: {fileID: 0}
   - m_RefCount: 3
     m_Data: {fileID: -4857229626792621450, guid: 89f8457a94c98884b9ed84c003fef8f8, type: 3}
   m_TileMatrixArray:
@@ -5862,31 +5850,9 @@ Tilemap:
       e31: 0
       e32: 0
       e33: 1
-  - m_RefCount: 0
-    m_Data:
-      e00: 1.427e-42
-      e01: 0
-      e02: 1e-45
-      e03: 1.3224334e-38
-      e10: 0
-      e11: 0
-      e12: 0
-      e13: 8.23e-43
-      e20: 3.8764675e-16
-      e21: 1.3224334e-38
-      e22: -9.807228e-39
-      e23: -7.001343e-18
-      e30: 4.5912e-41
-      e31: 8.23e-43
-      e32: 8.25e-43
-      e33: 8.23e-43
   m_TileColorArray:
   - m_RefCount: 3
     m_Data: {r: 1, g: 1, b: 1, a: 1}
-  - m_RefCount: 0
-    m_Data: {r: 2.86207e-40, g: 2.86207e-40, b: 2.86207e-40, a: 2.86207e-40}
-  - m_RefCount: 0
-    m_Data: {r: 2.86207e-40, g: 2.86207e-40, b: 2.86207e-40, a: 2.86207e-40}
   m_TileObjectToInstantiateArray: []
   m_AnimationFrameRate: 1
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -6082,28 +6048,20 @@ CompositeCollider2D:
   m_ColliderPaths:
   - m_Collider: {fileID: 7658234835526018428}
     m_ColliderPaths:
-    - - X: 70400008
-        Y: -17649986
-      - X: 76800008
-        Y: -17649986
+    - - X: 83200000
+        Y: -14349999
+      - X: 63999996
+        Y: -14349999
+      - X: 63999996
+        Y: -17649998
       - X: 83200000
-        Y: -17649984
-      - X: 83200000
-        Y: -14349984
-      - X: 76800000
-        Y: -14349985
-      - X: 70400008
-        Y: -14349986
-      - X: 64000000
-        Y: -14349988
-      - X: 64000000
-        Y: -17649988
+        Y: -17649998
   m_CompositePaths:
     m_Paths:
-    - - {x: 6.4, y: -1.7649696}
-      - {x: 8.32, y: -1.7649692}
-      - {x: 8.31997, y: -1.4349984}
-      - {x: 6.4, y: -1.4350281}
+    - - {x: 8.31997, y: -1.7649999}
+      - {x: 8.31997, y: -1.435}
+      - {x: 6.3999996, y: -1.4350293}
+      - {x: 6.4000287, y: -1.7649999}
   m_VertexDistance: 0.0005
   m_OffsetDistance: 0.00005
   m_UseDelaunayMesh: 0
