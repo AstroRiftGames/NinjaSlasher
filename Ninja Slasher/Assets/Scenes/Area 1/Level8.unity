@@ -2258,6 +2258,84 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 6680423626748546744, guid: 9d7c3c2f1f1a7e145a88f990f405fd68, type: 3}
   m_PrefabInstance: {fileID: 241709672}
   m_PrefabAsset: {fileID: 0}
+--- !u!1001 &259262363
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 1721076016}
+    m_Modifications:
+    - target: {fileID: 198991407655699055, guid: 26d6b5d0a5cdac048b567944a5e7d673, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 0.35
+      objectReference: {fileID: 0}
+    - target: {fileID: 198991407655699055, guid: 26d6b5d0a5cdac048b567944a5e7d673, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 0.35
+      objectReference: {fileID: 0}
+    - target: {fileID: 198991407655699055, guid: 26d6b5d0a5cdac048b567944a5e7d673, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 0.35
+      objectReference: {fileID: 0}
+    - target: {fileID: 198991407655699055, guid: 26d6b5d0a5cdac048b567944a5e7d673, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -5.76
+      objectReference: {fileID: 0}
+    - target: {fileID: 198991407655699055, guid: 26d6b5d0a5cdac048b567944a5e7d673, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -0.142
+      objectReference: {fileID: 0}
+    - target: {fileID: 198991407655699055, guid: 26d6b5d0a5cdac048b567944a5e7d673, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 198991407655699055, guid: 26d6b5d0a5cdac048b567944a5e7d673, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 198991407655699055, guid: 26d6b5d0a5cdac048b567944a5e7d673, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 198991407655699055, guid: 26d6b5d0a5cdac048b567944a5e7d673, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 198991407655699055, guid: 26d6b5d0a5cdac048b567944a5e7d673, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 198991407655699055, guid: 26d6b5d0a5cdac048b567944a5e7d673, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 198991407655699055, guid: 26d6b5d0a5cdac048b567944a5e7d673, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 198991407655699055, guid: 26d6b5d0a5cdac048b567944a5e7d673, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 180
+      objectReference: {fileID: 0}
+    - target: {fileID: 198991407655699055, guid: 26d6b5d0a5cdac048b567944a5e7d673, type: 3}
+      propertyPath: m_ConstrainProportionsScale
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5213041075208210700, guid: 26d6b5d0a5cdac048b567944a5e7d673, type: 3}
+      propertyPath: m_Name
+      value: Broken Ladder2-V1 (11)
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 26d6b5d0a5cdac048b567944a5e7d673, type: 3}
+--- !u!4 &259262364 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 198991407655699055, guid: 26d6b5d0a5cdac048b567944a5e7d673, type: 3}
+  m_PrefabInstance: {fileID: 259262363}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &282185203
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -15943,7 +16021,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6856843313460414210, guid: a2c9dab2ed1f40a48a5855ad8afc788b, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -0.138
+      value: -0.16
       objectReference: {fileID: 0}
     - target: {fileID: 7191382673050867296, guid: a2c9dab2ed1f40a48a5855ad8afc788b, type: 3}
       propertyPath: m_IsActive
@@ -18271,6 +18349,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 410524898}
+  - {fileID: 259262364}
   - {fileID: 282185204}
   - {fileID: 639205292}
   - {fileID: 1732098227}
