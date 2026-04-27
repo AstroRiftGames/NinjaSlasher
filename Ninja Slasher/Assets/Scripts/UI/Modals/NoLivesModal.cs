@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 
-public class NoLivesOverlay : UIOverlayBase
+public class NoLivesModal : UIModalBase
 {
     [Header("No Lives UI")]
     [SerializeField] private TextMeshProUGUI _messageText;
@@ -64,7 +64,7 @@ public class NoLivesOverlay : UIOverlayBase
 
     protected override void OnShown()
     {
-        Debug.Log($"[NoLivesOverlay] No lives available | realLives={LifeManager.Instance?.GetRealLives() ?? -1} | displayLives={LifeManager.Instance?.GetDisplayLives() ?? -1} | rewarded={AdsManager.Instance?.GetRewardedAvailabilityReason() ?? "ads_manager_missing"}");
+        Debug.Log($"[NoLivesModal] No lives available | realLives={LifeManager.Instance?.GetRealLives() ?? -1} | displayLives={LifeManager.Instance?.GetDisplayLives() ?? -1} | rewarded={AdsManager.Instance?.GetRewardedAvailabilityReason() ?? "ads_manager_missing"}");
 
         UpdateMessage();
         UpdateTimer();
@@ -145,7 +145,7 @@ public class NoLivesOverlay : UIOverlayBase
 
         if (_lastClaimLifeButtonVisible != claimVisible || _lastRecoveryState != recoveryState)
         {
-            Debug.Log($"[NoLivesOverlay] UpdateButtons | claimVisible={claimVisible} | {recoveryState}");
+            Debug.Log($"[NoLivesModal] UpdateButtons | claimVisible={claimVisible} | {recoveryState}");
             _lastClaimLifeButtonVisible = claimVisible;
             _lastRecoveryState = recoveryState;
         }
@@ -153,7 +153,7 @@ public class NoLivesOverlay : UIOverlayBase
 
     private void OnClaimLifeClicked()
     {
-        Debug.Log($"[NoLivesOverlay] Claim life clicked | canPlay={LifeManager.Instance?.CanPlay() ?? false} | realLives={LifeManager.Instance?.GetRealLives() ?? -1} | rewarded={AdsManager.Instance?.GetRewardedAvailabilityReason() ?? "ads_manager_missing"}");
+        Debug.Log($"[NoLivesModal] Claim life clicked | canPlay={LifeManager.Instance?.CanPlay() ?? false} | realLives={LifeManager.Instance?.GetRealLives() ?? -1} | rewarded={AdsManager.Instance?.GetRewardedAvailabilityReason() ?? "ads_manager_missing"}");
 
         if (LifeManager.Instance != null && LifeManager.Instance.CanPlay())
         {
@@ -163,12 +163,12 @@ public class NoLivesOverlay : UIOverlayBase
 
         if (!CanWatchAdForRecovery())
         {
-            Debug.LogWarning($"[NoLivesOverlay] Extra life rewarded ad request rejected | reason={AdsManager.Instance?.GetRewardedAvailabilityReason() ?? "ads_manager_missing"}");
+            Debug.LogWarning($"[NoLivesModal] Extra life rewarded ad request rejected | reason={AdsManager.Instance?.GetRewardedAvailabilityReason() ?? "ads_manager_missing"}");
             UpdateButtons();
             return;
         }
 
-        Debug.Log("[NoLivesOverlay] Claim button requested extra life rewarded ad.");
+        Debug.Log("[NoLivesModal] Claim button requested extra life rewarded ad.");
         _isClaimLifeFlowInProgress = true;
         UpdateButtons();
         AdsManager.Instance?.ShowRewardedAdForExtraLife();
@@ -230,7 +230,7 @@ public class NoLivesOverlay : UIOverlayBase
             return;
 
         _suppressAbandonOnHide = true;
-        Hide();
+        RequestClose();
     }
 
     private void ResolveRecoveredLifeFlow()
@@ -242,7 +242,7 @@ public class NoLivesOverlay : UIOverlayBase
         HideForFlowTransition();
 
         if (ShouldReturnToDefeatFlow())
-            UIEvents.RequestShowDefeatOverlay(LifeManager.Instance.GetRealLives());
+            UIEvents.RequestShowDefeatModal(LifeManager.Instance.GetRealLives());
     }
 
     private bool ShouldReturnToDefeatFlow()
@@ -252,5 +252,16 @@ public class NoLivesOverlay : UIOverlayBase
 
         string activeSceneName = SceneManager.GetActiveScene().name;
         return activeSceneName.StartsWith("Level_") || activeSceneName.Contains("Level");
+    }
+
+    private void RequestClose()
+    {
+        if (UIManager.Instance != null)
+        {
+            UIManager.Instance.CloseModal(this);
+            return;
+        }
+
+        Hide();
     }
 }

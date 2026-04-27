@@ -2,7 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
-public class DefeatOverlay : UIOverlayBase
+public class DefeatModal : UIModalBase
 {
     [Header("Defeat UI")]
     [SerializeField] private TextMeshProUGUI _titleText;
@@ -30,7 +30,6 @@ public class DefeatOverlay : UIOverlayBase
     public void ShowLifeLost(int livesRemaining)
     {
         UpdateUI(livesRemaining);
-        Show();
     }
 
     public override void Show()
@@ -76,14 +75,13 @@ public class DefeatOverlay : UIOverlayBase
 
     private void OnContinueClicked()
     {
-        Hide();
+        RequestClose();
         UIEvents.RaiseRetryPressed();
     }
 
     private void OnQuitClicked()
     {
-        PauseController.Instance.ReleasePause(PauseSource.Defeat);
-        UIEvents.RaisePause(false);
+        RequestClose();
         UIEvents.RaiseQuitToMenuPressed();
     }
 
@@ -106,5 +104,16 @@ public class DefeatOverlay : UIOverlayBase
 
         if (_quitButton != null)
             _quitButton.onClick.RemoveAllListeners();
+    }
+
+    private void RequestClose()
+    {
+        if (UIManager.Instance != null)
+        {
+            UIManager.Instance.CloseModal(this);
+            return;
+        }
+
+        Hide();
     }
 }

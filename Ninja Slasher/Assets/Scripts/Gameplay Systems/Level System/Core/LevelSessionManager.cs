@@ -371,7 +371,7 @@ public class LevelSessionManager : MonoBehaviourSingleton<LevelSessionManager>
 
         if (!LifeManager.Instance.CanPlay())
         {
-            UIEvents.RequestShowNoLivesOverlay();
+            UIEvents.RequestShowNoLivesModal();
             return;
         }
 

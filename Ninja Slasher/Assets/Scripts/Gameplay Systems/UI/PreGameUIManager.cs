@@ -113,23 +113,23 @@ public class PreGameUIManager : MonoBehaviour
 
     private void ResolveGoalTextReferencesIfNeeded()
     {
-        PreGameScreen preGameScreen = GetComponentInChildren<PreGameScreen>(true);
-        if (preGameScreen == null)
+        PregameModal pregameModal = GetComponentInChildren<PregameModal>(true);
+        if (pregameModal == null)
             return;
 
         if (_title == null)
-            _title = FindNamedText(preGameScreen.transform, "LevelTitle");
+            _title = FindNamedText(pregameModal.transform, "LevelTitle");
 
         if (_starsContainer == null)
         {
-            Transform starsTransform = FindDescendantByName(preGameScreen.transform, "StarsContainer");
+            Transform starsTransform = FindDescendantByName(pregameModal.transform, "StarsContainer");
             if (starsTransform != null)
                 _starsContainer = starsTransform;
         }
 
         Transform goalsRoot = _primaryGoalText != null
             ? _primaryGoalText.transform.parent
-            : FindDescendantByName(preGameScreen.transform, "Goals");
+            : FindDescendantByName(pregameModal.transform, "Goals");
 
         if (goalsRoot == null)
             return;
@@ -271,7 +271,7 @@ public class PreGameUIManager : MonoBehaviour
         _pendingSceneName = sceneName;
         _isLevelSelected = true;
 
-        UIEvents.RequestShowPreGameScreen();
+        UIEvents.RequestShowPregameModal();
 
         ShowPreGameTitle();
         SetGoals();
@@ -636,7 +636,7 @@ public class PreGameUIManager : MonoBehaviour
             return;
         }
 
-        UIEvents.RequestHidePreGameScreen();
+        UIEvents.RequestHidePregameModal();
     }
 
     private void OnCloseButtonClicked()
@@ -647,7 +647,7 @@ public class PreGameUIManager : MonoBehaviour
             return;
         }
 
-        UIEvents.RequestHidePreGameScreen();
+        UIEvents.RequestHidePregameModal();
     }
 
     private void OnConfirmLevelSelection()
@@ -655,13 +655,13 @@ public class PreGameUIManager : MonoBehaviour
         if (!LifeManager.Instance.CanPlay())
         {
             AbortPendingLevelSelectionForLifeWall();
-            UIEvents.RequestShowNoLivesOverlay();
+            UIEvents.RequestShowNoLivesModal();
             return;
         }
 
         StopAllAnimations();
         _isLevelSelected = false;
-        UIEvents.RequestHidePreGameScreen();
+        UIEvents.RequestHidePregameModal();
         UIEvents.RequestSceneTransition(_pendingSceneName);
     }
 
@@ -670,7 +670,7 @@ public class PreGameUIManager : MonoBehaviour
         StopAllAnimations();
         _isLevelSelected = false;
         _pendingSceneName = null;
-        UIEvents.RequestHidePreGameScreen();
+        UIEvents.RequestHidePregameModal();
     }
 
     private void AbortPendingLevelSelectionForLifeWall()
@@ -679,7 +679,7 @@ public class PreGameUIManager : MonoBehaviour
         HidePowerUpConfirmationImmediate();
         _isLevelSelected = false;
         _pendingSceneName = null;
-        UIEvents.RequestHidePreGameScreen();
+        UIEvents.RequestHidePregameModal();
     }
 
     private void OnDailyRewardClaimedRefresh(DailyReward _)

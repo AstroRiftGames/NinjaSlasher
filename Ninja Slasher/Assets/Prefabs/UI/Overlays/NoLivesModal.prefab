@@ -687,6 +687,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -1032,6 +1033,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -1210,7 +1212,7 @@ GameObject:
   - component: {fileID: 422449283910431333}
   - component: {fileID: 8017220068941848403}
   m_Layer: 5
-  m_Name: NoLivesOverlay
+  m_Name: NoLivesModal
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1251,15 +1253,24 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _canvasGroup: {fileID: 4856902796938769588}
   _panelTransform: {fileID: 6979343137342153851}
+  _hasBackground: 1
   _backgroundImage: {fileID: 7827441054279095262}
-  _backgroundColor: {r: 0, g: 0, b: 0, a: 0.7}
-  _blockRaycastsWhenHidden: 0
-  _backgroundFadeDuration: 0.2
-  _contentFadeDuration: 0.3
-  _fadeEase: 6
-  _panelAnimator: {fileID: 4420618475129301691}
-  _animatorOpenDuration: 0.35
-  _animatorCloseDuration: 0.35
+  _closeOnOutsideClick: 1
+  _modalAnimator: {fileID: 4420618475129301691}
+  _useCanvasGroupFadeWhenNoAnimator: 1
+  _useContentScaleWhenNoAnimator: 1
+  _animatedContentTransform: {fileID: 0}
+  _animatedContentCanvasGroup: {fileID: 0}
+  _fadeAnimationDuration: 0.2
+  _showFadeEase: 6
+  _hideFadeEase: 5
+  _showScaleDuration: 0.22
+  _hideScaleDuration: 0.18
+  _showScaleEase: 27
+  _hideScaleEase: 26
+  _hiddenScaleMultiplier: 0.94
+  _openTrigger: Open
+  _closeTrigger: Close
   _messageText: {fileID: 2993103644486340773}
   _timerText: {fileID: 4675032662731993554}
   _closeButton: {fileID: 3727680938165334815}
@@ -1494,6 +1505,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -1630,6 +1642,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -1856,6 +1869,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -2317,6 +2331,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
