@@ -20,6 +20,7 @@ public class DailyWheelUI : MonoBehaviour
     [SerializeField] private WheelLever _wheelLever;
     [SerializeField] private TextMeshProUGUI timerText;
     [SerializeField] private TextMeshProUGUI _availableSpinsText;
+    [SerializeField] private UIPunchScaleFeedback _availableSpinsFeedback;
     [SerializeField] private TextMeshProUGUI _nextFreeSpinPopupText;
     [SerializeField] private Button _closeButton;
     [SerializeField] private Button _noSpinsBuyButton;
@@ -102,9 +103,12 @@ public class DailyWheelUI : MonoBehaviour
         if (_availableSpinsText != null)
         {
             DOTween.Kill(_availableSpinsText);
-            DOTween.Kill(_availableSpinsText.transform);
             _availableSpinsText.color = _availableSpinsBaseColor;
-            _availableSpinsText.transform.localScale = Vector3.one;
+
+            if (_availableSpinsFeedback != null)
+                _availableSpinsFeedback.ResetImmediate();
+            else
+                _availableSpinsText.transform.localScale = Vector3.one;
         }
     }
 
@@ -510,6 +514,11 @@ public class DailyWheelUI : MonoBehaviour
         if (_availableSpinsText != null)
             _availableSpinsBaseColor = _availableSpinsText.color;
 
+        if (_availableSpinsFeedback == null && _availableSpinsText != null)
+        {
+            _availableSpinsFeedback = GetOrCreateAvailableSpinsFeedback(_availableSpinsText.rectTransform);
+        }
+
         if (_lotteryPanel == null)
         {
             Transform rewardParent = _sharedRewardInfoPanel != null ? _sharedRewardInfoPanel.transform.parent : null;
@@ -673,18 +682,53 @@ public class DailyWheelUI : MonoBehaviour
         if (_availableSpinsText == null)
             return;
 
+        if (_availableSpinsFeedback == null)
+            _availableSpinsFeedback = GetOrCreateAvailableSpinsFeedback(_availableSpinsText.rectTransform);
+
         DOTween.Kill(_availableSpinsText);
-        DOTween.Kill(_availableSpinsText.transform);
 
         _availableSpinsText.color = _availableSpinsBaseColor;
-        _availableSpinsText.transform.localScale = Vector3.one;
+
+        if (_availableSpinsFeedback != null)
+            _availableSpinsFeedback.ResetImmediate();
+        else
+            _availableSpinsText.transform.localScale = Vector3.one;
 
         Color targetColor = increased ? AvailableSpinsIncreaseColor : AvailableSpinsDecreaseColor;
         Sequence sequence = DOTween.Sequence();
         sequence.SetTarget(_availableSpinsText);
         sequence.Join(_availableSpinsText.DOColor(targetColor, _availableSpinsAnimationDuration * 0.45f));
-        sequence.Join(_availableSpinsText.transform.DOPunchScale(Vector3.one * _availableSpinsPunchScale, _availableSpinsAnimationDuration, vibrato: 1, elasticity: 0.6f));
+
+        if (_availableSpinsFeedback != null)
+            _availableSpinsFeedback.Play();
+        else
+            sequence.Join(_availableSpinsText.transform.DOPunchScale(Vector3.one * _availableSpinsPunchScale, _availableSpinsAnimationDuration, vibrato: 1, elasticity: 0.6f));
+
         sequence.Append(_availableSpinsText.DOColor(_availableSpinsBaseColor, _availableSpinsAnimationDuration * 0.55f));
+    }
+
+    private UIPunchScaleFeedback GetOrCreateAvailableSpinsFeedback(RectTransform target)
+    {
+        UIPunchScaleFeedback feedback = target.GetComponent<UIPunchScaleFeedback>();
+        if (feedback == null)
+            feedback = target.gameObject.AddComponent<UIPunchScaleFeedback>();
+
+        feedback.Configure(
+            useFade: false,
+            hideGameObjectOnComplete: false,
+            activateGameObjectOnPlay: false,
+            useUnscaledTime: false,
+            scaleInDuration: 0f,
+            punchDuration: _availableSpinsAnimationDuration,
+            visibleDuration: 0f,
+            fadeDuration: 0f,
+            initialScaleMultiplier: 1f,
+            punchStrength: Vector3.one * _availableSpinsPunchScale,
+            vibrato: 1,
+            elasticity: 0.6f);
+
+        feedback.ResetImmediate();
+        return feedback;
     }
 
     private void HideLotteryInfo()

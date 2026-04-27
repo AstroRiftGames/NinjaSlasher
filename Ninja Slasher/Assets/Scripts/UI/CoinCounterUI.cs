@@ -10,6 +10,8 @@ public class CoinCounterUI : MonoBehaviour
     [Header("References")]
     [SerializeField] private TextMeshProUGUI _label;
     [SerializeField] private RectTransform   _coinIcon;
+    [SerializeField] private UIPunchScaleFeedback _coinIconFeedback;
+    [SerializeField] private UIPunchScaleFeedback _labelFeedback;
 
     [Header("Counter Animation")]
     [SerializeField] private float _animationDuration = 0.7f;
@@ -33,6 +35,7 @@ public class CoinCounterUI : MonoBehaviour
     {
         Instance = this;
         GameEvents.OnCoinsChanged += AnimateTo;
+        ResolveFeedbackReferences();
 
         int saved = SaveManager.Instance != null ? SaveManager.Instance.GetCoins() : 0;
         SetImmediate(saved);
@@ -126,21 +129,72 @@ public class CoinCounterUI : MonoBehaviour
     {
         if (_punchIcon && _coinIcon != null)
         {
-            DOTween.Kill(_coinIcon);
-            _coinIcon
-                .DOPunchScale(_iconPunch, _iconPunchDuration, vibrato: 1, elasticity: 0.5f)
-                .SetUpdate(true);
+            ResolveFeedbackReferences();
+
+            if (_coinIconFeedback != null)
+            {
+                _coinIconFeedback.Play();
+            }
+            else
+            {
+                DOTween.Kill(_coinIcon);
+                _coinIcon
+                    .DOPunchScale(_iconPunch, _iconPunchDuration, vibrato: 1, elasticity: 0.5f)
+                    .SetUpdate(true);
+            }
         }
 
         if (_punchLabel && _label != null)
         {
-            DOTween.Kill(_label.rectTransform);
-            _label.rectTransform
-                .DOPunchScale(_labelPunch, _labelPunchDuration, vibrato: 1, elasticity: 0.5f)
-                .SetUpdate(true);
+            ResolveFeedbackReferences();
+
+            if (_labelFeedback != null)
+            {
+                _labelFeedback.Play();
+            }
+            else
+            {
+                DOTween.Kill(_label.rectTransform);
+                _label.rectTransform
+                    .DOPunchScale(_labelPunch, _labelPunchDuration, vibrato: 1, elasticity: 0.5f)
+                    .SetUpdate(true);
+            }
         }
 
         if (_audioContext?.Audio?.rewardCoins != null)
             AudioService.Instance?.PlaySFX(_audioContext.Audio.rewardCoins);
+    }
+
+    private void ResolveFeedbackReferences()
+    {
+        if (_coinIconFeedback == null && _coinIcon != null)
+            _coinIconFeedback = GetOrCreatePunchFeedback(_coinIcon, _iconPunchDuration, _iconPunch);
+
+        if (_labelFeedback == null && _label != null)
+            _labelFeedback = GetOrCreatePunchFeedback(_label.rectTransform, _labelPunchDuration, _labelPunch);
+    }
+
+    private UIPunchScaleFeedback GetOrCreatePunchFeedback(RectTransform target, float punchDuration, Vector3 punchStrength)
+    {
+        UIPunchScaleFeedback feedback = target.GetComponent<UIPunchScaleFeedback>();
+        if (feedback == null)
+            feedback = target.gameObject.AddComponent<UIPunchScaleFeedback>();
+
+        feedback.Configure(
+            useFade: false,
+            hideGameObjectOnComplete: false,
+            activateGameObjectOnPlay: false,
+            useUnscaledTime: true,
+            scaleInDuration: 0f,
+            punchDuration: punchDuration,
+            visibleDuration: 0f,
+            fadeDuration: 0f,
+            initialScaleMultiplier: 1f,
+            punchStrength: punchStrength,
+            vibrato: 1,
+            elasticity: 0.5f);
+
+        feedback.ResetImmediate();
+        return feedback;
     }
 }
