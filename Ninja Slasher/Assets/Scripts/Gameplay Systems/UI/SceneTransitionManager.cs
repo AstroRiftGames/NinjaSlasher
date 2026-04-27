@@ -106,6 +106,8 @@ public class SceneTransitionManager : MonoBehaviour
         _transitionAnim.SetTrigger("OpeningStart");
         yield return new WaitForSecondsRealtime(_transitionTime);
 
+        MusicEvents.OnEnterLevelSelection?.Invoke();
+        
         SceneManager.sceneLoaded += OnLevelSelectorSceneLoaded;
         SceneManager.LoadScene(_levelSelectorSceneName);
     }
@@ -141,7 +143,6 @@ public class SceneTransitionManager : MonoBehaviour
         _transitionAnim.SetTrigger("End");
         AudioService.Instance?.PlaySFX(_audioContext.Audio.transitionSlash);
 
-        MusicEvents.OnEnterLevelSelection?.Invoke();
         UIEvents.RequestUpdateLivesUI(LifeManager.Instance?.CurrentLives ?? 0);
 
         UIEvents.RaiseLevelSelectorReady();
@@ -167,7 +168,6 @@ public class SceneTransitionManager : MonoBehaviour
         _transitionAnim.SetTrigger("End");
         AudioService.Instance?.PlaySFX(_audioContext.Audio.transitionSlash);
 
-        MusicEvents.OnEnterLevelSelection?.Invoke();
         UIEvents.RequestUpdateLivesUI(LifeManager.Instance?.CurrentLives ?? 0);
 
         UIEvents.RaiseLevelSelectorReady();
