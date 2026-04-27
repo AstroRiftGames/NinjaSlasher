@@ -48,6 +48,7 @@ public class SceneTransitionManager : MonoBehaviour
     private IEnumerator LoadLevelSceneCo(string sceneName)
     {
         SetHUDActive(false);
+        UIManager.Instance.SetLevelsScreenEnabled(false);
 
         if (AudioService.Instance != null)
         {
@@ -56,8 +57,6 @@ public class SceneTransitionManager : MonoBehaviour
 
         _transitionAnim.SetTrigger("Start");
         yield return new WaitForSeconds(_transitionTime);
-
-        UIManager.Instance.SetLevelsScreenEnabled(false);
 
         SceneManager.LoadScene(sceneName);
 
