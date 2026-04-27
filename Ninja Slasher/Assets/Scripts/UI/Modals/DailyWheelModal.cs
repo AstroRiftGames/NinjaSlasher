@@ -48,7 +48,7 @@ public class DailyWheelModal : UIModalBase
             return;
         }
 
-        Hide();
+        RequestCloseModal();
     }
 
     public void CloseNoSpinsPopup()
@@ -59,7 +59,7 @@ public class DailyWheelModal : UIModalBase
             return;
         }
 
-        Hide();
+        RequestCloseModal();
     }
 
     public void BuyNoSpinsPopupOffer()
@@ -75,6 +75,17 @@ public class DailyWheelModal : UIModalBase
         }
 
         _dailyWheelUI?.CloseRewardPopup();
+        RequestCloseModal();
+    }
+
+    private void RequestCloseModal()
+    {
+        if (UIManager.Instance != null)
+        {
+            UIManager.Instance.CloseModal(this);
+            return;
+        }
+
         Hide();
     }
 }

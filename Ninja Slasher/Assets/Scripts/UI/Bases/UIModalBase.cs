@@ -1,12 +1,15 @@
 using System.Collections;
 using DG.Tweening;
 using UnityEngine;
+using UnityEngine.EventSystems;
+using UnityEngine.UI;
 
-public abstract class UIModalBase : UIPanel
+public abstract class UIModalBase : UIPanel, IPointerClickHandler
 {
     [Header("Modal Background")]
     [SerializeField] protected bool _hasBackground = true;
-    [SerializeField] protected UnityEngine.UI.Image _backgroundImage;
+    [SerializeField] protected Image _backgroundImage;
+    [SerializeField] protected bool _closeOnOutsideClick = false;
 
     [Header("Modal Animation")]
     [SerializeField] protected Animator _modalAnimator;
@@ -29,7 +32,6 @@ public abstract class UIModalBase : UIPanel
 
     private Sequence _contentAnimationSequence;
     private Coroutine _delayedDeactivateCoroutine;
-
     protected virtual float HideAnimationDuration => 0.4f;
 
     protected override void Awake()
@@ -51,6 +53,7 @@ public abstract class UIModalBase : UIPanel
         if (_animatedContentCanvasGroup == null)
             _animatedContentCanvasGroup = ResolveAnimatedContentCanvasGroup();
 
+        EnsureBackgroundClickable();
         _isVisible = gameObject.activeSelf;
     }
 
@@ -64,13 +67,10 @@ public abstract class UIModalBase : UIPanel
         gameObject.SetActive(true);
         _isVisible = true;
 
-        if (_hasBackground && _backgroundImage != null)
-        {
-            _backgroundImage.raycastTarget = true;
-        }
-
+        EnsureBackgroundClickable();
         PlayShowAnimation();
         NotifyPanelShown();
+        NotifyUIManagerModalShown();
         OnShown();
     }
 
@@ -79,14 +79,10 @@ public abstract class UIModalBase : UIPanel
         if (!_isVisible) return;
 
         _isVisible = false;
-
         SetPanelInputEnabled(false);
 
-        if (_hasBackground && _backgroundImage != null)
-        {
-            _backgroundImage.raycastTarget = false;
-        }
-
+        EnsureBackgroundClickable();
+        NotifyUIManagerModalHidden();
         OnHidden();
         PlayHideAnimation();
     }
@@ -96,6 +92,27 @@ public abstract class UIModalBase : UIPanel
         base.OnDisable();
         CancelPendingDeactivate();
         KillActiveAnimation();
+        NotifyUIManagerModalHidden();
+    }
+
+    protected void SetBackgroundRaycastTarget(bool enabled)
+    {
+        if (_hasBackground && _backgroundImage != null)
+            _backgroundImage.raycastTarget = enabled;
+    }
+
+    protected void NotifyUIManagerModalShown() => UIManager.Instance?.NotifyModalShown(this);
+    protected void NotifyUIManagerModalHidden() => UIManager.Instance?.NotifyModalHidden(this);
+
+    public void OnPointerClick(PointerEventData eventData) => HandlePointerClick(eventData);
+
+    internal void HandlePointerClick(PointerEventData eventData)
+    {
+        if (!_closeOnOutsideClick || !_isVisible || eventData == null)
+            return;
+
+        if (WasOutsideSurfaceClicked(eventData))
+            RequestCloseFromOutsideClick();
     }
 
     private void PlayShowAnimation()
@@ -103,13 +120,10 @@ public abstract class UIModalBase : UIPanel
         if (_modalAnimator != null)
         {
             ResetContentVisualState();
-
             if (!string.IsNullOrEmpty(_closeTrigger))
                 _modalAnimator.ResetTrigger(_closeTrigger);
-
             if (!string.IsNullOrEmpty(_openTrigger))
                 _modalAnimator.SetTrigger(_openTrigger);
-
             return;
         }
 
@@ -118,8 +132,7 @@ public abstract class UIModalBase : UIPanel
         if (!_useCanvasGroupFadeWhenNoAnimator && !_useContentScaleWhenNoAnimator)
             return;
 
-        _contentAnimationSequence = DOTween.Sequence()
-            .SetUpdate(true);
+        _contentAnimationSequence = DOTween.Sequence().SetUpdate(true);
 
         if (_animatedContentCanvasGroup != null && _useCanvasGroupFadeWhenNoAnimator)
         {
@@ -144,10 +157,8 @@ public abstract class UIModalBase : UIPanel
         {
             if (!string.IsNullOrEmpty(_openTrigger))
                 _modalAnimator.ResetTrigger(_openTrigger);
-
             if (!string.IsNullOrEmpty(_closeTrigger))
                 _modalAnimator.SetTrigger(_closeTrigger);
-
             _delayedDeactivateCoroutine = StartCoroutine(DeactivateAfterDelay(HideAnimationDuration));
             return;
         }
@@ -159,8 +170,7 @@ public abstract class UIModalBase : UIPanel
             return;
         }
 
-        _contentAnimationSequence = DOTween.Sequence()
-            .SetUpdate(true);
+        _contentAnimationSequence = DOTween.Sequence().SetUpdate(true);
 
         if (_animatedContentCanvasGroup != null && _useCanvasGroupFadeWhenNoAnimator)
         {
@@ -192,9 +202,7 @@ public abstract class UIModalBase : UIPanel
 
     private void CancelPendingDeactivate()
     {
-        if (_delayedDeactivateCoroutine == null)
-            return;
-
+        if (_delayedDeactivateCoroutine == null) return;
         StopCoroutine(_delayedDeactivateCoroutine);
         _delayedDeactivateCoroutine = null;
     }
@@ -204,31 +212,58 @@ public abstract class UIModalBase : UIPanel
         if (_animatedContentTransform == null)
             return _canvasGroup;
 
-        CanvasGroup contentCanvasGroup = _animatedContentTransform.GetComponent<CanvasGroup>();
-        if (contentCanvasGroup != null)
-            return contentCanvasGroup;
-
         if (_animatedContentTransform == _panelTransform)
             return _canvasGroup;
 
-        return _animatedContentTransform.gameObject.AddComponent<CanvasGroup>();
+        CanvasGroup contentCanvasGroup = _animatedContentTransform.GetComponent<CanvasGroup>();
+        return contentCanvasGroup != null ? contentCanvasGroup : _animatedContentTransform.gameObject.AddComponent<CanvasGroup>();
     }
 
     private void ResetContentVisualState()
     {
         if (_animatedContentCanvasGroup != null)
             _animatedContentCanvasGroup.alpha = 1f;
-
         if (_animatedContentTransform != null)
             _animatedContentTransform.localScale = Vector3.one;
     }
 
     private void KillActiveAnimation()
     {
-        if (_contentAnimationSequence == null)
-            return;
-
+        if (_contentAnimationSequence == null) return;
         _contentAnimationSequence.Kill();
         _contentAnimationSequence = null;
+    }
+
+    private void RequestCloseFromOutsideClick()
+    {
+        if (UIManager.Instance != null)
+        {
+            UIManager.Instance.CloseModal(this);
+            return;
+        }
+        Hide();
+    }
+
+    private bool WasOutsideSurfaceClicked(PointerEventData eventData)
+    {
+        if (_backgroundImage == null)
+            return false;
+
+        GameObject clickedObject = eventData.pointerPressRaycast.gameObject;
+        if (clickedObject == null)
+            clickedObject = eventData.pointerCurrentRaycast.gameObject;
+
+        if (clickedObject == null)
+            return false;
+
+        Transform clickedTransform = clickedObject.transform;
+        Transform backgroundTransform = _backgroundImage.transform;
+        return clickedTransform == backgroundTransform || clickedTransform.IsChildOf(backgroundTransform);
+    }
+
+    private void EnsureBackgroundClickable()
+    {
+        if (_backgroundImage == null) return;
+        _backgroundImage.raycastTarget = _closeOnOutsideClick && _isVisible;
     }
 }

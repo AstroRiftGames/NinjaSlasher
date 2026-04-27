@@ -100,7 +100,6 @@ public abstract class UIPanel : MonoBehaviour
 
         bool allowInput = _isVisible && _selfInputEnabled && !_isBlockedByHigherPanel;
         _canvasGroup.interactable = allowInput;
-        _canvasGroup.blocksRaycasts = allowInput;
     }
 
     private void RegisterBlockingPanel()

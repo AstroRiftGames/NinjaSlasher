@@ -37,25 +37,8 @@ public static class UIEvents
     public static event Action OnShowPauseOverlayRequested;
     public static event Action OnHidePauseOverlayRequested;
     public static event Action OnTogglePauseOverlayRequested;
-
-    public static event Action OnShowNoLivesOverlayRequested;
-    public static event Action OnHideNoLivesOverlayRequested;
-
-    public static event Action<int> OnShowDefeatOverlayRequested;
-
-    public static event Action<EmergencyBundleOffer> OnShowEmergencyBundleOverlayRequested;
-    public static event Action OnHideEmergencyBundleOverlayRequested;
     public static event Action OnShowTutorialOverlayRequested;
     public static event Action OnHideTutorialOverlayRequested;
-
-    public static void RequestShowEmergencyBundleOverlay(EmergencyBundleOffer offer)
-        => OnShowEmergencyBundleOverlayRequested?.Invoke(offer);
-
-    public static void RequestHideEmergencyBundleOverlay()
-        => OnHideEmergencyBundleOverlayRequested?.Invoke();
-
-    public static bool HasEmergencyBundleOverlayListener()
-        => OnShowEmergencyBundleOverlayRequested != null;
 
     public static void RequestShowTutorialOverlay()
     {
@@ -87,21 +70,6 @@ public static class UIEvents
         OnTogglePauseOverlayRequested?.Invoke();
     }
 
-    public static void RequestShowNoLivesOverlay()
-    {
-        OnShowNoLivesOverlayRequested?.Invoke();
-    }
-
-    public static void RequestHideNoLivesOverlay()
-    {
-        OnHideNoLivesOverlayRequested?.Invoke();
-    }
-
-    public static void RequestShowDefeatOverlay(int livesRemaining)
-    {
-        OnShowDefeatOverlayRequested?.Invoke(livesRemaining);
-    }
-
     #endregion
 
     #region SCREEN EVENTS
@@ -111,10 +79,6 @@ public static class UIEvents
 
     public static event Action OnShowLevelsScreenRequested;
     public static event Action OnHideLevelsScreenRequested;
-
-    public static event Action OnShowPreGameScreenRequested;
-    public static event Action OnHidePreGameScreenRequested;
-    public static event Action OnTogglePreGameScreenRequested;
 
     public static void RequestShowSplashScreen()
     {
@@ -136,24 +100,22 @@ public static class UIEvents
         OnHideLevelsScreenRequested?.Invoke();
     }
 
-    public static void RequestShowPreGameScreen()
-    {
-        OnShowPreGameScreenRequested?.Invoke();
-    }
-
-    public static void RequestHidePreGameScreen()
-    {
-        OnHidePreGameScreenRequested?.Invoke();
-    }
-
-    public static void RequestTogglePreGameScreen()
-    {
-        OnTogglePreGameScreenRequested?.Invoke();
-    }
-
     #endregion
 
     #region MODAL EVENTS
+
+    public static event Action OnShowPregameModalRequested;
+    public static event Action OnHidePregameModalRequested;
+    public static event Action OnTogglePregameModalRequested;
+
+    public static event Action OnShowNoLivesModalRequested;
+    public static event Action OnHideNoLivesModalRequested;
+
+    public static event Action<int> OnShowDefeatModalRequested;
+    public static event Action OnHideDefeatModalRequested;
+
+    public static event Action<EmergencyBundleOffer> OnShowEmergencyBundleModalRequested;
+    public static event Action OnHideEmergencyBundleModalRequested;
 
     public static event Action OnShowCreditsModalRequested;
     public static event Action OnHideCreditsModalRequested;
@@ -182,6 +144,56 @@ public static class UIEvents
     public static event Action OnShowVictoryModalRequested;
     public static event Action OnHideVictoryModalRequested;
     public static event Action OnToggleVictoryModalRequested;
+
+    public static void RequestShowPregameModal()
+    {
+        OnShowPregameModalRequested?.Invoke();
+    }
+
+    public static void RequestHidePregameModal()
+    {
+        OnHidePregameModalRequested?.Invoke();
+    }
+
+    public static void RequestTogglePregameModal()
+    {
+        OnTogglePregameModalRequested?.Invoke();
+    }
+
+    public static void RequestShowNoLivesModal()
+    {
+        OnShowNoLivesModalRequested?.Invoke();
+    }
+
+    public static void RequestHideNoLivesModal()
+    {
+        OnHideNoLivesModalRequested?.Invoke();
+    }
+
+    public static void RequestShowDefeatModal(int livesRemaining)
+    {
+        OnShowDefeatModalRequested?.Invoke(livesRemaining);
+    }
+
+    public static void RequestHideDefeatModal()
+    {
+        OnHideDefeatModalRequested?.Invoke();
+    }
+
+    public static void RequestShowEmergencyBundleModal(EmergencyBundleOffer offer)
+    {
+        OnShowEmergencyBundleModalRequested?.Invoke(offer);
+    }
+
+    public static void RequestHideEmergencyBundleModal()
+    {
+        OnHideEmergencyBundleModalRequested?.Invoke();
+    }
+
+    public static bool HasEmergencyBundleModalListener()
+    {
+        return OnShowEmergencyBundleModalRequested != null;
+    }
 
     public static void RequestShowCreditsModal()
     {
@@ -496,11 +508,6 @@ public static class UIEvents
         OnShowPauseOverlayRequested = null;
         OnHidePauseOverlayRequested = null;
         OnTogglePauseOverlayRequested = null;
-        OnShowNoLivesOverlayRequested = null;
-        OnHideNoLivesOverlayRequested = null;
-        OnShowDefeatOverlayRequested = null;
-        OnShowEmergencyBundleOverlayRequested = null;
-        OnHideEmergencyBundleOverlayRequested = null;
         OnShowTutorialOverlayRequested = null;
         OnHideTutorialOverlayRequested = null;
     }
@@ -511,13 +518,19 @@ public static class UIEvents
         OnHideSplashScreenRequested = null;
         OnShowLevelsScreenRequested = null;
         OnHideLevelsScreenRequested = null;
-        OnShowPreGameScreenRequested = null;
-        OnHidePreGameScreenRequested = null;
-        OnTogglePreGameScreenRequested = null;
     }
 
     public static void ClearModalEvents()
     {
+        OnShowPregameModalRequested = null;
+        OnHidePregameModalRequested = null;
+        OnTogglePregameModalRequested = null;
+        OnShowNoLivesModalRequested = null;
+        OnHideNoLivesModalRequested = null;
+        OnShowDefeatModalRequested = null;
+        OnHideDefeatModalRequested = null;
+        OnShowEmergencyBundleModalRequested = null;
+        OnHideEmergencyBundleModalRequested = null;
         OnShowCreditsModalRequested = null;
         OnHideCreditsModalRequested = null;
         OnToggleCreditsModalRequested = null;

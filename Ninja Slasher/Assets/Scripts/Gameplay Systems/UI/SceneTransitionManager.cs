@@ -86,11 +86,13 @@ public class SceneTransitionManager : MonoBehaviour
 
         UIEvents.RequestHideVictoryModal();
         UIEvents.RequestHidePauseOverlay();
-        UIEvents.RequestHideNoLivesOverlay();
+        UIEvents.RequestHideNoLivesModal();
+        UIEvents.RequestHideDefeatModal();
+        UIEvents.RequestHideEmergencyBundleModal();
+        UIEvents.RequestHidePregameModal();
 
         if (UIManager.Instance != null)
         {
-            UIManager.Instance.HideDefeatOverlay();
             UIManager.Instance.SetGameplayHUDEnabled(false);
             UIManager.Instance.SetLevelsScreenEnabled(false);
             UIManager.Instance.ResetLevelsScreenAnimation();
@@ -119,12 +121,10 @@ public class SceneTransitionManager : MonoBehaviour
 
         UIEvents.RequestHideVictoryModal();
         UIEvents.RequestHidePauseOverlay();
-        UIEvents.RequestHideNoLivesOverlay();
-
-        if (UIManager.Instance != null)
-        {
-            UIManager.Instance.HideDefeatOverlay();
-        }
+        UIEvents.RequestHideNoLivesModal();
+        UIEvents.RequestHideDefeatModal();
+        UIEvents.RequestHideEmergencyBundleModal();
+        UIEvents.RequestHidePregameModal();
 
         if (AudioService.Instance != null)
         {

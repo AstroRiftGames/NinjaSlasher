@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -11,17 +12,17 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
 
     [Header("OVERLAYS")]
     [SerializeField] private PauseOverlay _pauseOverlay;
-    [SerializeField] private NoLivesOverlay _noLivesOverlay;
-    [SerializeField] private DefeatOverlay _defeatOverlay;
-    [SerializeField] private EmergencyBundleOverlay _emergencyBundleOverlay;
     [SerializeField] private TutorialUIOverlay _tutorialOverlay;
 
     [Header("SCREENS")]
     [SerializeField] private SplashScreen _splashScreen;
-    [SerializeField] private PreGameScreen _preGameScreen;
     [SerializeField] private LevelsScreen _levelsScreen;
 
     [Header("MODALS")]
+    [SerializeField] private PregameModal _pregameModal;
+    [SerializeField] private NoLivesModal _noLivesModal;
+    [SerializeField] private DefeatModal _defeatModal;
+    [SerializeField] private EmergencyBundleModal _emergencyBundleModal;
     [SerializeField] private CreditsModal _creditsModal;
     [SerializeField] private ProfileModal _profileModal;
     [SerializeField] private DailyRewardModal _dailyRewardModal;
@@ -37,6 +38,7 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
 
     private bool _isInitialized = false;
     private bool _shouldGameplayHUDBeVisible;
+    private readonly List<UIModalBase> _activeModals = new();
 
 
     #region INITIALIZATION
@@ -152,13 +154,6 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
         UIEvents.OnHidePauseOverlayRequested += HidePauseOverlay;
         UIEvents.OnTogglePauseOverlayRequested += TogglePauseOverlay;
 
-        UIEvents.OnShowNoLivesOverlayRequested += ShowNoLivesOverlay;
-        UIEvents.OnHideNoLivesOverlayRequested += HideNoLivesOverlay;
-
-        UIEvents.OnShowDefeatOverlayRequested += ShowDefeatOverlay;
-
-        UIEvents.OnShowEmergencyBundleOverlayRequested += ShowEmergencyBundleOverlay;
-        UIEvents.OnHideEmergencyBundleOverlayRequested += HideEmergencyBundleOverlay;
         UIEvents.OnShowTutorialOverlayRequested += ShowTutorialOverlay;
         UIEvents.OnHideTutorialOverlayRequested += HideTutorialOverlay;
 
@@ -168,9 +163,18 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
         UIEvents.OnShowLevelsScreenRequested += ShowLevelsScreen;
         UIEvents.OnHideLevelsScreenRequested += HideLevelsScreen;
 
-        UIEvents.OnShowPreGameScreenRequested += ShowPreGameScreen;
-        UIEvents.OnHidePreGameScreenRequested += HidePreGameScreen;
-        UIEvents.OnTogglePreGameScreenRequested += TogglePreGameScreen;
+        UIEvents.OnShowPregameModalRequested += ShowPregameModal;
+        UIEvents.OnHidePregameModalRequested += HidePregameModal;
+        UIEvents.OnTogglePregameModalRequested += TogglePregameModal;
+
+        UIEvents.OnShowNoLivesModalRequested += ShowNoLivesModal;
+        UIEvents.OnHideNoLivesModalRequested += HideNoLivesModal;
+
+        UIEvents.OnShowDefeatModalRequested += ShowDefeatModal;
+        UIEvents.OnHideDefeatModalRequested += HideDefeatModal;
+
+        UIEvents.OnShowEmergencyBundleModalRequested += ShowEmergencyBundleModal;
+        UIEvents.OnHideEmergencyBundleModalRequested += HideEmergencyBundleModal;
 
         UIEvents.OnShowCreditsModalRequested += ShowCreditsModal;
         UIEvents.OnHideCreditsModalRequested += HideCreditsModal;
@@ -213,13 +217,6 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
         UIEvents.OnHidePauseOverlayRequested -= HidePauseOverlay;
         UIEvents.OnTogglePauseOverlayRequested -= TogglePauseOverlay;
 
-        UIEvents.OnShowNoLivesOverlayRequested -= ShowNoLivesOverlay;
-        UIEvents.OnHideNoLivesOverlayRequested -= HideNoLivesOverlay;
-
-        UIEvents.OnShowDefeatOverlayRequested -= ShowDefeatOverlay;
-
-        UIEvents.OnShowEmergencyBundleOverlayRequested -= ShowEmergencyBundleOverlay;
-        UIEvents.OnHideEmergencyBundleOverlayRequested -= HideEmergencyBundleOverlay;
         UIEvents.OnShowTutorialOverlayRequested -= ShowTutorialOverlay;
         UIEvents.OnHideTutorialOverlayRequested -= HideTutorialOverlay;
 
@@ -229,9 +226,18 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
         UIEvents.OnShowLevelsScreenRequested -= ShowLevelsScreen;
         UIEvents.OnHideLevelsScreenRequested -= HideLevelsScreen;
 
-        UIEvents.OnShowPreGameScreenRequested -= ShowPreGameScreen;
-        UIEvents.OnHidePreGameScreenRequested -= HidePreGameScreen;
-        UIEvents.OnTogglePreGameScreenRequested -= TogglePreGameScreen;
+        UIEvents.OnShowPregameModalRequested -= ShowPregameModal;
+        UIEvents.OnHidePregameModalRequested -= HidePregameModal;
+        UIEvents.OnTogglePregameModalRequested -= TogglePregameModal;
+
+        UIEvents.OnShowNoLivesModalRequested -= ShowNoLivesModal;
+        UIEvents.OnHideNoLivesModalRequested -= HideNoLivesModal;
+
+        UIEvents.OnShowDefeatModalRequested -= ShowDefeatModal;
+        UIEvents.OnHideDefeatModalRequested -= HideDefeatModal;
+
+        UIEvents.OnShowEmergencyBundleModalRequested -= ShowEmergencyBundleModal;
+        UIEvents.OnHideEmergencyBundleModalRequested -= HideEmergencyBundleModal;
 
         UIEvents.OnShowCreditsModalRequested -= ShowCreditsModal;
         UIEvents.OnHideCreditsModalRequested -= HideCreditsModal;
@@ -278,10 +284,10 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
                 ShowVictoryModal();
                 break;
             case LevelResult.NoLives:
-                ShowNoLivesOverlay();
+                ShowNoLivesModal();
                 break;
             case LevelResult.Defeat:
-                ShowDefeatOverlay(LifeManager.Instance != null ? LifeManager.Instance.GetRealLives() : 0);
+                ShowDefeatModal(LifeManager.Instance != null ? LifeManager.Instance.GetRealLives() : 0);
                 break;
         }
     }
@@ -291,42 +297,6 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
     private void ShowPauseOverlay() => ShowPanel(_pauseOverlay);
     private void HidePauseOverlay() => HidePanel(_pauseOverlay);
     public void TogglePauseOverlay() => TogglePanel(_pauseOverlay);
-
-    private void ShowNoLivesOverlay()
-    {
-        HidePanel(_emergencyBundleOverlay);
-        ShowPanel(_noLivesOverlay);
-    }
-    private void HideNoLivesOverlay() => HidePanel(_noLivesOverlay);
-
-    private void ShowDefeatOverlay(int livesRemaining)
-    {
-        _noLivesOverlay?.HideForFlowTransition();
-        HidePanel(_emergencyBundleOverlay);
-
-        if (_defeatOverlay != null)
-            _defeatOverlay.ShowLifeLost(livesRemaining);
-    }
-
-    public void HideDefeatOverlay()
-    {
-        if (_defeatOverlay != null)
-            _defeatOverlay.Hide();
-    }
-
-    private void ShowEmergencyBundleOverlay(EmergencyBundleOffer offer)
-    {
-        Debug.Log($"[UIManager] ShowEmergencyBundleOverlay | overlay assigned={_emergencyBundleOverlay != null}");
-        _noLivesOverlay?.HideForFlowTransition();
-
-        if (_emergencyBundleOverlay != null)
-            _emergencyBundleOverlay.ShowWithOffer(offer);
-    }
-
-    private void HideEmergencyBundleOverlay()
-    {
-        HidePanel(_emergencyBundleOverlay);
-    }
 
     private void ShowTutorialOverlay() => ShowPanel(ResolveTutorialOverlay());
     private void HideTutorialOverlay() => HidePanel(ResolveTutorialOverlay());
@@ -340,10 +310,6 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
 
     private void ShowLevelsScreen() => ShowPanel(_levelsScreen);
     private void HideLevelsScreen() => HidePanel(_levelsScreen);
-
-    private void ShowPreGameScreen() => ShowPanel(_preGameScreen);
-    private void HidePreGameScreen() => HidePanel(_preGameScreen);
-    private void TogglePreGameScreen() => TogglePanel(_preGameScreen);
 
     public void SetLevelsScreenEnabled(bool enabled)
     {
@@ -363,44 +329,84 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
 
     #region MODALS
 
-    private void ShowCreditsModal() => ShowPanel(_creditsModal);
-    private void HideCreditsModal() => HidePanel(_creditsModal);
-    private void ToggleCreditsModal() => TogglePanel(_creditsModal);
+    private void ShowPregameModal() => ShowModal(_pregameModal);
+    private void HidePregameModal() => CloseModal(_pregameModal);
+    private void TogglePregameModal() => ToggleModal(_pregameModal);
 
-    private void ShowProfileModal() => ShowPanel(_profileModal);
-    private void HideProfileModal() => HidePanel(_profileModal);
-    private void ToggleProfileModal() => TogglePanel(_profileModal);
+    private void ShowNoLivesModal()
+    {
+        CloseModal(_emergencyBundleModal);
+        ShowModal(_noLivesModal);
+    }
+
+    private void HideNoLivesModal() => CloseModal(_noLivesModal);
+
+    private void ShowDefeatModal(int livesRemaining)
+    {
+        _noLivesModal?.HideForFlowTransition();
+        CloseModal(_emergencyBundleModal);
+
+        if (_defeatModal != null)
+        {
+            _defeatModal.ShowLifeLost(livesRemaining);
+            ShowModal(_defeatModal);
+        }
+    }
+
+    private void HideDefeatModal() => CloseModal(_defeatModal);
+
+    private void ShowEmergencyBundleModal(EmergencyBundleOffer offer)
+    {
+        Debug.Log($"[UIManager] ShowEmergencyBundleModal | modal assigned={_emergencyBundleModal != null}");
+        _noLivesModal?.HideForFlowTransition();
+
+        if (_emergencyBundleModal != null)
+        {
+            _emergencyBundleModal.ShowWithOffer(offer);
+            ShowModal(_emergencyBundleModal);
+        }
+    }
+
+    private void HideEmergencyBundleModal() => CloseModal(_emergencyBundleModal);
+
+    private void ShowCreditsModal() => ShowModal(_creditsModal);
+    private void HideCreditsModal() => CloseModal(_creditsModal);
+    private void ToggleCreditsModal() => ToggleModal(_creditsModal);
+
+    private void ShowProfileModal() => ShowModal(_profileModal);
+    private void HideProfileModal() => CloseModal(_profileModal);
+    private void ToggleProfileModal() => ToggleModal(_profileModal);
 
     private void ShowDailyRewardModal()
     {
-        ShowPanel(_dailyRewardModal);
+        ShowModal(_dailyRewardModal);
         DailyRewardUIManager.Instance?.ShowDailyReward();
     }
-    private void HideDailyRewardModal() => HidePanel(_dailyRewardModal);
-    private void ToggleDailyRewardModal() => TogglePanel(_dailyRewardModal);
-    public bool IsDailyRewardModalVisible() => IsPanelVisible(_dailyRewardModal);
+    private void HideDailyRewardModal() => CloseModal(_dailyRewardModal);
+    private void ToggleDailyRewardModal() => ToggleModal(_dailyRewardModal);
+    public bool IsDailyRewardModalVisible() => IsModalVisible(_dailyRewardModal);
 
     private void OnHideDailyRewardRequested()
     {
         HideDailyRewardModal();
     }
 
-    private void ShowDailyWheelModal() => ShowPanel(_dailyWheelModal);
-    private void HideDailyWheelModal() => HidePanel(_dailyWheelModal);
-    private void ToggleDailyWheelModal() => TogglePanel(_dailyWheelModal);
-    public bool IsDailyWheelModalVisible() => IsPanelVisible(_dailyWheelModal);
+    private void ShowDailyWheelModal() => ShowModal(_dailyWheelModal);
+    private void HideDailyWheelModal() => CloseModal(_dailyWheelModal);
+    private void ToggleDailyWheelModal() => ToggleModal(_dailyWheelModal);
+    public bool IsDailyWheelModalVisible() => IsModalVisible(_dailyWheelModal);
     private void OnHideDailyWheelRequested()
     {
         HideDailyWheelModal();
     }
 
-    private void ShowStoreModal() => ShowPanel(_storeModal);
-    private void HideStoreModal() => HidePanel(_storeModal);
-    private void ToggleStoreModal() => TogglePanel(_storeModal);
+    private void ShowStoreModal() => ShowModal(_storeModal);
+    private void HideStoreModal() => CloseModal(_storeModal);
+    private void ToggleStoreModal() => ToggleModal(_storeModal);
 
-    private void ShowVictoryModal() => ShowPanel(_victoryModal);
-    private void HideVictoryModal() => HidePanel(_victoryModal);
-    private void ToggleVictoryModal() => TogglePanel(_victoryModal);
+    private void ShowVictoryModal() => ShowModal(_victoryModal);
+    private void HideVictoryModal() => CloseModal(_victoryModal);
+    private void ToggleVictoryModal() => ToggleModal(_victoryModal);
 
     #endregion
 
@@ -448,6 +454,59 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
 
     #region UTILITY METHODS
 
+    public void ShowModal(UIModalBase modal)
+    {
+        if (modal == null)
+            return;
+
+        if (modal.IsVisible)
+        {
+            NotifyModalShown(modal);
+            return;
+        }
+
+        modal.Show();
+    }
+
+    public void CloseModal(UIModalBase modal)
+    {
+        if (modal == null)
+            return;
+
+        if (!modal.IsVisible)
+        {
+            NotifyModalHidden(modal);
+            return;
+        }
+
+        modal.Hide();
+    }
+
+    public void CloseTopModal()
+    {
+        if (_activeModals.Count == 0)
+            return;
+
+        CloseModal(_activeModals[_activeModals.Count - 1]);
+    }
+
+    public void NotifyModalShown(UIModalBase modal)
+    {
+        if (modal == null)
+            return;
+
+        _activeModals.Remove(modal);
+        _activeModals.Add(modal);
+    }
+
+    public void NotifyModalHidden(UIModalBase modal)
+    {
+        if (modal == null)
+            return;
+
+        _activeModals.Remove(modal);
+    }
+
     private void ShowPanel(UIPanel panel)
     {
         if (panel == null) return;
@@ -473,6 +532,22 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
     private bool IsPanelVisible(UIPanel panel)
     {
         return panel != null && panel.IsVisible;
+    }
+
+    private void ToggleModal(UIModalBase modal)
+    {
+        if (modal == null)
+            return;
+
+        if (modal.IsVisible)
+            CloseModal(modal);
+        else
+            ShowModal(modal);
+    }
+
+    private bool IsModalVisible(UIModalBase modal)
+    {
+        return modal != null && modal.IsVisible;
     }
 
     private void RefreshGameplayHUDVisibility()
@@ -506,18 +581,18 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
     public bool HasBlockingPanelForLevelSelection()
     {
         return IsPanelVisible(_pauseOverlay)
-            || IsPanelVisible(_noLivesOverlay)
-            || IsPanelVisible(_defeatOverlay)
-            || IsPanelVisible(_emergencyBundleOverlay)
             || IsPanelVisible(ResolveTutorialOverlay())
             || IsPanelVisible(_splashScreen)
-            || IsPanelVisible(_preGameScreen)
-            || IsPanelVisible(_creditsModal)
-            || IsPanelVisible(_profileModal)
-            || IsPanelVisible(_dailyRewardModal)
-            || IsPanelVisible(_dailyWheelModal)
-            || IsPanelVisible(_storeModal)
-            || IsPanelVisible(_victoryModal);
+            || IsModalVisible(_pregameModal)
+            || IsModalVisible(_noLivesModal)
+            || IsModalVisible(_defeatModal)
+            || IsModalVisible(_emergencyBundleModal)
+            || IsModalVisible(_creditsModal)
+            || IsModalVisible(_profileModal)
+            || IsModalVisible(_dailyRewardModal)
+            || IsModalVisible(_dailyWheelModal)
+            || IsModalVisible(_storeModal)
+            || IsModalVisible(_victoryModal);
     }
 
     #endregion

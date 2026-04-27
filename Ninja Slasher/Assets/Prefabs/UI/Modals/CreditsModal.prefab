@@ -143,7 +143,6 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 3462122808591343686}
   - {fileID: 5545017378674443734}
   m_Father: {fileID: 6717016315465191488}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -555,6 +554,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -691,6 +691,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -906,7 +907,7 @@ GameObject:
   - component: {fileID: 4856623466177519119}
   - component: {fileID: 6666064950118161295}
   m_Layer: 5
-  m_Name: BG Image
+  m_Name: BackgroundOverlay
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -924,7 +925,7 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 4488717803393508550}
+  m_Father: {fileID: 6717016315465191488}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
@@ -952,15 +953,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0, g: 0, b: 0, a: 0.8}
+  m_Color: {r: 0, g: 0, b: 0, a: 0.78431374}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
-  m_Type: 1
+  m_Sprite: {fileID: 7482667652216324306, guid: 979f45e28a18e2f49923a7e2aa5e2595, type: 3}
+  m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
   m_FillMethod: 4
@@ -1075,6 +1076,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -1139,6 +1141,7 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 3462122808591343686}
   - {fileID: 4488717803393508550}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -1171,6 +1174,22 @@ MonoBehaviour:
   _panelTransform: {fileID: 4488717803393508550}
   _hasBackground: 1
   _backgroundImage: {fileID: 6666064950118161295}
+  _closeOnOutsideClick: 1
+  _modalAnimator: {fileID: 4050443727384585437}
+  _useCanvasGroupFadeWhenNoAnimator: 1
+  _useContentScaleWhenNoAnimator: 1
+  _animatedContentTransform: {fileID: 0}
+  _animatedContentCanvasGroup: {fileID: 0}
+  _fadeAnimationDuration: 0.2
+  _showFadeEase: 6
+  _hideFadeEase: 5
+  _showScaleDuration: 0.22
+  _hideScaleDuration: 0.18
+  _showScaleEase: 27
+  _hideScaleEase: 26
+  _hiddenScaleMultiplier: 0.94
+  _openTrigger: Open
+  _closeTrigger: Close
 --- !u!95 &4050443727384585437
 Animator:
   serializedVersion: 7
