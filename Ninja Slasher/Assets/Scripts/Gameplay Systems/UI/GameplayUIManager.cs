@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using TMPro;
 using UnityEngine;
 using DG.Tweening;
@@ -15,25 +14,32 @@ public class GameplayUIManager : MonoBehaviour
     [SerializeField] private TextMeshProUGUI _bonusTimeText;
 
     private UIAudioContext _audioContext;
+    private RectTransform _bonusTimeRectTransform;
+    private CanvasGroup _bonusTimeCanvasGroup;
+    private Sequence _bonusTimeSequence;
+    private Vector3 _bonusTimeBaseScale = Vector3.one;
+    private bool _bonusTimeBaseScaleCached;
 
     private bool _noLivesActive = false;
 
     private void Awake()
     {
         _audioContext = GetComponentInParent<UIAudioContext>();
+        CacheBonusTimeReferences();
+        CacheBonusTimeBaseScale();
+        ResetBonusTimeVisualState(hide: true);
     }
 
     private void OnDisable()
     {
         UnsubscribeFromEvents();
+        ResetBonusTimeVisualState(hide: true);
     }
 
     public void Initialize()
     {
         UpdateLivesUI(LifeManager.Instance?.GetDisplayLives() ?? 0);
-
-        if (_bonusTimeText != null)
-            _bonusTimeText.gameObject.SetActive(false);
+        ResetBonusTimeVisualState(hide: true);
     }
 
     public void OnSceneLoaded()
@@ -135,40 +141,97 @@ public class GameplayUIManager : MonoBehaviour
     {
         if (_bonusTimeText == null) return;
 
-        StopAllCoroutines();
-
         _bonusTimeText.text = $"+{bonus:F0}s";
         _bonusTimeText.gameObject.SetActive(true);
-
-        StartCoroutine(AnimateBonusText());
+        PlayBonusTimeAnimation();
     }
 
-    private IEnumerator AnimateBonusText()
+    private void PlayBonusTimeAnimation()
     {
-        if (_bonusTimeText == null) yield break;
+        CacheBonusTimeReferences();
+        CacheBonusTimeBaseScale();
 
-        var rectTransform = _bonusTimeText.GetComponent<RectTransform>();
-        var canvasGroup = _bonusTimeText.GetComponent<CanvasGroup>();
+        if (_bonusTimeRectTransform == null || _bonusTimeCanvasGroup == null)
+            return;
 
-        if (canvasGroup == null)
+        ResetBonusTimeVisualState(hide: false);
+
+        _bonusTimeRectTransform.localScale = _bonusTimeBaseScale * 0.5f;
+        _bonusTimeCanvasGroup.alpha = 1f;
+
+        _bonusTimeSequence = DOTween.Sequence();
+        _bonusTimeSequence.Append(_bonusTimeRectTransform
+            .DOScale(_bonusTimeBaseScale, 0.2f)
+            .SetEase(Ease.OutBack));
+        _bonusTimeSequence.AppendCallback(() => _bonusTimeRectTransform.localScale = _bonusTimeBaseScale);
+        _bonusTimeSequence.Append(_bonusTimeRectTransform
+            .DOPunchScale(_bonusTimeBaseScale * 0.3f, 0.15f, vibrato: 5, elasticity: 0.5f));
+        _bonusTimeSequence.AppendCallback(() => _bonusTimeRectTransform.localScale = _bonusTimeBaseScale);
+        _bonusTimeSequence.AppendInterval(1.2f);
+        _bonusTimeSequence.Append(_bonusTimeCanvasGroup
+            .DOFade(0f, 0.3f)
+            .SetEase(Ease.InQuad));
+        _bonusTimeSequence.OnComplete(() => ResetBonusTimeVisualState(hide: true));
+    }
+
+    private void CacheBonusTimeReferences()
+    {
+        if (_bonusTimeText == null)
+            return;
+
+        if (_bonusTimeRectTransform == null)
+            _bonusTimeRectTransform = _bonusTimeText.rectTransform;
+
+        if (_bonusTimeCanvasGroup == null &&
+            !_bonusTimeText.TryGetComponent(out _bonusTimeCanvasGroup))
         {
-            canvasGroup = _bonusTimeText.gameObject.AddComponent<CanvasGroup>();
+            _bonusTimeCanvasGroup = _bonusTimeText.gameObject.AddComponent<CanvasGroup>();
+        }
+    }
+
+    private void CacheBonusTimeBaseScale()
+    {
+        if (_bonusTimeBaseScaleCached || _bonusTimeRectTransform == null)
+            return;
+
+        _bonusTimeBaseScale = _bonusTimeRectTransform.localScale;
+        _bonusTimeBaseScaleCached = true;
+    }
+
+    private void ResetBonusTimeVisualState(bool hide)
+    {
+        KillBonusTimeTweens();
+
+        if (_bonusTimeRectTransform != null && _bonusTimeBaseScaleCached)
+            _bonusTimeRectTransform.localScale = _bonusTimeBaseScale;
+
+        if (_bonusTimeCanvasGroup != null)
+            _bonusTimeCanvasGroup.alpha = hide ? 0f : 1f;
+
+        if (hide && _bonusTimeText != null)
+            _bonusTimeText.gameObject.SetActive(false);
+    }
+
+    private void KillBonusTimeTweens()
+    {
+        if (_bonusTimeSequence != null)
+        {
+            if (_bonusTimeSequence.IsActive())
+                _bonusTimeSequence.Kill();
+
+            _bonusTimeSequence = null;
         }
 
-        Vector3 originalScale = rectTransform.localScale;
-        canvasGroup.alpha = 1f;
+        KillBonusTimeScaleTweens();
 
-        rectTransform.localScale = originalScale * 0.5f;
-        rectTransform.DOScale(originalScale * 1.3f, 0.2f).SetEase(DG.Tweening.Ease.OutBack);
+        if (_bonusTimeCanvasGroup != null)
+            DOTween.Kill(_bonusTimeCanvasGroup);
+    }
 
-        yield return new WaitForSeconds(0.2f);
-
-        rectTransform.DOScale(originalScale, 0.15f).SetEase(DG.Tweening.Ease.InOutQuad);
-
-        yield return new WaitForSeconds(1.2f);
-
-        canvasGroup.DOFade(0f, 0.3f).SetEase(DG.Tweening.Ease.InQuad)
-            .OnComplete(() => _bonusTimeText.gameObject.SetActive(false));
+    private void KillBonusTimeScaleTweens()
+    {
+        if (_bonusTimeRectTransform != null)
+            DOTween.Kill(_bonusTimeRectTransform);
     }
 
     private void OnLevelTimeChanged(float time)
