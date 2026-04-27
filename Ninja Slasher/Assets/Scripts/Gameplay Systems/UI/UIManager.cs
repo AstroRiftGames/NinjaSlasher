@@ -466,6 +466,7 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
         }
 
         modal.Show();
+        UIEvents.RaiseAnyModalShown();
     }
 
     public void CloseModal(UIModalBase modal)
@@ -511,6 +512,7 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
     {
         if (panel == null) return;
         panel.Show();
+        UIEvents.RaiseAnyModalShown();
     }
 
     private void HidePanel(UIPanel panel)

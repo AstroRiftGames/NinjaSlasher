@@ -9,6 +9,7 @@ public static class UIEvents
     public static event Action<string> OnPanelCloseRequested;
     public static event Action<string> OnPanelToggleRequested;
     public static event Action OnAllPanelsCloseRequested;
+    public static event Action OnAnyModalShown;
 
     public static void RequestOpenPanel(string panelName)
     {
@@ -28,6 +29,11 @@ public static class UIEvents
     public static void RequestCloseAllPanels()
     {
         OnAllPanelsCloseRequested?.Invoke();
+    }
+
+    public static void RaiseAnyModalShown()
+    {
+        OnAnyModalShown?.Invoke();
     }
 
     #endregion
