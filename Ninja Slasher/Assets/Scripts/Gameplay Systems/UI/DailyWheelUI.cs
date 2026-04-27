@@ -469,10 +469,12 @@ public class DailyWheelUI : MonoBehaviour
         }
     }
 
-    private TimeSpan GetTimeUntilNextSpin()
+    private DateTime GetNextSpinAvailabilityUtc()
     {
-        DateTime now = DateTime.UtcNow;
-        return now.Date.AddDays(1) - now;
+        if (DailyWheelSystem.Instance == null)
+            return DateTime.UtcNow;
+
+        return DailyWheelSystem.Instance.GetNextDailySpinAvailabilityUtc();
     }
 
     private void RefreshWheelState()
@@ -575,13 +577,21 @@ public class DailyWheelUI : MonoBehaviour
 
     private void UpdateSpinCountdownTexts(bool canSpin, int availableSpins)
     {
-        TimeSpan timeUntilNextSpin = GetTimeUntilNextSpin();
+        DateTime nextSpinAvailabilityUtc = GetNextSpinAvailabilityUtc();
+        string nextSpinText = DailyAvailabilityUIFormatter.FormatLockedAvailability(
+            "Proximo giro en ",
+            nextSpinAvailabilityUtc,
+            "Giro disponible ahora");
+        string nextSpinPopupText = DailyAvailabilityUIFormatter.FormatLockedAvailability(
+            "Proximo giro en: ",
+            nextSpinAvailabilityUtc,
+            "Giro disponible ahora");
 
         if (timerText != null)
         {
             if (!canSpin)
             {
-                timerText.text = $"Proximo giro en {timeUntilNextSpin.Hours:D2}:{timeUntilNextSpin.Minutes:D2}:{timeUntilNextSpin.Seconds:D2}";
+                timerText.text = nextSpinText;
             }
             else
             {
@@ -592,7 +602,7 @@ public class DailyWheelUI : MonoBehaviour
         }
 
         if (_nextFreeSpinPopupText != null)
-            _nextFreeSpinPopupText.text = $"Proximo giro en: {timeUntilNextSpin.Hours:D2}:{timeUntilNextSpin.Minutes:D2}:{timeUntilNextSpin.Seconds:D2}";
+            _nextFreeSpinPopupText.text = canSpin ? "Giro disponible ahora" : nextSpinPopupText;
     }
 
     public void ShowNoSpinsPopup()

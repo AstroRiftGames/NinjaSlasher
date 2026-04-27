@@ -1,3 +1,5 @@
+using System;
+using System.Globalization;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
@@ -194,8 +196,10 @@ public class DailyRewardUIManager : MonoBehaviourSingleton<DailyRewardUIManager>
     {
         if (nextRewardTimeText != null && dailyRewardSystem != null)
         {
-            string timeText = dailyRewardSystem.GetTimeUntilNextReward();
-            nextRewardTimeText.text = timeText.Contains("DISPONIBLE") ? timeText : $"Próxima recompensa: {timeText}";
+            nextRewardTimeText.text = DailyAvailabilityUIFormatter.FormatLockedAvailability(
+                "Proxima recompensa: ",
+                dailyRewardSystem.GetNextRewardAvailabilityUtc(),
+                "DISPONIBLE AHORA");
         }
     }
 
@@ -290,7 +294,7 @@ public class DailyRewardUIManager : MonoBehaviourSingleton<DailyRewardUIManager>
         {
             if (hasDoubledToday)
             {
-                _doubleRewardButtonText.text = "¡DUPLICADA!";
+                _doubleRewardButtonText.text = "DUPLICADA!";
             }
             else if (canDouble)
             {
@@ -319,7 +323,7 @@ public class DailyRewardUIManager : MonoBehaviourSingleton<DailyRewardUIManager>
 
         if (!AdsManager.Instance.IsRewardedAdReady())
         {
-            Debug.LogWarning("[DailyRewardUIManager] Anuncio no está listo");
+            Debug.LogWarning("[DailyRewardUIManager] Anuncio no esta listo");
             return;
         }
 
@@ -437,7 +441,55 @@ public class DailyRewardDayUI
 
     string GetDayName(int dayIndex)
     {
-        string[] dayNames = { "DÍA 1", "DÍA 2", "DÍA 3", "DÍA 4", "DÍA 5", "DÍA 6", "DÍA 7" };
-        return dayIndex < dayNames.Length ? dayNames[dayIndex] : $"DÍA {dayIndex + 1}";
+        string[] dayNames = { "DIA 1", "DIA 2", "DIA 3", "DIA 4", "DIA 5", "DIA 6", "DIA 7" };
+        return dayIndex < dayNames.Length ? dayNames[dayIndex] : $"DIA {dayIndex + 1}";
+    }
+}
+
+internal static class DailyAvailabilityUIFormatter
+{
+    private const string CountdownFormat = @"hh\:mm\:ss";
+
+    public static string FormatRewardAvailability(string countdownText, string lockedPrefix, string availableText)
+    {
+        if (string.IsNullOrWhiteSpace(countdownText))
+            return availableText;
+
+        if (countdownText.IndexOf("DISPONIBLE", StringComparison.OrdinalIgnoreCase) >= 0)
+            return availableText;
+
+        if (!TimeSpan.TryParseExact(countdownText, CountdownFormat, CultureInfo.InvariantCulture, out TimeSpan remaining))
+            return $"{lockedPrefix}{countdownText}";
+
+        DateTime nextAvailabilityUtc = DateTime.UtcNow.Add(remaining);
+        return FormatLockedAvailability(lockedPrefix, nextAvailabilityUtc, availableText);
+    }
+
+    public static string FormatLockedAvailability(string lockedPrefix, DateTime nextAvailabilityUtc, string availableText)
+    {
+        DateTime normalizedUtc = NormalizeUtc(nextAvailabilityUtc);
+        TimeSpan remaining = normalizedUtc - DateTime.UtcNow;
+
+        if (remaining.TotalSeconds <= 0d)
+            return availableText;
+
+        return $"{lockedPrefix}{FormatCountdown(remaining)}";
+    }
+
+    private static DateTime NormalizeUtc(DateTime value)
+    {
+        if (value.Kind == DateTimeKind.Utc)
+            return value;
+
+        if (value.Kind == DateTimeKind.Local)
+            return value.ToUniversalTime();
+
+        return DateTime.SpecifyKind(value, DateTimeKind.Utc);
+    }
+
+    private static string FormatCountdown(TimeSpan remaining)
+    {
+        int totalHours = Math.Max(0, (int)Math.Floor(remaining.TotalHours));
+        return $"{totalHours:D2}:{remaining.Minutes:D2}:{remaining.Seconds:D2}";
     }
 }

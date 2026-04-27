@@ -121,6 +121,7 @@ public class DailyWheelSystem : MonoBehaviourSingleton<DailyWheelSystem>
             return;
 
         wheelData.lastAutoShowDate = currentDate.ToString("yyyy-MM-dd");
+        wheelData.lastAutoShowTimestampUtc = DateTime.UtcNow.ToString("o");
         SaveWheelData();
     }
 
@@ -136,10 +137,11 @@ public class DailyWheelSystem : MonoBehaviourSingleton<DailyWheelSystem>
 
     private bool HasDailySpinAvailable()
     {
-        DateTime lastSpin = GetLastSpinDateSafe();
-        DateTime currentDate = DateTime.UtcNow.Date;
+        DateTime lastSpinUtc = GetLastSpinTimestampSafe();
+        if (lastSpinUtc == DateTime.MinValue)
+            return true;
 
-        return lastSpin < currentDate;
+        return DateTime.UtcNow >= lastSpinUtc + DailyAvailabilityTimeUtility.CooldownInterval;
     }
 
     private bool HasPendingFreeSpins()
@@ -150,6 +152,15 @@ public class DailyWheelSystem : MonoBehaviourSingleton<DailyWheelSystem>
     private bool ShouldConsumePendingFreeSpin()
     {
         return !HasDailySpinAvailable() && HasPendingFreeSpins();
+    }
+
+    public DateTime GetNextDailySpinAvailabilityUtc()
+    {
+        DateTime lastSpinUtc = GetLastSpinTimestampSafe();
+        if (lastSpinUtc == DateTime.MinValue)
+            return DateTime.UtcNow;
+
+        return lastSpinUtc + DailyAvailabilityTimeUtility.CooldownInterval;
     }
 
     private WheelReward GetCalculatedReward()
@@ -195,15 +206,16 @@ public class DailyWheelSystem : MonoBehaviourSingleton<DailyWheelSystem>
             return;
         }
 
-        DateTime lastSpin = GetLastSpinDateSafe();
-        DateTime currentDate = DateTime.UtcNow.Date;
+        DateTime nowUtc = DateTime.UtcNow;
+        DateTime lastSpinUtc = GetLastSpinTimestampSafe();
 
-        if (lastSpin == currentDate.AddDays(-1))
+        if (lastSpinUtc != DateTime.MinValue && nowUtc - lastSpinUtc < DailyAvailabilityTimeUtility.MissedWindowThreshold)
             wheelData.consecutiveSpins++;
         else
             wheelData.consecutiveSpins = 1;
 
-        wheelData.lastSpinDate = DateTime.UtcNow.ToString("yyyy-MM-dd");
+        wheelData.lastSpinTimestampUtc = nowUtc.ToString("o");
+        wheelData.lastSpinDate = nowUtc.ToString("yyyy-MM-dd");
         wheelData.totalSpins++;
     }
 
@@ -218,10 +230,14 @@ public class DailyWheelSystem : MonoBehaviourSingleton<DailyWheelSystem>
         if (SaveManager.Instance == null) return;
         var saved = SaveManager.Instance.GetGameData().dailyWheelData;
         wheelData.lastSpinDate      = saved.lastSpinDateIso;
+        wheelData.lastSpinTimestampUtc = saved.lastSpinTimestampUtc;
         wheelData.consecutiveSpins  = saved.consecutiveSpins;
         wheelData.totalSpins        = saved.totalSpins;
         wheelData.pendingFreeSpins  = saved.pendingFreeSpins;
         wheelData.lastAutoShowDate  = saved.lastAutoShowDateIso;
+        wheelData.lastAutoShowTimestampUtc = saved.lastAutoShowTimestampUtc;
+
+        MigrateLegacyTimestamps();
     }
 
     private void SaveWheelData()
@@ -230,23 +246,51 @@ public class DailyWheelSystem : MonoBehaviourSingleton<DailyWheelSystem>
         SaveManager.Instance.Modify(d =>
         {
             d.dailyWheelData.lastSpinDateIso  = wheelData.lastSpinDate;
+            d.dailyWheelData.lastSpinTimestampUtc = wheelData.lastSpinTimestampUtc;
             d.dailyWheelData.consecutiveSpins = wheelData.consecutiveSpins;
             d.dailyWheelData.totalSpins       = wheelData.totalSpins;
             d.dailyWheelData.pendingFreeSpins = wheelData.pendingFreeSpins;
             d.dailyWheelData.lastAutoShowDateIso = wheelData.lastAutoShowDate;
+            d.dailyWheelData.lastAutoShowTimestampUtc = wheelData.lastAutoShowTimestampUtc;
         });
     }
 
-    private DateTime GetLastSpinDateSafe()
+    private DateTime GetLastSpinTimestampSafe()
     {
-        if (string.IsNullOrEmpty(wheelData.lastSpinDate)) return DateTime.MinValue;
-        return DateTime.TryParse(wheelData.lastSpinDate, out DateTime result) ? result.Date : DateTime.MinValue;
+        if (DailyAvailabilityTimeUtility.TryParseIsoUtc(wheelData.lastSpinTimestampUtc, out DateTime exactUtc))
+            return exactUtc;
+
+        if (DailyAvailabilityTimeUtility.TryParseIsoUtc(wheelData.lastSpinDate, out DateTime legacyIsoUtc))
+            return legacyIsoUtc;
+
+        if (DailyAvailabilityTimeUtility.TryParseUtcDate(wheelData.lastSpinDate, out DateTime legacyDateUtc))
+            return legacyDateUtc;
+
+        return DateTime.MinValue;
     }
 
     private DateTime GetLastAutoShowDateSafe()
     {
         if (string.IsNullOrEmpty(wheelData.lastAutoShowDate)) return DateTime.MinValue;
         return DateTime.TryParse(wheelData.lastAutoShowDate, out DateTime result) ? result.Date : DateTime.MinValue;
+    }
+
+    private void MigrateLegacyTimestamps()
+    {
+        DateTime lastSpinUtc = GetLastSpinTimestampSafe();
+        if (lastSpinUtc > DateTime.MinValue)
+        {
+            if (string.IsNullOrEmpty(wheelData.lastSpinTimestampUtc))
+                wheelData.lastSpinTimestampUtc = lastSpinUtc.ToString("o");
+
+            if (string.IsNullOrEmpty(wheelData.lastSpinDate))
+                wheelData.lastSpinDate = lastSpinUtc.ToString("yyyy-MM-dd");
+        }
+
+        if (string.IsNullOrEmpty(wheelData.lastAutoShowTimestampUtc) && GetLastAutoShowDateSafe() > DateTime.MinValue)
+        {
+            wheelData.lastAutoShowTimestampUtc = GetLastAutoShowDateSafe().ToUniversalTime().ToString("o");
+        }
     }
 
 
@@ -302,7 +346,9 @@ public class DailyWheelSystem : MonoBehaviourSingleton<DailyWheelSystem>
 public class WheelData
 {
     public string lastSpinDate;
+    public string lastSpinTimestampUtc;
     public string lastAutoShowDate;
+    public string lastAutoShowTimestampUtc;
     public int consecutiveSpins;
     public int totalSpins;
     public int pendingFreeSpins;
