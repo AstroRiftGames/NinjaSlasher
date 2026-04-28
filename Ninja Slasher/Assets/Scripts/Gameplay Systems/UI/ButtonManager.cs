@@ -52,7 +52,6 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
     [SerializeField] private Button _closeStoreButton;
 
     [Header("PREGAME BUTTONS")]
-    [SerializeField] private Button _closePregameButton;
     [SerializeField] private Button _playButton;
 
     [Header("GAMEPLAY BUTTONS")]

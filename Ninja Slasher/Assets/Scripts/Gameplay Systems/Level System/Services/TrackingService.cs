@@ -115,22 +115,25 @@ public class TrackingService
     {
         if (!CanTrackGameplay) return;
 
-        if (activeEnemies.Contains(enemy))
+        if (!activeEnemies.Contains(enemy))
         {
-            activeEnemies.Remove(enemy);
+            activeEnemies.Add(enemy);
+            totalEnemiesAtStart++;
+        }
 
-            UpdateSessionStats();
+        activeEnemies.Remove(enemy);
 
-            if (_isDashActive)
-            {
-                _currentDashKills++;
-                session.UpdateMaxSingleAttackKills(_currentDashKills);
-            }
+        UpdateSessionStats();
 
-            if (activeEnemies.Count == 0)
-            {
-                OnAllEnemiesDefeated();
-            }
+        if (_isDashActive)
+        {
+            _currentDashKills++;
+            session.UpdateMaxSingleAttackKills(_currentDashKills);
+        }
+
+        if (activeEnemies.Count == 0)
+        {
+            OnAllEnemiesDefeated();
         }
     }
 

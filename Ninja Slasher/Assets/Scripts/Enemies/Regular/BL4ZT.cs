@@ -69,7 +69,6 @@ public class BL4ZT : Enemy
         Vector2 direction = GetMovementDir();
 
         hit = Physics2D.Raycast(origin, direction, wallCheckDistance, _obstaclesLayer);
-        Debug.DrawRay(origin, direction * wallCheckDistance, Color.red);
 
         return hit.collider != null;
     }
@@ -97,14 +96,12 @@ public class BL4ZT : Enemy
 
     private bool CheckCorner(bool groundFront, bool groundBack, bool wallAhead)
     {
-        Debug.Log($"Checking corner: GroundF = {groundFront}, GroundB = {groundBack}, Wall = {wallAhead}");
         // CLOSE CORNER
         if (wallAhead && groundFront && groundBack)
         {
             Vector2 newNormal =
                 new Vector2(-currentNormal.y, currentNormal.x);
 
-            Debug.Log("Close Corner");
             StartTurn(newNormal, true);
             return true;
         }
@@ -112,10 +109,15 @@ public class BL4ZT : Enemy
         // OPEN CORNER
         if (!wallAhead && groundBack && !groundFront)
         {
+            // Verify it's not a seam between colliders
+            if (DetectGround(groundHorizontalOffset + 0.15f, out RaycastHit2D seamHit))
+            {
+                return false;
+            }
+
             Vector2 newNormal =
                 new Vector2(currentNormal.y, -currentNormal.x);
 
-            Debug.Log("Open Corner");
             StartTurn(newNormal, false);
             return true;
         }
@@ -148,7 +150,6 @@ public class BL4ZT : Enemy
         Vector2 direction = -transform.up;
 
         RaycastHit2D hit = Physics2D.Raycast(origin, direction, .5f, _obstaclesLayer);
-        Debug.DrawRay(origin, direction * .5f, Color.green, 2f);
 
         if (!hit.collider)
             return;
@@ -156,6 +157,18 @@ public class BL4ZT : Enemy
         float delta = hit.distance;
 
         transform.position -= transform.up * (delta + groundCheckDistance/2);
+    }
+
+    private void ApplyFailsafeAlignment()
+    {
+        RaycastHit2D hit = Physics2D.Raycast(transform.position, Vector2.down, Mathf.Infinity, _obstaclesLayer);
+        
+        if (hit.collider != null)
+        {
+            AlignToSurface(hit.normal);
+            transform.position = (Vector3)hit.point + transform.up * 0.1f;
+            SnapToSurface();
+        }
     }
     #endregion
 
@@ -200,7 +213,6 @@ public class BL4ZT : Enemy
         }
 
         transform.RotateAround(pivotPoint, Vector3.forward, step);
-        Debug.DrawLine(transform.position, pivotPoint, Color.yellow, 2f);
 
         transform.position += GetMovementDir() * _currentSpeed * Time.deltaTime;
 
@@ -215,9 +227,8 @@ public class BL4ZT : Enemy
     private bool HasLOS()
     {
         Vector2 dirToPlayer = (_player.transform.position - transform.position).normalized;
-        RaycastHit2D hit = Physics2D.Raycast(transform.position, dirToPlayer, _data.Range, _playerLayer);
-        return hit;
-
+        RaycastHit2D hit = Physics2D.Raycast(transform.position, dirToPlayer, _data.Range, _playerLayer | _obstaclesLayer);
+        return hit.collider != null && hit.collider.CompareTag("Player");
     }
 
     private bool CheckTarget(Vector3 target)
@@ -249,7 +260,6 @@ public class BL4ZT : Enemy
         _animator.SetBool("IsMoving", false);
 
         yield return new WaitForSeconds(0.5f);
-        IncreaseNodeIndex();
         Transform _nextNode = _nodes[_currentNodeIndex];
         
         _destination = GetClosestPoint(_nextNode.position);
@@ -270,12 +280,16 @@ public class BL4ZT : Enemy
         {
             Vector2 dirToCast = GetDirectionByIndex(n);
             RaycastHit2D hit = Physics2D.Raycast(origin, dirToCast, 15, base._obstaclesLayer);
-            float disToCurrent = Vector2.Distance(origin, hit.point);
-
-            if (disToClosestSurface == 0 || disToClosestSurface > disToCurrent)
+            
+            if (hit.collider != null)
             {
-                disToClosestSurface = disToCurrent;
-                closestPoint = hit.point;
+                float disToCurrent = Vector2.Distance(origin, hit.point);
+
+                if (disToClosestSurface == float.MaxValue || disToClosestSurface > disToCurrent)
+                {
+                    disToClosestSurface = disToCurrent;
+                    closestPoint = hit.point;
+                }
             }
         }
         return closestPoint;
@@ -425,6 +439,7 @@ public class BL4ZT : Enemy
 
         if (!groundFront && !groundBack)
         {
+            ApplyFailsafeAlignment();
             return;
         }
 
@@ -436,7 +451,7 @@ public class BL4ZT : Enemy
             }
             else
             {
-                if (!CheckTarget(_destination) || _isRoaming)
+                if (!_isWaiting && (!CheckTarget(_destination) || _isRoaming))
                 {
                     AudioService.Instance.StopSFX(_audioContext.Audio.idle);
                     AudioService.Instance.PlaySFXAtPosition(_audioContext.Audio.move, transform.position);
@@ -451,6 +466,7 @@ public class BL4ZT : Enemy
                     AudioService.Instance.PlaySFXAtPosition(_audioContext.Audio.idle, transform.position);
                     if (!_isRoaming)
                     {
+                        IncreaseNodeIndex();
                         StartCoroutine(SetPatrolTarget());
                     }   
                 }
@@ -491,17 +507,5 @@ public class BL4ZT : Enemy
         }
     }
     #endregion
-
-    private void OnDrawGizmosSelected()
-    {
-        Gizmos.color = Color.white;
-        Gizmos.DrawLine(transform.position, _destination);
-        Gizmos.color = Color.black;
-        Gizmos.DrawSphere(pivotPoint, .1f);
-        Gizmos.color = Color.blue;
-        Gizmos.DrawWireSphere(transform.position, _data.Range);
-        Gizmos.color = Color.red;
-        Gizmos.DrawWireSphere(transform.position, _explosionRadius);
-    }
 }
 

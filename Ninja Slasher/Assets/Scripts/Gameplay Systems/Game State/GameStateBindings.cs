@@ -78,16 +78,16 @@ public sealed class GameStateBindings : MonoBehaviour
     private void SubscribeUIFlow()
     {
         UIEvents.OnLevelSelectorReady += OnLevelSelectorReady;
-        UIEvents.OnShowPreGameScreenRequested += OnShowPreGameScreenRequested;
-        UIEvents.OnHidePreGameScreenRequested += OnHidePreGameScreenRequested;
+        UIEvents.OnShowPregameModalRequested += OnShowPregameModalRequested;
+        UIEvents.OnHidePregameModalRequested += OnHidePregameModalRequested;
         UIEvents.OnSceneTransitionRequested += OnSceneTransitionRequested;
         UIEvents.OnLoadLevelSelectorSceneRequested += OnLoadLevelSelectorSceneRequested;
         UIEvents.OnShowLevelSelectorRequested += OnShowLevelSelectorRequested;
         UIEvents.OnShowPauseOverlayRequested += OnShowPauseOverlayRequested;
         UIEvents.OnShowTutorialOverlayRequested += OnShowTutorialOverlayRequested;
-        UIEvents.OnShowNoLivesOverlayRequested += OnShowNoLivesOverlayRequested;
-        UIEvents.OnShowDefeatOverlayRequested += OnShowDefeatOverlayRequested;
-        UIEvents.OnShowEmergencyBundleOverlayRequested += OnShowEmergencyBundleOverlayRequested;
+        UIEvents.OnShowNoLivesModalRequested += OnShowNoLivesModalRequested;
+        UIEvents.OnShowDefeatModalRequested += OnShowDefeatModalRequested;
+        UIEvents.OnShowEmergencyBundleModalRequested += OnShowEmergencyBundleModalRequested;
         UIEvents.OnShowVictoryModalRequested += OnShowVictoryModalRequested;
         UIEvents.OnShowDailyWheelModalRequested += OnShowDailyWheelModalRequested;
         UIEvents.OnShowDailyRewardModalRequested += OnShowDailyRewardModalRequested;
@@ -98,16 +98,16 @@ public sealed class GameStateBindings : MonoBehaviour
     private void UnsubscribeUIFlow()
     {
         UIEvents.OnLevelSelectorReady -= OnLevelSelectorReady;
-        UIEvents.OnShowPreGameScreenRequested -= OnShowPreGameScreenRequested;
-        UIEvents.OnHidePreGameScreenRequested -= OnHidePreGameScreenRequested;
+        UIEvents.OnShowPregameModalRequested -= OnShowPregameModalRequested;
+        UIEvents.OnHidePregameModalRequested -= OnHidePregameModalRequested;
         UIEvents.OnSceneTransitionRequested -= OnSceneTransitionRequested;
         UIEvents.OnLoadLevelSelectorSceneRequested -= OnLoadLevelSelectorSceneRequested;
         UIEvents.OnShowLevelSelectorRequested -= OnShowLevelSelectorRequested;
         UIEvents.OnShowPauseOverlayRequested -= OnShowPauseOverlayRequested;
         UIEvents.OnShowTutorialOverlayRequested -= OnShowTutorialOverlayRequested;
-        UIEvents.OnShowNoLivesOverlayRequested -= OnShowNoLivesOverlayRequested;
-        UIEvents.OnShowDefeatOverlayRequested -= OnShowDefeatOverlayRequested;
-        UIEvents.OnShowEmergencyBundleOverlayRequested -= OnShowEmergencyBundleOverlayRequested;
+        UIEvents.OnShowNoLivesModalRequested -= OnShowNoLivesModalRequested;
+        UIEvents.OnShowDefeatModalRequested -= OnShowDefeatModalRequested;
+        UIEvents.OnShowEmergencyBundleModalRequested -= OnShowEmergencyBundleModalRequested;
         UIEvents.OnShowVictoryModalRequested -= OnShowVictoryModalRequested;
         UIEvents.OnShowDailyWheelModalRequested -= OnShowDailyWheelModalRequested;
         UIEvents.OnShowDailyRewardModalRequested -= OnShowDailyRewardModalRequested;
@@ -138,15 +138,15 @@ public sealed class GameStateBindings : MonoBehaviour
         TrySetState(GameState.LevelSelection, "LevelSelectorReady");
     }
 
-    private void OnShowPreGameScreenRequested()
+    private void OnShowPregameModalRequested()
     {
-        TrySetState(GameState.PreGame, "ShowPreGameScreenRequested");
+        TrySetState(GameState.PreGame, "ShowPregameModalRequested");
     }
 
-    private void OnHidePreGameScreenRequested()
+    private void OnHidePregameModalRequested()
     {
         if (_manager != null && _manager.CurrentState == GameState.PreGame)
-            TrySetState(GameState.LevelSelection, "HidePreGameScreenRequested");
+            TrySetState(GameState.LevelSelection, "HidePregameModalRequested");
     }
 
     private void OnSceneTransitionRequested(string _)
@@ -174,19 +174,19 @@ public sealed class GameStateBindings : MonoBehaviour
         TrySetState(GameState.Paused, "TutorialOverlayRequested");
     }
 
-    private void OnShowNoLivesOverlayRequested()
+    private void OnShowNoLivesModalRequested()
     {
-        TrySetState(GameState.NoLivesWall, "NoLivesOverlayRequested");
+        TrySetState(GameState.NoLivesWall, "NoLivesModalRequested");
     }
 
-    private void OnShowDefeatOverlayRequested(int _)
+    private void OnShowDefeatModalRequested(int _)
     {
-        TrySetState(GameState.Defeat, "DefeatOverlayRequested");
+        TrySetState(GameState.Defeat, "DefeatModalRequested");
     }
 
-    private void OnShowEmergencyBundleOverlayRequested(EmergencyBundleOffer _)
+    private void OnShowEmergencyBundleModalRequested(EmergencyBundleOffer _)
     {
-        TrySetState(GameState.EmergencyBundleOffer, "EmergencyBundleOverlayRequested");
+        TrySetState(GameState.EmergencyBundleOffer, "EmergencyBundleModalRequested");
     }
 
     private void OnShowVictoryModalRequested()

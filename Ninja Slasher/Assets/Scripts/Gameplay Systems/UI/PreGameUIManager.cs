@@ -9,7 +9,6 @@ using UnityEngine.UI;
 public class PreGameUIManager : MonoBehaviour
 {
     [Header("PREGAME")]
-    [SerializeField] private Button _closeButton;
     [SerializeField] private Button _playButton;
     [SerializeField] private string _pendingSceneName;
     [SerializeField] private Transform _powerUpsContainer;
@@ -17,13 +16,17 @@ public class PreGameUIManager : MonoBehaviour
     [SerializeField] private PowerUpBase[] allPowerUpBases;
     [SerializeField] private PowerUpConfirmationPopUp _powerUpConfirmationPopUp;
     [SerializeField] private TextMeshProUGUI _title;
-    [SerializeField] private Transform _starsContainer;
     [SerializeField] private TextMeshProUGUI _primaryGoalText;
     [SerializeField] private TextMeshProUGUI[] _secondaryGoalTexts;
 
     [Header("STAR SPRITES")]
     [SerializeField] private Sprite _starNotAcquiredSprite;
     [SerializeField] private Sprite _starAcquiredSprite;
+
+    [Header("OBJECTIVE REFERENCES")]
+    [SerializeField] private Transform _objective1Container;
+    [SerializeField] private Transform _objective2Container;
+    [SerializeField] private Transform _objective3Container;
 
     [Header("NINJA TEXT ANIMATIONS")]
     [SerializeField] private bool useNinjaAnimations = true;
@@ -84,7 +87,6 @@ public class PreGameUIManager : MonoBehaviour
     private void SetupButtonListeners()
     {
         _playButton.onClick.AddListener(OnPlayButtonClicked);
-        _closeButton.onClick.AddListener(OnCloseButtonClicked);
     }
 
     private void CacheBaseVisualState()
@@ -113,47 +115,47 @@ public class PreGameUIManager : MonoBehaviour
 
     private void ResolveGoalTextReferencesIfNeeded()
     {
-        PreGameScreen preGameScreen = GetComponentInChildren<PreGameScreen>(true);
-        if (preGameScreen == null)
+        PregameModal pregameModal = GetComponentInChildren<PregameModal>(true);
+        if (pregameModal == null)
             return;
 
         if (_title == null)
-            _title = FindNamedText(preGameScreen.transform, "LevelTitle");
+            _title = FindNamedText(pregameModal.transform, "LevelTitle");
 
-        if (_starsContainer == null)
+        if (_objective1Container == null)
+            _objective1Container = FindDescendantByName(pregameModal.transform, "Objective 1");
+        if (_objective2Container == null)
+            _objective2Container = FindDescendantByName(pregameModal.transform, "Objective 2");
+        if (_objective3Container == null)
+            _objective3Container = FindDescendantByName(pregameModal.transform, "Objective 3");
+
+        Transform[] objectiveContainers = new Transform[] { _objective1Container, _objective2Container, _objective3Container };
+        List<TextMeshProUGUI> foundTexts = new List<TextMeshProUGUI>();
+
+        foreach (Transform container in objectiveContainers)
         {
-            Transform starsTransform = FindDescendantByName(preGameScreen.transform, "StarsContainer");
-            if (starsTransform != null)
-                _starsContainer = starsTransform;
+            if (container == null)
+                continue;
+
+            TextMeshProUGUI text = container.GetComponentInChildren<TextMeshProUGUI>(true);
+            if (text != null)
+                foundTexts.Add(text);
         }
 
-        Transform goalsRoot = _primaryGoalText != null
-            ? _primaryGoalText.transform.parent
-            : FindDescendantByName(preGameScreen.transform, "Goals");
-
-        if (goalsRoot == null)
-            return;
-
-        List<TextMeshProUGUI> objectiveTexts = goalsRoot
-            .GetComponentsInChildren<TextMeshProUGUI>(true)
-            .Where(text => text != null && text.transform.parent == goalsRoot)
-            .OrderByDescending(text => text.rectTransform.anchoredPosition.y)
-            .ToList();
-
-        if (objectiveTexts.Count == 0)
+        if (foundTexts.Count == 0)
             return;
 
         if (_primaryGoalText == null)
-            _primaryGoalText = objectiveTexts[0];
+            _primaryGoalText = foundTexts[0];
 
-        int secondaryCount = Mathf.Max(0, objectiveTexts.Count - 1);
+        int secondaryCount = Mathf.Max(0, foundTexts.Count - 1);
         if (_secondaryGoalTexts == null || _secondaryGoalTexts.Length != secondaryCount)
             _secondaryGoalTexts = new TextMeshProUGUI[secondaryCount];
 
         for (int i = 0; i < _secondaryGoalTexts.Length; i++)
         {
-            if (_secondaryGoalTexts[i] == null && i + 1 < objectiveTexts.Count)
-                _secondaryGoalTexts[i] = objectiveTexts[i + 1];
+            if (_secondaryGoalTexts[i] == null && i + 1 < foundTexts.Count)
+                _secondaryGoalTexts[i] = foundTexts[i + 1];
         }
     }
 
@@ -271,7 +273,7 @@ public class PreGameUIManager : MonoBehaviour
         _pendingSceneName = sceneName;
         _isLevelSelected = true;
 
-        UIEvents.RequestShowPreGameScreen();
+        UIEvents.RequestShowPregameModal();
 
         ShowPreGameTitle();
         SetGoals();
@@ -636,7 +638,7 @@ public class PreGameUIManager : MonoBehaviour
             return;
         }
 
-        UIEvents.RequestHidePreGameScreen();
+        UIEvents.RequestHidePregameModal();
     }
 
     private void OnCloseButtonClicked()
@@ -647,7 +649,7 @@ public class PreGameUIManager : MonoBehaviour
             return;
         }
 
-        UIEvents.RequestHidePreGameScreen();
+        UIEvents.RequestHidePregameModal();
     }
 
     private void OnConfirmLevelSelection()
@@ -655,13 +657,13 @@ public class PreGameUIManager : MonoBehaviour
         if (!LifeManager.Instance.CanPlay())
         {
             AbortPendingLevelSelectionForLifeWall();
-            UIEvents.RequestShowNoLivesOverlay();
+            UIEvents.RequestShowNoLivesModal();
             return;
         }
 
         StopAllAnimations();
         _isLevelSelected = false;
-        UIEvents.RequestHidePreGameScreen();
+        UIEvents.RequestHidePregameModal();
         UIEvents.RequestSceneTransition(_pendingSceneName);
     }
 
@@ -670,7 +672,7 @@ public class PreGameUIManager : MonoBehaviour
         StopAllAnimations();
         _isLevelSelected = false;
         _pendingSceneName = null;
-        UIEvents.RequestHidePreGameScreen();
+        UIEvents.RequestHidePregameModal();
     }
 
     private void AbortPendingLevelSelectionForLifeWall()
@@ -679,7 +681,7 @@ public class PreGameUIManager : MonoBehaviour
         HidePowerUpConfirmationImmediate();
         _isLevelSelected = false;
         _pendingSceneName = null;
-        UIEvents.RequestHidePreGameScreen();
+        UIEvents.RequestHidePregameModal();
     }
 
     private void OnDailyRewardClaimedRefresh(DailyReward _)
@@ -817,13 +819,24 @@ public class PreGameUIManager : MonoBehaviour
 
         _objectiveCompletionStates[objectiveText] = isComplete;
 
-        SetStar(starIndex, isComplete);
+        SetGoalStar(starIndex, isComplete);
     }
 
-    private void SetStar(int idx, bool acquired)
+    private void SetGoalStar(int objectiveIndex, bool acquired)
     {
-        Image img = _starsContainer.GetChild(idx).GetComponent<Image>();
-        if (!img)
+        Transform container = objectiveIndex switch
+        {
+            0 => _objective1Container,
+            1 => _objective2Container,
+            2 => _objective3Container,
+            _ => null
+        };
+
+        if (container == null)
+            return;
+
+        Image img = container.GetComponentInChildren<Image>(true);
+        if (img == null)
             return;
 
         img.sprite = acquired ? _starAcquiredSprite : _starNotAcquiredSprite;

@@ -2,7 +2,7 @@ using DG.Tweening;
 using UnityEngine;
 using UnityEngine.Serialization;
 
-public class PreGameScreen : UIScreenBase
+public class PregameModal : UIModalBase
 {
     [Header("Tween Animation")]
     [FormerlySerializedAs("_closeAnimationDuration")]
@@ -57,6 +57,7 @@ public class PreGameScreen : UIScreenBase
 
         gameObject.SetActive(true);
         _isVisible = true;
+        SetBackgroundRaycastTarget(true);
 
         if (_buttonManager != null)
         {
@@ -75,6 +76,7 @@ public class PreGameScreen : UIScreenBase
 
         SetPanelInputEnabled(false);
         KillActiveTweens();
+        SetBackgroundRaycastTarget(false);
 
         if (_preGameUIManager != null)
         {
@@ -82,6 +84,7 @@ public class PreGameScreen : UIScreenBase
             _preGameUIManager.HidePowerUpConfirmationImmediate();
         }
 
+        NotifyUIManagerModalHidden();
         OnHidden();
         AnimateToHiddenState();
     }
@@ -100,6 +103,7 @@ public class PreGameScreen : UIScreenBase
                 _canvasGroup.alpha = 1f;
 
             NotifyPanelShown();
+            NotifyUIManagerModalShown();
             OnShown();
             return;
         }
@@ -123,6 +127,7 @@ public class PreGameScreen : UIScreenBase
         }
 
         NotifyPanelShown();
+        NotifyUIManagerModalShown();
         OnShown();
     }
 

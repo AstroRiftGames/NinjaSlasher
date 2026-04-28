@@ -394,7 +394,7 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
         var data = GetGameData();
         data.dailyRewardData = dailyRewardJson;
         if (updateLastRewardTimestamp)
-            data.lastRewardTimestamp = DateTime.Now.ToString("o");
+            data.lastRewardTimestamp = DateTime.UtcNow.ToString("o");
         SaveData();
     }
 

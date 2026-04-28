@@ -17,7 +17,9 @@ public class DailyRewardSaveData
 {
     public bool[] claimedDays = new bool[7];
     public string lastClaimDate;
+    public string lastClaimTimestampUtc;
     public string lastAutoShowDate;
+    public string lastAutoShowTimestampUtc;
     public int currentWeekDay;
     public int consecutiveDays;
 
@@ -25,7 +27,9 @@ public class DailyRewardSaveData
     {
         claimedDays = new bool[7];
         lastClaimDate = "";
+        lastClaimTimestampUtc = "";
         lastAutoShowDate = "";
+        lastAutoShowTimestampUtc = "";
         currentWeekDay = 0;
         consecutiveDays = 0;
     }
@@ -65,7 +69,7 @@ public class DailyRewardSystem : MonoBehaviourSingleton<DailyRewardSystem>
     private void BootstrapFromSave()
     {
         LoadRewardData();
-        CheckDailyReward();
+        SyncRewardState();
         CheckDoubleRewardStatus();
 
         GameEvents.RaiseRewardAvailabilityChanged(CanClaimToday());
@@ -90,12 +94,8 @@ public class DailyRewardSystem : MonoBehaviourSingleton<DailyRewardSystem>
             }
         }
 
-        if (string.IsNullOrEmpty(rewardData.lastClaimDate))
-        {
-            var last = GetLastClaimDateSafe();
-            if (last > DateTime.MinValue)
-                rewardData.lastClaimDate = last.ToString("yyyy-MM-dd");
-        }
+        EnsureSaveDataShape();
+        MigrateLegacyRewardTimestamps();
     }
 
     void SaveRewardData(bool updateLastRewardTimestamp = true)
@@ -114,47 +114,18 @@ public class DailyRewardSystem : MonoBehaviourSingleton<DailyRewardSystem>
 
     void CheckDailyReward()
     {
-        bool wasAvailable = CanClaimToday();
-        var last = GetLastClaimDateSafe();
-        var currentDate = DateTime.UtcNow.Date;
+        bool wasAvailable = IsRewardAvailable();
+        bool stateChanged = SyncRewardState();
+        bool isAvailableNow = IsRewardAvailable();
 
-        if (last == DateTime.MinValue.Date)
-        {
-            Debug.Log("[DailyRewardSystem] Primer dia de recompensas");
-        }
-        else
-        {
-            int daysDifference = (int)(currentDate - last).TotalDays;
-
-            if (daysDifference == 0)
-            {
-                Debug.Log("[DailyRewardSystem] Recompensa ya reclamada hoy");
-            }
-            else if (daysDifference == 1)
-            {
-                AdvanceDay();
-            }
-            else if (daysDifference > 1)
-            {
-                ResetWeeklyProgress();
-            }
-        }
-
-        bool isAvailableNow = CanClaimToday();
-
-        if (wasAvailable != isAvailableNow)
+        if (stateChanged || wasAvailable != isAvailableNow)
             GameEvents.RaiseRewardAvailabilityChanged(isAvailableNow);
     }
 
     private void CheckDoubleRewardStatus()
     {
-        var last = GetLastClaimDateSafe();
-        var currentDate = DateTime.UtcNow.Date;
-
-        if (last != currentDate)
-        {
+        if (IsRewardAvailable())
             _hasDoubledToday = false;
-        }
     }
 
     public void DoubleTodaysReward()
@@ -185,7 +156,7 @@ public class DailyRewardSystem : MonoBehaviourSingleton<DailyRewardSystem>
         AddPowerUpToInventoryViaAutoSave(doubledReward);
 
         rewardData.claimedDays[rewardData.currentWeekDay] = true;
-        rewardData.lastClaimDate = DateTime.UtcNow.ToString("yyyy-MM-dd");
+        SetLastClaimTimestamp(DateTime.UtcNow);
 
         _hasDoubledToday = true;
 
@@ -210,10 +181,18 @@ public class DailyRewardSystem : MonoBehaviourSingleton<DailyRewardSystem>
 
     public bool ShouldAutoShowToday()
     {
+        SyncRewardState();
+
         if (!CanClaimToday())
             return false;
 
-        return GetLastAutoShowDateSafe() < DateTime.UtcNow.Date;
+        DateTime lastClaimUtc = GetLastClaimTimestampSafe();
+        DateTime lastAutoShowUtc = GetLastAutoShowTimestampSafe();
+
+        if (lastClaimUtc == DateTime.MinValue)
+            return lastAutoShowUtc == DateTime.MinValue;
+
+        return lastAutoShowUtc < GetNextRewardAvailabilityUtc();
     }
 
     public void MarkAutoShowShownToday()
@@ -221,11 +200,9 @@ public class DailyRewardSystem : MonoBehaviourSingleton<DailyRewardSystem>
         if (rewardData == null)
             return;
 
-        DateTime currentDate = DateTime.UtcNow.Date;
-        if (GetLastAutoShowDateSafe() == currentDate)
-            return;
-
-        rewardData.lastAutoShowDate = currentDate.ToString("yyyy-MM-dd");
+        DateTime nowUtc = DateTime.UtcNow;
+        rewardData.lastAutoShowTimestampUtc = nowUtc.ToString("o");
+        rewardData.lastAutoShowDate = nowUtc.ToString("yyyy-MM-dd");
         SaveRewardData(updateLastRewardTimestamp: false);
     }
 
@@ -260,6 +237,8 @@ public class DailyRewardSystem : MonoBehaviourSingleton<DailyRewardSystem>
 
     public bool ClaimReward()
     {
+        SyncRewardState();
+
         if (!CanClaimToday()) return false;
 
         if (rewardData.claimedDays[rewardData.currentWeekDay])
@@ -268,7 +247,7 @@ public class DailyRewardSystem : MonoBehaviourSingleton<DailyRewardSystem>
         }
 
         rewardData.claimedDays[rewardData.currentWeekDay] = true;
-        rewardData.lastClaimDate = DateTime.UtcNow.ToString("yyyy-MM-dd");
+        SetLastClaimTimestamp(DateTime.UtcNow);
 
         var claimed = weeklyRewards[rewardData.currentWeekDay];
 
@@ -315,14 +294,13 @@ public class DailyRewardSystem : MonoBehaviourSingleton<DailyRewardSystem>
 
     public bool CanClaimToday()
     {
-        var last = GetLastClaimDateSafe();
-        if (last == DateTime.MinValue.Date) return true;
-
-        return DateTime.UtcNow.Date > last;
+        SyncRewardState();
+        return IsRewardAvailable();
     }
 
     public DailyReward GetTodayReward()
     {
+        SyncRewardState();
         return weeklyRewards[rewardData.currentWeekDay];
     }
 
@@ -333,60 +311,139 @@ public class DailyRewardSystem : MonoBehaviourSingleton<DailyRewardSystem>
 
     public bool[] GetWeeklyProgress()
     {
+        SyncRewardState();
         return rewardData.claimedDays;
     }
 
     public int GetCurrentWeekDay()
     {
+        SyncRewardState();
         return rewardData.currentWeekDay;
     }
 
     public string GetTimeUntilNextReward()
     {
-        var last = GetLastClaimDateSafe();
-        if (last == DateTime.MinValue.Date)
+        if (CanClaimToday())
             return "DISPONIBLE AHORA";
 
-        DateTime nextAvailable = last.AddDays(1);
-        TimeSpan timeUntilNext = nextAvailable - DateTime.UtcNow;
+        TimeSpan timeUntilNext = GetNextRewardAvailabilityUtc() - DateTime.UtcNow;
 
         if (timeUntilNext.TotalSeconds <= 0)
             return "DISPONIBLE AHORA";
 
-        return $"{timeUntilNext.Hours:D2}:{timeUntilNext.Minutes:D2}:{timeUntilNext.Seconds:D2}";
+        return DailyAvailabilityTimeUtility.FormatCountdown(timeUntilNext);
     }
 
-    private DateTime GetLastClaimDateSafe()
+    public DateTime GetNextRewardAvailabilityUtc()
     {
-        if (!string.IsNullOrEmpty(rewardData?.lastClaimDate) && TryParseYMD(rewardData.lastClaimDate, out var ymd))
-            return ymd.Date;
+        DateTime lastClaimUtc = GetLastClaimTimestampSafe();
+        if (lastClaimUtc == DateTime.MinValue)
+            return DateTime.UtcNow;
+
+        return lastClaimUtc + DailyAvailabilityTimeUtility.CooldownInterval;
+    }
+
+    private bool SyncRewardState()
+    {
+        if (rewardData == null)
+            return false;
+
+        EnsureSaveDataShape();
+
+        DateTime lastClaimUtc = GetLastClaimTimestampSafe();
+        if (lastClaimUtc == DateTime.MinValue)
+            return false;
+
+        if (!rewardData.claimedDays[rewardData.currentWeekDay])
+            return false;
+
+        TimeSpan elapsed = DateTime.UtcNow - lastClaimUtc;
+        if (elapsed < DailyAvailabilityTimeUtility.CooldownInterval)
+            return false;
+
+        if (elapsed >= DailyAvailabilityTimeUtility.MissedWindowThreshold)
+        {
+            ResetWeeklyProgress();
+            SaveRewardData(updateLastRewardTimestamp: false);
+            return true;
+        }
+
+        AdvanceDay();
+        SaveRewardData(updateLastRewardTimestamp: false);
+        return true;
+    }
+
+    private bool IsRewardAvailable()
+    {
+        DateTime lastClaimUtc = GetLastClaimTimestampSafe();
+        if (lastClaimUtc == DateTime.MinValue)
+            return true;
+
+        return DateTime.UtcNow >= lastClaimUtc + DailyAvailabilityTimeUtility.CooldownInterval;
+    }
+
+    private DateTime GetLastClaimTimestampSafe()
+    {
+        if (DailyAvailabilityTimeUtility.TryParseIsoUtc(rewardData?.lastClaimTimestampUtc, out var exactUtc))
+            return exactUtc;
 
         var gd = SaveManager.Instance.GetGameData();
-        if (!string.IsNullOrEmpty(gd.lastRewardTimestamp) && TryParseISO(gd.lastRewardTimestamp, out var iso))
-            return iso.Date;
+        if (DailyAvailabilityTimeUtility.TryParseIsoUtc(gd.lastRewardTimestamp, out var fallbackUtc))
+            return fallbackUtc;
 
-        return DateTime.MinValue.Date;
+        if (DailyAvailabilityTimeUtility.TryParseUtcDate(rewardData?.lastClaimDate, out var legacyUtc))
+            return legacyUtc;
+
+        return DateTime.MinValue;
     }
 
-    private DateTime GetLastAutoShowDateSafe()
+    private DateTime GetLastAutoShowTimestampSafe()
     {
-        if (!string.IsNullOrEmpty(rewardData?.lastAutoShowDate) && TryParseYMD(rewardData.lastAutoShowDate, out var ymd))
-            return ymd.Date;
+        if (DailyAvailabilityTimeUtility.TryParseIsoUtc(rewardData?.lastAutoShowTimestampUtc, out var exactUtc))
+            return exactUtc;
 
-        return DateTime.MinValue.Date;
+        if (DailyAvailabilityTimeUtility.TryParseUtcDate(rewardData?.lastAutoShowDate, out var legacyUtc))
+            return legacyUtc;
+
+        return DateTime.MinValue;
     }
 
-    private static bool TryParseYMD(string ymd, out DateTime date)
+    private void SetLastClaimTimestamp(DateTime claimUtc)
     {
-        return DateTime.TryParseExact(ymd, "yyyy-MM-dd",
-            CultureInfo.InvariantCulture,
-            DateTimeStyles.None, out date);
+        DateTime normalizedUtc = DailyAvailabilityTimeUtility.NormalizeUtc(claimUtc);
+        rewardData.lastClaimTimestampUtc = normalizedUtc.ToString("o");
+        rewardData.lastClaimDate = normalizedUtc.ToString("yyyy-MM-dd");
     }
 
-    private static bool TryParseISO(string iso, out DateTime date)
+    private void EnsureSaveDataShape()
     {
-        return DateTime.TryParse(iso, null,
-            DateTimeStyles.RoundtripKind, out date);
+        if (rewardData.claimedDays == null || rewardData.claimedDays.Length != WeekLength)
+            rewardData.claimedDays = new bool[WeekLength];
+
+        rewardData.currentWeekDay = Mathf.Clamp(rewardData.currentWeekDay, 0, Mathf.Max(0, WeekLength - 1));
+    }
+
+    private void MigrateLegacyRewardTimestamps()
+    {
+        DateTime lastClaimUtc = GetLastClaimTimestampSafe();
+        if (lastClaimUtc > DateTime.MinValue)
+        {
+            if (string.IsNullOrEmpty(rewardData.lastClaimTimestampUtc))
+                rewardData.lastClaimTimestampUtc = lastClaimUtc.ToString("o");
+
+            if (string.IsNullOrEmpty(rewardData.lastClaimDate))
+                rewardData.lastClaimDate = lastClaimUtc.ToString("yyyy-MM-dd");
+        }
+
+        DateTime lastAutoShowUtc = GetLastAutoShowTimestampSafe();
+        if (lastAutoShowUtc > DateTime.MinValue)
+        {
+            if (string.IsNullOrEmpty(rewardData.lastAutoShowTimestampUtc))
+                rewardData.lastAutoShowTimestampUtc = lastAutoShowUtc.ToString("o");
+
+            if (string.IsNullOrEmpty(rewardData.lastAutoShowDate))
+                rewardData.lastAutoShowDate = lastAutoShowUtc.ToString("yyyy-MM-dd");
+        }
     }
 
     private void ValidateWeeklyRewardsArray()

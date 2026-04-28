@@ -3,7 +3,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class EmergencyBundleOverlay : UIOverlayBase
+public class EmergencyBundleModal : UIModalBase
 {
     [Header("Bundle Info")]
     [SerializeField] private Image _bundleIcon;
@@ -44,7 +44,6 @@ public class EmergencyBundleOverlay : UIOverlayBase
     {
         _currentOffer = offer;
         PopulateUI(offer);
-        Show();
     }
 
     protected override void OnShown()
@@ -146,7 +145,7 @@ public class EmergencyBundleOverlay : UIOverlayBase
         if (EmergencyBundleService.Instance != null)
             EmergencyBundleService.Instance.OnOfferExpired();
         else
-            UIEvents.RequestHideEmergencyBundleOverlay();
+            UIEvents.RequestHideEmergencyBundleModal();
     }
 
     private void StopCountdown()
@@ -178,7 +177,7 @@ public class EmergencyBundleOverlay : UIOverlayBase
         if (IAPManager.Instance != null)
             IAPManager.Instance.PurchaseProduct(productId);
         else
-            Debug.LogWarning("[EmergencyBundleOverlay] IAPManager no disponible.");
+            Debug.LogWarning("[EmergencyBundleModal] IAPManager no disponible.");
     }
 
     private void OnDismissClicked() => DismissOffer();
@@ -188,7 +187,7 @@ public class EmergencyBundleOverlay : UIOverlayBase
         if (EmergencyBundleService.Instance != null)
             EmergencyBundleService.Instance.OnOfferDismissed();
         else
-            UIEvents.RequestHideEmergencyBundleOverlay();
+            UIEvents.RequestHideEmergencyBundleModal();
     }
 
     #endregion

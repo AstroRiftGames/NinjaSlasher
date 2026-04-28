@@ -90,7 +90,7 @@ public class GameplayUIManager : MonoBehaviour
     public void ShowNoLivesPanel()
     {
         _noLivesActive = true;
-        UIEvents.RequestShowNoLivesOverlay();
+        UIEvents.RequestShowNoLivesModal();
     }
 
     public void UpdateLivesUI(int lives)
@@ -124,7 +124,7 @@ public class GameplayUIManager : MonoBehaviour
         if (_noLivesActive && LifeManager.Instance.GetRealLives() > 0)
         {
             _noLivesActive = false;
-            UIEvents.RequestHideNoLivesOverlay();
+            UIEvents.RequestHideNoLivesModal();
         }
     }
 

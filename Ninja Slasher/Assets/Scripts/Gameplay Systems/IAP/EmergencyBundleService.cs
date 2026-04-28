@@ -142,7 +142,7 @@ public class EmergencyBundleService : MonoBehaviourSingleton<EmergencyBundleServ
         Debug.Log($"[EBS] Showing offer | tier={tier} | productId='{product.PrimaryProductId}'");
 #endif
 
-        UIEvents.RequestShowEmergencyBundleOverlay(offer);
+        UIEvents.RequestShowEmergencyBundleModal(offer);
     }
 
     private void CloseOffer(PaywallOutcome outcome)
@@ -156,7 +156,7 @@ public class EmergencyBundleService : MonoBehaviourSingleton<EmergencyBundleServ
         _offerActive   = false;
         _activeProduct = null;
 
-        UIEvents.RequestHideEmergencyBundleOverlay();
+        UIEvents.RequestHideEmergencyBundleModal();
         ShowDefeatUI();
     }
 
@@ -171,8 +171,8 @@ public class EmergencyBundleService : MonoBehaviourSingleton<EmergencyBundleServ
     private void ShowDefeatUI()
     {
         if (LifeManager.Instance == null || !LifeManager.Instance.CanPlay())
-            UIEvents.RequestShowNoLivesOverlay();
+            UIEvents.RequestShowNoLivesModal();
         else
-            UIEvents.RequestShowDefeatOverlay(LifeManager.Instance.GetRealLives());
+            UIEvents.RequestShowDefeatModal(LifeManager.Instance.GetRealLives());
     }
 }
