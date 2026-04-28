@@ -12,10 +12,15 @@ public class PauseOverlay : UIOverlayBase
     [SerializeField] private RestartConfirmationPopUp _restartConfirmationPopUp;
     [SerializeField] private BackToLevelSelectionConfirmationPopUp _backToLevelSelectionConfirmationPopUp;
 
+    [Header("Background")]
+    [SerializeField] private UnityEngine.UI.Image _backgroundImage;
+
     [Header("Info")]
     [SerializeField] private GameObject _infoRoot;
     [SerializeField] private TextMeshProUGUI _totalStarsText;
     [SerializeField] private TextMeshProUGUI _livesAmountText;
+
+    private Texture2D _backgroundTexture;
     protected override void Awake()
     {
         base.Awake();
@@ -45,10 +50,47 @@ public class PauseOverlay : UIOverlayBase
 
     protected override void OnShown()
     {
+        CaptureScreen();
+        
         PauseController.Instance.RequestPause(PauseSource.PauseOverlay);
         RefreshInfo();
         UIManager.Instance?.SetGameplayHUDTopRightInfoVisible(false);
         UIEvents.RaisePause(true);
+    }
+
+    private void CaptureScreen()
+    {
+        if (_backgroundImage == null)
+            return;
+
+        int width = Screen.width;
+        int height = Screen.height;
+
+        if (_backgroundTexture == null || _backgroundTexture.width != width)
+        {
+            _backgroundTexture = new Texture2D(width, height, TextureFormat.RGB24, false);
+        }
+
+        RenderTexture renderTexture = RenderTexture.GetTemporary(width, height, 24);
+        RenderTexture previous = RenderTexture.active;
+        RenderTexture.active = renderTexture;
+
+        Camera mainCamera = Camera.main;
+        if (mainCamera != null)
+        {
+            mainCamera.targetTexture = renderTexture;
+            mainCamera.Render();
+            mainCamera.targetTexture = null;
+        }
+
+        _backgroundTexture.ReadPixels(new Rect(0, 0, width, height), 0, 0);
+        _backgroundTexture.Apply();
+
+        RenderTexture.active = previous;
+        RenderTexture.ReleaseTemporary(renderTexture);
+
+        Sprite sprite = Sprite.Create(_backgroundTexture, new Rect(0, 0, width, height), Vector2.one * 0.5f);
+        _backgroundImage.sprite = sprite;
     }
 
     protected override void OnHidden()
@@ -126,6 +168,12 @@ public class PauseOverlay : UIOverlayBase
 
     private void OnDestroy()
     {
+        if (_backgroundTexture != null)
+        {
+            UnityEngine.Object.Destroy(_backgroundTexture);
+            _backgroundTexture = null;
+        }
+
         if (_resumeButton != null)
             _resumeButton.onClick.RemoveAllListeners();
 

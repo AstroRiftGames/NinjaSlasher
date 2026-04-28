@@ -340,6 +340,7 @@ GameObject:
   - component: {fileID: 1007349289874720267}
   - component: {fileID: 5110386087155048652}
   - component: {fileID: 6252203636573057686}
+  - component: {fileID: 8382674935410692741}
   m_Layer: 5
   m_Name: BonusTimerText
   m_TagString: Untagged
@@ -432,6 +433,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -465,6 +467,32 @@ MonoBehaviour:
   m_hasFontAssetChanged: 0
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
+--- !u!114 &8382674935410692741
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3945545298626332863}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4bd8d4d3290346bf8c426c4375384f16, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _target: {fileID: 0}
+  _canvasGroup: {fileID: 0}
+  _useFade: 1
+  _hideGameObjectOnComplete: 1
+  _activateGameObjectOnPlay: 1
+  _useUnscaledTime: 0
+  _scaleInDuration: 0.2
+  _punchDuration: 0.15
+  _visibleDuration: 1.2
+  _fadeDuration: 0.3
+  _initialScaleMultiplier: 0.5
+  _punchStrength: {x: 0.3, y: 0.3, z: 0}
+  _vibrato: 5
+  _elasticity: 0.5
 --- !u!1 &3954391576167784320
 GameObject:
   m_ObjectHideFlags: 0
@@ -773,6 +801,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0

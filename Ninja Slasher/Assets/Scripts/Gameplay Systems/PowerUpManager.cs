@@ -24,7 +24,6 @@ public class PowerUpInfo
 [DefaultExecutionOrder(-100)]
 public class PowerUpManager : MonoBehaviourSingleton<PowerUpManager>
 {
-    [SerializeField] private PowerUpUIController PowerUpUIController;
     public List<PowerUpBase> activePowerUps = new List<PowerUpBase>();
     public PowerUpContext context = new PowerUpContext();
 
@@ -48,15 +47,12 @@ public class PowerUpManager : MonoBehaviourSingleton<PowerUpManager>
     public override void Awake()
     {
         base.Awake();
-
-        if (PowerUpUIController == null)
-            Debug.LogError("[PowerUpManager] PowerUpUIController no asignado. La HUD de power-ups no funcionará.");
     }
 
     void Start()
     {
         LoadActivePowerUpsFromGameData();
-        RebuildHUD();
+        RefreshActivePowerUpState();
     }
 
     void OnEnable()
@@ -99,8 +95,6 @@ public class PowerUpManager : MonoBehaviourSingleton<PowerUpManager>
         usesRemaining--;
 
         UpdateContextRemainingUses(powerUpType, usesRemaining);
-
-        PowerUpUIController.UpdateUses(powerUpType, usesRemaining);
 
         pu.OnUseConsumed(context);
 
@@ -183,9 +177,10 @@ public class PowerUpManager : MonoBehaviourSingleton<PowerUpManager>
         _activeUsages.Add((powerUp, powerUp.maxUses));
 
         PowerUpType type = GetPowerUpType(powerUp);
-        PowerUpUIController.ShowPowerUp(type, powerUp.icon, powerUp.maxUses);
         UpdateContextRemainingUses(type, powerUp.maxUses);
+        UpdateContextActiveState(type, true);
 
+        GameEvents.RaisePowerUpActivated(type, powerUp.maxUses);
         GameEvents.RaisePowerUpUsesUpdated(type, powerUp.maxUses);
     }
 
@@ -298,8 +293,6 @@ public class PowerUpManager : MonoBehaviourSingleton<PowerUpManager>
             SaveManager.Instance.DeactivatePowerUp(type);
         }
 
-        PowerUpUIController.HidePowerUp(type);
-
         GameEvents.RaisePowerUpExpired(type);
 
         {
@@ -357,8 +350,6 @@ public class PowerUpManager : MonoBehaviourSingleton<PowerUpManager>
             AnalyticsManager.Instance?.RecordPowerUpActivated(type.ToString(), usesToSet, levelId, attemptNumber);
         }
 
-        PowerUpUIController.ShowPowerUp(type, powerUp.icon, usesToSet);
-
         GameEvents.RaisePowerUpUsesUpdated(type, usesToSet);
     }
 
@@ -392,6 +383,23 @@ public class PowerUpManager : MonoBehaviourSingleton<PowerUpManager>
 
         var usage = _activeUsages.Find(u => u.powerUp == powerUpRef);
         return usage.powerUp != null ? usage.usesRemaining : 0;
+    }
+
+    public bool TryGetAnyActivePowerUp(out PowerUpBase powerUp, out int remainingUses)
+    {
+        foreach (var usage in _activeUsages)
+        {
+            if (usage.powerUp != null && activePowerUps.Contains(usage.powerUp) && usage.usesRemaining > 0)
+            {
+                powerUp = usage.powerUp;
+                remainingUses = usage.usesRemaining;
+                return true;
+            }
+        }
+
+        powerUp = null;
+        remainingUses = 0;
+        return false;
     }
 
     public int GetInventoryCount(PowerUpType type)
@@ -436,15 +444,15 @@ public class PowerUpManager : MonoBehaviourSingleton<PowerUpManager>
         _activationLevelIds.Clear();
 
         LoadActivePowerUpsFromGameData();
-        RebuildHUD();
+        RefreshActivePowerUpState();
     }
 
-    public void RebuildHUD()
+    public void RefreshActivePowerUpState()
     {
         foreach (var (powerUp, usesRemaining) in _activeUsages)
         {
             PowerUpType type = GetPowerUpType(powerUp);
-            PowerUpUIController.ShowPowerUp(type, powerUp.icon, usesRemaining);
+            GameEvents.RaisePowerUpUsesUpdated(type, usesRemaining);
         }
     }
 

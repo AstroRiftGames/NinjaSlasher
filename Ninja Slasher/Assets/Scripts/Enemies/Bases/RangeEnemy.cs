@@ -15,6 +15,7 @@ public class RangeEnemy : Enemy
     [Header("Attack stats")]
     [SerializeField] private float _cooldDown;
     [SerializeField] protected Transform _refPoint;
+    [SerializeField] protected Transform _unitCenter;
     private float _lastAttack;
     private ObjectPool<Projectile> _pool;
     protected void SetLastAttack() => _lastAttack = Time.time;
@@ -46,7 +47,7 @@ public class RangeEnemy : Enemy
         _hasTarget = _target != null;
         if(_hasTarget)
         {
-            _dirToTarget = _target.position - _refPoint.position;
+            _dirToTarget = _target.position - _unitCenter.position;
             _hasLOS = CheckLOS();
         }
     }

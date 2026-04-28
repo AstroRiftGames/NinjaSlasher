@@ -31,6 +31,33 @@ public class ConfigDropdown : MonoBehaviour
         _configPanelAnim.Update(0f);
     }
 
+    private void OnEnable()
+    {
+        UIEvents.OnAnyModalShown += OnAnyModalShown;
+    }
+
+    private void OnDisable()
+    {
+        UIEvents.OnAnyModalShown -= OnAnyModalShown;
+    }
+
+    private void OnAnyModalShown()
+    {
+        ResetToIdle();
+    }
+
+    private void ResetToIdle()
+    {
+        if (!_isOpen) return;
+
+        _configPanelAnim.Rebind();
+        _configPanelAnim.ResetTrigger(OpenTrigger);
+        _configPanelAnim.ResetTrigger(CloseTrigger);
+        _configPanelAnim.Play("Idle", 0, 0f);
+        _configPanelAnim.Update(0f);
+        _isOpen = false;
+    }
+
     public void OpenCloseConfigPanel()
     {
         AudioService.Instance?.PlaySFX(_audioContext?.Audio.showConfig);

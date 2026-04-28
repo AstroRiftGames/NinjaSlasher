@@ -48,6 +48,7 @@ public class SceneTransitionManager : MonoBehaviour
     private IEnumerator LoadLevelSceneCo(string sceneName)
     {
         SetHUDActive(false);
+        UIManager.Instance.SetLevelsScreenEnabled(false);
 
         if (AudioService.Instance != null)
         {
@@ -56,8 +57,6 @@ public class SceneTransitionManager : MonoBehaviour
 
         _transitionAnim.SetTrigger("Start");
         yield return new WaitForSeconds(_transitionTime);
-
-        UIManager.Instance.SetLevelsScreenEnabled(false);
 
         SceneManager.LoadScene(sceneName);
 
@@ -86,11 +85,13 @@ public class SceneTransitionManager : MonoBehaviour
 
         UIEvents.RequestHideVictoryModal();
         UIEvents.RequestHidePauseOverlay();
-        UIEvents.RequestHideNoLivesOverlay();
+        UIEvents.RequestHideNoLivesModal();
+        UIEvents.RequestHideDefeatModal();
+        UIEvents.RequestHideEmergencyBundleModal();
+        UIEvents.RequestHidePregameModal();
 
         if (UIManager.Instance != null)
         {
-            UIManager.Instance.HideDefeatOverlay();
             UIManager.Instance.SetGameplayHUDEnabled(false);
             UIManager.Instance.SetLevelsScreenEnabled(false);
             UIManager.Instance.ResetLevelsScreenAnimation();
@@ -104,6 +105,8 @@ public class SceneTransitionManager : MonoBehaviour
         _transitionAnim.SetTrigger("OpeningStart");
         yield return new WaitForSecondsRealtime(_transitionTime);
 
+        MusicEvents.OnEnterLevelSelection?.Invoke();
+        
         SceneManager.sceneLoaded += OnLevelSelectorSceneLoaded;
         SceneManager.LoadScene(_levelSelectorSceneName);
     }
@@ -119,12 +122,10 @@ public class SceneTransitionManager : MonoBehaviour
 
         UIEvents.RequestHideVictoryModal();
         UIEvents.RequestHidePauseOverlay();
-        UIEvents.RequestHideNoLivesOverlay();
-
-        if (UIManager.Instance != null)
-        {
-            UIManager.Instance.HideDefeatOverlay();
-        }
+        UIEvents.RequestHideNoLivesModal();
+        UIEvents.RequestHideDefeatModal();
+        UIEvents.RequestHideEmergencyBundleModal();
+        UIEvents.RequestHidePregameModal();
 
         if (AudioService.Instance != null)
         {
@@ -141,7 +142,6 @@ public class SceneTransitionManager : MonoBehaviour
         _transitionAnim.SetTrigger("End");
         AudioService.Instance?.PlaySFX(_audioContext.Audio.transitionSlash);
 
-        MusicEvents.OnEnterLevelSelection?.Invoke();
         UIEvents.RequestUpdateLivesUI(LifeManager.Instance?.CurrentLives ?? 0);
 
         UIEvents.RaiseLevelSelectorReady();
@@ -167,7 +167,6 @@ public class SceneTransitionManager : MonoBehaviour
         _transitionAnim.SetTrigger("End");
         AudioService.Instance?.PlaySFX(_audioContext.Audio.transitionSlash);
 
-        MusicEvents.OnEnterLevelSelection?.Invoke();
         UIEvents.RequestUpdateLivesUI(LifeManager.Instance?.CurrentLives ?? 0);
 
         UIEvents.RaiseLevelSelectorReady();

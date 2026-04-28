@@ -16,6 +16,8 @@ public class LevelSelectionScreenController : MonoBehaviour
     [SerializeField] private RectTransform _livesWidgetRoot;
     [SerializeField] private TextMeshProUGUI _livesAmountText;
     [SerializeField] private TextMeshProUGUI _livesTimerText;
+    [SerializeField] private UIPunchScaleFeedback _livesWidgetFeedback;
+    [SerializeField] private UIPunchScaleFeedback _livesAmountFeedback;
     [SerializeField] private Button _dailyWheelButton;
     [SerializeField] private GameObject _infoRoot;
     [SerializeField] private GameObject _buttonsRoot;
@@ -101,20 +103,35 @@ public class LevelSelectionScreenController : MonoBehaviour
     public void PlayUnlimitedLivesArrivalFeedback()
     {
         RefreshLivesWidget();
+        ResolveLivesFeedbackReferences();
 
         RectTransform target = GetUnlimitedLivesFeedbackTarget();
         if (target != null)
         {
-            DOTween.Kill(target);
-            target.DOPunchScale(new Vector3(0.26f, 0.26f, 0f), 0.32f, vibrato: 1, elasticity: 0.45f)
-                .SetUpdate(true);
+            if (_livesWidgetFeedback != null)
+            {
+                _livesWidgetFeedback.Play();
+            }
+            else
+            {
+                DOTween.Kill(target);
+                target.DOPunchScale(new Vector3(0.26f, 0.26f, 0f), 0.32f, vibrato: 1, elasticity: 0.45f)
+                    .SetUpdate(true);
+            }
         }
 
         if (_livesAmountText != null)
         {
-            DOTween.Kill(_livesAmountText.rectTransform);
-            _livesAmountText.rectTransform.DOPunchScale(new Vector3(0.16f, 0.16f, 0f), 0.24f, vibrato: 1, elasticity: 0.4f)
-                .SetUpdate(true);
+            if (_livesAmountFeedback != null)
+            {
+                _livesAmountFeedback.Play();
+            }
+            else
+            {
+                DOTween.Kill(_livesAmountText.rectTransform);
+                _livesAmountText.rectTransform.DOPunchScale(new Vector3(0.16f, 0.16f, 0f), 0.24f, vibrato: 1, elasticity: 0.4f)
+                    .SetUpdate(true);
+            }
         }
     }
 
@@ -176,6 +193,8 @@ public class LevelSelectionScreenController : MonoBehaviour
 
         if (_livesTimerText == null)
             _livesTimerText = FindTextByName("CounterText");
+
+        ResolveLivesFeedbackReferences();
     }
 
     private void CacheDailyWheelButton()
@@ -277,5 +296,39 @@ public class LevelSelectionScreenController : MonoBehaviour
             return $"{Mathf.FloorToInt((float)remaining.TotalHours):D2}:{remaining.Minutes:D2}:{remaining.Seconds:D2}";
 
         return $"{remaining.Minutes:D2}:{remaining.Seconds:D2}";
+    }
+
+    private void ResolveLivesFeedbackReferences()
+    {
+        RectTransform target = GetUnlimitedLivesFeedbackTarget();
+        if (_livesWidgetFeedback == null && target != null)
+            _livesWidgetFeedback = GetOrCreateFeedback(target, 0.32f, new Vector3(0.26f, 0.26f, 0f), 0.45f);
+
+        if (_livesAmountFeedback == null && _livesAmountText != null)
+            _livesAmountFeedback = GetOrCreateFeedback(_livesAmountText.rectTransform, 0.24f, new Vector3(0.16f, 0.16f, 0f), 0.4f);
+    }
+
+    private UIPunchScaleFeedback GetOrCreateFeedback(RectTransform target, float punchDuration, Vector3 punchStrength, float elasticity)
+    {
+        UIPunchScaleFeedback feedback = target.GetComponent<UIPunchScaleFeedback>();
+        if (feedback == null)
+            feedback = target.gameObject.AddComponent<UIPunchScaleFeedback>();
+
+        feedback.Configure(
+            useFade: false,
+            hideGameObjectOnComplete: false,
+            activateGameObjectOnPlay: false,
+            useUnscaledTime: true,
+            scaleInDuration: 0f,
+            punchDuration: punchDuration,
+            visibleDuration: 0f,
+            fadeDuration: 0f,
+            initialScaleMultiplier: 1f,
+            punchStrength: punchStrength,
+            vibrato: 1,
+            elasticity: elasticity);
+
+        feedback.ResetImmediate();
+        return feedback;
     }
 }

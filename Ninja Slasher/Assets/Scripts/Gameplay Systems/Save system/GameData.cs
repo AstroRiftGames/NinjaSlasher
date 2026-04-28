@@ -289,8 +289,10 @@ public class ObjectiveCompletionData
 public class DailyWheelSaveData
 {
     public string lastSpinDateIso;
+    public string lastSpinTimestampUtc;
     public int consecutiveSpins;
     public int totalSpins;
     public int pendingFreeSpins;
     public string lastAutoShowDateIso;
+    public string lastAutoShowTimestampUtc;
 }
