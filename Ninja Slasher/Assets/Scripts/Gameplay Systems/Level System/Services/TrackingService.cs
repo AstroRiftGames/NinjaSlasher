@@ -137,6 +137,18 @@ public class TrackingService
         }
     }
 
+    public void RegisterSpawnedEnemy(Enemy enemy)
+    {
+        if (!CanTrackGameplay || enemy == null) return;
+
+        if (activeEnemies.Contains(enemy))
+            return;
+
+        activeEnemies.Add(enemy);
+        totalEnemiesAtStart++;
+        UpdateSessionStats();
+    }
+
     private void OnEnemyDefeated(int enemyCount)
     {
         if (!CanTrackGameplay) return;

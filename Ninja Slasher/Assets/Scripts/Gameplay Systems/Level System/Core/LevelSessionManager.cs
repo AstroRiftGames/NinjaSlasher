@@ -307,6 +307,12 @@ public class LevelSessionManager : MonoBehaviourSingleton<LevelSessionManager>
         trackingService?.RegisterEnemyKilled(enemy);
     }
 
+    public void RegisterSpawnedEnemy(Enemy enemy)
+    {
+        if (!IsSessionRunning) return;
+        trackingService?.RegisterSpawnedEnemy(enemy);
+    }
+
     public ObjectiveProgressData GetCurrentProgress()
     {
         if (currentSession == null || objectiveService == null)
