@@ -20,6 +20,7 @@ public sealed class DailyStartupSequence : IDisposable
         SaveManager.OnDataLoaded += OnDataLoaded;
         UIEvents.OnLevelSelectorReady += OnLevelSelectorReady;
         UIEvents.OnWheelSequenceCompleted += OnWheelSequenceCompleted;
+        UIEvents.OnDailyWheelModalClosed += OnDailyWheelModalClosed;
         UIEvents.OnDailyRewardModalClosed += OnDailyRewardModalClosed;
     }
 
@@ -28,6 +29,7 @@ public sealed class DailyStartupSequence : IDisposable
         SaveManager.OnDataLoaded -= OnDataLoaded;
         UIEvents.OnLevelSelectorReady -= OnLevelSelectorReady;
         UIEvents.OnWheelSequenceCompleted -= OnWheelSequenceCompleted;
+        UIEvents.OnDailyWheelModalClosed -= OnDailyWheelModalClosed;
         UIEvents.OnDailyRewardModalClosed -= OnDailyRewardModalClosed;
     }
 
@@ -59,6 +61,14 @@ public sealed class DailyStartupSequence : IDisposable
     private IEnumerator DelayedAdvanceSequence()
     {
         yield return new WaitForSeconds(WheelToRewardDelay);
+        TryAdvanceSequence();
+    }
+
+    private void OnDailyWheelModalClosed()
+    {
+        if (!_isWaitingForWheel) return;
+
+        _isWaitingForWheel = false;
         TryAdvanceSequence();
     }
 

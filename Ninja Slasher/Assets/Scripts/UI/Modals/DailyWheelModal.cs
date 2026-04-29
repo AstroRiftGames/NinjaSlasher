@@ -40,6 +40,12 @@ public class DailyWheelModal : UIModalBase
         _dailyWheelUI?.HandleModalShown();
     }
 
+    protected override void OnHidden()
+    {
+        base.OnHidden();
+        UIEvents.RaiseDailyWheelModalClosed();
+    }
+
     public void CloseRewardPopup()
     {
         if (_dailyWheelUI != null)
@@ -87,6 +93,16 @@ public class DailyWheelModal : UIModalBase
         }
 
         Hide();
+    }
+
+    protected override void RequestCloseFromOutsideClick()
+    {
+        if (_dailyWheelUI != null && !_dailyWheelUI.CanCloseModal())
+        {
+            return;
+        }
+
+        base.RequestCloseFromOutsideClick();
     }
 }
 
