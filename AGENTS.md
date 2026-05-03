@@ -1,138 +1,21 @@
-# AGENTS.md - Ninja Slasher
+# Repository Guidelines
 
-Guidelines for autonomous coding agents.
+## Project Structure & Module Organization
+This repository contains a Unity game project in `Ninja Slasher/`. Core gameplay code lives in `Ninja Slasher/Assets/Scripts/`, organized by domain: `Gameplay Systems/`, `Player/`, `Enemies/`, `Platforms/`, `UI/`, and `Events/`. Scenes are under `Assets/Scenes/`; reusable prefabs, art, audio, and ScriptableObjects live in `Assets/Prefabs/`, `Assets/Graphics/`, `Assets/Audio/`, and `Assets/Scriptable Objects/`. Package and editor settings are stored in `Packages/` and `ProjectSettings/`. Do not hand-edit generated folders such as `Library/`, `Logs/`, or `obj/`.
 
-## Project
+## Build, Test, and Development Commands
+Open the project with Unity Hub using `Ninja Slasher/` and Unity `6000.0.73f1`.
 
-- **Type**: Unity mobile game (Android/iOS), URP
-- **Version**: Unity 2021.3+
-- **Architecture**: Manager-orchestrated + event-driven
-- **Pattern**: `MonoBehaviourSingleton<T>`, `GameEvents`
+- `dotnet build "Ninja Slasher/Assembly-CSharp.csproj"`: fast compile check for gameplay scripts.
+- Unity Editor -> Play: primary test loop for gameplay, UI, and scene flow.
+- Unity Editor -> File -> Build Settings -> Android/iOS -> Build: produce device builds.
+- `git status --short`: verify only intended files changed before committing.
 
----
+## Coding Style & Naming Conventions
+Use C# with 4-space indentation and keep `using` directives minimal. Follow existing naming patterns: classes, methods, enums, and properties in `PascalCase`; private serialized fields in `_camelCase`; interfaces with `I` prefix. Keep scripts focused by feature area and prefer extending the existing manager-and-events architecture (`MonoBehaviourSingleton<T>`, `GameEvents`, `UIEvents`) instead of introducing new global state. Unsubscribe from events in `OnDisable`, and null-check singletons before use, for example `SaveManager.Instance?.Modify(...)`.
 
-## Build Commands
+## Testing Guidelines
+`com.unity.test-framework` is installed, but this repository currently relies on manual verification rather than committed test suites. Validate gameplay changes in Play Mode and retest the affected scene directly, especially `Assets/Scenes/` content and UI flows. If you add automated tests, place them in a dedicated `Assets/Tests/` folder and name files after the target class, such as `AdsManagerTests.cs`.
 
-### Android
-```
-Unity Hub > open "Ninja Slasher" > Build Settings > Build (Android)
-```
-
-### iOS
-```
-Unity Hub > open "Ninja Slasher" > Build Settings > Platform > iOS > Build
-```
-
-### Testing
-No unit tests. Test in-editor via Play Mode.
-
----
-
-## Code Style
-
-### Template
-```csharp
-using UnityEngine;
-using System.Collections;
-using System.Linq;
-
-public class MyClass : MonoBehaviour
-{
-    [Header("Presentation")]
-    [SerializeField] private float _someValue = 1f;
-
-    [Header("References")]
-    [SerializeField] private Transform _myTransform;
-
-    #region INITIALIZATION
-    private void Awake() { }
-    private void Start() { }
-    #endregion
-}
-```
-
-### Imports
-```csharp
-using UnityEngine;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-using UnityEngine.SceneManager;
-```
-
-### Naming
-| Element | Convention | Example |
-|---------|-----------|---------|
-| Class | PascalCase | `PlayerController` |
-| Interface | I Prefix | `ITracker` |
-| Private Field | _camelCase | `_isDashing` |
-| Property | PascalCase | `IsVictory` |
-
-### Null Safety
-```csharp
-if (SaveManager.Instance != null)
-    SaveManager.Instance.Modify(data => data.AddCoins(amount));
-
-GameManager.Instance?.PublicMethod();
-```
-
----
-
-## Event Pattern (Critical)
-
-```csharp
-private void OnEnable()
-{
-    GameEvents.OnLevelStarted += OnLevelStarted;
-}
-
-private void OnDisable()
-{
-    GameEvents.OnLevelStarted -= OnLevelStarted;  // ALWAYS unsubscribe!
-}
-```
-
----
-
-## Singleton
-```csharp
-public class MyManager : MonoBehaviourSingleton<MyManager>
-{
-    public override void Awake()
-    {
-        base.Awake();
-    }
-}
-```
-
----
-
-## Unity Lifecycle
-
-1. `Awake()` - initializes
-2. `OnEnable()` - becomes active
-3. `Start()` - before first frame
-4. `OnDisable()` - becomes inactive
-5. `OnDestroy()` - is destroyed
-
----
-
-## Directory Structure
-```
-Assets/Scripts/
-├── Gameplay Systems/  # Managers
-├── Player/            # Player controller
-├── Enemies/           # Enemies
-├── Events/            # GameEvents
-└── UI/                # Screens, Modals
-```
-
----
-
-## Critical Rules
-
-1. **Unsubscribe** events in `OnDisable` only
-2. **Null check** singletons before use
-3. **Use Time.deltaTime** for movement
-4. **No static instances** - use `MonoBehaviourSingleton<T>`
-5. Keep changes incremental and production-safe
+## Commit & Pull Request Guidelines
+Recent history uses short, imperative commit subjects such as `Fix lvl 1`, `Magnetic Platform Anims`, and `Update PreGame modal layout and UI bindings`. Keep subjects concise, capitalized, and without trailing punctuation. Pull requests should summarize gameplay impact, list touched scenes/prefabs/scripts, mention editor or device validation performed, and include screenshots or recordings for visible UI or animation changes.
