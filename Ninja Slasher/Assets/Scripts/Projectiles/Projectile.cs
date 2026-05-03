@@ -39,7 +39,7 @@ public class Projectile : MonoBehaviour, IPoolable
 
     public event Action<Projectile> OnRequestDespawn;
 
-    public void Initialize(Vector2 direction, Transform owner)
+    public virtual void Initialize(Vector2 direction, Transform owner)
     {
         InitializeAudioContext();
         SetOwner(owner);

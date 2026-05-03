@@ -6,6 +6,11 @@ public class RicochetProjectile : Projectile
     [SerializeField] private AudioEvent _ricochetSfx;
     private int _currentBounces;
 
+    public override void Initialize(Vector2 direction, Transform owner)
+    {
+        base.Initialize(direction, owner);
+        _currentBounces = 0;
+    }
     public override void OnCollisionEnter2D(Collision2D collision)
     {
         if (TryHandleGameplayClosed())
