@@ -11,6 +11,12 @@ public class PowerUpSlotUI : MonoBehaviour
     [SerializeField] private TextMeshProUGUI usesText;
     [SerializeField] private Button activateButton;
     [SerializeField] private GameObject activeIndicator;
+    [SerializeField] private GameObject _activeFrameOverlay;
+
+    [Header("ACTIVE FRAME")]
+    [SerializeField] private Color _activeFrameColor = new Color(1f, 0.84f, 0.2f, 1f);
+    [SerializeField] private Vector2 _activeFramePadding = Vector2.zero;
+    [SerializeField] private float _activeFrameThickness = 4f;
 
     [Header("QUANTITY / COST")]
     [SerializeField] private GameObject _quantityContainer;
@@ -20,6 +26,13 @@ public class PowerUpSlotUI : MonoBehaviour
     private Action<PowerUpInventoryItem, PowerUpBase> _onInteractCallback;
     private PowerUpBase _powerUpBase;
     private PowerUpType _powerUpType;
+    private Image _activeFrameImage;
+    private bool _activeFrameOverlayWasGenerated;
+
+    private void Awake()
+    {
+        EnsureActiveFrameOverlay();
+    }
 
     void OnEnable()
     {
@@ -49,6 +62,7 @@ public class PowerUpSlotUI : MonoBehaviour
         activateButton.onClick.RemoveAllListeners();
         activateButton.onClick.AddListener(OnInteractPressed);
 
+        EnsureActiveFrameOverlay();
         RefreshState();
     }
 
@@ -66,6 +80,9 @@ public class PowerUpSlotUI : MonoBehaviour
 
         if (activeIndicator != null)
             activeIndicator.SetActive(isActive);
+
+        if (_activeFrameOverlay != null)
+            _activeFrameOverlay.SetActive(isActive);
 
         if (usesText != null)
         {
@@ -99,5 +116,94 @@ public class PowerUpSlotUI : MonoBehaviour
     private void OnPowerUpExpired(PowerUpType type)
     {
         if (type == _powerUpType) RefreshState();
+    }
+
+    private void EnsureActiveFrameOverlay()
+    {
+        if (_activeFrameOverlay != null)
+        {
+            CacheActiveFrameImage();
+            NormalizeActiveFrameOverlayRect();
+            _activeFrameOverlay.transform.SetAsLastSibling();
+
+            if (_activeFrameImage != null)
+                _activeFrameImage.raycastTarget = false;
+
+            return;
+        }
+
+        if (activateButton == null)
+            return;
+
+        RectTransform buttonRect = activateButton.transform as RectTransform;
+        if (buttonRect == null)
+            return;
+
+        GameObject frameObject = new GameObject("ActiveFrameOverlay", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Outline));
+        RectTransform frameRect = frameObject.GetComponent<RectTransform>();
+        frameRect.SetParent(buttonRect, false);
+        frameRect.anchorMin = Vector2.zero;
+        frameRect.anchorMax = Vector2.one;
+        frameRect.offsetMin = Vector2.zero;
+        frameRect.offsetMax = Vector2.zero;
+        frameRect.SetAsLastSibling();
+
+        _activeFrameOverlay = frameObject;
+        _activeFrameOverlayWasGenerated = true;
+        CacheActiveFrameImage();
+        ApplyActiveFrameVisuals();
+        _activeFrameOverlay.SetActive(false);
+    }
+
+    private void CacheActiveFrameImage()
+    {
+        if (_activeFrameOverlay == null)
+            return;
+
+        if (_activeFrameImage == null)
+            _activeFrameImage = _activeFrameOverlay.GetComponent<Image>();
+    }
+
+    private void ApplyActiveFrameVisuals()
+    {
+        if (_activeFrameOverlay == null)
+            return;
+
+        NormalizeActiveFrameOverlayRect();
+
+        if (!_activeFrameOverlayWasGenerated)
+            return;
+
+        _activeFrameOverlay.transform.SetAsLastSibling();
+
+        RectTransform frameRect = _activeFrameOverlay.transform as RectTransform;
+
+        if (_activeFrameImage != null)
+        {
+            _activeFrameImage.color = new Color(_activeFrameColor.r, _activeFrameColor.g, _activeFrameColor.b, 0f);
+            _activeFrameImage.raycastTarget = false;
+        }
+
+        Outline outline = _activeFrameOverlay.GetComponent<Outline>();
+        if (outline != null)
+        {
+            outline.effectColor = _activeFrameColor;
+            outline.effectDistance = new Vector2(_activeFrameThickness, _activeFrameThickness);
+            outline.useGraphicAlpha = false;
+        }
+    }
+
+    private void NormalizeActiveFrameOverlayRect()
+    {
+        RectTransform frameRect = _activeFrameOverlay.transform as RectTransform;
+        if (frameRect == null)
+            return;
+
+        frameRect.anchorMin = Vector2.zero;
+        frameRect.anchorMax = Vector2.one;
+        frameRect.anchoredPosition = Vector2.zero;
+        frameRect.sizeDelta = Vector2.zero;
+        frameRect.offsetMin = Vector2.zero;
+        frameRect.offsetMax = Vector2.zero;
     }
 }

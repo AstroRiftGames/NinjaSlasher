@@ -5,9 +5,10 @@ public class TrajectoryRenderer : MonoBehaviour
     [SerializeField] private SpriteRenderer _indicator;
     public SpriteRenderer Indicator => _indicator;
 
-    [SerializeField] private SpriteRenderer _hitMarker;
+    [SerializeField] private GameObject _hitMarker;
     private ParticleSystem _hitParticles;
-
+    private Animator _animator;
+ 
     [SerializeField] private LayerMask _collisionLayers;
     [SerializeField] private float _defaultMaxDistance = 5f;
 
@@ -27,8 +28,10 @@ public class TrajectoryRenderer : MonoBehaviour
 
         if (_hitMarker != null)
         {
-            _hitMarker.enabled = false;
+            _hitMarker.SetActive(false);
             _hitParticles = _hitMarker.GetComponent<ParticleSystem>();
+            _animator = _hitMarker.GetComponent<Animator>();
+
             if (_hitParticles != null)
             {
                 _hitParticles.Stop();
@@ -53,8 +56,18 @@ public class TrajectoryRenderer : MonoBehaviour
 
             if (_hitMarker != null)
             {
-                _hitMarker.enabled = true;
+                _hitMarker.SetActive(true);
                 _hitMarker.transform.position = hit.point;
+
+                if (_animator!= null)
+                {
+                    bool isSafe = !hit.collider.CompareTag("Spikes");
+                    if(_animator.GetBool("IsAvailable") != isSafe) 
+                    {
+                        _animator.SetBool("IsAvailable", isSafe);
+                    }
+                }
+
                 if (_hitParticles != null && !_hitParticles.isPlaying)
                 {
                     _hitParticles.Play();
@@ -67,7 +80,7 @@ public class TrajectoryRenderer : MonoBehaviour
 
             if (_hitMarker != null)
             {
-                _hitMarker.enabled = false;
+                _hitMarker.SetActive(false);
                 if (_hitParticles != null && _hitParticles.isPlaying)
                 {
                     _hitParticles.Stop();
@@ -118,7 +131,7 @@ public class TrajectoryRenderer : MonoBehaviour
         if (_indicator != null) _indicator.enabled = false;
         if (_hitMarker != null) 
         {
-            _hitMarker.enabled = false;
+            _hitMarker.SetActive(false);
             if (_hitParticles != null && _hitParticles.isPlaying)
             {
                 _hitParticles.Stop();

@@ -234,7 +234,7 @@ public abstract class UIModalBase : UIPanel, IPointerClickHandler
         _contentAnimationSequence = null;
     }
 
-    private void RequestCloseFromOutsideClick()
+    protected virtual void RequestCloseFromOutsideClick()
     {
         if (UIManager.Instance != null)
         {

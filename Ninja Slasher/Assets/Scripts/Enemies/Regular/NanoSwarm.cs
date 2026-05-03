@@ -10,11 +10,18 @@ public class NanoSwarm : FlyingEnemy
     {
         for (int n = 0; n < _childrenAmount; n++)
         {
-            Instantiate(_miniSwarmBot, 
-                        new Vector2(transform.position.x + Random.Range(-3f, 3f), transform.position.y + Random.Range(-1.5f, 1.5f)), 
-                        Quaternion.identity).TryGetComponent(out MiniSwarmBot bot);
+            GameObject miniSwarm = Instantiate(
+                _miniSwarmBot,
+                new Vector2(transform.position.x + Random.Range(-3f, 3f), transform.position.y + Random.Range(-1.5f, 1.5f)),
+                Quaternion.identity);
+
+            if (!miniSwarm.TryGetComponent(out MiniSwarmBot bot))
+                continue;
+
+            LevelSessionManager.Instance?.RegisterSpawnedEnemy(bot);
             bot.StartCoroutine(bot.Initialize());
         }
+
         _isDying = true;
         _rb.linearVelocity = Vector2.zero;
         base.Die();
