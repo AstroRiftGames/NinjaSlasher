@@ -100,6 +100,11 @@ public class TutorialManager : MonoBehaviourSingleton<TutorialManager>
                 continue;
             }
 
+            yield return WaitForTransitionPresentation(scene);
+
+            if (!scene.IsValid() || SceneManager.GetActiveScene() != scene)
+                yield break;
+
             EvaluateTutorialForScene(scene, levelConfiguration);
             _pendingSceneEvaluation = null;
             yield break;
@@ -107,6 +112,17 @@ public class TutorialManager : MonoBehaviourSingleton<TutorialManager>
 
         Debug.LogWarning($"[TutorialManager] No se pudo inicializar el tutorial para la escena '{scene.name}' porque UI o configuración no estuvieron listas a tiempo.");
         _pendingSceneEvaluation = null;
+    }
+
+    private IEnumerator WaitForTransitionPresentation(Scene scene)
+    {
+        while (scene.IsValid()
+               && SceneManager.GetActiveScene() == scene
+               && PauseController.Instance != null
+               && PauseController.Instance.IsPauseSourceActive(PauseSource.Transition))
+        {
+            yield return null;
+        }
     }
 
     private void EvaluateTutorialForScene(Scene scene, LevelConfiguration levelConfiguration)

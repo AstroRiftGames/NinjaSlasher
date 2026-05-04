@@ -4,5 +4,6 @@ public enum PauseSource
     PauseOverlay = 1,
     Tutorial = 2,
     Defeat = 3,
-    ApplicationBackground = 4
+    ApplicationBackground = 4,
+    Transition = 5
 }

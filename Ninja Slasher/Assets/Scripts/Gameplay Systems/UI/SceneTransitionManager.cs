@@ -61,6 +61,7 @@ public class SceneTransitionManager : MonoBehaviour
 
     private IEnumerator LoadLevelSceneWithKatanaCo(string sceneName)
     {
+        BeginTransitionPause();
         SetHUDActive(false);
 
         if (AudioService.Instance != null)
@@ -80,6 +81,7 @@ public class SceneTransitionManager : MonoBehaviour
         yield return WaitForKatanaTransitionToComplete();
 
         UIManager.Instance?.SetGameplayHUDEnabled(true);
+        EndTransitionPause();
 
         yield return new WaitForEndOfFrame();
         SetHUDActive(true);
@@ -322,5 +324,15 @@ public class SceneTransitionManager : MonoBehaviour
     {
         yield return null;
         yield return new WaitForEndOfFrame();
+    }
+
+    private void BeginTransitionPause()
+    {
+        PauseController.Instance?.RequestPause(PauseSource.Transition);
+    }
+
+    private void EndTransitionPause()
+    {
+        PauseController.Instance?.ReleasePause(PauseSource.Transition);
     }
 }
