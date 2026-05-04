@@ -1,4 +1,4 @@
-Shader "UI/Katana Slash Transition Preview"
+Shader "UI/Katana Slash Transition"
 {
     Properties
     {

@@ -7,8 +7,8 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: M_KatanaSlashTransitionPreview
-  m_Shader: {fileID: 4800000, guid: c30a166fe5164e14a0903959f3b9ca64, type: 3}
+  m_Name: M_KatanaSlashTransition
+  m_Shader: {fileID: 4800000, guid: 7a2d8e91198e4e4a8ef0fd0d380d8f4b, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
@@ -30,7 +30,7 @@ Material:
     m_Ints: []
     m_Floats:
     - _Angle: -45
-    - _CoreLineIntensity: 1.35
+    - _CoreLineIntensity: 1.2
     - _CutBodyWidthScale: 1
     - _CutCurvatureAmount: 0.045
     - _CutCurvatureBias: 0.58
@@ -43,22 +43,19 @@ Material:
     - _Energy: 1
     - _FrontWidth: 0.055
     - _GlowThickness: 0.045
-    - _HighlightIntensity: 0.85
-    - _IrregularityFrequency: 12
-    - _LineIrregularity: 0.008
+    - _IrregularityFrequency: 8
+    - _LineIrregularity: 0.002
     - _LineThickness: 0.011
     - _MaxAperture: 2.35
-    - _Opacity: 1
-    - _Open: 0
-    - _OpenProgress: 1
+    - _Opacity: 0
+    - _OpenProgress: 0
     - _OpenWidth: 1.1
-    - _PostTraceIntensity: 0.55
-    - _Separation: 0.12
+    - _PostTraceIntensity: 0.22
     - _SweepIntensity: 0.72
     - _TrailLength: 0.22
-    - _Travel: 1
+    - _Travel: 0
     - _TravelDirection: 45
-    - _TravelPosition: -2.2
+    - _TravelPosition: 2.2
     m_Colors:
     - _CoreLineColor: {r: 1, g: 1, b: 1, a: 1}
     - _HighlightColor: {r: 1, g: 0.96, b: 0.82, a: 0.9}

@@ -16,9 +16,14 @@ public sealed class KatanaSlashTransitionPreviewEditor : Editor
 
         using (new EditorGUILayout.HorizontalScope())
         {
-            if (GUILayout.Button("Closed"))
+            if (GUILayout.Button("Source"))
             {
-                preview.PreviewClosed();
+                preview.PreviewSource();
+            }
+
+            if (GUILayout.Button("Covered"))
+            {
+                preview.PreviewCovered();
             }
 
             if (GUILayout.Button("Mid Slash"))
@@ -41,6 +46,11 @@ public sealed class KatanaSlashTransitionPreviewEditor : Editor
                 preview.PlayPreview();
             }
 
+            if (GUILayout.Button("Play Full"))
+            {
+                preview.PlayFullSequence();
+            }
+
             if (GUILayout.Button("Stop"))
             {
                 preview.StopPreview();
@@ -55,7 +65,7 @@ public sealed class KatanaSlashTransitionPreviewEditor : Editor
         }
 
         EditorGUILayout.HelpBox(
-            "El prefab es aislado: no usa SceneManager, no toca el Animator productivo y solo sirve para iteracion visual.",
+            "Play Sequence corta un fondo negro ya cubierto. Play Full reproduce source -> fade to black -> hold -> cut.",
             MessageType.Info);
     }
 }

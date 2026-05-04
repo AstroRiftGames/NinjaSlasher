@@ -9,6 +9,9 @@ public class SceneTransitionManager : MonoBehaviour
     [SerializeField] private float _transitionTime;
     [SerializeField] private string _levelSelectorSceneName = "SplashScreen";
 
+    [Header("KATANA TRANSITION")]
+    [SerializeField] private KatanaTransitionController _katanaTransition;
+
     [SerializeField] private GameObject _hudObject;
 
     private UIAudioContext _audioContext;
@@ -42,10 +45,48 @@ public class SceneTransitionManager : MonoBehaviour
 
     private void LoadLevelScene(string sceneName)
     {
-        StartCoroutine(LoadLevelSceneCo(sceneName));
+        if (HasKatanaTransition())
+        {
+            StartCoroutine(LoadLevelSceneWithKatanaCo(sceneName));
+            return;
+        }
+
+        StartCoroutine(LoadLevelSceneLegacyCo(sceneName));
     }
 
-    private IEnumerator LoadLevelSceneCo(string sceneName)
+    private bool HasKatanaTransition()
+    {
+        return _katanaTransition != null && _katanaTransition.IsReady;
+    }
+
+    private IEnumerator LoadLevelSceneWithKatanaCo(string sceneName)
+    {
+        SetHUDActive(false);
+
+        if (AudioService.Instance != null)
+        {
+            AudioService.Instance.StopAllSFX();
+        }
+
+        UIManager.Instance?.SetLevelsScreenEnabled(false);
+
+        _katanaTransition.PlayEnterLevelTransition();
+
+        yield return new WaitForSeconds(0.4f + 0.56f + 0.1f);
+
+        SceneManager.LoadScene(sceneName);
+
+        _katanaTransition.PlayExitLevelTransition();
+
+        yield return new WaitForSeconds(0.4f + 0.56f + 0.1f);
+
+        UIManager.Instance?.SetGameplayHUDEnabled(true);
+
+        yield return new WaitForEndOfFrame();
+        SetHUDActive(true);
+    }
+
+    private IEnumerator LoadLevelSceneLegacyCo(string sceneName)
     {
         SetHUDActive(false);
         UIManager.Instance.SetLevelsScreenEnabled(false);
@@ -74,10 +115,53 @@ public class SceneTransitionManager : MonoBehaviour
         if (_isLoadingLevelSelectorScene)
             return;
 
-        StartCoroutine(LoadLevelSelectorSceneCo());
+        if (HasKatanaTransition())
+        {
+            StartCoroutine(LoadLevelSelectorSceneWithKatanaCo());
+            return;
+        }
+
+        StartCoroutine(LoadLevelSelectorSceneLegacyCo());
     }
 
-    private IEnumerator LoadLevelSelectorSceneCo()
+    private IEnumerator LoadLevelSelectorSceneWithKatanaCo()
+    {
+        _isLoadingLevelSelectorScene = true;
+
+        SetHUDActive(false);
+
+        UIEvents.RequestHideVictoryModal();
+        UIEvents.RequestHidePauseOverlay();
+        UIEvents.RequestHideNoLivesModal();
+        UIEvents.RequestHideDefeatModal();
+        UIEvents.RequestHideEmergencyBundleModal();
+        UIEvents.RequestHidePregameModal();
+
+        if (UIManager.Instance != null)
+        {
+            UIManager.Instance.SetGameplayHUDEnabled(false);
+            UIManager.Instance.SetLevelsScreenEnabled(false);
+            UIManager.Instance.ResetLevelsScreenAnimation();
+        }
+
+        if (AudioService.Instance != null)
+        {
+            AudioService.Instance.StopAllSFX();
+        }
+
+        _katanaTransition.PlayEnterLevelTransition();
+        yield return new WaitForSeconds(0.4f + 0.56f + 0.1f);
+
+        MusicEvents.OnEnterLevelSelection?.Invoke();
+        
+        SceneManager.sceneLoaded += OnLevelSelectorSceneLoaded;
+        SceneManager.LoadScene(_levelSelectorSceneName);
+
+        yield return new WaitForSeconds(0.1f);
+        _isLoadingLevelSelectorScene = false;
+    }
+
+    private IEnumerator LoadLevelSelectorSceneLegacyCo()
     {
         _isLoadingLevelSelectorScene = true;
 
@@ -113,10 +197,46 @@ public class SceneTransitionManager : MonoBehaviour
 
     public void ShowLevelSelector()
     {
-        StartCoroutine(ShowLevelSelectorCo());
+        if (HasKatanaTransition())
+        {
+            StartCoroutine(ShowLevelSelectorWithKatanaCo());
+            return;
+        }
+
+        StartCoroutine(ShowLevelSelectorLegacyCo());
     }
 
-    private IEnumerator ShowLevelSelectorCo()
+    private IEnumerator ShowLevelSelectorWithKatanaCo()
+    {
+        SetHUDActive(false);
+
+        UIEvents.RequestHideVictoryModal();
+        UIEvents.RequestHidePauseOverlay();
+        UIEvents.RequestHideNoLivesModal();
+        UIEvents.RequestHideDefeatModal();
+        UIEvents.RequestHideEmergencyBundleModal();
+        UIEvents.RequestHidePregameModal();
+
+        if (AudioService.Instance != null)
+        {
+            AudioService.Instance.StopAllSFX();
+        }
+
+        _katanaTransition.PlayEnterLevelTransition();
+        yield return new WaitForSeconds(0.4f + 0.56f + 0.1f);
+
+        UIEvents.RequestHideSplashScreen();
+        UIManager.Instance.SetLevelsScreenEnabled(true);
+        UIManager.Instance.SetGameplayHUDEnabled(false);
+
+        _katanaTransition.PlayExitLevelTransition();
+        yield return new WaitForSeconds(0.4f + 0.56f + 0.1f);
+
+        UIEvents.RequestUpdateLivesUI(LifeManager.Instance?.CurrentLives ?? 0);
+        UIEvents.RaiseLevelSelectorReady();
+    }
+
+    private IEnumerator ShowLevelSelectorLegacyCo()
     {
         SetHUDActive(false);
 
