@@ -30,9 +30,6 @@ public class PreGameUIManager : MonoBehaviour
 
     [Header("NINJA TEXT ANIMATIONS")]
     [SerializeField] private bool useNinjaAnimations = true;
-    [SerializeField] private float titleAnimationDelay = 0.6f;
-    [SerializeField] private float titleAnimationDuration = 0.8f;
-    [SerializeField] private float titleRevealPadding = 24f;
     [SerializeField] private float objectiveDelay = 0.3f;
     [SerializeField] private float objectiveStagger = 0.1f;
     [SerializeField] private float objectiveBaseStepDelay = 0.025f;
@@ -49,13 +46,7 @@ public class PreGameUIManager : MonoBehaviour
     private readonly List<Sequence> _activeSequences = new();
     private readonly List<PowerUpSlotUI> _slots = new();
 
-    private RectTransform _titleRevealRoot;
-    private RectTransform _titleLeftMaskRect;
-    private RectTransform _titleRightMaskRect;
-    private TextMeshProUGUI _titleLeftRevealText;
-    private TextMeshProUGUI _titleRightRevealText;
     private UIAudioContext _audioContext;
-    private Color _titleBaseColor;
     private bool _isLevelSelected;
 
     private void Awake()
@@ -68,7 +59,6 @@ public class PreGameUIManager : MonoBehaviour
         ResolveGoalTextReferencesIfNeeded();
         CacheBaseVisualState();
         SetupButtonListeners();
-        InitializeTitleReveal();
         ResetVisualState();
     }
 
@@ -91,12 +81,6 @@ public class PreGameUIManager : MonoBehaviour
 
     private void CacheBaseVisualState()
     {
-        if (_title != null)
-        {
-            _titleBaseColor = _title.color;
-            _baseTextColors[_title] = _title.color;
-        }
-
         if (_primaryGoalText != null)
         {
             _baseTextColors[_primaryGoalText] = _primaryGoalText.color;
@@ -193,74 +177,12 @@ public class PreGameUIManager : MonoBehaviour
         _objectiveSlashBaseEnabled[slashImage] = slashImage.enabled;
     }
 
-    private void InitializeTitleReveal()
-    {
-        if (_title == null || _titleRevealRoot != null)
-            return;
-
-        RectTransform titleRect = _title.rectTransform;
-        Transform titleParent = titleRect.parent;
-
-        _titleRevealRoot = CreateRectTransform("TitleRevealRoot", titleParent);
-        CopyRectTransform(titleRect, _titleRevealRoot);
-        _titleRevealRoot.SetSiblingIndex(titleRect.GetSiblingIndex() + 1);
-
-        _titleLeftMaskRect = CreateMaskRect("TitleRevealLeftMask", _titleRevealRoot, new Vector2(0.5f, 0f), new Vector2(0.5f, 1f), new Vector2(1f, 0.5f));
-        _titleRightMaskRect = CreateMaskRect("TitleRevealRightMask", _titleRevealRoot, new Vector2(0.5f, 0f), new Vector2(0.5f, 1f), new Vector2(0f, 0.5f));
-
-        _titleLeftRevealText = CreateTitleRevealClone("TitleRevealLeftText", _titleLeftMaskRect);
-        _titleRightRevealText = CreateTitleRevealClone("TitleRevealRightText", _titleRightMaskRect);
-
-        _titleRevealRoot.gameObject.SetActive(false);
-    }
-
     private RectTransform CreateRectTransform(string objectName, Transform parent)
     {
         GameObject go = new GameObject(objectName, typeof(RectTransform));
         RectTransform rect = go.GetComponent<RectTransform>();
         rect.SetParent(parent, false);
         return rect;
-    }
-
-    private RectTransform CreateMaskRect(string objectName, Transform parent, Vector2 anchorMin, Vector2 anchorMax, Vector2 pivot)
-    {
-        RectTransform rect = CreateRectTransform(objectName, parent);
-        rect.anchorMin = anchorMin;
-        rect.anchorMax = anchorMax;
-        rect.pivot = pivot;
-        rect.anchoredPosition = Vector2.zero;
-        rect.sizeDelta = Vector2.zero;
-        rect.gameObject.AddComponent<RectMask2D>();
-        return rect;
-    }
-
-    private TextMeshProUGUI CreateTitleRevealClone(string objectName, Transform parent)
-    {
-        TextMeshProUGUI clone = Instantiate(_title, parent);
-        clone.name = objectName;
-        clone.raycastTarget = false;
-
-        RectTransform cloneRect = clone.rectTransform;
-        cloneRect.anchorMin = new Vector2(0.5f, 0.5f);
-        cloneRect.anchorMax = new Vector2(0.5f, 0.5f);
-        cloneRect.pivot = new Vector2(0.5f, 0.5f);
-        cloneRect.anchoredPosition = Vector2.zero;
-        cloneRect.sizeDelta = _title.rectTransform.rect.size;
-        cloneRect.localRotation = Quaternion.identity;
-        cloneRect.localScale = Vector3.one;
-
-        return clone;
-    }
-
-    private void CopyRectTransform(RectTransform source, RectTransform target)
-    {
-        target.anchorMin = source.anchorMin;
-        target.anchorMax = source.anchorMax;
-        target.pivot = source.pivot;
-        target.anchoredPosition = source.anchoredPosition;
-        target.sizeDelta = source.sizeDelta;
-        target.localRotation = source.localRotation;
-        target.localScale = Vector3.one;
     }
 
     public void ShowConfirmationPanel(string sceneName)
@@ -280,220 +202,7 @@ public class PreGameUIManager : MonoBehaviour
         RefreshObjectiveSlashBaselines();
         ResetVisualState();
         ShowPreGamePowerUps();
-
-        if (useNinjaAnimations)
-            StartCoroutine(DelayedAnimations());
-        else
-            ApplyObjectiveCompletionVisuals();
-    }
-
-    private IEnumerator DelayedAnimations()
-    {
-        PrepareTitleReveal();
-        PrepareObjectiveReveal();
-
-        yield return new WaitForSeconds(titleAnimationDelay);
-        yield return AnimateTitleReveal();
-
-        yield return new WaitForSeconds(objectiveDelay);
-        yield return AnimateObjectives();
-    }
-
-    private IEnumerator AnimateTitleReveal()
-    {
-        if (_title == null || _titleRevealRoot == null)
-            yield break;
-
-        float targetHeight = Mathf.Max(_title.rectTransform.rect.height, _title.preferredHeight) + titleRevealPadding;
-        float halfWidth = Mathf.Max(0f, (_title.preferredWidth * 0.5f) + titleRevealPadding);
-
-        SetTitleMaskDimensions(_titleLeftMaskRect, 0f, targetHeight);
-        SetTitleMaskDimensions(_titleRightMaskRect, 0f, targetHeight);
-
-        Sequence revealSequence = DOTween.Sequence();
-        revealSequence.Append(
-            DOTween.To(
-                    () => _titleLeftMaskRect.sizeDelta.x,
-                    width => SetTitleMaskDimensions(_titleLeftMaskRect, width, targetHeight),
-                    halfWidth,
-                    titleAnimationDuration)
-                .SetEase(Ease.OutCubic));
-        revealSequence.Join(
-            DOTween.To(
-                    () => _titleRightMaskRect.sizeDelta.x,
-                    width => SetTitleMaskDimensions(_titleRightMaskRect, width, targetHeight),
-                    halfWidth,
-                    titleAnimationDuration)
-                .SetEase(Ease.OutCubic));
-        revealSequence.OnComplete(FinishTitleReveal);
-        _activeSequences.Add(revealSequence);
-
-        yield return revealSequence.WaitForCompletion();
-    }
-
-    private void SetTitleMaskDimensions(RectTransform maskRect, float width, float height)
-    {
-        if (maskRect == null)
-            return;
-
-        maskRect.sizeDelta = new Vector2(width, height);
-    }
-
-    private IEnumerator AnimateObjectives()
-    {
-        foreach (TextMeshProUGUI objectiveText in GetObjectiveTexts())
-        {
-            yield return RevealObjectiveText(objectiveText);
-            yield return new WaitForSeconds(objectiveStagger);
-        }
-    }
-
-    private IEnumerator RevealObjectiveText(TextMeshProUGUI objectiveText)
-    {
-        if (objectiveText == null || string.IsNullOrEmpty(objectiveText.text))
-            yield break;
-
-        objectiveText.ForceMeshUpdate();
-        int totalCharacters = objectiveText.textInfo.characterCount;
-        if (totalCharacters <= 0)
-            yield break;
-
-        objectiveText.maxVisibleCharacters = 0;
-
-        Image slashImage = objectiveText.GetComponentInChildren<Image>(true);
-        Sequence flashSequence = BuildObjectiveFlashSequence(objectiveText, slashImage);
-        if (flashSequence != null)
-            _activeSequences.Add(flashSequence);
-
-        int visibleCharacters = 0;
-        while (visibleCharacters < totalCharacters)
-        {
-            visibleCharacters = Mathf.Min(totalCharacters, visibleCharacters + GetNextRevealBurst(objectiveText.text, visibleCharacters));
-            objectiveText.maxVisibleCharacters = visibleCharacters;
-
-            yield return new WaitForSeconds(GetRevealDelay(objectiveText.text, visibleCharacters));
-        }
-    }
-
-    private Sequence BuildObjectiveFlashSequence(TextMeshProUGUI objectiveText, Image slashImage)
-    {
-        if (objectiveText == null)
-            return null;
-
-        if (!_baseTextColors.TryGetValue(objectiveText, out Color baseColor))
-            baseColor = objectiveText.color;
-
-        objectiveText.color = new Color(baseColor.r, baseColor.g, baseColor.b, 0.78f);
-
-        Sequence flashSequence = DOTween.Sequence();
-        flashSequence.Append(objectiveText.DOFade(baseColor.a, objectiveFlashDuration).SetEase(Ease.OutQuad));
-
-        bool shouldShowSlash = _objectiveCompletionStates.TryGetValue(objectiveText, out bool isCompleted) && isCompleted;
-        if (slashImage != null && shouldShowSlash)
-        {
-            if (!_objectiveSlashBasePositions.TryGetValue(slashImage, out Vector2 basePosition))
-                basePosition = slashImage.rectTransform.anchoredPosition;
-
-            if (!_objectiveSlashBaseColors.TryGetValue(slashImage, out Color baseSlashColor))
-                baseSlashColor = slashImage.color;
-
-            slashImage.rectTransform.anchoredPosition = basePosition + new Vector2(-18f, 0f);
-            slashImage.color = new Color(baseSlashColor.r, baseSlashColor.g, baseSlashColor.b, 0f);
-
-            flashSequence.AppendCallback(PlayObjectiveStrokeSfx);
-            flashSequence.Join(slashImage.DOFade(baseSlashColor.a, slashEffectDuration * 0.45f).SetEase(Ease.OutQuad));
-            flashSequence.Join(slashImage.rectTransform.DOAnchorPos(basePosition, slashEffectDuration).SetEase(Ease.OutCubic));
-            flashSequence.OnKill(() => ApplyObjectiveSlashCompletionState(objectiveText, slashImage));
-            flashSequence.OnComplete(() => ApplyObjectiveSlashCompletionState(objectiveText, slashImage));
-        }
-
-        return flashSequence;
-    }
-
-    private int GetNextRevealBurst(string text, int currentVisibleCharacters)
-    {
-        if (currentVisibleCharacters >= text.Length)
-            return 0;
-
-        int burst = 0;
-        while (currentVisibleCharacters + burst < text.Length && burst < Mathf.Max(1, objectiveBurstSize))
-        {
-            burst++;
-            char nextChar = text[currentVisibleCharacters + burst - 1];
-            if (char.IsWhiteSpace(nextChar) || IsPunctuation(nextChar))
-                break;
-        }
-
-        return Mathf.Max(1, burst);
-    }
-
-    private float GetRevealDelay(string text, int visibleCharacters)
-    {
-        if (visibleCharacters <= 0 || visibleCharacters > text.Length)
-            return objectiveBaseStepDelay;
-
-        char lastVisibleChar = text[visibleCharacters - 1];
-        return char.IsWhiteSpace(lastVisibleChar) || IsPunctuation(lastVisibleChar)
-            ? objectiveWordPauseDelay
-            : objectiveBaseStepDelay;
-    }
-
-    private static bool IsPunctuation(char value)
-    {
-        return value == '.' || value == ',' || value == ':' || value == ';' || value == '!' || value == '?';
-    }
-
-    private void PrepareTitleReveal()
-    {
-        if (_title == null || _titleRevealRoot == null)
-            return;
-
-        _title.ForceMeshUpdate();
-        CopyRectTransform(_title.rectTransform, _titleRevealRoot);
-
-        if (_titleLeftRevealText != null)
-        {
-            _titleLeftRevealText.text = _title.text;
-            _titleLeftRevealText.color = _titleBaseColor;
-            _titleLeftRevealText.alpha = 1f;
-            _titleLeftRevealText.rectTransform.sizeDelta = _titleRevealRoot.rect.size;
-        }
-
-        if (_titleRightRevealText != null)
-        {
-            _titleRightRevealText.text = _title.text;
-            _titleRightRevealText.color = _titleBaseColor;
-            _titleRightRevealText.alpha = 1f;
-            _titleRightRevealText.rectTransform.sizeDelta = _titleRevealRoot.rect.size;
-        }
-
-        _title.color = new Color(_titleBaseColor.r, _titleBaseColor.g, _titleBaseColor.b, 0f);
-        _titleRevealRoot.gameObject.SetActive(true);
-    }
-
-    private void FinishTitleReveal()
-    {
-        if (_title != null)
-            _title.color = _titleBaseColor;
-
-        if (_titleRevealRoot != null)
-            _titleRevealRoot.gameObject.SetActive(false);
-    }
-
-    private void PrepareObjectiveReveal()
-    {
-        foreach (TextMeshProUGUI objectiveText in GetObjectiveTexts())
-        {
-            objectiveText.ForceMeshUpdate();
-            objectiveText.maxVisibleCharacters = 0;
-
-            if (_baseTextColors.TryGetValue(objectiveText, out Color baseColor))
-                objectiveText.color = baseColor;
-
-            Image slashImage = objectiveText.GetComponentInChildren<Image>(true);
-            if (slashImage != null)
-                RestoreObjectiveSlashBaseline(slashImage);
-        }
+        ApplyObjectiveCompletionVisuals();
     }
 
     public void StopAllAnimations()
@@ -527,37 +236,7 @@ public class PreGameUIManager : MonoBehaviour
 
     private void ResetVisualState()
     {
-        ResetTitleVisualState();
         ResetObjectiveVisualState();
-    }
-
-    private void ResetTitleVisualState()
-    {
-        if (_title != null)
-            _title.color = _titleBaseColor;
-
-        if (_titleRevealRoot != null)
-            _titleRevealRoot.gameObject.SetActive(false);
-
-        if (_titleLeftMaskRect != null)
-            _titleLeftMaskRect.sizeDelta = Vector2.zero;
-
-        if (_titleRightMaskRect != null)
-            _titleRightMaskRect.sizeDelta = Vector2.zero;
-
-        if (_titleLeftRevealText != null)
-        {
-            _titleLeftRevealText.text = _title != null ? _title.text : string.Empty;
-            _titleLeftRevealText.color = _titleBaseColor;
-            _titleLeftRevealText.alpha = 1f;
-        }
-
-        if (_titleRightRevealText != null)
-        {
-            _titleRightRevealText.text = _title != null ? _title.text : string.Empty;
-            _titleRightRevealText.color = _titleBaseColor;
-            _titleRightRevealText.alpha = 1f;
-        }
     }
 
     private void ResetObjectiveVisualState()
@@ -595,12 +274,6 @@ public class PreGameUIManager : MonoBehaviour
         RestoreObjectiveSlashBaseline(slashImage);
         bool shouldShowSlash = _objectiveCompletionStates.TryGetValue(objectiveText, out bool isCompleted) && isCompleted;
         slashImage.enabled = shouldShowSlash;
-    }
-
-    private void PlayObjectiveStrokeSfx()
-    {
-        if (_audioContext?.Audio?.tapSplash != null)
-            AudioService.Instance?.PlaySFX(_audioContext.Audio.tapSplash);
     }
 
     private void RestoreObjectiveSlashBaseline(Image slashImage)
@@ -641,17 +314,6 @@ public class PreGameUIManager : MonoBehaviour
         UIEvents.RequestHidePregameModal();
     }
 
-    private void OnCloseButtonClicked()
-    {
-        if (_isLevelSelected)
-        {
-            CancelLevelSelection();
-            return;
-        }
-
-        UIEvents.RequestHidePregameModal();
-    }
-
     private void OnConfirmLevelSelection()
     {
         if (!LifeManager.Instance.CanPlay())
@@ -665,14 +327,6 @@ public class PreGameUIManager : MonoBehaviour
         _isLevelSelected = false;
         UIEvents.RequestHidePregameModal();
         UIEvents.RequestSceneTransition(_pendingSceneName);
-    }
-
-    private void CancelLevelSelection()
-    {
-        StopAllAnimations();
-        _isLevelSelected = false;
-        _pendingSceneName = null;
-        UIEvents.RequestHidePregameModal();
     }
 
     private void AbortPendingLevelSelectionForLifeWall()
