@@ -203,13 +203,23 @@ public class MultiattackDrone : BossEnemy
         _lastAttack = Time.time;
     }
 
+    private int SelectParriableProjectile(int amount)
+    {
+        return UnityEngine.Random.Range(0, amount);
+    }
+
     private IEnumerator ShootBurst()
     {
         _animator.SetTrigger("OnLinearBurst");
         yield return new WaitForSeconds(.916f);
+        int parriableProj = SelectParriableProjectile(_burstAmount);
         for (int n = 0; n < _burstAmount; n++)
         {
-            Shoot(AttackType.Burst, GetDirToPlayer());
+            Projectile newProj = Shoot(AttackType.Burst, GetDirToPlayer());
+            if(n == parriableProj)
+            {
+                newProj.SetIsParryable(true);
+            }
             yield return new WaitForSeconds(.165f);
         }
     }
@@ -218,6 +228,7 @@ public class MultiattackDrone : BossEnemy
     {
         _animator.SetTrigger("OnConeShot");
         yield return new WaitForSeconds(.916f);
+        int parriableProj = SelectParriableProjectile(_burstAmount);
         Vector2 direction = GetDirToPlayer();
         for (int m = 0; m < _coneAmount; m++)
         {
@@ -226,7 +237,11 @@ public class MultiattackDrone : BossEnemy
                 float offsetAngle = n < 1 ? -15 : n == 1 ? 0 : 15;
                 direction = Quaternion.Euler(0, 0, offsetAngle) * direction;
 
-                Shoot(AttackType.Cone, direction);
+                Projectile newProj = Shoot(AttackType.Cone, direction);
+                if (n == parriableProj)
+                {
+                    newProj.SetIsParryable(true);
+                }
             }
             yield return new WaitForSeconds(.5f);
         }
@@ -236,14 +251,20 @@ public class MultiattackDrone : BossEnemy
     {
         _animator.SetTrigger("OnReboundShot");
         yield return new WaitForSeconds(.916f);
+        int parriableProj = SelectParriableProjectile(_burstAmount);
+        
         for (int n = 0; n < _reboundAmount; n++)
         {
-            Shoot(AttackType.Rebound, GetDirToPlayer());
+            Projectile newProj = Shoot(AttackType.Rebound, GetDirToPlayer());
+            if (n == parriableProj)
+            {
+                newProj.SetIsParryable(true);
+            }
             yield return new WaitForSeconds(.5f);
         }
     }
     
-    private void Shoot(AttackType type, Vector2 direction)
+    private Projectile Shoot(AttackType type, Vector2 direction)
     {
         ObjectPool<Projectile> pool = type switch
         {
@@ -264,6 +285,7 @@ public class MultiattackDrone : BossEnemy
         projectile.OnRequestDespawn += HandleProjectileDespawn;
 
         projectile.Initialize(direction, transform);
+        return projectile;
     }
 
     private void HandleProjectileDespawn(Projectile projectile)

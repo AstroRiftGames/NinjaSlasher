@@ -24,7 +24,7 @@ public class Projectile : MonoBehaviour, IPoolable
     public void SetIsParryable(bool newValue)
     {
         isParryable = newValue;
-        Debug.Log("Proj parryable updated. New value: " + newValue);
+        _animator.SetBool("IsParryable", true);
     }
 
     protected bool _isEnhancedParry = false;
