@@ -27,11 +27,6 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
     [SerializeField] private Button _calendarButton;
     [SerializeField] private Button _storeButton;
 
-    [Header("CALENDAR ICONS")]
-    [SerializeField] private Image _calendarButtonImage;
-    [SerializeField] private Sprite _calendarAvailableIcon;
-    [SerializeField] private Sprite _calendarClaimedIcon;
-
     [Header("CONFIG DROPDOWN COMPONENTS")]
     [SerializeField] private Button _musicButton;
     [SerializeField] private Button _sfxButton;
@@ -105,18 +100,12 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
         _configToggles = GetComponent<AudioSettingsUI>();
         _configPanelManager = GetComponent<ConfigDropdown>();
 
-        if (_calendarButtonImage == null && _calendarButton != null)
-        {
-            _calendarButtonImage = _calendarButton.GetComponent<Image>();
-        }
-
         SaveButtonPositions();
     }
 
     private void Start()
     {
         _configToggles?.RefreshUI();
-        StartCoroutine(InitializeCalendarIcon());
     }
 
     private void OnEnable()
@@ -130,8 +119,6 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
             StartCoroutine(DelayedSubscription());
         }
 
-        GameEvents.OnRewardClaimed += OnRewardClaimed;
-        GameEvents.OnRewardAvailabilityChanged += UpdateCalendarButtonIcon;
         SaveManager.OnDataLoaded += OnSaveDataLoaded;
     }
 
@@ -142,8 +129,6 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
             LevelProgressionManager.Instance.OnProgressionUpdated -= RefreshLevelProgression;
         }
 
-        GameEvents.OnRewardClaimed -= OnRewardClaimed;
-        GameEvents.OnRewardAvailabilityChanged -= UpdateCalendarButtonIcon;
         SaveManager.OnDataLoaded -= OnSaveDataLoaded;
     }
 
@@ -175,33 +160,6 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
 
         _backToSelectionButton.onClick.AddListener(UIEvents.RaiseQuitToMenuPressed);
         _continueButton.onClick.AddListener(UIEvents.RaiseQuitToMenuPressed);
-    }
-
-    private IEnumerator InitializeCalendarIcon()
-    {
-        while (DailyRewardSystem.Instance == null || SaveManager.Instance == null || !SaveManager.Instance.IsDataLoaded)
-        {
-            yield return null;
-        }
-
-        yield return new WaitForSeconds(0.1f);
-
-        UpdateCalendarButtonIcon(DailyRewardSystem.Instance.CanClaimToday());
-    }
-
-    private void OnRewardClaimed(DailyReward reward)
-    {
-        UpdateCalendarButtonIcon(false);
-    }
-
-    public void UpdateCalendarButtonIcon(bool isAvailable)
-    {
-        if (_calendarButtonImage == null || _calendarAvailableIcon == null || _calendarClaimedIcon == null)
-        {
-            return;
-        }
-
-        _calendarButtonImage.sprite = isAvailable ? _calendarAvailableIcon : _calendarClaimedIcon;
     }
 
     private void SetupLevelProgression()

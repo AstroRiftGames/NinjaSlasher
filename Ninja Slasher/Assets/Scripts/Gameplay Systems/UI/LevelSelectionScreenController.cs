@@ -18,29 +18,38 @@ public class LevelSelectionScreenController : MonoBehaviour
     [SerializeField] private TextMeshProUGUI _livesTimerText;
     [SerializeField] private UIPunchScaleFeedback _livesWidgetFeedback;
     [SerializeField] private UIPunchScaleFeedback _livesAmountFeedback;
+    [SerializeField] private Button _dailyRewardButton;
     [SerializeField] private Button _dailyWheelButton;
     [SerializeField] private GameObject _infoRoot;
     [SerializeField] private GameObject _buttonsRoot;
+    
+    private const string DailyAvailabilityParameterName = "IsAvailable";
+    private Animator _dailyRewardButtonAnimator;
+    private Animator _dailyWheelButtonAnimator;
 
     private void Awake()
     {
         Instance = this;
-        CacheLivesWidgetReferences();
-        CacheDailyWheelButton();
+        ResolveLivesFeedbackReferences();
+        CacheDailyButtons();
         StoreRewardFeedbackController.EnsureFor(this);
     }
 
     private void OnEnable()
     {
         Instance = this;
-        CacheLivesWidgetReferences();
-        CacheDailyWheelButton();
+        ResolveLivesFeedbackReferences();
+        CacheDailyButtons();
         StoreRewardFeedbackController.EnsureFor(this);
         RefreshAll();
         UpdateTotalStarsDisplay();
         RefreshLivesWidget();
+        RefreshDailyButtonVisuals();
         RegisterButtonListeners();
         UpdateForegroundVisibility();
+
+        GameEvents.OnRewardAvailabilityChanged += OnRewardAvailabilityChanged;
+        GameEvents.OnWheelAvailabilityChanged += OnWheelAvailabilityChanged;
 
         if (LevelProgressionManager.Instance != null)
         {
@@ -60,6 +69,9 @@ public class LevelSelectionScreenController : MonoBehaviour
         if (Instance == this)
             Instance = null;
 
+        GameEvents.OnRewardAvailabilityChanged -= OnRewardAvailabilityChanged;
+        GameEvents.OnWheelAvailabilityChanged -= OnWheelAvailabilityChanged;
+
         if (LevelProgressionManager.Instance != null)
         {
             LevelProgressionManager.Instance.OnNewAreaUnlocked -= HandleNewAreaUnlocked;
@@ -78,6 +90,7 @@ public class LevelSelectionScreenController : MonoBehaviour
     private void Update()
     {
         RefreshLivesWidget();
+        RefreshDailyButtonVisuals();
         UpdateForegroundVisibility();
     }
 
@@ -169,42 +182,13 @@ public class LevelSelectionScreenController : MonoBehaviour
     private void ContextMenuRefreshAll() => RefreshAll();
 #endif
 
-    private void CacheLivesWidgetReferences()
+    private void CacheDailyButtons()
     {
-        if (_infoRoot == null)
-        {
-            Transform infoTransform = transform.Find("Info");
-            if (infoTransform != null)
-                _infoRoot = infoTransform.gameObject;
-        }
+        if (_dailyRewardButtonAnimator == null && _dailyRewardButton != null)
+            _dailyRewardButtonAnimator = _dailyRewardButton.GetComponent<Animator>();
 
-        if (_buttonsRoot == null)
-        {
-            Transform buttonsTransform = transform.Find("Buttons");
-            if (buttonsTransform != null)
-                _buttonsRoot = buttonsTransform.gameObject;
-        }
-
-        if (_livesWidgetRoot == null)
-            _livesWidgetRoot = FindRectTransformByName("Lives");
-
-        if (_livesAmountText == null)
-            _livesAmountText = FindTextByName("LivesAmount");
-
-        if (_livesTimerText == null)
-            _livesTimerText = FindTextByName("CounterText");
-
-        ResolveLivesFeedbackReferences();
-    }
-
-    private void CacheDailyWheelButton()
-    {
-        if (_dailyWheelButton != null)
-            return;
-
-        RectTransform buttonRect = FindRectTransformByName("DailyWheelButton");
-        if (buttonRect != null)
-            _dailyWheelButton = buttonRect.GetComponent<Button>();
+        if (_dailyWheelButtonAnimator == null && _dailyWheelButton != null)
+            _dailyWheelButtonAnimator = _dailyWheelButton.GetComponent<Animator>();
     }
 
     private void RegisterButtonListeners()
@@ -229,9 +213,20 @@ public class LevelSelectionScreenController : MonoBehaviour
         UIEvents.RequestShowDailyWheelModal();
     }
 
+    private void OnRewardAvailabilityChanged(bool isAvailable)
+    {
+        SetDailyButtonAvailability(_dailyRewardButtonAnimator, isAvailable);
+    }
+
+    private void OnWheelAvailabilityChanged(bool isAvailable)
+    {
+        SetDailyButtonAvailability(_dailyWheelButtonAnimator, isAvailable);
+    }
+
     private void UpdateForegroundVisibility()
     {
         bool shouldShow = true;
+        bool buttonsVisibilityChanged = false;
 
         if (UIManager.Instance != null)
             shouldShow = !UIManager.Instance.HasBlockingPanelForLevelSelection();
@@ -243,25 +238,25 @@ public class LevelSelectionScreenController : MonoBehaviour
             _infoRoot.SetActive(shouldShow);
 
         if (_buttonsRoot != null && _buttonsRoot.activeSelf != shouldShow)
-            _buttonsRoot.SetActive(shouldShow);
-    }
-
-    private RectTransform FindRectTransformByName(string objectName)
-    {
-        Transform[] children = GetComponentsInChildren<Transform>(includeInactive: true);
-        foreach (Transform child in children)
         {
-            if (child.name == objectName)
-                return child as RectTransform;
+            _buttonsRoot.SetActive(shouldShow);
+            buttonsVisibilityChanged = true;
         }
 
-        return null;
+        if (buttonsVisibilityChanged && shouldShow)
+        {
+            RebindDailyButtonAnimators();
+            RefreshDailyButtonVisuals();
+        }
     }
 
-    private TextMeshProUGUI FindTextByName(string objectName)
+    private void RefreshDailyButtonVisuals()
     {
-        RectTransform rect = FindRectTransformByName(objectName);
-        return rect != null ? rect.GetComponent<TextMeshProUGUI>() : null;
+        if (_dailyRewardButtonAnimator != null && DailyRewardSystem.Instance != null)
+            SetDailyButtonAvailability(_dailyRewardButtonAnimator, DailyRewardSystem.Instance.CanClaimToday());
+
+        if (_dailyWheelButtonAnimator != null && DailyWheelSystem.Instance != null)
+            SetDailyButtonAvailability(_dailyWheelButtonAnimator, DailyWheelSystem.Instance.CanSpinToday());
     }
 
     private void RefreshLivesWidget()
@@ -330,5 +325,50 @@ public class LevelSelectionScreenController : MonoBehaviour
 
         feedback.ResetImmediate();
         return feedback;
+    }
+
+    private void RebindDailyButtonAnimators()
+    {
+        RebindAnimator(_dailyRewardButtonAnimator);
+        RebindAnimator(_dailyWheelButtonAnimator);
+    }
+
+    private static void RebindAnimator(Animator animator)
+    {
+        if (animator == null || !animator.isActiveAndEnabled)
+            return;
+
+        animator.Rebind();
+        animator.Update(0f);
+    }
+
+    private static void SetDailyButtonAvailability(Animator animator, bool isAvailable)
+    {
+        if (animator == null || !animator.isActiveAndEnabled)
+            return;
+
+        if (!HasBoolParameter(animator, DailyAvailabilityParameterName))
+            return;
+
+        if (animator.GetBool(DailyAvailabilityParameterName) != isAvailable)
+            animator.SetBool(DailyAvailabilityParameterName, isAvailable);
+    }
+
+    private static bool HasBoolParameter(Animator animator, string parameterName)
+    {
+        if (animator == null || string.IsNullOrWhiteSpace(parameterName))
+            return false;
+
+        AnimatorControllerParameter[] parameters = animator.parameters;
+        for (int i = 0; i < parameters.Length; i++)
+        {
+            if (parameters[i].type == AnimatorControllerParameterType.Bool
+                && parameters[i].name == parameterName)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
