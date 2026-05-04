@@ -14,7 +14,7 @@ public class KatanaTransitionController : MonoBehaviour
     [SerializeField] private float _delayBeforeSlash = 0.11f;
     [SerializeField] private float _cutAngle = -45f;
     [SerializeField] private float _slashDirection = 45f;
-    [SerializeField] private float _openFollowDelay = 0.28f;
+    [SerializeField] private float _openFollowDelay = 0.4f;
 
     [Header("Animation Curves")]
     [SerializeField] private AnimationCurve _fadeCurve = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
@@ -183,6 +183,7 @@ public class KatanaTransitionController : MonoBehaviour
             return Mathf.Clamp01(travel);
         }
 
-        return Mathf.Clamp01((travel - delay) / (1f - delay));
+        float normalized = Mathf.Clamp01((travel - delay) / (1f - delay));
+        return normalized * normalized;
     }
 }

@@ -36,7 +36,7 @@ public sealed class KatanaSlashTransitionOverlay : MonoBehaviour
     [SerializeField, Min(1.5f)] private float _travelOverscan = 2.2f;
     [SerializeField, Min(0f)] private float _slashFrontWidth = 0.055f;
     [SerializeField, Min(0f)] private float _trailLength = 0.22f;
-    [SerializeField, Range(0f, 0.6f)] private float _openFollowDelay = 0.28f;
+    [SerializeField, Range(0f, 0.6f)] private float _openFollowDelay = 0.4f;
     [SerializeField, Min(0f)] private float _openWidthBehindSlash = 1.1f;
 
     [Header("Slash Look")]
@@ -509,7 +509,8 @@ public sealed class KatanaSlashTransitionOverlay : MonoBehaviour
             return Mathf.Clamp01(travel);
         }
 
-        return Mathf.Clamp01((travel - clampedDelay) / (1f - clampedDelay));
+        float normalized = Mathf.Clamp01((travel - clampedDelay) / (1f - clampedDelay));
+        return normalized * normalized;
     }
 
     private void EnsureOverlaySetup()
