@@ -71,14 +71,13 @@ public class SceneTransitionManager : MonoBehaviour
         UIManager.Instance?.SetLevelsScreenEnabled(false);
 
         _katanaTransition.PlayEnterLevelTransition();
-
-        yield return new WaitForSeconds(0.4f + 0.56f + 0.1f);
+        yield return WaitForKatanaTransitionToComplete();
 
         SceneManager.LoadScene(sceneName);
+        yield return WaitForScenePresentationFrame();
 
         _katanaTransition.PlayExitLevelTransition();
-
-        yield return new WaitForSeconds(0.4f + 0.56f + 0.1f);
+        yield return WaitForKatanaTransitionToComplete();
 
         UIManager.Instance?.SetGameplayHUDEnabled(true);
 
@@ -150,15 +149,12 @@ public class SceneTransitionManager : MonoBehaviour
         }
 
         _katanaTransition.PlayEnterLevelTransition();
-        yield return new WaitForSeconds(0.4f + 0.56f + 0.1f);
+        yield return WaitForKatanaTransitionToComplete();
 
         MusicEvents.OnEnterLevelSelection?.Invoke();
         
         SceneManager.sceneLoaded += OnLevelSelectorSceneLoaded;
         SceneManager.LoadScene(_levelSelectorSceneName);
-
-        yield return new WaitForSeconds(0.1f);
-        _isLoadingLevelSelectorScene = false;
     }
 
     private IEnumerator LoadLevelSelectorSceneLegacyCo()
@@ -223,14 +219,14 @@ public class SceneTransitionManager : MonoBehaviour
         }
 
         _katanaTransition.PlayEnterLevelTransition();
-        yield return new WaitForSeconds(0.4f + 0.56f + 0.1f);
+        yield return WaitForKatanaTransitionToComplete();
 
         UIEvents.RequestHideSplashScreen();
         UIManager.Instance.SetLevelsScreenEnabled(true);
         UIManager.Instance.SetGameplayHUDEnabled(false);
 
         _katanaTransition.PlayExitLevelTransition();
-        yield return new WaitForSeconds(0.4f + 0.56f + 0.1f);
+        yield return WaitForKatanaTransitionToComplete();
 
         UIEvents.RequestUpdateLivesUI(LifeManager.Instance?.CurrentLives ?? 0);
         UIEvents.RaiseLevelSelectorReady();
@@ -284,8 +280,16 @@ public class SceneTransitionManager : MonoBehaviour
         UIManager.Instance?.SetLevelsScreenEnabled(true);
         UIManager.Instance?.SetGameplayHUDEnabled(false);
 
-        _transitionAnim.SetTrigger("End");
-        AudioService.Instance?.PlaySFX(_audioContext.Audio.transitionSlash);
+        if (HasKatanaTransition())
+        {
+            _katanaTransition.PlayExitLevelTransition();
+            yield return WaitForKatanaTransitionToComplete();
+        }
+        else
+        {
+            _transitionAnim.SetTrigger("End");
+            AudioService.Instance?.PlaySFX(_audioContext.Audio.transitionSlash);
+        }
 
         UIEvents.RequestUpdateLivesUI(LifeManager.Instance?.CurrentLives ?? 0);
 
@@ -299,5 +303,24 @@ public class SceneTransitionManager : MonoBehaviour
         {
             _hudObject.SetActive(active);
         }
+    }
+
+    private IEnumerator WaitForKatanaTransitionToComplete()
+    {
+        if (_katanaTransition == null)
+        {
+            yield break;
+        }
+
+        while (_katanaTransition.IsTransitioning)
+        {
+            yield return null;
+        }
+    }
+
+    private static IEnumerator WaitForScenePresentationFrame()
+    {
+        yield return null;
+        yield return new WaitForEndOfFrame();
     }
 }

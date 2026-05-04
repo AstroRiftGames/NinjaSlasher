@@ -44,6 +44,11 @@ public class KatanaTransitionController : MonoBehaviour
     public bool IsTransitioning => _isTransitioning;
     public bool IsReady => _slashOverlay != null && _slashOverlay.material != null;
 
+    private void Awake()
+    {
+        _audioContext ??= GetComponentInParent<UIAudioContext>();
+    }
+
     private void Start()
     {
         if (_slashOverlay != null)
@@ -56,16 +61,9 @@ public class KatanaTransitionController : MonoBehaviour
     {
         if (_isTransitioning || !IsReady) return;
         _isTransitioning = true;
-
-        if (_audioContext?.Audio?.transitionSlash != null && AudioService.Instance != null)
-        {
-            AudioService.Instance.PlaySFX(_audioContext.Audio.transitionSlash);
-        }
-
-        _slashOverlay.enabled = true;
+        _slashOverlay.enabled = false;
         ResetMaterialValues();
-
-        StartCoroutine(TransitionSequence(onComplete));
+        StartCoroutine(CoverSequence(onComplete));
     }
 
     public void PlayExitLevelTransition(System.Action onComplete = null)
@@ -78,13 +76,13 @@ public class KatanaTransitionController : MonoBehaviour
             AudioService.Instance.PlaySFX(_audioContext.Audio.transitionSlash);
         }
 
+        ApplyMaterialValues(1f, 0f, 1f);
         _slashOverlay.enabled = true;
-        ApplyMaterialValues(1f, 1f, 1f);
 
-        StartCoroutine(ExitTransitionSequence(onComplete));
+        StartCoroutine(RevealSequence(onComplete));
     }
 
-    private System.Collections.IEnumerator TransitionSequence(System.Action onComplete)
+    private System.Collections.IEnumerator CoverSequence(System.Action onComplete)
     {
         float elapsed = 0f;
         while (elapsed < _fadeToBlackDuration)
@@ -106,19 +104,14 @@ public class KatanaTransitionController : MonoBehaviour
             _blackOverlay.color = c;
         }
 
-        if (_delayBeforeSlash > 0f)
-            yield return new WaitForSecondsRealtime(_delayBeforeSlash);
-
-        yield return AnimateSlash();
-
-        _slashOverlay.enabled = false;
         _isTransitioning = false;
         onComplete?.Invoke();
     }
 
-    private System.Collections.IEnumerator ExitTransitionSequence(System.Action onComplete)
+    private System.Collections.IEnumerator RevealSequence(System.Action onComplete)
     {
-        yield return AnimateSlashReverse();
+        // Let the closed katana mask take over before removing the flat black overlay.
+        yield return null;
 
         if (_blackOverlay != null)
         {
@@ -127,6 +120,12 @@ public class KatanaTransitionController : MonoBehaviour
             _blackOverlay.color = c;
         }
 
+        if (_delayBeforeSlash > 0f)
+            yield return new WaitForSecondsRealtime(_delayBeforeSlash);
+
+        yield return AnimateSlash();
+
+        ResetMaterialValues();
         _slashOverlay.enabled = false;
         _isTransitioning = false;
         onComplete?.Invoke();
@@ -143,19 +142,6 @@ public class KatanaTransitionController : MonoBehaviour
             yield return null;
         }
         ApplyMaterialValues(1f, 1f, 1f);
-    }
-
-    private System.Collections.IEnumerator AnimateSlashReverse()
-    {
-        float elapsed = 0f;
-        while (elapsed < _slashDuration)
-        {
-            elapsed += Time.unscaledDeltaTime;
-            float t = 1f - _slashCurve.Evaluate(Mathf.Clamp01(elapsed / _slashDuration));
-            ApplyMaterialValues(1f, t, 1f);
-            yield return null;
-        }
-        ApplyMaterialValues(1f, 0f, 0f);
     }
 
     private void ResetMaterialValues()
