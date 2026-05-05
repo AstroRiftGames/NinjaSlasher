@@ -8,6 +8,7 @@ public class NanoSwarm : FlyingEnemy
 
     public override void Die()
     {
+        if(_isDead) return;
         for (int n = 0; n < _childrenAmount; n++)
         {
             GameObject miniSwarm = Instantiate(

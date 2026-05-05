@@ -20,6 +20,7 @@ public class Enemy : MonoBehaviour
 
     [SerializeField] protected Animator _animator;
     public Animator Animator => _animator;
+    public bool IsDead => _isDead;
     protected bool _isDead = false;
     private bool _hasRegisteredKill = false;
     private bool _hasHandledGameplayClosed = false;

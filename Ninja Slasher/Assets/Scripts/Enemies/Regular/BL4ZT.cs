@@ -328,7 +328,7 @@ public class BL4ZT : Enemy
                 col.TryGetComponent(out PlayerController player);
                 player.Die();
             }
-            else if (col.CompareTag("Enemy") && col.TryGetComponent(out Enemy enemy) && enemy != this)
+            else if (col.CompareTag("Enemy") && col.TryGetComponent(out Enemy enemy) && enemy != this && !enemy.IsDead)
             {
                 enemy.Die();
                 bl4ztKills++;
