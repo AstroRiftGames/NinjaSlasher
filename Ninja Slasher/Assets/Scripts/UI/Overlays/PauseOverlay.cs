@@ -122,7 +122,6 @@ public class PauseOverlay : UIOverlayBase
 
     private void ConfirmRestartLevel()
     {
-        Hide();
         UIEvents.RequestRestartLevel();
     }
 
@@ -162,7 +161,6 @@ public class PauseOverlay : UIOverlayBase
 
     private void ConfirmQuitToLevelSelection()
     {
-        Hide();
         UIEvents.RaiseQuitToMenuPressed();
     }
 

@@ -107,13 +107,11 @@ public class GameplayUIManager : MonoBehaviour
     public void OnBackToSelectionPressed()
     {
         UIEvents.RequestShowLifeLostPanel();
-        UIEvents.RequestHideVictoryModal();
         UIEvents.RaiseQuitToMenuPressed();
     }
 
     public void ContinueToLevelSelector()
     {
-        UIEvents.RequestHideVictoryModal();
         UIEvents.RaiseQuitToMenuPressed();
     }
 

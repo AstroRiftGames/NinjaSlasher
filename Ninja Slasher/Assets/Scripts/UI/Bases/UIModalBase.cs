@@ -32,6 +32,7 @@ public abstract class UIModalBase : UIPanel, IPointerClickHandler
 
     private Sequence _contentAnimationSequence;
     private Coroutine _delayedDeactivateCoroutine;
+    protected virtual float ShowAnimationDuration => Mathf.Max(_fadeAnimationDuration, _showScaleDuration);
     protected virtual float HideAnimationDuration => 0.4f;
 
     protected override void Awake()
@@ -85,6 +86,41 @@ public abstract class UIModalBase : UIPanel, IPointerClickHandler
         NotifyUIManagerModalHidden();
         OnHidden();
         PlayHideAnimation();
+    }
+
+    public override void HideImmediate()
+    {
+        CancelPendingDeactivate();
+        KillActiveAnimation();
+
+        if (!_isVisible && !gameObject.activeSelf)
+            return;
+
+        _isVisible = false;
+        SetPanelInputEnabled(false);
+        EnsureBackgroundClickable();
+        NotifyUIManagerModalHidden();
+        OnHidden();
+        ResetContentVisualState();
+        gameObject.SetActive(false);
+    }
+
+    public override IEnumerator ShowRoutine()
+    {
+        if (_isVisible)
+            yield break;
+
+        Show();
+        yield return WaitForShowAnimationToFinish();
+    }
+
+    public override IEnumerator HideRoutine()
+    {
+        if (!_isVisible)
+            yield break;
+
+        Hide();
+        yield return WaitForHideAnimationToFinish();
     }
 
     protected override void OnDisable()
@@ -149,6 +185,8 @@ public abstract class UIModalBase : UIPanel, IPointerClickHandler
                 _animatedContentTransform.DOScale(1f, _showScaleDuration)
                     .SetEase(_showScaleEase));
         }
+
+        _contentAnimationSequence.OnComplete(() => _contentAnimationSequence = null);
     }
 
     private void PlayHideAnimation()
@@ -159,7 +197,7 @@ public abstract class UIModalBase : UIPanel, IPointerClickHandler
                 _modalAnimator.ResetTrigger(_openTrigger);
             if (!string.IsNullOrEmpty(_closeTrigger))
                 _modalAnimator.SetTrigger(_closeTrigger);
-            _delayedDeactivateCoroutine = StartCoroutine(DeactivateAfterDelay(HideAnimationDuration));
+            _delayedDeactivateCoroutine = StartCoroutine(DeactivateAfterHideAnimation());
             return;
         }
 
@@ -188,15 +226,17 @@ public abstract class UIModalBase : UIPanel, IPointerClickHandler
 
         _contentAnimationSequence.OnComplete(() =>
         {
+            _contentAnimationSequence = null;
             ResetContentVisualState();
             gameObject.SetActive(false);
         });
     }
 
-    private IEnumerator DeactivateAfterDelay(float delay)
+    private IEnumerator DeactivateAfterHideAnimation()
     {
-        yield return new WaitForSecondsRealtime(delay);
+        yield return WaitForAnimatorPlayback(_modalAnimator, HideAnimationDuration);
         _delayedDeactivateCoroutine = null;
+        ResetContentVisualState();
         gameObject.SetActive(false);
     }
 
@@ -232,6 +272,35 @@ public abstract class UIModalBase : UIPanel, IPointerClickHandler
         if (_contentAnimationSequence == null) return;
         _contentAnimationSequence.Kill();
         _contentAnimationSequence = null;
+    }
+
+    private IEnumerator WaitForShowAnimationToFinish()
+    {
+        if (_modalAnimator != null)
+        {
+            yield return WaitForAnimatorPlayback(_modalAnimator, ShowAnimationDuration);
+            yield break;
+        }
+
+        while (_contentAnimationSequence != null && _contentAnimationSequence.IsActive())
+        {
+            yield return null;
+        }
+    }
+
+    private IEnumerator WaitForHideAnimationToFinish()
+    {
+        if (_modalAnimator != null)
+        {
+            float timeout = Mathf.Max(0.1f, HideAnimationDuration + 0.75f);
+            yield return WaitForGameObjectToDeactivate(gameObject, timeout);
+            yield break;
+        }
+
+        while (_contentAnimationSequence != null && _contentAnimationSequence.IsActive())
+        {
+            yield return null;
+        }
     }
 
     protected virtual void RequestCloseFromOutsideClick()

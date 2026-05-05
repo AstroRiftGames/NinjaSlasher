@@ -44,7 +44,7 @@ public abstract class UIPopupBase : UIPanel
         OnHidden();
     }
 
-    public virtual void HideImmediate()
+    public override void HideImmediate()
     {
         DOTween.Kill(_panelTransform);
 

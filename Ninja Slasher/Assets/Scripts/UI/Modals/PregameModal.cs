@@ -1,4 +1,5 @@
 using DG.Tweening;
+using System.Collections;
 using UnityEngine;
 using UnityEngine.Serialization;
 
@@ -87,6 +88,24 @@ public class PregameModal : UIModalBase
         NotifyUIManagerModalHidden();
         OnHidden();
         AnimateToHiddenState();
+    }
+
+    public override IEnumerator ShowRoutine()
+    {
+        if (_isVisible)
+            yield break;
+
+        Show();
+        yield return WaitForTweensToFinish();
+    }
+
+    public override IEnumerator HideRoutine()
+    {
+        if (!_isVisible)
+            yield break;
+
+        Hide();
+        yield return WaitForTweensToFinish();
     }
 
     protected override void OnDisable()
@@ -185,5 +204,29 @@ public class PregameModal : UIModalBase
         _moveTween = null;
         _scaleTween = null;
         _fadeTween = null;
+    }
+
+    private IEnumerator WaitForTweensToFinish()
+    {
+        float elapsed = 0f;
+        float timeout = Mathf.Max(0.1f, _animationDuration + 0.25f);
+
+        while (HasActiveTween() && elapsed < timeout)
+        {
+            elapsed += Time.unscaledDeltaTime;
+            yield return null;
+        }
+    }
+
+    private bool HasActiveTween()
+    {
+        return IsTweenActive(_moveTween)
+            || IsTweenActive(_scaleTween)
+            || IsTweenActive(_fadeTween);
+    }
+
+    private static bool IsTweenActive(Tween tween)
+    {
+        return tween != null && tween.IsActive();
     }
 }

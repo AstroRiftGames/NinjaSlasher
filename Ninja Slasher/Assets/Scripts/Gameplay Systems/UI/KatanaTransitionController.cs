@@ -72,9 +72,7 @@ public class KatanaTransitionController : MonoBehaviour
         _isTransitioning = true;
 
         if (_audioContext?.Audio?.transitionSlash != null && AudioService.Instance != null)
-        {
             AudioService.Instance.PlaySFX(_audioContext.Audio.transitionSlash);
-        }
 
         ApplyMaterialValues(1f, 0f, 1f);
         _slashOverlay.enabled = true;

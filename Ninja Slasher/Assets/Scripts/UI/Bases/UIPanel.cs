@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -53,6 +54,29 @@ public abstract class UIPanel : MonoBehaviour
         gameObject.SetActive(false);
     }
 
+    public virtual void HideImmediate()
+    {
+        if (!_isVisible && !gameObject.activeSelf)
+            return;
+
+        _isVisible = false;
+        SetPanelInputEnabled(false);
+        OnHidden();
+        gameObject.SetActive(false);
+    }
+
+    public virtual IEnumerator ShowRoutine()
+    {
+        Show();
+        yield break;
+    }
+
+    public virtual IEnumerator HideRoutine()
+    {
+        Hide();
+        yield break;
+    }
+
     protected virtual void OnShown()
     {
     }
@@ -87,6 +111,87 @@ public abstract class UIPanel : MonoBehaviour
         RefreshInputState();
     }
 
+    protected static IEnumerator WaitForSecondsUnscaled(float duration)
+    {
+        if (duration <= 0f)
+            yield break;
+
+        float elapsed = 0f;
+        while (elapsed < duration)
+        {
+            elapsed += Time.unscaledDeltaTime;
+            yield return null;
+        }
+    }
+
+    protected static IEnumerator WaitForAnimatorPlayback(Animator animator, float fallbackDuration, int layer = 0)
+    {
+        if (animator == null)
+        {
+            yield return WaitForSecondsUnscaled(fallbackDuration);
+            yield break;
+        }
+
+        yield return null;
+
+        if (animator == null || !animator.isActiveAndEnabled || !animator.gameObject.activeInHierarchy)
+            yield break;
+
+        float timeout = Mathf.Max(0.1f, fallbackDuration + 0.5f);
+        float elapsed = 0f;
+        int initialStateHash = animator.GetCurrentAnimatorStateInfo(layer).fullPathHash;
+        bool observedPlayback = false;
+
+        while (elapsed < timeout)
+        {
+            if (animator == null || !animator.isActiveAndEnabled || !animator.gameObject.activeInHierarchy)
+                yield break;
+
+            AnimatorStateInfo state = animator.GetCurrentAnimatorStateInfo(layer);
+            if (animator.IsInTransition(layer) || state.fullPathHash != initialStateHash)
+            {
+                observedPlayback = true;
+                break;
+            }
+
+            elapsed += Time.unscaledDeltaTime;
+            yield return null;
+        }
+
+        if (!observedPlayback)
+        {
+            yield return WaitForSecondsUnscaled(fallbackDuration);
+            yield break;
+        }
+
+        elapsed = 0f;
+        while (elapsed < timeout)
+        {
+            if (animator == null || !animator.isActiveAndEnabled || !animator.gameObject.activeInHierarchy)
+                yield break;
+
+            AnimatorStateInfo state = animator.GetCurrentAnimatorStateInfo(layer);
+            if (!animator.IsInTransition(layer) && state.normalizedTime >= 1f)
+                yield break;
+
+            elapsed += Time.unscaledDeltaTime;
+            yield return null;
+        }
+    }
+
+    protected static IEnumerator WaitForGameObjectToDeactivate(GameObject target, float timeout)
+    {
+        if (target == null)
+            yield break;
+
+        float elapsed = 0f;
+        while (target.activeInHierarchy && elapsed < timeout)
+        {
+            elapsed += Time.unscaledDeltaTime;
+            yield return null;
+        }
+    }
+
     private void SetBlockedByHigherPanel(bool blocked)
     {
         _isBlockedByHigherPanel = blocked;
@@ -100,6 +205,7 @@ public abstract class UIPanel : MonoBehaviour
 
         bool allowInput = _isVisible && _selfInputEnabled && !_isBlockedByHigherPanel;
         _canvasGroup.interactable = allowInput;
+        _canvasGroup.blocksRaycasts = allowInput;
     }
 
     private void RegisterBlockingPanel()

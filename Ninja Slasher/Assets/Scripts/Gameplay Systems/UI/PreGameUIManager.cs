@@ -330,7 +330,6 @@ public class PreGameUIManager : MonoBehaviour
 
         StopAllAnimations();
         _isLevelSelected = false;
-        UIEvents.RequestHidePregameModal();
         UIEvents.RequestSceneTransition(_pendingSceneName);
     }
 

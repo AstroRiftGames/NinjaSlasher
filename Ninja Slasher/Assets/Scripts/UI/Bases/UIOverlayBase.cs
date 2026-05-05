@@ -1,3 +1,4 @@
+using System.Collections;
 using DG.Tweening;
 using UnityEngine;
 using UnityEngine.UI;
@@ -24,6 +25,8 @@ public abstract class UIOverlayBase : UIPanel
     [SerializeField] protected Animator _panelAnimator;
     [SerializeField] protected float _animatorOpenDuration = 0.35f;
     [SerializeField] protected float _animatorCloseDuration = 0.35f;
+
+    private Sequence _panelSequence;
 
     protected override bool BlocksUnderlyingUI => true;
 
@@ -72,47 +75,81 @@ public abstract class UIOverlayBase : UIPanel
         OnHidden();
     }
 
+    public override void HideImmediate()
+    {
+        if (!_isVisible && !gameObject.activeSelf)
+            return;
+
+        KillActiveSequence();
+        _isVisible = false;
+        SetPanelInputEnabled(false);
+        OnHidden();
+        ResetVisualState();
+        gameObject.SetActive(false);
+    }
+
+    public override IEnumerator ShowRoutine()
+    {
+        if (_isVisible)
+            yield break;
+
+        Show();
+        yield return WaitForSequenceToFinish();
+    }
+
+    public override IEnumerator HideRoutine()
+    {
+        if (!_isVisible)
+            yield break;
+
+        Hide();
+        yield return WaitForSequenceToFinish();
+    }
+
     protected virtual void AnimateShow()
     {
         DOTween.Kill(_backgroundImage);
         DOTween.Kill(_canvasGroup);
         DOTween.Kill(_panelTransform);
+        KillActiveSequence();
 
         float maxFadeDuration = Mathf.Max(_backgroundFadeDuration, _contentFadeDuration);
         if (_useContentScaleAnimation)
             maxFadeDuration = Mathf.Max(maxFadeDuration, _contentShowScaleDuration);
 
-        Sequence showSequence = DOTween.Sequence();
+        _panelSequence = DOTween.Sequence();
 
         if (_backgroundImage != null)
         {
-            showSequence.Insert(0f, _backgroundImage.DOFade(_backgroundColor.a, _backgroundFadeDuration)
+            _panelSequence.Insert(0f, _backgroundImage.DOFade(_backgroundColor.a, _backgroundFadeDuration)
                 .SetEase(_fadeEase));
         }
 
         if (_canvasGroup != null)
         {
             _canvasGroup.alpha = 0f;
-            showSequence.Insert(0f, _canvasGroup.DOFade(1f, _contentFadeDuration)
+            _panelSequence.Insert(0f, _canvasGroup.DOFade(1f, _contentFadeDuration)
                 .SetEase(_fadeEase));
         }
 
         if (_panelTransform != null && _useContentScaleAnimation)
         {
             _panelTransform.localScale = Vector3.one * _hiddenContentScaleMultiplier;
-            showSequence.Insert(0f, _panelTransform.DOScale(1f, _contentShowScaleDuration)
+            _panelSequence.Insert(0f, _panelTransform.DOScale(1f, _contentShowScaleDuration)
                 .SetEase(_contentShowScaleEase));
         }
 
         if (_panelAnimator != null)
         {
-            showSequence.InsertCallback(maxFadeDuration, () =>
+            _panelSequence.InsertCallback(maxFadeDuration, () =>
             {
                 _panelAnimator.SetTrigger("Open");
             });
         }
 
-        showSequence.SetUpdate(true);
+        _panelSequence
+            .SetUpdate(true)
+            .OnComplete(() => _panelSequence = null);
     }
 
     protected virtual void AnimateHide()
@@ -120,18 +157,19 @@ public abstract class UIOverlayBase : UIPanel
         DOTween.Kill(_backgroundImage);
         DOTween.Kill(_canvasGroup);
         DOTween.Kill(_panelTransform);
+        KillActiveSequence();
 
         // Deshabilitar raycasts al inicio del cierre, no al final de la animación
         if (!_blockRaycastsWhenHidden)
             SetPanelInputEnabled(false);
 
-        Sequence hideSequence = DOTween.Sequence();
+        _panelSequence = DOTween.Sequence();
 
         float currentTime = 0f;
 
         if (_panelAnimator != null)
         {
-            hideSequence.InsertCallback(currentTime, () =>
+            _panelSequence.InsertCallback(currentTime, () =>
             {
                 _panelAnimator.SetTrigger("Close");
             });
@@ -141,44 +179,30 @@ public abstract class UIOverlayBase : UIPanel
 
         if (_canvasGroup != null)
         {
-            hideSequence.Insert(currentTime, _canvasGroup.DOFade(0f, _contentFadeDuration)
+            _panelSequence.Insert(currentTime, _canvasGroup.DOFade(0f, _contentFadeDuration)
                 .SetEase(Ease.InQuad));
         }
 
         if (_panelTransform != null && _useContentScaleAnimation)
         {
-            hideSequence.Insert(currentTime, _panelTransform.DOScale(_hiddenContentScaleMultiplier, _contentHideScaleDuration)
+            _panelSequence.Insert(currentTime, _panelTransform.DOScale(_hiddenContentScaleMultiplier, _contentHideScaleDuration)
                 .SetEase(_contentHideScaleEase));
         }
 
         if (_backgroundImage != null)
         {
-            hideSequence.Insert(currentTime, _backgroundImage.DOFade(0f, _backgroundFadeDuration)
+            _panelSequence.Insert(currentTime, _backgroundImage.DOFade(0f, _backgroundFadeDuration)
                 .SetEase(Ease.InQuad));
         }
 
-        hideSequence.OnComplete(() =>
+        _panelSequence.OnComplete(() =>
         {
+            _panelSequence = null;
             gameObject.SetActive(false);
-
-            if (_canvasGroup != null)
-                _canvasGroup.alpha = 1f;
-
-            if (_panelTransform != null)
-                _panelTransform.localScale = Vector3.one;
-
-            if (_backgroundImage != null)
-            {
-                _backgroundImage.color = new Color(
-                    _backgroundColor.r,
-                    _backgroundColor.g,
-                    _backgroundColor.b,
-                    0f
-                );
-            }
+            ResetVisualState();
         });
 
-        hideSequence.SetUpdate(true);
+        _panelSequence.SetUpdate(true);
     }
 
     protected override void OnDisable()
@@ -187,11 +211,46 @@ public abstract class UIOverlayBase : UIPanel
         DOTween.Kill(_backgroundImage);
         DOTween.Kill(_canvasGroup);
         DOTween.Kill(_panelTransform);
+        KillActiveSequence();
+        ResetVisualState();
+
+        if (!_blockRaycastsWhenHidden)
+            SetPanelInputEnabled(false);
+    }
+
+    private IEnumerator WaitForSequenceToFinish()
+    {
+        while (_panelSequence != null && _panelSequence.IsActive())
+        {
+            yield return null;
+        }
+    }
+
+    private void KillActiveSequence()
+    {
+        if (_panelSequence == null)
+            return;
+
+        _panelSequence.Kill();
+        _panelSequence = null;
+    }
+
+    private void ResetVisualState()
+    {
+        if (_canvasGroup != null)
+            _canvasGroup.alpha = 1f;
 
         if (_panelTransform != null)
             _panelTransform.localScale = Vector3.one;
 
-        if (!_blockRaycastsWhenHidden)
-            SetPanelInputEnabled(false);
+        if (_backgroundImage != null)
+        {
+            _backgroundImage.color = new Color(
+                _backgroundColor.r,
+                _backgroundColor.g,
+                _backgroundColor.b,
+                0f
+            );
+        }
     }
 }

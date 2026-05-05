@@ -234,8 +234,13 @@ public class NoLivesModal : UIModalBase
         if (!_isVisible)
             return;
 
-        _suppressAbandonOnHide = true;
+        PrepareForFlowTransitionClose();
         RequestClose();
+    }
+
+    public void PrepareForFlowTransitionClose()
+    {
+        _suppressAbandonOnHide = true;
     }
 
     private void ResolveRecoveredLifeFlow()
@@ -244,10 +249,15 @@ public class NoLivesModal : UIModalBase
             return;
 
         _isClaimLifeFlowInProgress = false;
-        HideForFlowTransition();
+        PrepareForFlowTransitionClose();
 
         if (ShouldReturnToDefeatFlow())
+        {
             UIEvents.RequestShowDefeatModal(LifeManager.Instance.GetRealLives());
+            return;
+        }
+
+        RequestClose();
     }
 
     private bool ShouldReturnToDefeatFlow()
@@ -272,8 +282,7 @@ public class NoLivesModal : UIModalBase
     private void DismissBlockedFlow()
     {
         _isClaimLifeFlowInProgress = false;
-        _suppressAbandonOnHide = true;
-        RequestClose();
+        PrepareForFlowTransitionClose();
 
         LifeManager.Instance?.NotifyLifeWallAbandoned();
 

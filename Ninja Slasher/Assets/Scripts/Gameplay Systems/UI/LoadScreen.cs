@@ -16,6 +16,7 @@ public class LoadManager : MonoBehaviour
     [SerializeField] private Ease _loadingEase = Ease.OutQuart;
 
     private UIAudioContext _audioContext;
+    private bool _continueRequested;
 
     private void Awake()
     {
@@ -57,12 +58,12 @@ public class LoadManager : MonoBehaviour
                     Touch touch = Input.GetTouch(0);
                     if (touch.phase == TouchPhase.Began)
                     {
-                        AudioService.Instance.PlaySFX(_audioContext.Audio.tapSplash);
+                        if (_continueRequested)
+                            continue;
 
+                        _continueRequested = true;
                         UIEvents.RequestShowLevelSelector();
                         yield return new WaitForSeconds(2);
-                        
-                        AudioService.Instance.PlaySFX(_audioContext.Audio.transitionSlash);
 
                         asyncOperation.allowSceneActivation = true;
                     }
@@ -70,8 +71,10 @@ public class LoadManager : MonoBehaviour
 #if UNITY_EDITOR
                 if (Input.anyKeyDown)
                 {
-                    AudioService.Instance.PlaySFX(_audioContext.Audio.tapSplash);
+                    if (_continueRequested)
+                        continue;
 
+                    _continueRequested = true;
                     UIEvents.RequestShowLevelSelector();
 
                     yield return new WaitForSeconds(2);

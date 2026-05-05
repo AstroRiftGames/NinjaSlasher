@@ -75,13 +75,11 @@ public class DefeatModal : UIModalBase
 
     private void OnContinueClicked()
     {
-        RequestClose();
         UIEvents.RaiseRetryPressed();
     }
 
     private void OnQuitClicked()
     {
-        RequestClose();
         UIEvents.RaiseQuitToMenuPressed();
     }
 
