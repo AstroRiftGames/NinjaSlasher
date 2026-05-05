@@ -139,6 +139,12 @@ public class LevelSessionManager : MonoBehaviourSingleton<LevelSessionManager>
             return;
         }
 
+        if (!TryAuthorizeLevelAttempt())
+        {
+            Debug.LogWarning("[LevelSessionManager] StartLevel blocked by life validation.");
+            return;
+        }
+
         currentSession.Start();
         timerService.Start();
 
@@ -349,6 +355,29 @@ public class LevelSessionManager : MonoBehaviourSingleton<LevelSessionManager>
         return timerService?.IsPaused ?? false;
     }
 
+    public bool CanStartLevelAttempt(bool includePendingExitCost = false)
+    {
+        LifeManager lifeManager = LifeManager.Instance;
+        if (lifeManager == null)
+        {
+            Debug.LogWarning("[LevelSessionManager] LifeManager no disponible para validar inicio/reinicio de nivel.");
+            return false;
+        }
+
+        return includePendingExitCost
+            ? lifeManager.CanPlayAfterConfirmingPendingDeduction()
+            : lifeManager.CanPlay();
+    }
+
+    public bool TryAuthorizeLevelAttempt(bool includePendingExitCost = false)
+    {
+        if (CanStartLevelAttempt(includePendingExitCost))
+            return true;
+
+        UIEvents.RequestShowNoLivesModal();
+        return false;
+    }
+
     private bool CanFailCurrentSession()
     {
         if (currentSession == null || currentSession.IsComplete || currentSession.IsFailed)
@@ -375,11 +404,8 @@ public class LevelSessionManager : MonoBehaviourSingleton<LevelSessionManager>
         if (!IsLevelScene(SceneManager.GetActiveScene().name) || LifeManager.Instance == null)
             return;
 
-        if (!LifeManager.Instance.CanPlay())
-        {
-            UIEvents.RequestShowNoLivesModal();
+        if (!TryAuthorizeLevelAttempt())
             return;
-        }
 
         CloseSessionForSceneChange();
         UIEvents.RequestSceneTransition(SceneManager.GetActiveScene().name);
@@ -390,14 +416,12 @@ public class LevelSessionManager : MonoBehaviourSingleton<LevelSessionManager>
         if (!IsLevelScene(SceneManager.GetActiveScene().name))
             return;
 
-        bool hadPendingDeduction = LifeManager.Instance != null && LifeManager.Instance.HasPendingDeduction();
-        CloseSessionForSceneChange();
+        bool includePendingExitCost = LifeManager.Instance != null && LifeManager.Instance.HasPendingDeduction();
 
-        if (hadPendingDeduction && LifeManager.Instance != null && !LifeManager.Instance.CanPlay())
-        {
-            UIEvents.RequestLoadLevelSelectorScene();
+        if (!TryAuthorizeLevelAttempt(includePendingExitCost))
             return;
-        }
+
+        CloseSessionForSceneChange();
 
         UIEvents.RequestSceneTransition(SceneManager.GetActiveScene().name);
     }

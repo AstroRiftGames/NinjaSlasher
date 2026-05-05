@@ -409,6 +409,21 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
         return CurrentLives > 0;
     }
 
+    public bool CanPlayAfterConfirmingPendingDeduction()
+    {
+        if (HasTimedUnlimitedLives) return true;
+
+        if (GameConfigManager.IsReady() && GameConfigManager.Config.infiniteLives)
+        {
+            return true;
+        }
+
+        if (!_hasVirtualDeduction)
+            return CurrentLives > 0;
+
+        return _virtualLives > 0;
+    }
+
     public void OnLevelStart()
     {
         _hasVirtualDeduction = false;

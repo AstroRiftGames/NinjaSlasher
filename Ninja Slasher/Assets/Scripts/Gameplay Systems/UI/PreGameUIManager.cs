@@ -316,10 +316,15 @@ public class PreGameUIManager : MonoBehaviour
 
     private void OnConfirmLevelSelection()
     {
-        if (!LifeManager.Instance.CanPlay())
+        bool canStartLevel = LevelSessionManager.Instance != null
+            ? LevelSessionManager.Instance.TryAuthorizeLevelAttempt()
+            : LifeManager.Instance != null && LifeManager.Instance.CanPlay();
+
+        if (!canStartLevel)
         {
             AbortPendingLevelSelectionForLifeWall();
-            UIEvents.RequestShowNoLivesModal();
+            if (LevelSessionManager.Instance == null)
+                UIEvents.RequestShowNoLivesModal();
             return;
         }
 

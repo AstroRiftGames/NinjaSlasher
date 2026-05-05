@@ -49,7 +49,7 @@ public class NoLivesModal : UIModalBase
     private void SetupButtons()
     {
         if (_closeButton != null)
-            _closeButton.onClick.AddListener(Hide);
+            _closeButton.onClick.AddListener(OnCloseRequested);
 
         if (_claimLifeButton != null)
             _claimLifeButton.onClick.AddListener(OnClaimLifeClicked);
@@ -224,6 +224,11 @@ public class NoLivesModal : UIModalBase
         return AdsManager.Instance != null && AdsManager.Instance.CanRequestRewardedAd();
     }
 
+    protected override void RequestCloseFromOutsideClick()
+    {
+        OnCloseRequested();
+    }
+
     public void HideForFlowTransition()
     {
         if (!_isVisible)
@@ -246,6 +251,37 @@ public class NoLivesModal : UIModalBase
     }
 
     private bool ShouldReturnToDefeatFlow()
+    {
+        if (IsLevelSceneContext())
+            return true;
+
+        return false;
+    }
+
+    private void OnCloseRequested()
+    {
+        if (LifeManager.Instance != null && !LifeManager.Instance.CanPlay())
+        {
+            DismissBlockedFlow();
+            return;
+        }
+
+        RequestClose();
+    }
+
+    private void DismissBlockedFlow()
+    {
+        _isClaimLifeFlowInProgress = false;
+        _suppressAbandonOnHide = true;
+        RequestClose();
+
+        LifeManager.Instance?.NotifyLifeWallAbandoned();
+
+        if (IsLevelSceneContext())
+            UIEvents.RaiseQuitToMenuPressed();
+    }
+
+    private bool IsLevelSceneContext()
     {
         if (LevelSessionManager.Instance != null && LevelSessionManager.Instance.IsLevelActive)
             return true;
