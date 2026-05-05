@@ -88,10 +88,13 @@ public class Geyser : MonoBehaviour
         Vector3 newPos = _platform.transform.localPosition;
         while (currentHeight < _maxHeight)
         {
-            currentHeight += Time.deltaTime * _force;
+            currentHeight += Time.fixedDeltaTime * _force;
+            if (currentHeight > _maxHeight) currentHeight = _maxHeight;
             newPos.y = currentHeight;
-            _platform.transform.localPosition = newPos;
-            yield return null;
+            
+            _platform.MovePlatformAndPlayer(newPos);
+            
+            yield return new WaitForFixedUpdate();
         }
         _animator.SetTrigger("OnTopReached");
     }
