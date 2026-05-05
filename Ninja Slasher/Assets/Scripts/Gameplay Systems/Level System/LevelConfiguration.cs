@@ -37,8 +37,12 @@ public class LevelConfiguration : ScriptableObject
     public AudioEvent gameplayMusic;
     public AudioEvent bossMusic;
 
-    [Header("TUTORIAL")]
+[Header("TUTORIAL")]
     public TutorialPanelData tutorialPanelData;
+
+    [Header("BOSS PREGAME")]
+    [Tooltip("Datos narrativos para el panel PreGame de niveles jefe")]
+    public BossPreGameData bossPreGameData;
 
     private void OnValidate()
     {
