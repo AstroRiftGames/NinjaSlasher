@@ -61,6 +61,7 @@ public class Arachnomadre : BossEnemy
     [Header("Vulnerability")]
     [SerializeField] float _vulnerabilityTime;
     [SerializeField] ArachnomadreCore _core;
+    [SerializeField] Collider2D _coreCollider;
 
     #endregion
 
@@ -310,11 +311,15 @@ public class Arachnomadre : BossEnemy
         return dir.normalized * force;
     }
     #endregion
-        #region FURTIVE ATTACK
+
+    [ContextMenu("Test Furtive Attack")]
+    public void TestFurtiveAttack() => StartCoroutine(FurtiveAttack());
+    #region FURTIVE ATTACK
     private IEnumerator FurtiveAttack()
     {
         _animator.SetTrigger("OnSubmerge");
         _col.enabled = false;
+        _coreCollider.enabled = false;
         yield return new WaitForSeconds(_submergingTime + _hidingTime / 2);
 
         //GET CLOSEST POINT TO PLAYER
@@ -335,6 +340,7 @@ public class Arachnomadre : BossEnemy
         yield return new WaitForSeconds(_emergingTime);
 
         _col.enabled = true;
+        _coreCollider.enabled = true;
         _isAttacking = false;
     }
 
