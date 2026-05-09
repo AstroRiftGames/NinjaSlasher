@@ -5,6 +5,8 @@ using System;
 
 public class PauseOverlay : UIOverlayBase
 {
+    private const string InfiniteLivesText = "∞";
+
     [Header("Pause Buttons")]
     [SerializeField] private Button _resumeButton;
     [SerializeField] private Button _restartButton;
@@ -195,7 +197,9 @@ public class PauseOverlay : UIOverlayBase
             return;
 
         if (_livesAmountText != null)
-            _livesAmountText.text = lifeManager.GetDisplayLives().ToString();
+            _livesAmountText.text = GameConfigManager.IsReady() && GameConfigManager.Config.infiniteLives
+                ? InfiniteLivesText
+                : lifeManager.GetDisplayLives().ToString();
     }
 
     private void OnDailyWheelClicked()

@@ -4,6 +4,8 @@ using UnityEngine;
 
 public class GameplayUIManager : MonoBehaviour
 {
+    private const string InfiniteLivesText = "∞";
+
     [Header("GAMEPLAY UI")]
     [SerializeField] private TextMeshProUGUI _livesAmount;
     [SerializeField] private TextMeshProUGUI _livesTimerText;
@@ -70,6 +72,21 @@ public class GameplayUIManager : MonoBehaviour
         var lm = LifeManager.Instance;
         if (lm == null || !lm.IsInitialized) return;
 
+        bool hasDebugInfiniteLives = GameConfigManager.IsReady() && GameConfigManager.Config.infiniteLives;
+        if (hasDebugInfiniteLives)
+        {
+            if (_livesTimerObj != null)
+                _livesTimerObj.SetActive(false);
+
+            if (_livesTimerText != null)
+                _livesTimerText.text = string.Empty;
+
+            if (_noLivesTimerText != null)
+                _noLivesTimerText.text = string.Empty;
+
+            return;
+        }
+
         bool needsTimer = lm.GetRealLives() < 3;
 
         if (_livesTimerObj != null)
@@ -96,7 +113,9 @@ public class GameplayUIManager : MonoBehaviour
     public void UpdateLivesUI(int lives)
     {
         if (_livesAmount != null)
-            _livesAmount.text = lives.ToString();
+            _livesAmount.text = GameConfigManager.IsReady() && GameConfigManager.Config.infiniteLives
+                ? InfiniteLivesText
+                : lives.ToString();
     }
 
     public void OnRetryPressed()

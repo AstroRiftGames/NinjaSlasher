@@ -78,6 +78,10 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
 
     private bool _lifeWallActive = false;
 
+    private bool HasDebugInfiniteLives =>
+        GameConfigManager.IsReady() &&
+        GameConfigManager.Config.infiniteLives;
+
     #region INITIALIZATION
 
     public override void Awake()
@@ -226,6 +230,7 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
 
     private void UpdateLifeRecharge()
     {
+        if (HasDebugInfiniteLives) return;
         if (CurrentLives >= MaxLives) return;
 
         try
@@ -298,6 +303,7 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
 
     private void CheckOfflineRegeneration()
     {
+        if (HasDebugInfiniteLives) return;
         if (CurrentLives >= MaxLives) return;
 
         try
@@ -401,7 +407,7 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
     {
         if (HasTimedUnlimitedLives) return true;
 
-        if (GameConfigManager.IsReady() && GameConfigManager.Config.infiniteLives)
+        if (HasDebugInfiniteLives)
         {
             return true;
         }
@@ -413,7 +419,7 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
     {
         if (HasTimedUnlimitedLives) return true;
 
-        if (GameConfigManager.IsReady() && GameConfigManager.Config.infiniteLives)
+        if (HasDebugInfiniteLives)
         {
             return true;
         }
@@ -428,6 +434,13 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
     {
         _hasVirtualDeduction = false;
 
+        if (HasDebugInfiniteLives)
+        {
+            _virtualLives = CurrentLives;
+            _levelInProgress = false;
+            return;
+        }
+
         if (!HasTimedUnlimitedLives && CurrentLives > 0)
         {
             _virtualLives = Mathf.Max(0, CurrentLives - 1);
@@ -440,6 +453,15 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
 
     public void UseLife()
     {
+        if (HasDebugInfiniteLives)
+        {
+            _hasVirtualDeduction = false;
+            _virtualLives = CurrentLives;
+            _levelInProgress = false;
+            EmitDisplayLivesChanged();
+            return;
+        }
+
         var context = PowerUpManager.Instance?.context;
         if (context != null && context.SecondChanceActive)
         {
@@ -534,7 +556,7 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
     {
         if (_hasVirtualDeduction)
         {
-            if (HasTimedUnlimitedLives)
+            if (HasTimedUnlimitedLives || HasDebugInfiniteLives)
             {
                 _virtualLives = CurrentLives;
                 _hasVirtualDeduction = false;

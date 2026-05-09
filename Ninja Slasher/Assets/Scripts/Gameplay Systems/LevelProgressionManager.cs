@@ -14,6 +14,9 @@ public class LevelProgressionManager : MonoBehaviourSingleton<LevelProgressionMa
 {
     private int LevelsPerArea => GameConfigManager.Config.levelsPerArea;
     private int TotalAreas => GameConfigManager.Config.totalAreas;
+    private bool HasDebugUnlockAllLevels =>
+        GameConfigManager.IsReady() &&
+        GameConfigManager.Config.unlockAllLevelsOnStart;
 
     private bool isInitialized = false;
 
@@ -32,13 +35,6 @@ public class LevelProgressionManager : MonoBehaviourSingleton<LevelProgressionMa
     private void Initialize()
     {
         isInitialized = true;
-
-        if (GameConfigManager.IsReady() && GameConfigManager.Config.unlockAllLevelsOnStart)
-        {
-#if UNITY_EDITOR
-            UnlockAllLevelsForDebug();
-#endif
-        }
     }
 
     private void OnEnable()
@@ -63,6 +59,9 @@ public class LevelProgressionManager : MonoBehaviourSingleton<LevelProgressionMa
             Initialize();
         }
 
+        if (HasDebugUnlockAllLevels)
+            return true;
+
         if (levelId == 1) return true;
 
         var (highestLevel, _, _) = SaveManager.Instance?.GetProgressionData() ?? (1, 1, 0);
@@ -73,6 +72,9 @@ public class LevelProgressionManager : MonoBehaviourSingleton<LevelProgressionMa
 
     private bool IsLevelAccessible(int levelId)
     {
+        if (HasDebugUnlockAllLevels)
+            return true;
+
         if (LevelConfigurationManager.Instance == null)
         {
             var (highestLevel, _, _) = SaveManager.Instance?.GetProgressionData() ?? (1, 1, 0);
@@ -101,8 +103,11 @@ public class LevelProgressionManager : MonoBehaviourSingleton<LevelProgressionMa
     {
         if (!isInitialized)
         {
-            return areaId == 1;
+            return HasDebugUnlockAllLevels || areaId == 1;
         }
+
+        if (HasDebugUnlockAllLevels)
+            return true;
 
         var (_, highestArea, _) = SaveManager.Instance?.GetProgressionData() ?? (1, 1, 0);
         return areaId <= highestArea;
@@ -124,6 +129,7 @@ public class LevelProgressionManager : MonoBehaviourSingleton<LevelProgressionMa
 
     public int GetRequiredStarsForBoss(int levelId)
     {
+        if (HasDebugUnlockAllLevels) return 0;
         if (LevelConfigurationManager.Instance == null) return 0;
         var config = LevelConfigurationManager.Instance.GetConfigurationForLevel(levelId);
         if (config?.unlockRequirements == null || !config.unlockRequirements.isBossLevel) return 0;
@@ -146,7 +152,7 @@ public class LevelProgressionManager : MonoBehaviourSingleton<LevelProgressionMa
                 highestUnlockedLevel = 1,
                 highestUnlockedArea = 1,
                 totalStars = 0,
-                nextBossRequirement = GameConfigManager.Config.starsRequiredPerBoss.Length > 0 ? GameConfigManager.Config.starsRequiredPerBoss[0] : 0
+                nextBossRequirement = HasDebugUnlockAllLevels ? 0 : (GameConfigManager.Config.starsRequiredPerBoss.Length > 0 ? GameConfigManager.Config.starsRequiredPerBoss[0] : 0)
             };
         }
 
@@ -157,7 +163,7 @@ public class LevelProgressionManager : MonoBehaviourSingleton<LevelProgressionMa
             highestUnlockedLevel = highestLevel,
             highestUnlockedArea = highestArea,
             totalStars = totalStars,
-            nextBossRequirement = GetNextBossStarRequirement(highestArea)
+            nextBossRequirement = HasDebugUnlockAllLevels ? 0 : GetNextBossStarRequirement(highestArea)
         };
     }
 

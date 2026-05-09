@@ -7,6 +7,7 @@ using UnityEngine.UI;
 public class LevelSelectionScreenController : MonoBehaviour
 {
     public static LevelSelectionScreenController Instance { get; private set; }
+    private const string InfiniteLivesText = "∞";
 
     [Header("Areas")]
     [SerializeField] private AreaSectionController[] _areas;
@@ -265,15 +266,21 @@ public class LevelSelectionScreenController : MonoBehaviour
         if (lifeManager == null || !lifeManager.IsInitialized)
             return;
 
-        if (_livesAmountText != null)
-            _livesAmountText.text = lifeManager.GetDisplayLives().ToString();
+        bool hasDebugInfiniteLives = GameConfigManager.IsReady() && GameConfigManager.Config.infiniteLives;
 
-        bool hasUnlimitedLives = lifeManager.HasTimedUnlimitedLives;
+        if (_livesAmountText != null)
+            _livesAmountText.text = hasDebugInfiniteLives
+                ? InfiniteLivesText
+                : lifeManager.GetDisplayLives().ToString();
+
+        bool hasUnlimitedLives = lifeManager.HasTimedUnlimitedLives || hasDebugInfiniteLives;
         if (_livesTimerText != null)
         {
             if (hasUnlimitedLives)
             {
-                _livesTimerText.text = FormatUnlimitedLivesTime(lifeManager.GetUnlimitedLivesRemainingTime());
+                _livesTimerText.text = hasDebugInfiniteLives
+                    ? InfiniteLivesText
+                    : FormatUnlimitedLivesTime(lifeManager.GetUnlimitedLivesRemainingTime());
             }
             else
             {
