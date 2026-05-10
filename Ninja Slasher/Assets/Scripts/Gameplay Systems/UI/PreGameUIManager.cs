@@ -18,6 +18,9 @@ public class PreGameUIManager : MonoBehaviour
     [SerializeField] private TextMeshProUGUI _title;
     [SerializeField] private TextMeshProUGUI _primaryGoalText;
     [SerializeField] private TextMeshProUGUI[] _secondaryGoalTexts;
+    [SerializeField] private TextMeshProUGUI _bossLoreText;
+    [SerializeField] private Transform _goalsContainer;
+    [SerializeField] private Transform _bossLoreContainer;
 
     [Header("STAR SPRITES")]
     [SerializeField] private Sprite _starNotAcquiredSprite;
@@ -353,8 +356,38 @@ public class PreGameUIManager : MonoBehaviour
         LevelConfigurationManager cfgMgr = LevelConfigurationManager.Instance;
         LevelConfiguration config = cfgMgr != null ? cfgMgr.GetConfigurationForLevel(levelId) : null;
 
-        if (_title != null)
-            _title.text = config != null ? config.levelName : string.Empty;
+        bool isBossLevel = config?.unlockRequirements?.isBossLevel ?? false;
+        BossPreGameData bossData = config?.bossPreGameData;
+        bool showBossLore = isBossLevel && bossData != null && !string.IsNullOrEmpty(bossData.loreDescription);
+
+        if (showBossLore)
+        {
+            if (_title != null)
+                _title.text = bossData.bossName;
+
+            if (_bossLoreText != null)
+                _bossLoreText.text = bossData.loreDescription;
+
+            if (_goalsContainer != null)
+                _goalsContainer.gameObject.SetActive(false);
+
+            if (_bossLoreContainer != null)
+                _bossLoreContainer.gameObject.SetActive(true);
+        }
+        else
+        {
+            if (_title != null)
+                _title.text = config != null ? config.levelName : string.Empty;
+
+            if (_bossLoreText != null)
+                _bossLoreText.text = string.Empty;
+
+            if (_goalsContainer != null)
+                _goalsContainer.gameObject.SetActive(true);
+
+            if (_bossLoreContainer != null)
+                _bossLoreContainer.gameObject.SetActive(false);
+        }
     }
 
     public void ShowPreGamePowerUps()

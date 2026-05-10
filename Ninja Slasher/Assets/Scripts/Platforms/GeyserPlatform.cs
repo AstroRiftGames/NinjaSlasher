@@ -57,4 +57,17 @@ public class GeyserPlatform : PlatformBase
             SetValues(false);
         }
     }
+
+    public void MovePlatformAndPlayer(Vector3 newLocalPos)
+    {
+        Vector3 newWorldPos = transform.parent != null ? transform.parent.TransformPoint(newLocalPos) : newLocalPos;
+        Vector3 deltaPos = newWorldPos - transform.position;
+        
+        _rb.MovePosition(newWorldPos);
+
+        if (_playerIsOn && _playerRB != null)
+        {
+            _playerRB.MovePosition(_playerRB.position + (Vector2)deltaPos);
+        }
+    }
 }
