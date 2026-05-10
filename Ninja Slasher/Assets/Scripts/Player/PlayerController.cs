@@ -378,7 +378,7 @@ public class PlayerController : MonoBehaviour
         else return _model.ParryRange;
     }
 
-    private void Grab(Vector2 normal)
+    private void Grab(Vector2 normal, Vector2 contactPoint, Collider2D surfaceCollider)
     {
         if (_isDashing)
         {
@@ -391,7 +391,6 @@ public class PlayerController : MonoBehaviour
         _view.RB.linearVelocity = Vector2.zero;
         _view.Animator.SetBool("IsWallGrabbed", false);
         _view.Animator.SetBool("IsCeilingGrabbed", false);
-        _view.LandingParticles.Play();
 
         if (normal == Vector2.right || normal == Vector2.left)
         {
@@ -404,6 +403,19 @@ public class PlayerController : MonoBehaviour
             _view.Animator.SetBool("IsCeilingGrabbed", true);
             RotateSprites(Vector2.left);
         }
+        
+        // Reposition and align particles AFTER all rotations and mirroring
+        _view.LandingParticles.transform.position = contactPoint;
+        _view.LandingParticles.transform.up = normal;
+        
+        SurfaceMaterial material = SurfaceMaterial.General;
+        if (surfaceCollider != null && surfaceCollider.TryGetComponent(out SurfaceProperties surfaceProps))
+        {
+            material = surfaceProps.MaterialType;
+        }
+        
+        _view.SetLandingParticlesSurface(material);
+        _view.LandingParticles.Play();
     }
 
     public void Die()
@@ -474,7 +486,8 @@ public class PlayerController : MonoBehaviour
         string colTag = collision.gameObject.tag;
         if (colMatrix.Contains(colTag))
         {
-            ProcessSurfaceCollision(collision.collider, collision.contacts.Last().normal);
+            var lastContact = collision.contacts.Last();
+            ProcessSurfaceCollision(collision.collider, lastContact.normal, lastContact.point);
         }
     }
 
@@ -492,7 +505,7 @@ public class PlayerController : MonoBehaviour
             {
                 if (Vector2.Dot(contact.normal, _lastMoveDirection) < -0.5f)
                 {
-                    ProcessSurfaceCollision(collision.collider, contact.normal);
+                    ProcessSurfaceCollision(collision.collider, contact.normal, contact.point);
                     break;
                 }
             }
@@ -511,7 +524,7 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    private void ProcessSurfaceCollision(Collider2D col, Vector2 normal)
+    private void ProcessSurfaceCollision(Collider2D col, Vector2 normal, Vector2 contactPoint)
     {
         Vector2 cleanNormal = GetCardinalNormal(normal);
 
@@ -527,12 +540,12 @@ public class PlayerController : MonoBehaviour
         if (platform == null)
         {
             AudioService.Instance.PlaySFXAtPosition(_audio.landGeneral, transform.position);
-            Grab(cleanNormal);
+            Grab(cleanNormal, contactPoint, col);
         }
         else if (platform.Type != PlatformTypes.Elastic)
         {
             _currentPlatform = platform;
-            Grab(cleanNormal);
+            Grab(cleanNormal, contactPoint, col);
         }
     }
 
