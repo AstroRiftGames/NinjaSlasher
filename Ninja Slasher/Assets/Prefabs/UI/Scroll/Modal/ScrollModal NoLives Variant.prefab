@@ -1028,9 +1028,17 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 4346429710559997632, guid: 380d74a0e92590640a3e7fbd94a0231a, type: 3}
+      propertyPath: m_UpdateMode
+      value: 2
+      objectReference: {fileID: 0}
     - target: {fileID: 8226208640437576049, guid: 380d74a0e92590640a3e7fbd94a0231a, type: 3}
       propertyPath: m_Name
       value: ScrollModal NoLives Variant
+      objectReference: {fileID: 0}
+    - target: {fileID: 8226208640437576049, guid: 380d74a0e92590640a3e7fbd94a0231a, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -1044,10 +1052,91 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 2235510720588789527, guid: 380d74a0e92590640a3e7fbd94a0231a, type: 3}
       insertIndex: -1
       addedObject: {fileID: 7169119575897567885}
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 8226208640437576049, guid: 380d74a0e92590640a3e7fbd94a0231a, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 585720238806123042}
   m_SourcePrefab: {fileID: 100100000, guid: 380d74a0e92590640a3e7fbd94a0231a, type: 3}
 --- !u!224 &247771160736780805 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 2235510720588789527, guid: 380d74a0e92590640a3e7fbd94a0231a, type: 3}
   m_PrefabInstance: {fileID: 2050936258570020114}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &610487280498906998 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 1445234759801303652, guid: 380d74a0e92590640a3e7fbd94a0231a, type: 3}
+  m_PrefabInstance: {fileID: 2050936258570020114}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!95 &2317099131562691538 stripped
+Animator:
+  m_CorrespondingSourceObject: {fileID: 4346429710559997632, guid: 380d74a0e92590640a3e7fbd94a0231a, type: 3}
+  m_PrefabInstance: {fileID: 2050936258570020114}
+  m_PrefabAsset: {fileID: 0}
+--- !u!225 &6009790426534894491 stripped
+CanvasGroup:
+  m_CorrespondingSourceObject: {fileID: 5697461602344713865, guid: 380d74a0e92590640a3e7fbd94a0231a, type: 3}
+  m_PrefabInstance: {fileID: 2050936258570020114}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &6689027096013872946 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 4657374149714803232, guid: 380d74a0e92590640a3e7fbd94a0231a, type: 3}
+  m_PrefabInstance: {fileID: 2050936258570020114}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!224 &7329983306725204564 stripped
+RectTransform:
+  m_CorrespondingSourceObject: {fileID: 8777295025906042694, guid: 380d74a0e92590640a3e7fbd94a0231a, type: 3}
+  m_PrefabInstance: {fileID: 2050936258570020114}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &7953144211007538275 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 8226208640437576049, guid: 380d74a0e92590640a3e7fbd94a0231a, type: 3}
+  m_PrefabInstance: {fileID: 2050936258570020114}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &585720238806123042
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7953144211007538275}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 569e32fa00c24014a9d28ec9a3a3f4b4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _canvasGroup: {fileID: 6009790426534894491}
+  _panelTransform: {fileID: 7329983306725204564}
+  _hasBackground: 1
+  _backgroundImage: {fileID: 610487280498906998}
+  _closeOnOutsideClick: 1
+  _modalAnimator: {fileID: 2317099131562691538}
+  _useCanvasGroupFadeWhenNoAnimator: 1
+  _useContentScaleWhenNoAnimator: 1
+  _animatedContentTransform: {fileID: 0}
+  _animatedContentCanvasGroup: {fileID: 0}
+  _fadeAnimationDuration: 0.2
+  _showFadeEase: 6
+  _hideFadeEase: 5
+  _showScaleDuration: 0.22
+  _hideScaleDuration: 0.18
+  _showScaleEase: 27
+  _hideScaleEase: 26
+  _hiddenScaleMultiplier: 0.94
+  _openTrigger: Open
+  _closeTrigger: Close
+  _messageText: {fileID: 1047408200331409613}
+  _timerText: {fileID: 8618501930072873826}
+  _closeButton: {fileID: 6689027096013872946}
+  _claimLifeButton: {fileID: 9092544759152789866}

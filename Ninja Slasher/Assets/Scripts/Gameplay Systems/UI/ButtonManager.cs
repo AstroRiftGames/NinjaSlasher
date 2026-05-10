@@ -17,7 +17,7 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
 
     private const string LinkedInUrl = "https://www.linkedin.com/company/astro-rift-games";
     private const string InstagramUrl = "https://www.instagram.com/astroriftgames";
-    private const string DiscordUrl = "https://discord.gg/z3XsQPK5";
+    private const string DiscordUrl = "https://discord.gg/KuG7vsZg";
     private const string SupportUrl = "https://www.astroriftgames.com/";
     private const string PrivacyPolicyUrl = "https://sites.google.com/view/ninja-slasher-privacy-policy/inicio";
 

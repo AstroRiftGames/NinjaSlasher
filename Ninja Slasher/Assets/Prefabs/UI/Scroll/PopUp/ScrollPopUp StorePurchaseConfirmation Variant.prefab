@@ -1126,8 +1126,49 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 2235510720588789527, guid: 7c5c2ed9462b37c45ad0201926909a4d, type: 3}
       insertIndex: -1
       addedObject: {fileID: 7750588405088997288}
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 8226208640437576049, guid: 7c5c2ed9462b37c45ad0201926909a4d, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 4165969076936427804}
   m_SourcePrefab: {fileID: 100100000, guid: 7c5c2ed9462b37c45ad0201926909a4d, type: 3}
+--- !u!225 &1782434692893832027 stripped
+CanvasGroup:
+  m_CorrespondingSourceObject: {fileID: 5697461602344713865, guid: 7c5c2ed9462b37c45ad0201926909a4d, type: 3}
+  m_PrefabInstance: {fileID: 6317716627276942802}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &2703378998820088995 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 8226208640437576049, guid: 7c5c2ed9462b37c45ad0201926909a4d, type: 3}
+  m_PrefabInstance: {fileID: 6317716627276942802}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &4165969076936427804
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2703378998820088995}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a030c4e6aaa39e243a824b50b5e477e9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _canvasGroup: {fileID: 1782434692893832027}
+  _panelTransform: {fileID: 3342302724665707156}
+  _animationDuration: 0.3
+  _openEase: 27
+  _closeEase: 26
+  _scaleOvershoot: 1.1
+  _purchaseIcon: {fileID: 7460767419897748431}
+  _purchaseNameText: {fileID: 3128503365041121921}
+  _descriptionText: {fileID: 9132335677720091645}
+  _buyButton: {fileID: 1302969763384003435}
+  _cancelButton: {fileID: 3331376732258850321}
+--- !u!224 &3342302724665707156 stripped
+RectTransform:
+  m_CorrespondingSourceObject: {fileID: 8777295025906042694, guid: 7c5c2ed9462b37c45ad0201926909a4d, type: 3}
+  m_PrefabInstance: {fileID: 6317716627276942802}
+  m_PrefabAsset: {fileID: 0}
 --- !u!224 &5236323982473329349 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 2235510720588789527, guid: 7c5c2ed9462b37c45ad0201926909a4d, type: 3}

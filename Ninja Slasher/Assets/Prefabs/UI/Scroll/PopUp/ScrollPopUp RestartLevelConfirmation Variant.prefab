@@ -996,6 +996,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 4346429710559997632, guid: 7c5c2ed9462b37c45ad0201926909a4d, type: 3}
+      propertyPath: m_UpdateMode
+      value: 2
+      objectReference: {fileID: 0}
     - target: {fileID: 8226208640437576049, guid: 7c5c2ed9462b37c45ad0201926909a4d, type: 3}
       propertyPath: m_Name
       value: ScrollPopUp RestartLevelConfirmation Variant
@@ -1016,10 +1020,48 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 2235510720588789527, guid: 7c5c2ed9462b37c45ad0201926909a4d, type: 3}
       insertIndex: -1
       addedObject: {fileID: 8985126860374095548}
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 8226208640437576049, guid: 7c5c2ed9462b37c45ad0201926909a4d, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 7184376187483311393}
   m_SourcePrefab: {fileID: 100100000, guid: 7c5c2ed9462b37c45ad0201926909a4d, type: 3}
 --- !u!224 &3082194126437805885 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 2235510720588789527, guid: 7c5c2ed9462b37c45ad0201926909a4d, type: 3}
+  m_PrefabInstance: {fileID: 3873102404037335082}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &5181773113332644187 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 8226208640437576049, guid: 7c5c2ed9462b37c45ad0201926909a4d, type: 3}
+  m_PrefabInstance: {fileID: 3873102404037335082}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &7184376187483311393
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5181773113332644187}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 76f827b2e6324a7fb132f2f51988298c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _canvasGroup: {fileID: 8849983633561511587}
+  _panelTransform: {fileID: 5480653490138488684}
+  _animationDuration: 0.3
+  _openEase: 27
+  _closeEase: 26
+  _scaleOvershoot: 1.1
+  _restartButton: {fileID: 770186888503067188}
+  _cancelButton: {fileID: 8580150711505937927}
+--- !u!224 &5480653490138488684 stripped
+RectTransform:
+  m_CorrespondingSourceObject: {fileID: 8777295025906042694, guid: 7c5c2ed9462b37c45ad0201926909a4d, type: 3}
+  m_PrefabInstance: {fileID: 3873102404037335082}
+  m_PrefabAsset: {fileID: 0}
+--- !u!225 &8849983633561511587 stripped
+CanvasGroup:
+  m_CorrespondingSourceObject: {fileID: 5697461602344713865, guid: 7c5c2ed9462b37c45ad0201926909a4d, type: 3}
   m_PrefabInstance: {fileID: 3873102404037335082}
   m_PrefabAsset: {fileID: 0}

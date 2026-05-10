@@ -1168,10 +1168,55 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 2235510720588789527, guid: 7c5c2ed9462b37c45ad0201926909a4d, type: 3}
       insertIndex: -1
       addedObject: {fileID: 3635301834377481401}
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 8226208640437576049, guid: 7c5c2ed9462b37c45ad0201926909a4d, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2450222795379513189}
   m_SourcePrefab: {fileID: 100100000, guid: 7c5c2ed9462b37c45ad0201926909a4d, type: 3}
 --- !u!224 &2638793341616074995 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 2235510720588789527, guid: 7c5c2ed9462b37c45ad0201926909a4d, type: 3}
+  m_PrefabInstance: {fileID: 4294395239825967076}
+  m_PrefabAsset: {fileID: 0}
+--- !u!224 &4780560995587866786 stripped
+RectTransform:
+  m_CorrespondingSourceObject: {fileID: 8777295025906042694, guid: 7c5c2ed9462b37c45ad0201926909a4d, type: 3}
+  m_PrefabInstance: {fileID: 4294395239825967076}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &5310197626781787797 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 8226208640437576049, guid: 7c5c2ed9462b37c45ad0201926909a4d, type: 3}
+  m_PrefabInstance: {fileID: 4294395239825967076}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &2450222795379513189
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5310197626781787797}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3b4a7d61c9a84cd89f2efbb7e6d1aa01, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _canvasGroup: {fileID: 8397439328327547245}
+  _panelTransform: {fileID: 4780560995587866786}
+  _animationDuration: 0.3
+  _openEase: 27
+  _closeEase: 26
+  _scaleOvershoot: 1.1
+  _purchaseIcon: {fileID: 520696750168905068}
+  _purchaseNameText: {fileID: 1751824345976095666}
+  _descriptionText: {fileID: 1318619139662268558}
+  _buyButton: {fileID: 4805058160368674620}
+  _cancelButton: {fileID: 8075463455467834112}
+  _buyButtonLabel: {fileID: 7334623841462338450}
+  _buyButtonIcon: {fileID: 1927325564230398202}
+  _activateButtonLabel: Activar
+  _buyButtonLabelFormat: '{0}'
+--- !u!225 &8397439328327547245 stripped
+CanvasGroup:
+  m_CorrespondingSourceObject: {fileID: 5697461602344713865, guid: 7c5c2ed9462b37c45ad0201926909a4d, type: 3}
   m_PrefabInstance: {fileID: 4294395239825967076}
   m_PrefabAsset: {fileID: 0}
