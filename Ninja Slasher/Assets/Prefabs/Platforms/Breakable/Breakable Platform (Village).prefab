@@ -4971,6 +4971,7 @@ GameObject:
   - component: {fileID: 3959458861029704305}
   - component: {fileID: 8108270545872192841}
   - component: {fileID: 4412938535127532715}
+  - component: {fileID: 8920593415602432686}
   m_Layer: 6
   m_Name: Tilemap 2
   m_TagString: Obstacle
@@ -5278,6 +5279,19 @@ CompositeCollider2D:
   m_OffsetDistance: 0.00005
   m_UseDelaunayMesh: 0
   m_CompositeGameObject: {fileID: 6393488162840164827}
+--- !u!114 &8920593415602432686
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6393488162840164827}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8115f4d8e66f1134694cc6a1f3fc98b3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  MaterialType: 0
 --- !u!1 &7559305783388975580
 GameObject:
   m_ObjectHideFlags: 0
@@ -5294,6 +5308,7 @@ GameObject:
   - component: {fileID: 1061390940217360890}
   - component: {fileID: 2974700991698168829}
   - component: {fileID: 5423003960987983709}
+  - component: {fileID: 4087238081764893048}
   m_Layer: 6
   m_Name: Tilemap 3
   m_TagString: Obstacle
@@ -5683,6 +5698,19 @@ BoxCollider2D:
   m_AutoTiling: 0
   m_Size: {x: 5.1222153, y: 0.6563134}
   m_EdgeRadius: 0
+--- !u!114 &4087238081764893048
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7559305783388975580}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8115f4d8e66f1134694cc6a1f3fc98b3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  MaterialType: 0
 --- !u!1 &8287803281622865990
 GameObject:
   m_ObjectHideFlags: 0
@@ -5698,6 +5726,7 @@ GameObject:
   - component: {fileID: 4747078729460291624}
   - component: {fileID: 1875761467515056210}
   - component: {fileID: 7260104740980129635}
+  - component: {fileID: 4645565544315366578}
   m_Layer: 6
   m_Name: Tilemap 1
   m_TagString: Obstacle
@@ -6019,3 +6048,16 @@ CompositeCollider2D:
   m_OffsetDistance: 0.00005
   m_UseDelaunayMesh: 0
   m_CompositeGameObject: {fileID: 8287803281622865990}
+--- !u!114 &4645565544315366578
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8287803281622865990}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8115f4d8e66f1134694cc6a1f3fc98b3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  MaterialType: 0
