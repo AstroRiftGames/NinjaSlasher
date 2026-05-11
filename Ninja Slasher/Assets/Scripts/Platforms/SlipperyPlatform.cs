@@ -14,6 +14,9 @@ public class SlipperyPlatform : PlatformBase
     [Tooltip("Velocidad inicial hacia arriba cuando el impacto tiene componente ascendente")]
     [SerializeField] private float upwardImpulse = 3f;
 
+    [Header("VFX")]
+    [SerializeField] private ParticleSystem _slideParticles;
+
     private Rigidbody2D playerRb;
     private PlayerController playerController;
 
@@ -67,10 +70,21 @@ public class SlipperyPlatform : PlatformBase
         _isSliding = true;
 
         AudioService.Instance.PlaySFXAtPosition(_audioContext.Audio.SlideLoop, player.transform.position);
+
+        if (_slideParticles != null)
+        {
+            _slideParticles.transform.position = player.transform.position;
+            _slideParticles.Play();
+        }
     }
 
     public override void OnPlayerExit(GameObject player, bool isForced = false)
     {
+        if (_slideParticles != null)
+        {
+            _slideParticles.Stop();
+        }
+
         if (playerRb == null) return;
 
         if (isForced)
@@ -110,8 +124,11 @@ public class SlipperyPlatform : PlatformBase
         if (playerController.IsDashing)
         {
             _isSliding = false;
+            if (_slideParticles != null) _slideParticles.Stop();
             return;
         }
+
+        Vector2 currentVelocity;
 
         if (_isVertical)
         {
@@ -121,12 +138,33 @@ public class SlipperyPlatform : PlatformBase
             // Clampear para que no supere la velocidad máxima de caída
             _verticalVelocity = Mathf.Max(_verticalVelocity, -maxFallSpeed);
 
-            playerRb.linearVelocity = new Vector2(0f, _verticalVelocity);
+            currentVelocity = new Vector2(0f, _verticalVelocity);
+            playerRb.linearVelocity = currentVelocity;
         }
         else
         {
             // Comportamiento original para plataformas horizontales
-            playerRb.linearVelocity = slideDirection * slideSpeed;
+            currentVelocity = slideDirection * slideSpeed;
+            playerRb.linearVelocity = currentVelocity;
+        }
+
+        if (_slideParticles != null)
+        {
+            _slideParticles.transform.position = playerRb.transform.position;
+            
+            Vector2 tangent = new Vector2(transform.up.y, -transform.up.x);
+            float directionDot = Vector2.Dot(currentVelocity, tangent);
+            
+            Vector3 scale = _slideParticles.transform.localScale;
+            if (directionDot > 0.01f)
+            {
+                scale.x = -Mathf.Abs(scale.x);
+            }
+            else if (directionDot < -0.01f)
+            {
+                scale.x = Mathf.Abs(scale.x);
+            }
+            _slideParticles.transform.localScale = scale;
         }
     }
 }
