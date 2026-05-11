@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using UnityEngine;
 using TMPro;
 using DG.Tweening;
@@ -23,9 +24,15 @@ public class LevelSelectionScreenController : MonoBehaviour
     [SerializeField] private Button _dailyWheelButton;
     
     private const string DailyAvailabilityParameterName = "IsAvailable";
+    private static readonly WaitForSecondsRealtime PresenterTickDelay = new(1f);
     private Animator _dailyRewardButtonAnimator;
     private Animator _dailyWheelButtonAnimator;
     private ButtonManager _buttonManager;
+    private Coroutine _presenterTickRoutine;
+    private string _lastLivesAmountValue;
+    private string _lastLivesTimerValue;
+    private bool? _lastDailyRewardAvailability;
+    private bool? _lastDailyWheelAvailability;
 
     private void Awake()
     {
@@ -45,10 +52,12 @@ public class LevelSelectionScreenController : MonoBehaviour
         StoreRewardFeedbackController.EnsureFor(this);
         RefreshAll();
         UpdateTotalStarsDisplay();
-        RefreshLivesWidget();
-        RefreshDailyButtonVisuals();
+        RefreshLivesWidget("OnEnable", force: true);
+        RefreshDailyButtonVisuals("OnEnable", force: true);
         RegisterButtonListeners();
+        StartPresenterTick();
 
+        GameEvents.OnLivesChanged += OnLivesChanged;
         GameEvents.OnRewardAvailabilityChanged += OnRewardAvailabilityChanged;
         GameEvents.OnWheelAvailabilityChanged += OnWheelAvailabilityChanged;
 
@@ -70,6 +79,9 @@ public class LevelSelectionScreenController : MonoBehaviour
         if (Instance == this)
             Instance = null;
 
+        StopPresenterTick();
+
+        GameEvents.OnLivesChanged -= OnLivesChanged;
         GameEvents.OnRewardAvailabilityChanged -= OnRewardAvailabilityChanged;
         GameEvents.OnWheelAvailabilityChanged -= OnWheelAvailabilityChanged;
 
@@ -86,12 +98,6 @@ public class LevelSelectionScreenController : MonoBehaviour
         }
 
         UnregisterButtonListeners();
-    }
-
-    private void Update()
-    {
-        RefreshLivesWidget();
-        RefreshDailyButtonVisuals();
     }
 
     public RectTransform GetUnlimitedLivesFeedbackTarget()
@@ -115,7 +121,7 @@ public class LevelSelectionScreenController : MonoBehaviour
 
     public void PlayUnlimitedLivesArrivalFeedback()
     {
-        RefreshLivesWidget();
+        RefreshLivesWidget("PlayUnlimitedLivesArrivalFeedback", force: true);
         ResolveLivesFeedbackReferences();
 
         RectTransform target = GetUnlimitedLivesFeedbackTarget();
@@ -234,19 +240,25 @@ public class LevelSelectionScreenController : MonoBehaviour
 
     private void OnRewardAvailabilityChanged(bool isAvailable)
     {
-        SetDailyButtonAvailability(_dailyRewardButtonAnimator, isAvailable);
+        ApplyDailyRewardAvailability(isAvailable, "GameEvents.OnRewardAvailabilityChanged", force: true);
     }
 
     private void OnWheelAvailabilityChanged(bool isAvailable)
     {
-        SetDailyButtonAvailability(_dailyWheelButtonAnimator, isAvailable);
+        ApplyDailyWheelAvailability(isAvailable, "GameEvents.OnWheelAvailabilityChanged", force: true);
+    }
+
+    private void OnLivesChanged(int lives)
+    {
+        RefreshLivesWidget("GameEvents.OnLivesChanged", force: true);
     }
 
     public void OnForegroundShown(string reason = null)
     {
         Debug.Log($"[LevelSelectionScreenController] Presenter -> ForegroundShown | Reason={reason ?? "Unspecified"}");
         RebindDailyButtonAnimators();
-        RefreshDailyButtonVisuals();
+        RefreshLivesWidget($"OnForegroundShown:{reason ?? "Unspecified"}", force: true);
+        RefreshDailyButtonVisuals($"OnForegroundShown:{reason ?? "Unspecified"}", force: true);
     }
 
     public void OnForegroundHidden(string reason = null)
@@ -254,39 +266,59 @@ public class LevelSelectionScreenController : MonoBehaviour
         Debug.Log($"[LevelSelectionScreenController] Presenter -> ForegroundHidden | Reason={reason ?? "Unspecified"}");
     }
 
-    private void RefreshDailyButtonVisuals()
+    private void RefreshDailyButtonVisuals(string reason, bool force = false)
     {
-        if (_dailyRewardButtonAnimator != null && DailyRewardSystem.Instance != null)
-            SetDailyButtonAvailability(_dailyRewardButtonAnimator, DailyRewardSystem.Instance.CanClaimToday());
+        if (DailyRewardSystem.Instance != null)
+            ApplyDailyRewardAvailability(DailyRewardSystem.Instance.CanClaimToday(), reason, force);
 
-        if (_dailyWheelButtonAnimator != null && DailyWheelSystem.Instance != null)
-            SetDailyButtonAvailability(_dailyWheelButtonAnimator, DailyWheelSystem.Instance.CanSpinToday());
+        if (DailyWheelSystem.Instance != null)
+            ApplyDailyWheelAvailability(DailyWheelSystem.Instance.CanSpinToday(), reason, force);
     }
 
-    private void RefreshLivesWidget()
+    private void RefreshLivesWidget(string reason, bool force = false)
     {
         LifeManager lifeManager = LifeManager.Instance;
         if (lifeManager == null || !lifeManager.IsInitialized)
             return;
 
-        if (_livesAmountText != null)
-            _livesAmountText.text = lifeManager.GetDisplayLives().ToString();
-
+        string newLivesAmount = lifeManager.GetDisplayLives().ToString();
+        string newTimerValue = string.Empty;
         bool hasUnlimitedLives = lifeManager.HasTimedUnlimitedLives;
+
+        if (hasUnlimitedLives)
+        {
+            newTimerValue = FormatUnlimitedLivesTime(lifeManager.GetUnlimitedLivesRemainingTime());
+        }
+        else
+        {
+            TimeSpan nextLife = lifeManager.GetTimeToNextLife();
+            newTimerValue = nextLife.TotalSeconds > 0d
+                ? $"{nextLife.Minutes:D2}:{nextLife.Seconds:D2}"
+                : string.Empty;
+        }
+
+        bool amountChanged = force || !string.Equals(_lastLivesAmountValue, newLivesAmount, StringComparison.Ordinal);
+        bool timerChanged = force || !string.Equals(_lastLivesTimerValue, newTimerValue, StringComparison.Ordinal);
+
+        if (_livesAmountText != null)
+        {
+            if (amountChanged)
+                _livesAmountText.text = newLivesAmount;
+        }
+
         if (_livesTimerText != null)
         {
-            if (hasUnlimitedLives)
-            {
-                _livesTimerText.text = FormatUnlimitedLivesTime(lifeManager.GetUnlimitedLivesRemainingTime());
-            }
-            else
-            {
-                TimeSpan nextLife = lifeManager.GetTimeToNextLife();
-                _livesTimerText.text = nextLife.TotalSeconds > 0d
-                    ? $"{nextLife.Minutes:D2}:{nextLife.Seconds:D2}"
-                    : string.Empty;
-            }
+            if (timerChanged)
+                _livesTimerText.text = newTimerValue;
         }
+
+        if (amountChanged || timerChanged)
+        {
+            Debug.Log($"[LevelSelectionScreenController] LivesWidget -> amount={newLivesAmount} | timer={newTimerValue} | unlimited={hasUnlimitedLives} | Reason={reason}");
+        }
+
+        _lastLivesAmountValue = newLivesAmount;
+        _lastLivesTimerValue = newTimerValue;
     }
 
     private string FormatUnlimitedLivesTime(TimeSpan remaining)
@@ -385,5 +417,57 @@ public class LevelSelectionScreenController : MonoBehaviour
 
         if (_buttonManager == null)
             Debug.LogWarning("[LevelSelectionScreenController] ButtonManager was not found.");
+    }
+
+    private void StartPresenterTick()
+    {
+        if (_presenterTickRoutine != null)
+            return;
+
+        _presenterTickRoutine = StartCoroutine(PresenterTickLoop());
+        Debug.Log("[LevelSelectionScreenController] PresenterTick -> Started (1Hz)");
+    }
+
+    private void StopPresenterTick()
+    {
+        if (_presenterTickRoutine == null)
+            return;
+
+        StopCoroutine(_presenterTickRoutine);
+        _presenterTickRoutine = null;
+        Debug.Log("[LevelSelectionScreenController] PresenterTick -> Stopped");
+    }
+
+    private IEnumerator PresenterTickLoop()
+    {
+        while (enabled)
+        {
+            yield return PresenterTickDelay;
+
+            RefreshLivesWidget("PresenterTick");
+            RefreshDailyButtonVisuals("PresenterTick");
+        }
+    }
+
+    private void ApplyDailyRewardAvailability(bool isAvailable, string reason, bool force = false)
+    {
+        bool changed = force || !_lastDailyRewardAvailability.HasValue || _lastDailyRewardAvailability.Value != isAvailable;
+        if (!changed)
+            return;
+
+        SetDailyButtonAvailability(_dailyRewardButtonAnimator, isAvailable);
+        _lastDailyRewardAvailability = isAvailable;
+        Debug.Log($"[LevelSelectionScreenController] DailyRewardAvailability -> {isAvailable} | Reason={reason}");
+    }
+
+    private void ApplyDailyWheelAvailability(bool isAvailable, string reason, bool force = false)
+    {
+        bool changed = force || !_lastDailyWheelAvailability.HasValue || _lastDailyWheelAvailability.Value != isAvailable;
+        if (!changed)
+            return;
+
+        SetDailyButtonAvailability(_dailyWheelButtonAnimator, isAvailable);
+        _lastDailyWheelAvailability = isAvailable;
+        Debug.Log($"[LevelSelectionScreenController] DailyWheelAvailability -> {isAvailable} | Reason={reason}");
     }
 }

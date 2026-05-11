@@ -23,11 +23,6 @@ public class LevelsScreen : UIScreenBase
         ResolveDependencies();
     }
 
-    private void Update()
-    {
-        RefreshForegroundVisibility("LevelsScreen.Update");
-    }
-
     protected override void OnEnable()
     {
         base.OnEnable();
@@ -201,8 +196,7 @@ public class LevelsScreen : UIScreenBase
 
     public void ResetAnimationStateForScreenReturn()
     {
-        _isWaitingForStartupSequence = false;
-        SetForegroundVisible(true, "ResetAnimationStateForScreenReturn");
+        ExitStartupSuppressedState("ResetAnimationStateForScreenReturn");
         ShowLevelButtonsInstantly();
     }
 
@@ -216,7 +210,7 @@ public class LevelsScreen : UIScreenBase
         ApplyStartupSequenceSignal(false, reason ?? "ExitStartupSuppressedState");
     }
 
-    public void RefreshForegroundVisibility(string reason = null)
+    private void RefreshForegroundVisibility(string reason = null)
     {
         bool shouldShow = ShouldForegroundBeVisible();
         SetForegroundVisible(shouldShow, reason ?? "RefreshForegroundVisibility");
