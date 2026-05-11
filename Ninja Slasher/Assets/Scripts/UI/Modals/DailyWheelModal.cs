@@ -43,6 +43,10 @@ public class DailyWheelModal : UIModalBase
     protected override void OnHidden()
     {
         base.OnHidden();
+    }
+
+    protected override void OnHideAnimationCompleted()
+    {
         UIEvents.RaiseDailyWheelModalClosed();
     }
 

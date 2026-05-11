@@ -4,66 +4,11 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
-using TMPro;
-using System;
 
 public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
 {
-    private const string LinkedInLinkId = "linkedin";
-    private const string InstagramLinkId = "instagram";
-    private const string DiscordLinkId = "discord";
-    private const string SupportLinkId = "support";
-    private const string PrivacyPolicyLinkId = "privacy-policy";
-
-    private const string LinkedInUrl = "https://www.linkedin.com/company/astro-rift-games";
-    private const string InstagramUrl = "https://www.instagram.com/astroriftgames";
-    private const string DiscordUrl = "https://discord.gg/KuG7vsZg";
-    private const string SupportUrl = "https://www.astroriftgames.com/";
-    private const string PrivacyPolicyUrl = "https://sites.google.com/view/ninja-slasher-privacy-policy/inicio";
-
     [Header("LEVEL SELECTOR BUTTONS")]
     [SerializeField] private Button[] levelButtons;
-    [SerializeField] private Button _configDropdownButton;
-    [SerializeField] private Button _calendarButton;
-    [SerializeField] private Button _storeButton;
-
-    [Header("CONFIG DROPDOWN COMPONENTS")]
-    [SerializeField] private Button _musicButton;
-    [SerializeField] private Button _sfxButton;
-    [SerializeField] private Button _profileButton;
-    [SerializeField] private Button _hapticButton;
-    [SerializeField] private Image _profileButtonImage;
-
-    [Header("PROFILE BUTTONS")]
-    [SerializeField] private Button _closeProfileButton;
-    [SerializeField] private Button _creditsButton;
-    [SerializeField] private Button _closeCreditsButton;
-    [SerializeField] private Image _userIconImagePanel;
-
-    [Header("DAILY REWARDS BUTTONS")]
-    [SerializeField] private Button _closeCalendarButton;
-
-    [Header("STORE BUTTONS")]
-    [SerializeField] private Button _closeStoreButton;
-
-    [Header("PREGAME BUTTONS")]
-    [SerializeField] private Button _playButton;
-
-    [Header("GAMEPLAY BUTTONS")]
-    [SerializeField] private Button _pauseButton;
-    [SerializeField] private Button _resumeButton;
-    [SerializeField] private Button _restartButton;
-    [SerializeField] private Button _quitButton;
-    [SerializeField] private Button _musicPausePanelButton;
-    [SerializeField] private Button _sfxPausePanelButton;
-    [SerializeField] private Button _retryButton;
-    [SerializeField] private Button _backToSelectionButton;
-    [SerializeField] private Button _continueButton;
-
-    [Header("NO LIVES PANEL BUTTONS")]
-    [SerializeField] private Button _closeNoLivesPanelButton;
-    [SerializeField] private Button _adForMoreLifeButton;
-    [SerializeField] private Button _claimButton;
 
     [Header("PROGRESSION UI")]
     [SerializeField] private Image[] levelButtonImages;
@@ -83,9 +28,6 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
     [SerializeField] private bool addRotationEffect = true;
     [SerializeField] private bool addImpactEffect = true;
 
-    private AudioSettingsUI _configToggles;
-    private ConfigDropdown _configPanelManager;
-
     private List<Sequence> activeButtonSequences = new List<Sequence>();
     private Dictionary<Button, Vector2> savedButtonPositions = new Dictionary<Button, Vector2>();
 
@@ -97,15 +39,7 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
     {
         base.Awake();
         _audioContext = GetComponentInParent<UIAudioContext>();
-        _configToggles = GetComponent<AudioSettingsUI>();
-        _configPanelManager = GetComponent<ConfigDropdown>();
-
         SaveButtonPositions();
-    }
-
-    private void Start()
-    {
-        _configToggles?.RefreshUI();
     }
 
     private void OnEnable()
@@ -145,21 +79,8 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
     public void SetupButtons()
     {
         SetupLevelSelectorButtons();
-        SetupGameplayButtons();
         SetupLevelProgression();
         UpdateButtonProgression();
-    }
-
-    private void SetupGameplayButtons()
-    {
-        _pauseButton.onClick.AddListener(() => UIEvents.RequestTogglePauseOverlay());
-        _resumeButton.onClick.AddListener(() => UIEvents.RequestTogglePauseOverlay());
-
-        _musicPausePanelButton.onClick.AddListener(_configToggles.MusicButtonPushed);
-        _sfxPausePanelButton.onClick.AddListener(_configToggles.SFXButtonPushed);
-
-        _backToSelectionButton.onClick.AddListener(UIEvents.RaiseQuitToMenuPressed);
-        _continueButton.onClick.AddListener(UIEvents.RaiseQuitToMenuPressed);
     }
 
     private void SetupLevelProgression()
@@ -199,48 +120,8 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
         }
     }
 
-    public void OpenURLButtonClicked(string url)
-    {
-        string resolvedUrl = ResolveExternalUrl(url);
-
-        if (!string.IsNullOrWhiteSpace(resolvedUrl))
-        {
-            Application.OpenURL(resolvedUrl);
-        }
-    }
-
-    private static string ResolveExternalUrl(string url)
-    {
-        return url switch
-        {
-            LinkedInLinkId => LinkedInUrl,
-            InstagramLinkId => InstagramUrl,
-            DiscordLinkId => DiscordUrl,
-            SupportLinkId => SupportUrl,
-            PrivacyPolicyLinkId => PrivacyPolicyUrl,
-            _ => url
-        };
-    }
-
     private void SetupLevelSelectorButtons()
-    {        
-        _musicButton.onClick.AddListener(_configToggles.MusicButtonPushed);
-        _sfxButton.onClick.AddListener(_configToggles.SFXButtonPushed);
-        _profileButton.onClick.AddListener(UIEvents.RequestShowProfileModal);
-
-        if (_hapticButton != null)
-        {
-            _hapticButton.onClick.AddListener(_configToggles.HapticFeedbackPushed);
-        }
-
-        _creditsButton.onClick.AddListener(UIEvents.RequestShowCreditsModal);
-        _closeProfileButton.onClick.AddListener(UIEvents.RequestHideProfileModal);
-        _closeCreditsButton.onClick.AddListener(UIEvents.RequestHideCreditsModal);
-        _storeButton.onClick.AddListener(UIEvents.RequestShowStoreModal);
-        _closeStoreButton.onClick.AddListener(UIEvents.RequestHideStoreModal);
-        _calendarButton.onClick.AddListener(UIEvents.RequestShowDailyRewardModal);
-        _configDropdownButton.onClick.AddListener(_configPanelManager.OpenCloseConfigPanel);
-
+    {
         for (int i = 0; i < levelButtons.Length; i++)
         {
             int levelId = i + 1;
@@ -361,12 +242,6 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
         }
 
         UpdateButtonProgression();
-    }
-
-    private void OnRestartPressed()
-    {
-        UIEvents.RequestRestartLevel();
-        UIEvents.RequestTogglePauseOverlay();
     }
 
     private bool IsLevelUnlocked(int levelId)

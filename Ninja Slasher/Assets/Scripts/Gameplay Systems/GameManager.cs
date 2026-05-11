@@ -250,12 +250,12 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
     {
         if (LevelSessionManager.Instance == null || !LevelSessionManager.Instance.IsSessionRunning) return;
 
-        bool isManagedBackgroundPauseActive = PauseController.Instance.IsPauseSourceActive(PauseSource.ApplicationBackground);
+        bool isManagedBackgroundPauseActive = PauseController.Instance != null &&
+                                             PauseController.Instance.IsPauseSourceActive(PauseSource.ApplicationBackground);
 
         if (!isManagedBackgroundPauseActive)
         {
-            LevelSessionManager.Instance.PauseLevel();
-            PauseController.Instance.RequestPause(PauseSource.ApplicationBackground);
+            PauseController.Instance?.RequestPause(PauseSource.ApplicationBackground);
             _pausedByFocusLoss = true;
         }
     }
@@ -264,8 +264,7 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
     {
         if (!_pausedByFocusLoss) return;
 
-        LevelSessionManager.Instance?.ResumeLevel();
-        PauseController.Instance.ReleasePause(PauseSource.ApplicationBackground);
+        PauseController.Instance?.ReleasePause(PauseSource.ApplicationBackground);
         _pausedByFocusLoss = false;
     }
 }

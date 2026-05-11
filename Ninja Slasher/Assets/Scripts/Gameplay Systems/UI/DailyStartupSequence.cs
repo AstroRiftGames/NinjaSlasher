@@ -1,5 +1,4 @@
 using System;
-using System.Collections;
 using UnityEngine;
 
 public sealed class DailyStartupSequence : IDisposable
@@ -8,15 +7,12 @@ public sealed class DailyStartupSequence : IDisposable
 
     private bool _isLevelSelectorReady;
     private bool _isWaitingForWheel;
+    private bool _isWaitingForWheelClose;
     private bool _isWaitingForReward;
     private bool _isRunning;
 
-    private readonly MonoBehaviour _runner;
-    private const float WheelToRewardDelay = 1.5f;
-
     public DailyStartupSequence(MonoBehaviour runner)
     {
-        _runner = runner;
         SaveManager.OnDataLoaded += OnDataLoaded;
         UIEvents.OnLevelSelectorReady += OnLevelSelectorReady;
         UIEvents.OnWheelSequenceCompleted += OnWheelSequenceCompleted;
@@ -44,6 +40,7 @@ public sealed class DailyStartupSequence : IDisposable
         _isRunning = true;
         IsSequenceRunning = true;
         _isWaitingForWheel = false;
+        _isWaitingForWheelClose = false;
         _isWaitingForReward = false;
 
         TryAdvanceSequence();
@@ -54,21 +51,16 @@ public sealed class DailyStartupSequence : IDisposable
         if (!_isWaitingForWheel) return;
 
         _isWaitingForWheel = false;
+        _isWaitingForWheelClose = true;
         UIEvents.RequestHideDailyWheelModal();
-        _runner.StartCoroutine(DelayedAdvanceSequence());
-    }
-
-    private IEnumerator DelayedAdvanceSequence()
-    {
-        yield return new WaitForSeconds(WheelToRewardDelay);
-        TryAdvanceSequence();
     }
 
     private void OnDailyWheelModalClosed()
     {
-        if (!_isWaitingForWheel) return;
+        if (!_isWaitingForWheel && !_isWaitingForWheelClose) return;
 
         _isWaitingForWheel = false;
+        _isWaitingForWheelClose = false;
         TryAdvanceSequence();
     }
 
@@ -84,7 +76,7 @@ public sealed class DailyStartupSequence : IDisposable
     {
         if (!_isRunning || !_isLevelSelectorReady) return;
         if (SaveManager.Instance == null || !SaveManager.Instance.IsDataLoaded) return;
-        if (_isWaitingForWheel || _isWaitingForReward) return;
+        if (_isWaitingForWheel || _isWaitingForWheelClose || _isWaitingForReward) return;
 
         if (DailyWheelSystem.Instance == null || DailyRewardSystem.Instance == null)
         {
@@ -118,6 +110,7 @@ public sealed class DailyStartupSequence : IDisposable
         _isRunning = false;
         IsSequenceRunning = false;
         _isWaitingForWheel = false;
+        _isWaitingForWheelClose = false;
         _isWaitingForReward = false;
 
         UIEvents.RaiseStartupSequenceCompleted();

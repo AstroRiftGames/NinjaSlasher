@@ -65,7 +65,7 @@ public class TutorialUIOverlay : UIOverlayBase, IPointerClickHandler
     protected override void OnShown()
     {
         base.OnShown();
-        PauseController.Instance.RequestPause(PauseSource.Tutorial);
+        PauseController.Instance?.RequestPause(PauseSource.Tutorial);
 
         UIEvents.RaisePause(true);
 
@@ -80,15 +80,18 @@ public class TutorialUIOverlay : UIOverlayBase, IPointerClickHandler
     protected override void OnHidden()
     {
         base.OnHidden();
-        PauseController.Instance.ReleasePause(PauseSource.Tutorial);
-
-        UIEvents.RaisePause(false);
 
         if (videoPlayer != null)
         {
             videoPlayer.Stop();
             ClearTargetTexture();
         }
+    }
+
+    protected override void OnHideAnimationCompleted()
+    {
+        PauseController.Instance?.ReleasePause(PauseSource.Tutorial);
+        UIEvents.RaisePause(false);
     }
 
     public void OnPointerClick(PointerEventData eventData)

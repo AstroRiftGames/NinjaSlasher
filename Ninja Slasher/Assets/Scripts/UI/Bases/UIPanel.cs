@@ -85,6 +85,14 @@ public abstract class UIPanel : MonoBehaviour
     {
     }
 
+    protected virtual void OnShowAnimationCompleted()
+    {
+    }
+
+    protected virtual void OnHideAnimationCompleted()
+    {
+    }
+
     protected virtual void OnEnable()
     {
         if (_isVisible && BlocksUnderlyingUI)

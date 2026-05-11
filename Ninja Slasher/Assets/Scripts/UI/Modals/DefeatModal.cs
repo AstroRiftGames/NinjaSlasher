@@ -40,13 +40,17 @@ public class DefeatModal : UIModalBase
 
     protected override void OnShown()
     {
-        PauseController.Instance.RequestPause(PauseSource.Defeat);
+        PauseController.Instance?.RequestPause(PauseSource.Defeat);
         UIEvents.RaisePause(true);
     }
 
     protected override void OnHidden()
     {
-        PauseController.Instance.ReleasePause(PauseSource.Defeat);
+    }
+
+    protected override void OnHideAnimationCompleted()
+    {
+        PauseController.Instance?.ReleasePause(PauseSource.Defeat);
         UIEvents.RaisePause(false);
     }
 

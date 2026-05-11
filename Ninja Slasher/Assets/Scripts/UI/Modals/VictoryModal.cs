@@ -1,12 +1,10 @@
 using UnityEngine;
-using System.Collections;
+using UnityEngine.UI;
 
 public class VictoryModal : UIModalBase
 {
     [SerializeField] private float _closeAnimationDuration = 0.4f;
-    [SerializeField] private float _delayBeforeShowingResults = 0.1f;
-
-    private Coroutine _showResultsCoroutine;
+    [SerializeField] private Button _continueButton;
 
     protected override float HideAnimationDuration => _closeAnimationDuration;
 
@@ -16,12 +14,8 @@ public class VictoryModal : UIModalBase
 
         if (_modalAnimator == null)
             _modalAnimator = GetComponentInChildren<Animator>();
-    }
 
-    protected override void OnDisable()
-    {
-        base.OnDisable();
-        StopShowResultsCoroutine();
+        SetupButtons();
     }
 
     protected override void OnShown()
@@ -30,23 +24,34 @@ public class VictoryModal : UIModalBase
 
         if (ResultsUIManager.Instance != null)
             ResultsUIManager.Instance.PrepareResultsIntro();
-
-        StopShowResultsCoroutine();
-        _showResultsCoroutine = StartCoroutine(ShowResultsDelayed());
     }
 
-    private IEnumerator ShowResultsDelayed()
+    protected override void OnShowAnimationCompleted()
     {
-        yield return new WaitForSecondsRealtime(_delayBeforeShowingResults);
-        _showResultsCoroutine = null;
-
         if (ResultsUIManager.Instance != null)
             ResultsUIManager.Instance.ShowResultsPanel();
     }
 
     protected override void OnHidden()
     {
-        StopShowResultsCoroutine();
+    }
+
+    private void SetupButtons()
+    {
+        if (_continueButton == null)
+        {
+            Debug.LogWarning("[VictoryModal] Continue button is not assigned.");
+            return;
+        }
+
+        _continueButton.onClick.RemoveListener(OnContinueClicked);
+        _continueButton.onClick.AddListener(OnContinueClicked);
+    }
+
+    private void OnContinueClicked()
+    {
+        SetPanelInputEnabled(false);
+        UIEvents.RaiseQuitToMenuPressed();
     }
 
     private void PlayVictoryAudio()
@@ -61,12 +66,9 @@ public class VictoryModal : UIModalBase
             AudioService.Instance.PlaySFX(clip);
     }
 
-    private void StopShowResultsCoroutine()
+    private void OnDestroy()
     {
-        if (_showResultsCoroutine == null)
-            return;
-
-        StopCoroutine(_showResultsCoroutine);
-        _showResultsCoroutine = null;
+        if (_continueButton != null)
+            _continueButton.onClick.RemoveListener(OnContinueClicked);
     }
 }

@@ -38,7 +38,7 @@ public class LevelSessionManager : MonoBehaviourSingleton<LevelSessionManager>
         UIEvents.OnRestartLevelRequested += OnRestartLevelRequested;
         UIEvents.OnRetryButtonPressed += OnRetryButtonPressed;
         UIEvents.OnQuitToMenuPressed += OnQuitToMenuPressed;
-        UIEvents.RaiseGamePaused += OnPauseStateChanged;
+        SubscribeToPauseController();
     }
 
     private void OnDisable()
@@ -52,7 +52,7 @@ public class LevelSessionManager : MonoBehaviourSingleton<LevelSessionManager>
         UIEvents.OnRestartLevelRequested -= OnRestartLevelRequested;
         UIEvents.OnRetryButtonPressed -= OnRetryButtonPressed;
         UIEvents.OnQuitToMenuPressed -= OnQuitToMenuPressed;
-        UIEvents.RaiseGamePaused -= OnPauseStateChanged;
+        UnsubscribeFromPauseController();
     }
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
@@ -397,6 +397,24 @@ public class LevelSessionManager : MonoBehaviourSingleton<LevelSessionManager>
         {
             ResumeLevel();
         }
+    }
+
+    private void SubscribeToPauseController()
+    {
+        if (PauseController.Instance == null)
+            return;
+
+        PauseController.Instance.PauseStateChanged -= OnPauseStateChanged;
+        PauseController.Instance.PauseStateChanged += OnPauseStateChanged;
+        OnPauseStateChanged(PauseController.Instance.IsPaused);
+    }
+
+    private void UnsubscribeFromPauseController()
+    {
+        if (PauseController.Instance == null)
+            return;
+
+        PauseController.Instance.PauseStateChanged -= OnPauseStateChanged;
     }
 
     private void OnRetryButtonPressed()

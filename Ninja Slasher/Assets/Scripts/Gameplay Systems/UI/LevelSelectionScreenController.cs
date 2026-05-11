@@ -19,6 +19,7 @@ public class LevelSelectionScreenController : MonoBehaviour
     [SerializeField] private UIPunchScaleFeedback _livesWidgetFeedback;
     [SerializeField] private UIPunchScaleFeedback _livesAmountFeedback;
     [SerializeField] private Button _dailyRewardButton;
+    [SerializeField] private Button _storeButton;
     [SerializeField] private Button _dailyWheelButton;
     [SerializeField] private GameObject _infoRoot;
     [SerializeField] private GameObject _buttonsRoot;
@@ -193,24 +194,36 @@ public class LevelSelectionScreenController : MonoBehaviour
 
     private void RegisterButtonListeners()
     {
-        if (_dailyWheelButton == null)
-            return;
+        _dailyRewardButton?.onClick.RemoveListener(OnDailyRewardButtonClicked);
+        _dailyRewardButton?.onClick.AddListener(OnDailyRewardButtonClicked);
 
-        _dailyWheelButton.onClick.RemoveListener(OnDailyWheelButtonClicked);
-        _dailyWheelButton.onClick.AddListener(OnDailyWheelButtonClicked);
+        _storeButton?.onClick.RemoveListener(OnStoreButtonClicked);
+        _storeButton?.onClick.AddListener(OnStoreButtonClicked);
+
+        _dailyWheelButton?.onClick.RemoveListener(OnDailyWheelButtonClicked);
+        _dailyWheelButton?.onClick.AddListener(OnDailyWheelButtonClicked);
     }
 
     private void UnregisterButtonListeners()
     {
-        if (_dailyWheelButton == null)
-            return;
+        _dailyRewardButton?.onClick.RemoveListener(OnDailyRewardButtonClicked);
+        _storeButton?.onClick.RemoveListener(OnStoreButtonClicked);
+        _dailyWheelButton?.onClick.RemoveListener(OnDailyWheelButtonClicked);
+    }
 
-        _dailyWheelButton.onClick.RemoveListener(OnDailyWheelButtonClicked);
+    private void OnDailyRewardButtonClicked()
+    {
+        UIEvents.RequestShowDailyRewardModal();
     }
 
     private void OnDailyWheelButtonClicked()
     {
         UIEvents.RequestShowDailyWheelModal();
+    }
+
+    private void OnStoreButtonClicked()
+    {
+        UIEvents.RequestShowStoreModal();
     }
 
     private void OnRewardAvailabilityChanged(bool isAvailable)

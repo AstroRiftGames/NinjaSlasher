@@ -9,6 +9,8 @@ public class PauseOverlay : UIOverlayBase
     [SerializeField] private Button _resumeButton;
     [SerializeField] private Button _restartButton;
     [SerializeField] private Button _quitButton;
+    [SerializeField] private Button _musicButton;
+    [SerializeField] private Button _sfxButton;
     [SerializeField] private RestartConfirmationPopUp _restartConfirmationPopUp;
     [SerializeField] private BackToLevelSelectionConfirmationPopUp _backToLevelSelectionConfirmationPopUp;
 
@@ -21,9 +23,12 @@ public class PauseOverlay : UIOverlayBase
     [SerializeField] private TextMeshProUGUI _livesAmountText;
 
     private Texture2D _backgroundTexture;
+    private AudioSettingsUI _audioSettingsUI;
+
     protected override void Awake()
     {
         base.Awake();
+        _audioSettingsUI = GetComponentInParent<AudioSettingsUI>();
         ResolvePopupReferences();
         SetupButtons();
     }
@@ -38,21 +43,29 @@ public class PauseOverlay : UIOverlayBase
 
     private void SetupButtons()
     {
-        if (_resumeButton != null)
-            _resumeButton.onClick.AddListener(OnResumeClicked);
+        BindButton(_resumeButton, OnResumeClicked, "resume");
+        BindButton(_restartButton, OnRestartClicked, "restart");
+        BindButton(_quitButton, OnQuitClicked, "quit");
+        BindButton(_musicButton, OnMusicClicked, "music");
+        BindButton(_sfxButton, OnSfxClicked, "sfx");
+    }
 
-        if (_restartButton != null)
-            _restartButton.onClick.AddListener(OnRestartClicked);
+    private void BindButton(Button button, UnityEngine.Events.UnityAction callback, string buttonName)
+    {
+        if (button == null)
+        {
+            Debug.LogWarning($"[PauseOverlay] {buttonName} button is not assigned.");
+            return;
+        }
 
-        if (_quitButton != null)
-            _quitButton.onClick.AddListener(OnQuitClicked);
+        button.onClick.AddListener(callback);
     }
 
     protected override void OnShown()
     {
         CaptureScreen();
-        
-        PauseController.Instance.RequestPause(PauseSource.PauseOverlay);
+
+        PauseController.Instance?.RequestPause(PauseSource.PauseOverlay);
         RefreshInfo();
         UIManager.Instance?.SetGameplayHUDTopRightInfoVisible(false);
         UIEvents.RaisePause(true);
@@ -97,8 +110,11 @@ public class PauseOverlay : UIOverlayBase
     {
         _restartConfirmationPopUp?.HideImmediate();
         _backToLevelSelectionConfirmationPopUp?.HideImmediate();
+    }
 
-        PauseController.Instance.ReleasePause(PauseSource.PauseOverlay);
+    protected override void OnHideAnimationCompleted()
+    {
+        PauseController.Instance?.ReleasePause(PauseSource.PauseOverlay);
         UIManager.Instance?.SetGameplayHUDTopRightInfoVisible(true);
         UIEvents.RaisePause(false);
     }
@@ -106,6 +122,28 @@ public class PauseOverlay : UIOverlayBase
     private void OnResumeClicked()
     {
         Hide();
+    }
+
+    private void OnMusicClicked()
+    {
+        if (_audioSettingsUI == null)
+        {
+            Debug.LogWarning("[PauseOverlay] AudioSettingsUI is not assigned.");
+            return;
+        }
+
+        _audioSettingsUI.MusicButtonPushed();
+    }
+
+    private void OnSfxClicked()
+    {
+        if (_audioSettingsUI == null)
+        {
+            Debug.LogWarning("[PauseOverlay] AudioSettingsUI is not assigned.");
+            return;
+        }
+
+        _audioSettingsUI.SFXButtonPushed();
     }
 
     private void OnRestartClicked()
@@ -172,14 +210,11 @@ public class PauseOverlay : UIOverlayBase
             _backgroundTexture = null;
         }
 
-        if (_resumeButton != null)
-            _resumeButton.onClick.RemoveAllListeners();
-
-        if (_restartButton != null)
-            _restartButton.onClick.RemoveAllListeners();
-
-        if (_quitButton != null)
-            _quitButton.onClick.RemoveAllListeners();
+        _resumeButton?.onClick.RemoveListener(OnResumeClicked);
+        _restartButton?.onClick.RemoveListener(OnRestartClicked);
+        _quitButton?.onClick.RemoveListener(OnQuitClicked);
+        _musicButton?.onClick.RemoveListener(OnMusicClicked);
+        _sfxButton?.onClick.RemoveListener(OnSfxClicked);
     }
 
     private void RefreshInfo()

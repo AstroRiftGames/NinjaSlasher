@@ -103,8 +103,10 @@ public class LevelsScreen : UIScreenBase
     private IEnumerator AnimateLevelButtonsSequence()
     {
         yield return null;
-        yield return new WaitForSeconds(_delayBeforeAnimation);
-        yield return new WaitForSeconds(0.5f);
+        yield return new WaitUntil(() => ButtonManager.Instance != null);
+
+        if (_delayBeforeAnimation > 0f)
+            yield return new WaitForSeconds(_delayBeforeAnimation);
 
         if (ButtonManager.Instance == null) yield break;
 

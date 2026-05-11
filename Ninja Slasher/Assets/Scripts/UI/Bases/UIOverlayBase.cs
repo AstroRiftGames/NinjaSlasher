@@ -86,6 +86,7 @@ public abstract class UIOverlayBase : UIPanel
         OnHidden();
         ResetVisualState();
         gameObject.SetActive(false);
+        OnHideAnimationCompleted();
     }
 
     public override IEnumerator ShowRoutine()
@@ -145,11 +146,17 @@ public abstract class UIOverlayBase : UIPanel
             {
                 _panelAnimator.SetTrigger("Open");
             });
+
+            _panelSequence.AppendInterval(_animatorOpenDuration);
         }
 
         _panelSequence
             .SetUpdate(true)
-            .OnComplete(() => _panelSequence = null);
+            .OnComplete(() =>
+            {
+                _panelSequence = null;
+                OnShowAnimationCompleted();
+            });
     }
 
     protected virtual void AnimateHide()
@@ -200,6 +207,7 @@ public abstract class UIOverlayBase : UIPanel
             _panelSequence = null;
             gameObject.SetActive(false);
             ResetVisualState();
+            OnHideAnimationCompleted();
         });
 
         _panelSequence.SetUpdate(true);

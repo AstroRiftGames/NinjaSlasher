@@ -14,7 +14,7 @@ public class DailyRewardModal : UIModalBase
             _modalAnimator = GetComponentInChildren<Animator>();
     }
 
-    protected override void OnHidden()
+    protected override void OnHideAnimationCompleted()
     {
         UIEvents.RaiseDailyRewardModalClosed();
     }

@@ -32,6 +32,7 @@ public abstract class UIModalBase : UIPanel, IPointerClickHandler
 
     private Sequence _contentAnimationSequence;
     private Coroutine _delayedDeactivateCoroutine;
+    private Coroutine _showCompletionCoroutine;
     protected virtual float ShowAnimationDuration => Mathf.Max(_fadeAnimationDuration, _showScaleDuration);
     protected virtual float HideAnimationDuration => 0.4f;
 
@@ -63,6 +64,7 @@ public abstract class UIModalBase : UIPanel, IPointerClickHandler
         if (_isVisible) return;
 
         CancelPendingDeactivate();
+        CancelShowCompletion();
         KillActiveAnimation();
 
         gameObject.SetActive(true);
@@ -79,6 +81,7 @@ public abstract class UIModalBase : UIPanel, IPointerClickHandler
     {
         if (!_isVisible) return;
 
+        CancelShowCompletion();
         _isVisible = false;
         SetPanelInputEnabled(false);
 
@@ -91,6 +94,7 @@ public abstract class UIModalBase : UIPanel, IPointerClickHandler
     public override void HideImmediate()
     {
         CancelPendingDeactivate();
+        CancelShowCompletion();
         KillActiveAnimation();
 
         if (!_isVisible && !gameObject.activeSelf)
@@ -103,6 +107,7 @@ public abstract class UIModalBase : UIPanel, IPointerClickHandler
         OnHidden();
         ResetContentVisualState();
         gameObject.SetActive(false);
+        OnHideAnimationCompleted();
     }
 
     public override IEnumerator ShowRoutine()
@@ -127,6 +132,7 @@ public abstract class UIModalBase : UIPanel, IPointerClickHandler
     {
         base.OnDisable();
         CancelPendingDeactivate();
+        CancelShowCompletion();
         KillActiveAnimation();
         NotifyUIManagerModalHidden();
     }
@@ -160,13 +166,17 @@ public abstract class UIModalBase : UIPanel, IPointerClickHandler
                 _modalAnimator.ResetTrigger(_closeTrigger);
             if (!string.IsNullOrEmpty(_openTrigger))
                 _modalAnimator.SetTrigger(_openTrigger);
+            _showCompletionCoroutine = StartCoroutine(CompleteShowAfterAnimator());
             return;
         }
 
         ResetContentVisualState();
 
         if (!_useCanvasGroupFadeWhenNoAnimator && !_useContentScaleWhenNoAnimator)
+        {
+            OnShowAnimationCompleted();
             return;
+        }
 
         _contentAnimationSequence = DOTween.Sequence().SetUpdate(true);
 
@@ -186,7 +196,11 @@ public abstract class UIModalBase : UIPanel, IPointerClickHandler
                     .SetEase(_showScaleEase));
         }
 
-        _contentAnimationSequence.OnComplete(() => _contentAnimationSequence = null);
+        _contentAnimationSequence.OnComplete(() =>
+        {
+            _contentAnimationSequence = null;
+            OnShowAnimationCompleted();
+        });
     }
 
     private void PlayHideAnimation()
@@ -205,6 +219,7 @@ public abstract class UIModalBase : UIPanel, IPointerClickHandler
         {
             ResetContentVisualState();
             gameObject.SetActive(false);
+            OnHideAnimationCompleted();
             return;
         }
 
@@ -229,6 +244,7 @@ public abstract class UIModalBase : UIPanel, IPointerClickHandler
             _contentAnimationSequence = null;
             ResetContentVisualState();
             gameObject.SetActive(false);
+            OnHideAnimationCompleted();
         });
     }
 
@@ -238,6 +254,14 @@ public abstract class UIModalBase : UIPanel, IPointerClickHandler
         _delayedDeactivateCoroutine = null;
         ResetContentVisualState();
         gameObject.SetActive(false);
+        OnHideAnimationCompleted();
+    }
+
+    private IEnumerator CompleteShowAfterAnimator()
+    {
+        yield return WaitForAnimatorPlayback(_modalAnimator, ShowAnimationDuration);
+        _showCompletionCoroutine = null;
+        OnShowAnimationCompleted();
     }
 
     private void CancelPendingDeactivate()
@@ -245,6 +269,13 @@ public abstract class UIModalBase : UIPanel, IPointerClickHandler
         if (_delayedDeactivateCoroutine == null) return;
         StopCoroutine(_delayedDeactivateCoroutine);
         _delayedDeactivateCoroutine = null;
+    }
+
+    private void CancelShowCompletion()
+    {
+        if (_showCompletionCoroutine == null) return;
+        StopCoroutine(_showCompletionCoroutine);
+        _showCompletionCoroutine = null;
     }
 
     private CanvasGroup ResolveAnimatedContentCanvasGroup()
