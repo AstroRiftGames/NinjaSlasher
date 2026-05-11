@@ -9,7 +9,10 @@ public sealed class DailyStartupSequence : IDisposable
     private bool _isWaitingForReward;
     private bool _isRunning;
     private bool _isRewardSystemReady;
+    private bool _shouldRunOnNextLevelSelectorReady;
     private bool _isWheelSystemReady;
+    
+    public bool ShouldRunOnNextLevelSelectorReady => _shouldRunOnNextLevelSelectorReady;
 
     public DailyStartupSequence(MonoBehaviour runner)
     {
@@ -32,6 +35,12 @@ public sealed class DailyStartupSequence : IDisposable
         UIEvents.OnDailyRewardModalClosed -= OnDailyRewardModalClosed;
     }
 
+    public void ConfigureNextLevelSelectorEntry(bool shouldRunStartupSequence)
+    {
+        _shouldRunOnNextLevelSelectorReady = shouldRunStartupSequence;
+        Debug.Log($"[DailyStartupSequence] ConfigureNextLevelSelectorEntry -> shouldRun={shouldRunStartupSequence}");
+    }
+
     private void OnRewardSystemBootstrapped()
     {
         _isRewardSystemReady = true;
@@ -48,6 +57,20 @@ public sealed class DailyStartupSequence : IDisposable
 
     private void OnLevelSelectorReady()
     {
+        if (_isRunning)
+        {
+            Debug.Log("[DailyStartupSequence] Signal -> LevelSelectorReady ignored because startup sequence is already running.");
+            return;
+        }
+
+        if (!_shouldRunOnNextLevelSelectorReady)
+        {
+            Debug.Log("[DailyStartupSequence] Signal -> LevelSelectorReady ignored because this entry does not own startup sequence.");
+            return;
+        }
+
+        _shouldRunOnNextLevelSelectorReady = false;
+
         SyncSystemReadiness("OnLevelSelectorReady");
         _isLevelSelectorReady = true;
         _isRunning = true;

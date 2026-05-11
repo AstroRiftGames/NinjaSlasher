@@ -9,6 +9,7 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
     private ButtonManager _buttonManager;
     private GameplayUIManager _gameplayUIManager;
     private PreGameUIManager _preGameUIManager;
+    private SceneTransitionManager _sceneTransitionManager;
 
     [Header("OVERLAYS")]
     [SerializeField] private PauseOverlay _pauseOverlay;
@@ -104,6 +105,7 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
         _buttonManager = GetComponent<ButtonManager>();
         _gameplayUIManager = GetComponent<GameplayUIManager>();
         _preGameUIManager = GetComponent<PreGameUIManager>();
+        _sceneTransitionManager = GetComponentInChildren<SceneTransitionManager>(true);
         ResolveTutorialOverlay();
 
         if (_buttonManager == null)
@@ -335,6 +337,15 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
     {
         if (_levelsScreen != null)
             _levelsScreen.ResetAnimationStateForScreenReturn();
+    }
+
+    public bool ShouldRunLevelSelectionStartupFlowOnNextEntry()
+    {
+        if (_sceneTransitionManager == null)
+            _sceneTransitionManager = GetComponentInChildren<SceneTransitionManager>(true);
+
+        return _sceneTransitionManager != null
+            && _sceneTransitionManager.ShouldRunLevelSelectionStartupFlowOnNextEntry;
     }
 
     #endregion

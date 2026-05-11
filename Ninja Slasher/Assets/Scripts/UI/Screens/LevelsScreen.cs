@@ -12,7 +12,6 @@ public class LevelsScreen : UIScreenBase
     [SerializeField] private LevelSelectionScreenController _presenter;
     [SerializeField] private ButtonManager _buttonManager;
 
-    private bool _hasPlayedIntroAnimation = false;
     private bool _isWaitingForStartupSequence = false;
     private bool _isBlockedByForegroundSignal = false;
     private bool _isForegroundVisible = true;
@@ -77,14 +76,14 @@ public class LevelsScreen : UIScreenBase
             _canvasGroup.alpha = 1f;
         }
 
-        if (!_hasPlayedIntroAnimation)
+        if (ShouldPlayStartupReveal())
         {
-            EnterStartupSuppressedState("Show/FirstEntry");
+            EnterStartupSuppressedState("Show/SessionBootstrapPending");
             HideLevelButtons();
         }
         else
         {
-            ExitStartupSuppressedState("Show/ReturnEntry");
+            ExitStartupSuppressedState("Show/SessionBootstrapCompleted");
             ShowLevelButtonsInstantly();
         }
 
@@ -112,7 +111,6 @@ public class LevelsScreen : UIScreenBase
         if (!_isWaitingForStartupSequence || !isActiveAndEnabled)
             return;
 
-        _hasPlayedIntroAnimation = true;
         ExitStartupSuppressedState("StartupSequenceCompleted");
         StartCoroutine(AnimateLevelButtonsSequence());
     }
@@ -264,6 +262,18 @@ public class LevelsScreen : UIScreenBase
 
         if (_buttonManager == null)
             Debug.LogWarning("[LevelsScreen] ButtonManager was not found.");
+    }
+
+    private bool ShouldPlayStartupReveal()
+    {
+        UIManager uiManager = UIManager.Instance;
+        if (uiManager == null)
+        {
+            Debug.LogWarning("[LevelsScreen] UIManager was not found. Startup reveal will remain enabled by default.");
+            return true;
+        }
+
+        return uiManager.ShouldRunLevelSelectionStartupFlowOnNextEntry();
     }
 
     private void SyncExternalForegroundSignals(string reason)

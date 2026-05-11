@@ -19,6 +19,9 @@ public class SceneTransitionManager : MonoBehaviour
     private bool _isLoadingLevelSelectorScene;
     private bool _isSceneTransitionInProgress;
 
+    public bool ShouldRunLevelSelectionStartupFlowOnNextEntry =>
+        _dailyStartupSequence != null && _dailyStartupSequence.ShouldRunOnNextLevelSelectorReady;
+
     private void Awake()
     {
         _audioContext = GetComponentInParent<UIAudioContext>();
@@ -132,6 +135,8 @@ public class SceneTransitionManager : MonoBehaviour
         if (_isLoadingLevelSelectorScene || !TryBeginSceneTransition())
             return;
 
+        ConfigureNextLevelSelectorEntry(shouldRunStartupSequence: false);
+
         if (HasKatanaTransition())
         {
             StartCoroutine(LoadLevelSelectorSceneWithKatanaCo());
@@ -203,6 +208,8 @@ public class SceneTransitionManager : MonoBehaviour
         if (!TryBeginSceneTransition())
             return;
 
+        ConfigureNextLevelSelectorEntry(shouldRunStartupSequence: true);
+
         if (HasKatanaTransition())
         {
             StartCoroutine(ShowLevelSelectorWithKatanaCo());
@@ -210,6 +217,11 @@ public class SceneTransitionManager : MonoBehaviour
         }
 
         StartCoroutine(ShowLevelSelectorLegacyCo());
+    }
+
+    private void ConfigureNextLevelSelectorEntry(bool shouldRunStartupSequence)
+    {
+        _dailyStartupSequence?.ConfigureNextLevelSelectorEntry(shouldRunStartupSequence);
     }
 
     private IEnumerator ShowLevelSelectorWithKatanaCo()
