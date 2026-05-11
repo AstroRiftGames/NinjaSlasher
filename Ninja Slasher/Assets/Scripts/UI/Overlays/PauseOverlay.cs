@@ -13,7 +13,7 @@ public class PauseOverlay : UIOverlayBase
     [SerializeField] private BackToLevelSelectionConfirmationPopUp _backToLevelSelectionConfirmationPopUp;
 
     [Header("Background")]
-    [SerializeField] private UnityEngine.UI.Image _backgroundImage;
+    [SerializeField] private Image _backgroundImage;
 
     [Header("Info")]
     [SerializeField] private GameObject _infoRoot;
@@ -168,7 +168,7 @@ public class PauseOverlay : UIOverlayBase
     {
         if (_backgroundTexture != null)
         {
-            UnityEngine.Object.Destroy(_backgroundTexture);
+            Destroy(_backgroundTexture);
             _backgroundTexture = null;
         }
 
@@ -196,25 +196,5 @@ public class PauseOverlay : UIOverlayBase
 
         if (_livesAmountText != null)
             _livesAmountText.text = lifeManager.GetDisplayLives().ToString();
-    }
-
-    private void OnDailyWheelClicked()
-    {
-        UIEvents.RequestShowDailyWheelModal();
-    }
-
-    private static string FormatUnlimitedLivesTime(TimeSpan remaining)
-    {
-        if (remaining.TotalHours >= 1d)
-            return $"{Mathf.FloorToInt((float)remaining.TotalHours):D2}:{remaining.Minutes:D2}:{remaining.Seconds:D2}";
-
-        return $"{remaining.Minutes:D2}:{remaining.Seconds:D2}";
-    }
-
-    private static string FormatNextLifeTimer(TimeSpan remaining)
-    {
-        return remaining.TotalSeconds > 0d
-            ? $"{remaining.Minutes:D2}:{remaining.Seconds:D2}"
-            : string.Empty;
     }
 }
