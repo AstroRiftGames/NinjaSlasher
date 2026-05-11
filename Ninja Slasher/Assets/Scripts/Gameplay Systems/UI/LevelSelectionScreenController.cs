@@ -21,16 +21,16 @@ public class LevelSelectionScreenController : MonoBehaviour
     [SerializeField] private Button _dailyRewardButton;
     [SerializeField] private Button _storeButton;
     [SerializeField] private Button _dailyWheelButton;
-    [SerializeField] private GameObject _infoRoot;
-    [SerializeField] private GameObject _buttonsRoot;
     
     private const string DailyAvailabilityParameterName = "IsAvailable";
     private Animator _dailyRewardButtonAnimator;
     private Animator _dailyWheelButtonAnimator;
+    private LevelsScreen _levelsScreen;
 
     private void Awake()
     {
         Instance = this;
+        ResolveLevelsScreen();
         ResolveLivesFeedbackReferences();
         CacheDailyButtons();
         StoreRewardFeedbackController.EnsureFor(this);
@@ -39,6 +39,7 @@ public class LevelSelectionScreenController : MonoBehaviour
     private void OnEnable()
     {
         Instance = this;
+        ResolveLevelsScreen();
         ResolveLivesFeedbackReferences();
         CacheDailyButtons();
         StoreRewardFeedbackController.EnsureFor(this);
@@ -238,25 +239,13 @@ public class LevelSelectionScreenController : MonoBehaviour
 
     private void UpdateForegroundVisibility()
     {
-        bool shouldShow = true;
-        bool buttonsVisibilityChanged = false;
+        if (_levelsScreen == null)
+            return;
 
-        if (UIManager.Instance != null)
-            shouldShow = !UIManager.Instance.HasBlockingPanelForLevelSelection();
+        bool wasVisible = _levelsScreen.IsForegroundVisible;
+        _levelsScreen.RefreshForegroundVisibility("LevelSelectionScreenController.UpdateForegroundVisibility");
 
-        if (DailyStartupSequence.IsSequenceRunning)
-            shouldShow = false;
-
-        if (_infoRoot != null && _infoRoot.activeSelf != shouldShow)
-            _infoRoot.SetActive(shouldShow);
-
-        if (_buttonsRoot != null && _buttonsRoot.activeSelf != shouldShow)
-        {
-            _buttonsRoot.SetActive(shouldShow);
-            buttonsVisibilityChanged = true;
-        }
-
-        if (buttonsVisibilityChanged && shouldShow)
+        if (!wasVisible && _levelsScreen.IsForegroundVisible)
         {
             RebindDailyButtonAnimators();
             RefreshDailyButtonVisuals();
@@ -383,5 +372,18 @@ public class LevelSelectionScreenController : MonoBehaviour
         }
 
         return false;
+    }
+
+    private void ResolveLevelsScreen()
+    {
+        if (_levelsScreen != null)
+            return;
+
+        _levelsScreen = GetComponent<LevelsScreen>();
+        if (_levelsScreen == null)
+            _levelsScreen = GetComponentInParent<LevelsScreen>(true);
+
+        if (_levelsScreen == null)
+            Debug.LogWarning("[LevelSelectionScreenController] LevelsScreen was not found. Foreground refresh requests will be ignored.");
     }
 }

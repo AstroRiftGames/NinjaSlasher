@@ -12,6 +12,7 @@ public class LevelsScreen : UIScreenBase
 
     private bool _hasPlayedIntroAnimation = false;
     private bool _isWaitingForStartupSequence = false;
+    private bool _isForegroundVisible = true;
 
     protected override void Awake()
     {
@@ -59,14 +60,12 @@ public class LevelsScreen : UIScreenBase
 
         if (!_hasPlayedIntroAnimation)
         {
-            _isWaitingForStartupSequence = true;
-            SetStartupSequenceVisualsVisible(false);
+            EnterStartupSuppressedState("Show/FirstEntry");
             HideLevelButtons();
         }
         else
         {
-            _isWaitingForStartupSequence = false;
-            SetStartupSequenceVisualsVisible(true);
+            ExitStartupSuppressedState("Show/ReturnEntry");
             ShowLevelButtonsInstantly();
         }
 
@@ -94,9 +93,8 @@ public class LevelsScreen : UIScreenBase
         if (!_isWaitingForStartupSequence || !isActiveAndEnabled)
             return;
 
-        _isWaitingForStartupSequence = false;
         _hasPlayedIntroAnimation = true;
-        SetStartupSequenceVisualsVisible(true);
+        ExitStartupSuppressedState("StartupSequenceCompleted");
         StartCoroutine(AnimateLevelButtonsSequence());
     }
 
@@ -161,16 +159,60 @@ public class LevelsScreen : UIScreenBase
     public void ResetAnimationStateForScreenReturn()
     {
         _isWaitingForStartupSequence = false;
-        SetStartupSequenceVisualsVisible(true);
+        SetForegroundVisible(true, "ResetAnimationStateForScreenReturn");
         ShowLevelButtonsInstantly();
     }
 
-    private void SetStartupSequenceVisualsVisible(bool visible)
+    public void EnterStartupSuppressedState(string reason = null)
     {
+        _isWaitingForStartupSequence = true;
+        SetForegroundVisible(false, reason ?? "EnterStartupSuppressedState");
+    }
+
+    public void ExitStartupSuppressedState(string reason = null)
+    {
+        _isWaitingForStartupSequence = false;
+        SetForegroundVisible(true, reason ?? "ExitStartupSuppressedState");
+    }
+
+    public void RefreshForegroundVisibility(string reason = null)
+    {
+        bool shouldShow = ShouldForegroundBeVisible();
+        SetForegroundVisible(shouldShow, reason ?? "RefreshForegroundVisibility");
+    }
+
+    public void SetForegroundVisible(bool visible, string reason = null)
+    {
+        if (_isForegroundVisible == visible
+            && (_infoRoot == null || _infoRoot.activeSelf == visible)
+            && (_buttonsRoot == null || _buttonsRoot.activeSelf == visible))
+        {
+            return;
+        }
+
+        _isForegroundVisible = visible;
+
         if (_infoRoot != null)
             _infoRoot.SetActive(visible);
 
         if (_buttonsRoot != null)
             _buttonsRoot.SetActive(visible);
+
+        Debug.Log($"[LevelsScreen] Foreground -> {(visible ? "Visible" : "Hidden")} | Reason={reason ?? "Unspecified"} | StartupSuppressed={_isWaitingForStartupSequence} | BlockingPanels={HasBlockingPanelsForForeground()} | ScreenVisible={_isVisible}");
     }
+
+    private bool ShouldForegroundBeVisible()
+    {
+        if (_isWaitingForStartupSequence)
+            return false;
+
+        return !HasBlockingPanelsForForeground();
+    }
+
+    private bool HasBlockingPanelsForForeground()
+    {
+        return UIManager.Instance != null && UIManager.Instance.HasBlockingPanelForLevelSelection();
+    }
+
+    public bool IsForegroundVisible => _isForegroundVisible;
 }
