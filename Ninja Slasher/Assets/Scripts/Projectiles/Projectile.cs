@@ -16,6 +16,7 @@ public class Projectile : MonoBehaviour, IPoolable
     [SerializeField] protected LayerMask playerLayer;
     [SerializeField] protected LayerMask scenarioLayer;
     [SerializeField] protected Animator _animator;
+    [SerializeField] protected ParticleSystem _particleSystem;
 
     protected Rigidbody2D _rb;
 
@@ -195,6 +196,7 @@ public class Projectile : MonoBehaviour, IPoolable
         }
 
         _animator.SetTrigger("OnImpact");
+        _particleSystem.Play();
         AudioService.Instance.PlaySFXAtPosition(_audioContext.Audio.impact, transform.position);
         _rb.linearVelocity = Vector2.zero;
     }
