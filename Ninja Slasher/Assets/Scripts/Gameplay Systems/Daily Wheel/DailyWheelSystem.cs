@@ -4,6 +4,8 @@ using UnityEngine;
 
 public class DailyWheelSystem : MonoBehaviourSingleton<DailyWheelSystem>
 {
+    public static event Action OnBootstrapped;
+
     [Header("DEBUG")]
     [SerializeField] private bool debugInfiniteSpins = false;
 
@@ -11,37 +13,36 @@ public class DailyWheelSystem : MonoBehaviourSingleton<DailyWheelSystem>
     [SerializeField] private WheelRewardSet _rewardSet;
 
     private WheelData wheelData = new WheelData();
+    private bool _bootstrapSignalEmitted;
+    private SaveBootstrapSync _saveBootstrapSync;
 
     public WheelReward[] WheelRewards => _rewardSet?.rewards;
+    public bool IsBootstrapped { get; private set; }
 
     public override void Awake()
     {
         base.Awake();
+        _saveBootstrapSync = new SaveBootstrapSync("DailyWheelSystem", () => IsBootstrapped, BootstrapFromSave);
     }
 
     private void OnEnable()
     {
-        SaveManager.OnDataLoaded += HandleDataLoaded;
+        _saveBootstrapSync?.Enable();
     }
 
     private void OnDisable()
     {
-        SaveManager.OnDataLoaded -= HandleDataLoaded;
+        _saveBootstrapSync?.Disable();
     }
 
-    private void HandleDataLoaded(GameData _)
+    protected override void OnDestroy()
     {
-        LoadWheelData();
-        CheckWheelAvailability();
-    }
+        _saveBootstrapSync?.Dispose();
 
-    private void Start()
-    {
-        if (SaveManager.Instance != null && SaveManager.Instance.IsDataLoaded)
-        {
-            LoadWheelData();
-            CheckWheelAvailability();
-        }
+        if (Instance == this)
+            OnBootstrapped = null;
+
+        base.OnDestroy();
     }
 
     public bool SpinWheel(out WheelReward reward)
@@ -101,6 +102,17 @@ public class DailyWheelSystem : MonoBehaviourSingleton<DailyWheelSystem>
             return 0;
 
         return Mathf.Max(0, wheelData.pendingFreeSpins);
+    }
+
+    public DailyAvailabilitySnapshot GetAvailabilitySnapshot()
+    {
+        bool canSpinToday = CanSpinToday();
+        int availableSpinCount = GetAvailableSpinCount();
+        DateTime nextAvailabilityUtc = canSpinToday
+            ? DateTime.UtcNow
+            : GetNextDailySpinAvailabilityUtc();
+
+        return new DailyAvailabilitySnapshot(canSpinToday, nextAvailabilityUtc, availableSpinCount);
     }
 
     public bool ShouldAutoShowToday()
@@ -223,6 +235,21 @@ public class DailyWheelSystem : MonoBehaviourSingleton<DailyWheelSystem>
     {
         bool isAvailable = CanSpinToday();
         GameEvents.RaiseWheelAvailabilityChanged(isAvailable);
+    }
+
+    private void BootstrapFromSave()
+    {
+        LoadWheelData();
+        IsBootstrapped = true;
+
+        if (!_bootstrapSignalEmitted)
+        {
+            _bootstrapSignalEmitted = true;
+            Debug.Log("[DailyWheelSystem] Bootstrap -> Completed");
+            OnBootstrapped?.Invoke();
+        }
+
+        CheckWheelAvailability();
     }
 
     private void LoadWheelData()

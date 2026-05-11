@@ -8,32 +8,47 @@ public sealed class DailyStartupSequence : IDisposable
     private bool _isWaitingForWheelClose;
     private bool _isWaitingForReward;
     private bool _isRunning;
+    private bool _isRewardSystemReady;
+    private bool _isWheelSystemReady;
 
     public DailyStartupSequence(MonoBehaviour runner)
     {
-        SaveManager.OnDataLoaded += OnDataLoaded;
+        DailyRewardSystem.OnBootstrapped += OnRewardSystemBootstrapped;
+        DailyWheelSystem.OnBootstrapped += OnWheelSystemBootstrapped;
         UIEvents.OnLevelSelectorReady += OnLevelSelectorReady;
         UIEvents.OnWheelSequenceCompleted += OnWheelSequenceCompleted;
         UIEvents.OnDailyWheelModalClosed += OnDailyWheelModalClosed;
         UIEvents.OnDailyRewardModalClosed += OnDailyRewardModalClosed;
+        SyncSystemReadiness("Constructor");
     }
 
     public void Dispose()
     {
-        SaveManager.OnDataLoaded -= OnDataLoaded;
+        DailyRewardSystem.OnBootstrapped -= OnRewardSystemBootstrapped;
+        DailyWheelSystem.OnBootstrapped -= OnWheelSystemBootstrapped;
         UIEvents.OnLevelSelectorReady -= OnLevelSelectorReady;
         UIEvents.OnWheelSequenceCompleted -= OnWheelSequenceCompleted;
         UIEvents.OnDailyWheelModalClosed -= OnDailyWheelModalClosed;
         UIEvents.OnDailyRewardModalClosed -= OnDailyRewardModalClosed;
     }
 
-    private void OnDataLoaded(GameData _)
+    private void OnRewardSystemBootstrapped()
     {
+        _isRewardSystemReady = true;
+        Debug.Log("[DailyStartupSequence] Signal -> DailyRewardSystem.OnBootstrapped");
+        TryAdvanceSequence();
+    }
+
+    private void OnWheelSystemBootstrapped()
+    {
+        _isWheelSystemReady = true;
+        Debug.Log("[DailyStartupSequence] Signal -> DailyWheelSystem.OnBootstrapped");
         TryAdvanceSequence();
     }
 
     private void OnLevelSelectorReady()
     {
+        SyncSystemReadiness("OnLevelSelectorReady");
         _isLevelSelectorReady = true;
         _isRunning = true;
         _isWaitingForWheel = false;
@@ -75,12 +90,19 @@ public sealed class DailyStartupSequence : IDisposable
     private void TryAdvanceSequence()
     {
         if (!_isRunning || !_isLevelSelectorReady) return;
-        if (SaveManager.Instance == null || !SaveManager.Instance.IsDataLoaded) return;
         if (_isWaitingForWheel || _isWaitingForWheelClose || _isWaitingForReward) return;
+
+        SyncSystemReadiness("TryAdvanceSequence");
 
         if (DailyWheelSystem.Instance == null || DailyRewardSystem.Instance == null)
         {
             CompleteSequence();
+            return;
+        }
+
+        if (!_isWheelSystemReady || !_isRewardSystemReady)
+        {
+            Debug.Log($"[DailyStartupSequence] Waiting -> rewardReady={_isRewardSystemReady} | wheelReady={_isWheelSystemReady}");
             return;
         }
 
@@ -114,5 +136,19 @@ public sealed class DailyStartupSequence : IDisposable
 
         Debug.Log("[DailyStartupSequence] Signal -> StartupSequenceCompleted");
         UIEvents.RaiseStartupSequenceCompleted();
+    }
+
+    private void SyncSystemReadiness(string reason)
+    {
+        bool rewardReadyNow = DailyRewardSystem.Instance != null && DailyRewardSystem.Instance.IsBootstrapped;
+        bool wheelReadyNow = DailyWheelSystem.Instance != null && DailyWheelSystem.Instance.IsBootstrapped;
+
+        if (_isRewardSystemReady != rewardReadyNow || _isWheelSystemReady != wheelReadyNow)
+        {
+            Debug.Log($"[DailyStartupSequence] Readiness -> rewardReady={rewardReadyNow} | wheelReady={wheelReadyNow} | Reason={reason}");
+        }
+
+        _isRewardSystemReady = rewardReadyNow;
+        _isWheelSystemReady = wheelReadyNow;
     }
 }

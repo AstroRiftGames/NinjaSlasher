@@ -269,10 +269,10 @@ public class LevelSelectionScreenController : MonoBehaviour
     private void RefreshDailyButtonVisuals(string reason, bool force = false)
     {
         if (DailyRewardSystem.Instance != null)
-            ApplyDailyRewardAvailability(DailyRewardSystem.Instance.CanClaimToday(), reason, force);
+            ApplyDailyRewardAvailability(DailyRewardSystem.Instance.GetAvailabilitySnapshot().IsAvailable, reason, force);
 
         if (DailyWheelSystem.Instance != null)
-            ApplyDailyWheelAvailability(DailyWheelSystem.Instance.CanSpinToday(), reason, force);
+            ApplyDailyWheelAvailability(DailyWheelSystem.Instance.GetAvailabilitySnapshot().IsAvailable, reason, force);
     }
 
     private void RefreshLivesWidget(string reason, bool force = false)

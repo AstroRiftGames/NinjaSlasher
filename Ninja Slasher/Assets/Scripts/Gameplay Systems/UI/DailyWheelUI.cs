@@ -78,15 +78,16 @@ public class DailyWheelUI : MonoBehaviour
 
     private void OnEnable()
     {
+        DailyWheelSystem.OnBootstrapped += OnWheelSystemBootstrapped;
         if (_wheelLever != null) _wheelLever.OnLeverActivated += OnLeverPulled;
         GameEvents.OnCoinsChanged += OnCoinsChanged;
         StartTimerUpdate();
-        RefreshWheelState();
-        RefreshNoSpinsPopupState();
+        TryRefreshWheelState("OnEnable");
     }
 
     private void OnDisable()
     {
+        DailyWheelSystem.OnBootstrapped -= OnWheelSystemBootstrapped;
         if (_wheelLever != null) _wheelLever.OnLeverActivated -= OnLeverPulled;
         GameEvents.OnCoinsChanged -= OnCoinsChanged;
         if (_timerCoroutine != null) StopCoroutine(_timerCoroutine);
@@ -115,21 +116,20 @@ public class DailyWheelUI : MonoBehaviour
     private void Start()
     {
         HideLotteryInfo();
-
         ResetVisualState();
-        RefreshWheelState();
-        RefreshNoSpinsPopupState();
     }
 
     public void HandleModalShown()
     {
+        TryRefreshWheelState("HandleModalShown");
+
         if (_delayedNoSpinsPopupCoroutine != null)
         {
             StopCoroutine(_delayedNoSpinsPopupCoroutine);
             _delayedNoSpinsPopupCoroutine = null;
         }
 
-        if (DailyWheelSystem.Instance == null || DailyWheelSystem.Instance.GetAvailableSpinCount() > 0)
+        if (!IsWheelSystemReady() || DailyWheelSystem.Instance.GetAvailabilitySnapshot().AvailableCount > 0)
             return;
 
         _delayedNoSpinsPopupCoroutine = StartCoroutine(ShowNoSpinsPopupWithDelay());
@@ -138,7 +138,7 @@ public class DailyWheelUI : MonoBehaviour
     private void OnLeverPulled()
     {
         if (_isSpinning) return;
-        if (DailyWheelSystem.Instance == null) return;
+        if (!IsWheelSystemReady()) return;
 
         if (!DailyWheelSystem.Instance.SpinWheel(out _currentReward))
         {
@@ -457,12 +457,11 @@ public class DailyWheelUI : MonoBehaviour
 
         while (true)
         {
-            if (DailyWheelSystem.Instance != null)
+            if (IsWheelSystemReady())
             {
-                bool canSpin = DailyWheelSystem.Instance.CanSpinToday();
-                int availableSpins = DailyWheelSystem.Instance.GetAvailableSpinCount();
-                UpdateSpinCountdownTexts(canSpin, availableSpins);
-                UpdateAvailableSpinsText(availableSpins);
+                DailyAvailabilitySnapshot availability = DailyWheelSystem.Instance.GetAvailabilitySnapshot();
+                UpdateSpinCountdownTexts(availability.IsAvailable, availability.AvailableCount, availability.NextAvailabilityUtc);
+                UpdateAvailableSpinsText(availability.AvailableCount);
             }
 
             yield return wait;
@@ -471,25 +470,24 @@ public class DailyWheelUI : MonoBehaviour
 
     private DateTime GetNextSpinAvailabilityUtc()
     {
-        if (DailyWheelSystem.Instance == null)
+        if (!IsWheelSystemReady())
             return DateTime.UtcNow;
 
-        return DailyWheelSystem.Instance.GetNextDailySpinAvailabilityUtc();
+        return DailyWheelSystem.Instance.GetAvailabilitySnapshot().NextAvailabilityUtc;
     }
 
     private void RefreshWheelState()
     {
-        if (DailyWheelSystem.Instance == null)
+        if (!IsWheelSystemReady())
         {
             UpdateUIState(false);
             return;
         }
 
-        bool canSpin = DailyWheelSystem.Instance.CanSpinToday();
-        int availableSpins = DailyWheelSystem.Instance.GetAvailableSpinCount();
-        UpdateSpinCountdownTexts(canSpin, availableSpins);
-        UpdateAvailableSpinsText(availableSpins);
-        UpdateUIState(canSpin);
+        DailyAvailabilitySnapshot availability = DailyWheelSystem.Instance.GetAvailabilitySnapshot();
+        UpdateSpinCountdownTexts(availability.IsAvailable, availability.AvailableCount, availability.NextAvailabilityUtc);
+        UpdateAvailableSpinsText(availability.AvailableCount);
+        UpdateUIState(availability.IsAvailable);
     }
 
     private void UpdateUIState(bool canSpin)
@@ -575,9 +573,8 @@ public class DailyWheelUI : MonoBehaviour
         _lastAvailableSpins = clampedAvailableSpins;
     }
 
-    private void UpdateSpinCountdownTexts(bool canSpin, int availableSpins)
+    private void UpdateSpinCountdownTexts(bool canSpin, int availableSpins, DateTime nextSpinAvailabilityUtc)
     {
-        DateTime nextSpinAvailabilityUtc = GetNextSpinAvailabilityUtc();
         string nextSpinText = DailyAvailabilityUIFormatter.FormatLockedAvailability(
             "Proximo giro en ",
             nextSpinAvailabilityUtc,
@@ -637,7 +634,7 @@ public class DailyWheelUI : MonoBehaviour
 
     public void TryPurchaseNoSpinsOffer()
     {
-        if (SaveManager.Instance == null || DailyWheelSystem.Instance == null)
+        if (SaveManager.Instance == null || !IsWheelSystemReady())
             return;
 
         if (!SaveManager.Instance.SpendCoins(NoSpinsPurchaseCost))
@@ -671,7 +668,7 @@ public class DailyWheelUI : MonoBehaviour
         yield return new WaitForSecondsRealtime(Mathf.Max(0f, _noSpinsPopupOpenDelay));
         _delayedNoSpinsPopupCoroutine = null;
 
-        if (!isActiveAndEnabled || DailyWheelSystem.Instance == null || DailyWheelSystem.Instance.GetAvailableSpinCount() > 0)
+        if (!isActiveAndEnabled || !IsWheelSystemReady() || DailyWheelSystem.Instance.GetAvailabilitySnapshot().AvailableCount > 0)
             yield break;
 
         ShowNoSpinsPopup();
@@ -824,5 +821,36 @@ public class DailyWheelUI : MonoBehaviour
             return;
 
         _sharedNoSpinsBuyButton.interactable = shouldBeInteractable && SaveManager.Instance != null && SaveManager.Instance.GetCoins() >= NoSpinsPurchaseCost;
+    }
+
+    private void OnWheelSystemBootstrapped()
+    {
+        Debug.Log("[DailyWheelUI] Signal -> DailyWheelSystem.OnBootstrapped");
+        TryRefreshWheelState("DailyWheelSystem.OnBootstrapped");
+    }
+
+    private bool TryRefreshWheelState(string reason)
+    {
+        if (!IsWheelSystemReady())
+        {
+            bool saveLoaded = SaveManager.Instance != null && SaveManager.Instance.IsDataLoaded;
+            bool systemExists = DailyWheelSystem.Instance != null;
+            bool wheelBootstrapped = systemExists && DailyWheelSystem.Instance.IsBootstrapped;
+            Debug.Log($"[DailyWheelUI] Bootstrap -> Waiting | Reason={reason} | systemExists={systemExists} | saveLoaded={saveLoaded} | wheelBootstrapped={wheelBootstrapped}");
+            return false;
+        }
+
+        RefreshWheelState();
+        RefreshNoSpinsPopupState();
+        Debug.Log($"[DailyWheelUI] Bootstrap -> Ready | Reason={reason}");
+        return true;
+    }
+
+    private bool IsWheelSystemReady()
+    {
+        return DailyWheelSystem.Instance != null
+            && SaveManager.Instance != null
+            && SaveManager.Instance.IsDataLoaded
+            && DailyWheelSystem.Instance.IsBootstrapped;
     }
 }
