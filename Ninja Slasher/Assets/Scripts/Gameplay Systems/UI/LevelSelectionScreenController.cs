@@ -25,12 +25,12 @@ public class LevelSelectionScreenController : MonoBehaviour
     private const string DailyAvailabilityParameterName = "IsAvailable";
     private Animator _dailyRewardButtonAnimator;
     private Animator _dailyWheelButtonAnimator;
-    private LevelsScreen _levelsScreen;
+    private ButtonManager _buttonManager;
 
     private void Awake()
     {
         Instance = this;
-        ResolveLevelsScreen();
+        ResolveButtonManager();
         ResolveLivesFeedbackReferences();
         CacheDailyButtons();
         StoreRewardFeedbackController.EnsureFor(this);
@@ -39,7 +39,7 @@ public class LevelSelectionScreenController : MonoBehaviour
     private void OnEnable()
     {
         Instance = this;
-        ResolveLevelsScreen();
+        ResolveButtonManager();
         ResolveLivesFeedbackReferences();
         CacheDailyButtons();
         StoreRewardFeedbackController.EnsureFor(this);
@@ -48,7 +48,6 @@ public class LevelSelectionScreenController : MonoBehaviour
         RefreshLivesWidget();
         RefreshDailyButtonVisuals();
         RegisterButtonListeners();
-        UpdateForegroundVisibility();
 
         GameEvents.OnRewardAvailabilityChanged += OnRewardAvailabilityChanged;
         GameEvents.OnWheelAvailabilityChanged += OnWheelAvailabilityChanged;
@@ -93,7 +92,6 @@ public class LevelSelectionScreenController : MonoBehaviour
     {
         RefreshLivesWidget();
         RefreshDailyButtonVisuals();
-        UpdateForegroundVisibility();
     }
 
     public RectTransform GetUnlimitedLivesFeedbackTarget()
@@ -176,7 +174,14 @@ public class LevelSelectionScreenController : MonoBehaviour
     private void OnAreaUnlockAnimationComplete(AreaSectionController area)
     {
         // Refresca los botones de niveles tras completar la animación de nubes
-        ButtonManager.Instance?.RefreshLevelProgression();
+        if (_buttonManager == null)
+        {
+            Debug.LogWarning("[LevelSelectionScreenController] ButtonManager was not found. Level progression refresh was skipped.");
+            return;
+        }
+
+        Debug.Log("[LevelSelectionScreenController] Presenter -> RefreshLevelProgression after area unlock animation.");
+        _buttonManager.RefreshLevelProgression();
     }
 
 #if UNITY_EDITOR
@@ -237,19 +242,16 @@ public class LevelSelectionScreenController : MonoBehaviour
         SetDailyButtonAvailability(_dailyWheelButtonAnimator, isAvailable);
     }
 
-    private void UpdateForegroundVisibility()
+    public void OnForegroundShown(string reason = null)
     {
-        if (_levelsScreen == null)
-            return;
+        Debug.Log($"[LevelSelectionScreenController] Presenter -> ForegroundShown | Reason={reason ?? "Unspecified"}");
+        RebindDailyButtonAnimators();
+        RefreshDailyButtonVisuals();
+    }
 
-        bool wasVisible = _levelsScreen.IsForegroundVisible;
-        _levelsScreen.RefreshForegroundVisibility("LevelSelectionScreenController.UpdateForegroundVisibility");
-
-        if (!wasVisible && _levelsScreen.IsForegroundVisible)
-        {
-            RebindDailyButtonAnimators();
-            RefreshDailyButtonVisuals();
-        }
+    public void OnForegroundHidden(string reason = null)
+    {
+        Debug.Log($"[LevelSelectionScreenController] Presenter -> ForegroundHidden | Reason={reason ?? "Unspecified"}");
     }
 
     private void RefreshDailyButtonVisuals()
@@ -374,16 +376,14 @@ public class LevelSelectionScreenController : MonoBehaviour
         return false;
     }
 
-    private void ResolveLevelsScreen()
+    private void ResolveButtonManager()
     {
-        if (_levelsScreen != null)
+        if (_buttonManager != null)
             return;
 
-        _levelsScreen = GetComponent<LevelsScreen>();
-        if (_levelsScreen == null)
-            _levelsScreen = GetComponentInParent<LevelsScreen>(true);
+        _buttonManager = GetComponentInParent<ButtonManager>(true);
 
-        if (_levelsScreen == null)
-            Debug.LogWarning("[LevelSelectionScreenController] LevelsScreen was not found. Foreground refresh requests will be ignored.");
+        if (_buttonManager == null)
+            Debug.LogWarning("[LevelSelectionScreenController] ButtonManager was not found.");
     }
 }

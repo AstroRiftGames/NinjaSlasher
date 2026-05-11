@@ -9,6 +9,8 @@ public class LevelsScreen : UIScreenBase
     [SerializeField] private GameObject _infoRoot;
     [SerializeField] private GameObject _buttonsRoot;
     [SerializeField] private AreaSectionController[] _areaSections;
+    [SerializeField] private LevelSelectionScreenController _presenter;
+    [SerializeField] private ButtonManager _buttonManager;
 
     private bool _hasPlayedIntroAnimation = false;
     private bool _isWaitingForStartupSequence = false;
@@ -17,11 +19,18 @@ public class LevelsScreen : UIScreenBase
     protected override void Awake()
     {
         base.Awake();
+        ResolveDependencies();
+    }
+
+    private void Update()
+    {
+        RefreshForegroundVisibility("LevelsScreen.Update");
     }
 
     protected override void OnEnable()
     {
         base.OnEnable();
+        ResolveDependencies();
         UIEvents.OnStartupSequenceCompleted += OnStartupSequenceCompleted;
 
         if (_areaSections == null) return;
@@ -42,8 +51,17 @@ public class LevelsScreen : UIScreenBase
     private void OnAreaUnlocked(AreaSectionController area)
     {
         var buttons = area.GetAreaButtons();
-        if (buttons.Length > 0)
-            ButtonManager.Instance?.AnimateButtons(buttons);
+        if (buttons.Length == 0)
+            return;
+
+        if (_buttonManager == null)
+        {
+            Debug.LogWarning("[LevelsScreen] ButtonManager was not found. Area unlock reveal was skipped.");
+            return;
+        }
+
+        Debug.Log($"[LevelsScreen] Reveal -> AreaUnlocked | Buttons={buttons.Length}");
+        _buttonManager.AnimateLevelButtonsReveal(buttons, "AreaUnlocked");
     }
 
     public override void Show()
@@ -81,7 +99,7 @@ public class LevelsScreen : UIScreenBase
 
         SetPanelInputEnabled(false);
 
-        ButtonManager.Instance?.StopAllButtonAnimations();
+        _buttonManager?.StopAllButtonAnimations();
 
         OnHidden();
 
@@ -101,15 +119,19 @@ public class LevelsScreen : UIScreenBase
     private IEnumerator AnimateLevelButtonsSequence()
     {
         yield return null;
-        yield return new WaitUntil(() => ButtonManager.Instance != null);
 
         if (_delayBeforeAnimation > 0f)
             yield return new WaitForSeconds(_delayBeforeAnimation);
 
-        if (ButtonManager.Instance == null) yield break;
+        if (_buttonManager == null)
+        {
+            Debug.LogWarning("[LevelsScreen] ButtonManager was not found. Intro reveal animation was skipped.");
+            yield break;
+        }
 
         var visibleButtons = CollectUnlockedAreaButtons();
-        ButtonManager.Instance.AnimateButtons(visibleButtons);
+        Debug.Log($"[LevelsScreen] Reveal -> IntroSequence | Buttons={visibleButtons.Count}");
+        _buttonManager.AnimateLevelButtonsReveal(visibleButtons, "IntroSequence");
     }
 
     private List<Button> CollectUnlockedAreaButtons()
@@ -134,26 +156,25 @@ public class LevelsScreen : UIScreenBase
 
     private void HideLevelButtons()
     {
-        if (ButtonManager.Instance == null) return;
-
-        var levelButtons = ButtonManager.Instance.GetLevelButtons();
-        if (levelButtons == null) return;
-
-        foreach (var button in levelButtons)
+        if (_buttonManager == null)
         {
-            if (button != null)
-            {
-                button.gameObject.SetActive(false);
-            }
+            Debug.LogWarning("[LevelsScreen] ButtonManager was not found. HideLevelButtons was skipped.");
+            return;
         }
+
+        _buttonManager.HideAllLevelButtons();
     }
 
     private void ShowLevelButtonsInstantly()
     {
-        if (ButtonManager.Instance == null) return;
+        if (_buttonManager == null)
+        {
+            Debug.LogWarning("[LevelsScreen] ButtonManager was not found. ShowLevelButtonsInstantly was skipped.");
+            return;
+        }
 
-        ButtonManager.Instance.StopAllButtonAnimations();
-        ButtonManager.Instance.ShowButtonsInstantly(ButtonManager.Instance.GetLevelButtons());
+        _buttonManager.StopAllButtonAnimations();
+        _buttonManager.ShowAllLevelButtonsInstantly();
     }
 
     public void ResetAnimationStateForScreenReturn()
@@ -198,6 +219,14 @@ public class LevelsScreen : UIScreenBase
         if (_buttonsRoot != null)
             _buttonsRoot.SetActive(visible);
 
+        if (_presenter != null)
+        {
+            if (visible)
+                _presenter.OnForegroundShown(reason);
+            else
+                _presenter.OnForegroundHidden(reason);
+        }
+
         Debug.Log($"[LevelsScreen] Foreground -> {(visible ? "Visible" : "Hidden")} | Reason={reason ?? "Unspecified"} | StartupSuppressed={_isWaitingForStartupSequence} | BlockingPanels={HasBlockingPanelsForForeground()} | ScreenVisible={_isVisible}");
     }
 
@@ -215,4 +244,19 @@ public class LevelsScreen : UIScreenBase
     }
 
     public bool IsForegroundVisible => _isForegroundVisible;
+
+    private void ResolveDependencies()
+    {
+        if (_presenter == null)
+            _presenter = GetComponent<LevelSelectionScreenController>() ?? GetComponentInChildren<LevelSelectionScreenController>(true);
+
+        if (_buttonManager == null)
+            _buttonManager = GetComponentInParent<ButtonManager>(true);
+
+        if (_presenter == null)
+            Debug.LogWarning("[LevelsScreen] LevelSelectionScreenController was not found.");
+
+        if (_buttonManager == null)
+            Debug.LogWarning("[LevelsScreen] ButtonManager was not found.");
+    }
 }

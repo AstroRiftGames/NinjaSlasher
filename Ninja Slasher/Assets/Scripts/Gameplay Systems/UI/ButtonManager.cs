@@ -268,6 +268,29 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
         }
     }
 
+    public void HideAllLevelButtons()
+    {
+        Debug.Log("[ButtonManager] Render -> HideAllLevelButtons");
+
+        foreach (var btn in levelButtons)
+        {
+            if (btn != null)
+                btn.gameObject.SetActive(false);
+        }
+    }
+
+    public void ShowAllLevelButtonsInstantly()
+    {
+        Debug.Log("[ButtonManager] Render -> ShowAllLevelButtonsInstantly");
+        ShowButtonsInstantly(levelButtons);
+    }
+
+    public void AnimateLevelButtonsReveal(IEnumerable<Button> buttons, string reason = null)
+    {
+        Debug.Log($"[ButtonManager] Render -> AnimateLevelButtonsReveal | Reason={reason ?? "Unspecified"}");
+        AnimateButtons(buttons);
+    }
+
     public void ShowButtonsInstantly(IEnumerable<Button> buttons)
     {
         if (buttons == null) return;
