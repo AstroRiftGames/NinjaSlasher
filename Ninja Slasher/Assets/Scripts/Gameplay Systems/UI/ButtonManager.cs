@@ -26,6 +26,8 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
     [SerializeField] private float _starRevealStagger = 0.14f;
     [SerializeField] private float _starPunchDuration = 0.18f;
     [SerializeField] private Vector3 _starPunchStrength = new Vector3(0.16f, 0.16f, 0f);
+    [SerializeField] private StarRevealCelebrationEffect _starRevealCelebrationEffectPrefab;
+    [SerializeField] private float _starRevealLevelGap = 0.08f;
 
     [Header("ANIMATION SETTINGS")]
     [SerializeField] private float fallDistance = 800f;
@@ -36,8 +38,29 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
     private List<Sequence> activeButtonSequences = new List<Sequence>();
     private List<Sequence> _activeStarSequences = new List<Sequence>();
     private Dictionary<Button, Vector2> savedButtonPositions = new Dictionary<Button, Vector2>();
+    private readonly Stack<StarRevealCelebrationEffect> _availableCelebrationEffects = new();
+    private readonly HashSet<StarRevealCelebrationEffect> _activeCelebrationEffects = new();
 
     private UIAudioContext _audioContext;
+    private Coroutine _pendingStarRevealPlaybackRoutine;
+
+    private readonly struct PendingStarRevealPresentation
+    {
+        public readonly Button Button;
+        public readonly RectTransform StarsContainer;
+        public readonly int PreviousStars;
+        public readonly int NewStars;
+        public readonly int LevelId;
+
+        public PendingStarRevealPresentation(Button button, RectTransform starsContainer, int previousStars, int newStars, int levelId)
+        {
+            Button = button;
+            StarsContainer = starsContainer;
+            PreviousStars = previousStars;
+            NewStars = newStars;
+            LevelId = levelId;
+        }
+    }
 
     private void OnSaveDataLoaded(GameData _) => RefreshLevelProgression();
 
@@ -472,13 +495,14 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
 
     public void StopAllButtonAnimations()
     {
+        StopStarRevealPresentation();
+
         foreach (var sequence in activeButtonSequences.ToList())
         {
             if (sequence != null && sequence.IsActive())
                 sequence.Kill(false);
         }
         activeButtonSequences.Clear();
-        KillAllStarTweens();
 
         foreach (var kvp in savedButtonPositions)
         {
@@ -501,8 +525,32 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
 
     public void TryPlayPendingStarRevealAnimations()
     {
-        if (LevelProgressionManager.Instance == null)
+        if (LevelProgressionManager.Instance == null || _pendingStarRevealPlaybackRoutine != null)
             return;
+
+        List<PendingStarRevealPresentation> pendingReveals = CollectPendingStarRevealPresentations();
+        if (pendingReveals.Count == 0)
+            return;
+
+        _pendingStarRevealPlaybackRoutine = StartCoroutine(PlayPendingStarRevealSequence(pendingReveals));
+    }
+
+    public void StopStarRevealPresentation()
+    {
+        if (_pendingStarRevealPlaybackRoutine != null)
+        {
+            StopCoroutine(_pendingStarRevealPlaybackRoutine);
+            _pendingStarRevealPlaybackRoutine = null;
+        }
+
+        KillAllStarTweens();
+        StopAllCelebrationEffects();
+        UpdateButtonProgression();
+    }
+
+    private List<PendingStarRevealPresentation> CollectPendingStarRevealPresentations()
+    {
+        List<PendingStarRevealPresentation> pendingReveals = new();
 
         for (int i = 0; i < levelButtons.Length; i++)
         {
@@ -510,27 +558,56 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
             if (levelButton == null || !levelButton.gameObject.activeInHierarchy)
                 continue;
 
-            Transform starsContainer = levelButton.transform.Find("Stars");
-            if (starsContainer == null || !starsContainer.gameObject.activeInHierarchy)
+            if (!(levelButton.transform.Find("Stars") is RectTransform starsContainer) || !starsContainer.gameObject.activeInHierarchy)
                 continue;
 
             int levelId = i + 1;
             if (!LevelProgressionManager.Instance.ConsumePendingStarReveal(levelId, out int previousStars, out int newStars))
                 continue;
 
-            AnimateNewStars(starsContainer, previousStars, newStars, levelId);
+            pendingReveals.Add(new PendingStarRevealPresentation(levelButton, starsContainer, previousStars, newStars, levelId));
+        }
+
+        return pendingReveals;
+    }
+
+    private IEnumerator PlayPendingStarRevealSequence(List<PendingStarRevealPresentation> pendingReveals)
+    {
+        try
+        {
+            foreach (PendingStarRevealPresentation reveal in pendingReveals)
+            {
+                if (!isActiveAndEnabled)
+                    yield break;
+
+                if (reveal.Button == null || !reveal.Button.gameObject.activeInHierarchy || reveal.StarsContainer == null)
+                    continue;
+
+                PlayStarRevealCelebration(reveal, out float celebrationLeadDelay);
+
+                if (celebrationLeadDelay > 0f)
+                    yield return new WaitForSecondsRealtime(celebrationLeadDelay);
+
+                float revealDuration = AnimateNewStars(reveal.StarsContainer, reveal.PreviousStars, reveal.NewStars, reveal.LevelId);
+                if (revealDuration > 0f)
+                    yield return new WaitForSecondsRealtime(revealDuration + _starRevealLevelGap);
+            }
+        }
+        finally
+        {
+            _pendingStarRevealPlaybackRoutine = null;
         }
     }
 
-    private void AnimateNewStars(Transform starsContainer, int previousStars, int newStars, int levelId)
+    private float AnimateNewStars(RectTransform starsContainer, int previousStars, int newStars, int levelId)
     {
         if (starsContainer == null)
-            return;
+            return 0f;
 
         int clampedPrevious = Mathf.Clamp(previousStars, 0, starsContainer.childCount);
         int clampedNew = Mathf.Clamp(newStars, clampedPrevious, starsContainer.childCount);
         if (clampedNew <= clampedPrevious)
-            return;
+            return 0f;
 
         Debug.Log($"[ButtonManager] StarReveal -> Level={levelId} | Previous={clampedPrevious} | New={clampedNew}");
 
@@ -574,6 +651,80 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
                     starRect.localScale = Vector3.one;
                 }
             });
+        }
+
+        return ((revealEnd - clampedPrevious - 1) * revealSpacing) + _starPunchDuration;
+    }
+
+    private void PlayStarRevealCelebration(PendingStarRevealPresentation reveal, out float leadDelay)
+    {
+        leadDelay = 0f;
+
+        if (_starRevealCelebrationEffectPrefab == null || reveal.Button == null)
+            return;
+
+        StarRevealCelebrationEffect effect = GetCelebrationEffect();
+        if (effect == null)
+            return;
+
+        Canvas sourceCanvas = reveal.Button.GetComponentInParent<Canvas>();
+        RectTransform anchor = reveal.StarsContainer != null ? reveal.StarsContainer : reveal.Button.GetComponent<RectTransform>();
+        Vector3 localPosition = anchor != null && anchor != reveal.Button.transform
+            ? anchor.localPosition
+            : Vector3.zero;
+
+        float scaleMultiplier = 1f;
+        if (anchor != null)
+        {
+            float referenceSize = Mathf.Max(anchor.rect.width, anchor.rect.height);
+            scaleMultiplier = Mathf.Clamp(referenceSize / 48f, 0.85f, 1.25f);
+        }
+
+        effect.Play(reveal.Button.transform, localPosition, _starAcquiredSprite, sourceCanvas, scaleMultiplier);
+        leadDelay = effect.LeadDelayBeforeStarReveal;
+    }
+
+    private StarRevealCelebrationEffect GetCelebrationEffect()
+    {
+        while (_availableCelebrationEffects.Count > 0)
+        {
+            StarRevealCelebrationEffect pooledEffect = _availableCelebrationEffects.Pop();
+            if (pooledEffect == null)
+                continue;
+
+            _activeCelebrationEffects.Add(pooledEffect);
+            return pooledEffect;
+        }
+
+        if (_starRevealCelebrationEffectPrefab == null)
+            return null;
+
+        StarRevealCelebrationEffect createdEffect = Instantiate(_starRevealCelebrationEffectPrefab, transform);
+        createdEffect.Initialize(ReturnCelebrationEffectToPool);
+        _activeCelebrationEffects.Add(createdEffect);
+        return createdEffect;
+    }
+
+    private void ReturnCelebrationEffectToPool(StarRevealCelebrationEffect effect)
+    {
+        if (effect == null)
+            return;
+
+        effect.transform.SetParent(transform, false);
+        _activeCelebrationEffects.Remove(effect);
+
+        if (!_availableCelebrationEffects.Contains(effect))
+            _availableCelebrationEffects.Push(effect);
+    }
+
+    private void StopAllCelebrationEffects()
+    {
+        foreach (StarRevealCelebrationEffect effect in _activeCelebrationEffects.ToList())
+        {
+            if (effect == null)
+                continue;
+
+            effect.StopAndRelease();
         }
     }
 

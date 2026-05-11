@@ -45,6 +45,7 @@ public class LevelsScreen : UIScreenBase
         UIEvents.OnStartupSequenceCompleted -= OnStartupSequenceCompleted;
         UIPanel.OnBlockingPanelVisibilityChanged -= OnBlockingPanelVisibilityChanged;
         CancelPendingStarReveal("OnDisable");
+        _buttonManager?.StopStarRevealPresentation();
 
         if (_areaSections == null) return;
         foreach (var area in _areaSections)
@@ -103,6 +104,7 @@ public class LevelsScreen : UIScreenBase
 
         SetPanelInputEnabled(false);
         CancelPendingStarReveal("Hide");
+        _buttonManager?.StopStarRevealPresentation();
 
         _buttonManager?.StopAllButtonAnimations();
 
@@ -245,9 +247,14 @@ public class LevelsScreen : UIScreenBase
         }
 
         if (visible)
+        {
             SchedulePendingStarReveal($"ForegroundVisible:{reason ?? "Unspecified"}");
+        }
         else
+        {
             CancelPendingStarReveal($"ForegroundHidden:{reason ?? "Unspecified"}");
+            _buttonManager?.StopStarRevealPresentation();
+        }
 
         Debug.Log($"[LevelsScreen] Foreground -> {(visible ? "Visible" : "Hidden")} | Reason={reason ?? "Unspecified"} | Signals={GetForegroundSignalSummary()} | BlockingStack={UIPanel.GetBlockingPanelDebugSummary()} | ScreenVisible={_isVisible}");
     }
