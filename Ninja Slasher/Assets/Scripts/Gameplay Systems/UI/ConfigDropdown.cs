@@ -42,16 +42,17 @@ public class ConfigDropdown : MonoBehaviour
 
     private void OnEnable()
     {
-        UIEvents.OnAnyModalShown += OnAnyModalShown;
+        UIEvents.OnBlockingPanelShown += OnBlockingPanelShown;
     }
 
     private void OnDisable()
     {
-        UIEvents.OnAnyModalShown -= OnAnyModalShown;
+        UIEvents.OnBlockingPanelShown -= OnBlockingPanelShown;
     }
 
-    private void OnAnyModalShown()
+    private void OnBlockingPanelShown(string source)
     {
+        Debug.Log($"[ConfigDropdown] Reset requested by blocking panel show | Source={source}");
         ResetToIdle();
     }
 

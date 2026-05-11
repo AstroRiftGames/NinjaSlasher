@@ -617,7 +617,7 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
         }
 
         modal.Show();
-        UIEvents.RaiseAnyModalShown();
+        RaiseBlockingPanelShownIfNeeded(modal);
     }
 
     private void CloseModalInternal(UIModalBase modal)
@@ -634,7 +634,7 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
     private void ShowPanelInternal(UIPanel panel)
     {
         panel.Show();
-        UIEvents.RaiseAnyModalShown();
+        RaiseBlockingPanelShownIfNeeded(panel);
     }
 
     private void HidePanelInternal(UIPanel panel)
@@ -695,8 +695,7 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
 
         yield return panel.ShowRoutine();
 
-        if (panel is UIModalBase)
-            UIEvents.RaiseAnyModalShown();
+        RaiseBlockingPanelShownIfNeeded(panel);
     }
 
     private IEnumerator HidePanelRoutineInternal(UIPanel panel)
@@ -704,7 +703,12 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
         if (panel == null)
             yield break;
 
+        bool wasBlocking = panel.BlocksUnderlyingUIForFlow;
+        string panelName = panel.name;
         yield return panel.HideRoutine();
+
+        if (wasBlocking)
+            RaiseBlockingPanelHidden(panelName);
     }
 
     private IEnumerator SetPanelVisibilityRoutineInternal(UIPanel panel, bool visible)
@@ -719,6 +723,21 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
     {
         if (panel is NoLivesModal noLivesModal)
             noLivesModal.PrepareForFlowTransitionClose();
+    }
+
+    private static void RaiseBlockingPanelShownIfNeeded(UIPanel panel)
+    {
+        if (panel == null || !panel.BlocksUnderlyingUIForFlow)
+            return;
+
+        Debug.Log($"[UIManager] Signal -> BlockingPanelShown | Source={panel.name}");
+        UIEvents.RaiseBlockingPanelShown(panel.name);
+    }
+
+    private static void RaiseBlockingPanelHidden(string panelName)
+    {
+        Debug.Log($"[UIManager] Signal -> BlockingPanelHidden | Source={panelName}");
+        UIEvents.RaiseBlockingPanelHidden(panelName);
     }
 
     #endregion

@@ -525,6 +525,8 @@ public static class UIEvents
         OnPanelCloseRequested = null;
         OnPanelToggleRequested = null;
         OnAllPanelsCloseRequested = null;
+        OnBlockingPanelShown = null;
+        OnBlockingPanelHidden = null;
     }
 
     public static void ClearOverlayEvents()

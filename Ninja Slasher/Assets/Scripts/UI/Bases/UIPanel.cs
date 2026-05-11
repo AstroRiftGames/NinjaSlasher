@@ -256,6 +256,7 @@ public abstract class UIPanel : MonoBehaviour
     public bool IsVisible => _isVisible;
     public static bool HasVisibleBlockingPanel => BlockingPanels.Count > 0;
     public bool IsBlockedByHigherPanel => _isBlockedByHigherPanel;
+    public bool BlocksUnderlyingUIForFlow => BlocksUnderlyingUI;
 
     public static string GetBlockingPanelDebugSummary()
     {
