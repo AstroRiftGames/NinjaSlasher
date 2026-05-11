@@ -603,23 +603,6 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
         yield return SetPanelVisibilityRoutineInternal(_levelsScreen, visible);
     }
 
-    public bool HasBlockingPanelForLevelSelection()
-    {
-        return IsPanelVisible(_pauseOverlay)
-            || IsPanelVisible(ResolveTutorialOverlay())
-            || IsPanelVisible(_splashScreen)
-            || IsModalVisible(_pregameModal)
-            || IsModalVisible(_noLivesModal)
-            || IsModalVisible(_defeatModal)
-            || IsModalVisible(_emergencyBundleModal)
-            || IsModalVisible(_creditsModal)
-            || IsModalVisible(_profileModal)
-            || IsModalVisible(_dailyRewardModal)
-            || IsModalVisible(_dailyWheelModal)
-            || IsModalVisible(_storeModal)
-            || IsModalVisible(_victoryModal);
-    }
-
     private bool ShouldIgnoreUIRequest()
     {
         return IsUIBusy;

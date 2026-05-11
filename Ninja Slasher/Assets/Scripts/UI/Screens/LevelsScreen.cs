@@ -14,6 +14,7 @@ public class LevelsScreen : UIScreenBase
 
     private bool _hasPlayedIntroAnimation = false;
     private bool _isWaitingForStartupSequence = false;
+    private bool _isBlockedByForegroundSignal = false;
     private bool _isForegroundVisible = true;
 
     protected override void Awake()
@@ -31,7 +32,10 @@ public class LevelsScreen : UIScreenBase
     {
         base.OnEnable();
         ResolveDependencies();
+        UIEvents.OnStartupSequenceStarted += OnStartupSequenceStarted;
         UIEvents.OnStartupSequenceCompleted += OnStartupSequenceCompleted;
+        UIPanel.OnBlockingPanelVisibilityChanged += OnBlockingPanelVisibilityChanged;
+        SyncExternalForegroundSignals("OnEnable");
 
         if (_areaSections == null) return;
         foreach (var area in _areaSections)
@@ -41,7 +45,9 @@ public class LevelsScreen : UIScreenBase
     protected override void OnDisable()
     {
         base.OnDisable();
+        UIEvents.OnStartupSequenceStarted -= OnStartupSequenceStarted;
         UIEvents.OnStartupSequenceCompleted -= OnStartupSequenceCompleted;
+        UIPanel.OnBlockingPanelVisibilityChanged -= OnBlockingPanelVisibilityChanged;
 
         if (_areaSections == null) return;
         foreach (var area in _areaSections)
@@ -116,6 +122,22 @@ public class LevelsScreen : UIScreenBase
         StartCoroutine(AnimateLevelButtonsSequence());
     }
 
+    private void OnStartupSequenceStarted()
+    {
+        if (!isActiveAndEnabled)
+            return;
+
+        EnterStartupSuppressedState("StartupSequenceStartedSignal");
+    }
+
+    private void OnBlockingPanelVisibilityChanged()
+    {
+        if (!isActiveAndEnabled)
+            return;
+
+        ApplyBlockingPanelSignal(IsBlockedByHigherPanel, "UIPanel.OnBlockingPanelVisibilityChanged");
+    }
+
     private IEnumerator AnimateLevelButtonsSequence()
     {
         yield return null;
@@ -186,14 +208,12 @@ public class LevelsScreen : UIScreenBase
 
     public void EnterStartupSuppressedState(string reason = null)
     {
-        _isWaitingForStartupSequence = true;
-        SetForegroundVisible(false, reason ?? "EnterStartupSuppressedState");
+        ApplyStartupSequenceSignal(true, reason ?? "EnterStartupSuppressedState");
     }
 
     public void ExitStartupSuppressedState(string reason = null)
     {
-        _isWaitingForStartupSequence = false;
-        SetForegroundVisible(true, reason ?? "ExitStartupSuppressedState");
+        ApplyStartupSequenceSignal(false, reason ?? "ExitStartupSuppressedState");
     }
 
     public void RefreshForegroundVisibility(string reason = null)
@@ -227,20 +247,12 @@ public class LevelsScreen : UIScreenBase
                 _presenter.OnForegroundHidden(reason);
         }
 
-        Debug.Log($"[LevelsScreen] Foreground -> {(visible ? "Visible" : "Hidden")} | Reason={reason ?? "Unspecified"} | StartupSuppressed={_isWaitingForStartupSequence} | BlockingPanels={HasBlockingPanelsForForeground()} | ScreenVisible={_isVisible}");
+        Debug.Log($"[LevelsScreen] Foreground -> {(visible ? "Visible" : "Hidden")} | Reason={reason ?? "Unspecified"} | Signals={GetForegroundSignalSummary()} | BlockingStack={UIPanel.GetBlockingPanelDebugSummary()} | ScreenVisible={_isVisible}");
     }
 
     private bool ShouldForegroundBeVisible()
     {
-        if (_isWaitingForStartupSequence)
-            return false;
-
-        return !HasBlockingPanelsForForeground();
-    }
-
-    private bool HasBlockingPanelsForForeground()
-    {
-        return UIManager.Instance != null && UIManager.Instance.HasBlockingPanelForLevelSelection();
+        return !_isWaitingForStartupSequence && !_isBlockedByForegroundSignal;
     }
 
     public bool IsForegroundVisible => _isForegroundVisible;
@@ -258,5 +270,43 @@ public class LevelsScreen : UIScreenBase
 
         if (_buttonManager == null)
             Debug.LogWarning("[LevelsScreen] ButtonManager was not found.");
+    }
+
+    private void SyncExternalForegroundSignals(string reason)
+    {
+        ApplyBlockingPanelSignal(IsBlockedByHigherPanel, $"{reason}/SyncBlockingPanel");
+    }
+
+    private void ApplyStartupSequenceSignal(bool active, string reason)
+    {
+        if (_isWaitingForStartupSequence == active)
+        {
+            Debug.Log($"[LevelsScreen] Signal -> StartupSequence unchanged | Active={active} | Reason={reason} | Signals={GetForegroundSignalSummary()}");
+            RefreshForegroundVisibility($"{reason}/StartupSequenceUnchanged");
+            return;
+        }
+
+        _isWaitingForStartupSequence = active;
+        Debug.Log($"[LevelsScreen] Signal -> StartupSequence {(active ? "Requested" : "Released")} | Reason={reason} | Signals={GetForegroundSignalSummary()}");
+        RefreshForegroundVisibility(reason);
+    }
+
+    private void ApplyBlockingPanelSignal(bool active, string reason)
+    {
+        if (_isBlockedByForegroundSignal == active)
+        {
+            Debug.Log($"[LevelsScreen] Signal -> BlockingPanel unchanged | Active={active} | Reason={reason} | Stack={UIPanel.GetBlockingPanelDebugSummary()} | Signals={GetForegroundSignalSummary()}");
+            RefreshForegroundVisibility($"{reason}/BlockingPanelUnchanged");
+            return;
+        }
+
+        _isBlockedByForegroundSignal = active;
+        Debug.Log($"[LevelsScreen] Signal -> BlockingPanel {(active ? "Requested" : "Released")} | Reason={reason} | Stack={UIPanel.GetBlockingPanelDebugSummary()} | Signals={GetForegroundSignalSummary()}");
+        RefreshForegroundVisibility(reason);
+    }
+
+    private string GetForegroundSignalSummary()
+    {
+        return $"StartupSequence={_isWaitingForStartupSequence}, BlockingPanel={_isBlockedByForegroundSignal}";
     }
 }

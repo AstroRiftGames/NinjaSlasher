@@ -3,8 +3,6 @@ using UnityEngine;
 
 public sealed class DailyStartupSequence : IDisposable
 {
-    public static bool IsSequenceRunning { get; private set; }
-
     private bool _isLevelSelectorReady;
     private bool _isWaitingForWheel;
     private bool _isWaitingForWheelClose;
@@ -38,10 +36,12 @@ public sealed class DailyStartupSequence : IDisposable
     {
         _isLevelSelectorReady = true;
         _isRunning = true;
-        IsSequenceRunning = true;
         _isWaitingForWheel = false;
         _isWaitingForWheelClose = false;
         _isWaitingForReward = false;
+
+        Debug.Log("[DailyStartupSequence] Signal -> StartupSequenceStarted");
+        UIEvents.RaiseStartupSequenceStarted();
 
         TryAdvanceSequence();
     }
@@ -108,11 +108,11 @@ public sealed class DailyStartupSequence : IDisposable
         if (!_isRunning) return;
 
         _isRunning = false;
-        IsSequenceRunning = false;
         _isWaitingForWheel = false;
         _isWaitingForWheelClose = false;
         _isWaitingForReward = false;
 
+        Debug.Log("[DailyStartupSequence] Signal -> StartupSequenceCompleted");
         UIEvents.RaiseStartupSequenceCompleted();
     }
 }
