@@ -22,6 +22,11 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
     [SerializeField] private Sprite _starNotAcquiredSprite;
     [SerializeField] private Sprite _starAcquiredSprite;
 
+    [Header("STAR FEEDBACK")]
+    [SerializeField] private float _starRevealStagger = 0.14f;
+    [SerializeField] private float _starPunchDuration = 0.18f;
+    [SerializeField] private Vector3 _starPunchStrength = new Vector3(0.16f, 0.16f, 0f);
+
     [Header("ANIMATION SETTINGS")]
     [SerializeField] private float fallDistance = 800f;
     [SerializeField] private float waveDelay = 0.08f;
@@ -29,6 +34,7 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
     [SerializeField] private bool addImpactEffect = true;
 
     private List<Sequence> activeButtonSequences = new List<Sequence>();
+    private List<Sequence> _activeStarSequences = new List<Sequence>();
     private Dictionary<Button, Vector2> savedButtonPositions = new Dictionary<Button, Vector2>();
 
     private UIAudioContext _audioContext;
@@ -40,6 +46,7 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
         base.Awake();
         _audioContext = GetComponentInParent<UIAudioContext>();
         SaveButtonPositions();
+        HideAllStarContainers();
     }
 
     private void OnEnable()
@@ -143,12 +150,33 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
 
     void UpdateStars(Button levelButton, int levelId)
     {
+        if (levelButton == null)
+            return;
+
         Transform buttonTransform = levelButton.transform;
         Transform starsContainer = buttonTransform.Find("Stars");
-        int starsEarned = GetStars(levelId);
-        bool isLevelUnlocked = IsLevelUnlocked(levelId);
+        if (starsContainer == null)
+            return;
 
-        for (int i = 0; i < 3; i++)
+        if (!IsSaveDataReady())
+        {
+            starsContainer.gameObject.SetActive(false);
+            return;
+        }
+
+        int starsEarned = GetStars(levelId);
+        bool hasRecordedLevelProgress = HasRecordedLevelProgress(levelId);
+        int previousStars = 0;
+        int pendingNewStars = 0;
+        bool hasPendingStarReveal = LevelProgressionManager.Instance != null
+            && LevelProgressionManager.Instance.TryGetPendingStarReveal(levelId, out previousStars, out pendingNewStars);
+
+        starsContainer.gameObject.SetActive(hasRecordedLevelProgress);
+
+        if (!hasRecordedLevelProgress)
+            return;
+
+        for (int i = 0; i < starsContainer.childCount; i++)
         {
             Transform star = starsContainer.GetChild(i);
             if (star != null)
@@ -156,12 +184,12 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
                 Image starImage = star.GetComponent<Image>();
                 if (starImage != null)
                 {
-                    star.gameObject.SetActive(isLevelUnlocked);
-                    if (isLevelUnlocked)
-                    {
-                        bool isEarned = i < starsEarned;
-                        SetStar(starImage, isEarned);
-                    }
+                    bool isEarned = i < starsEarned;
+                    SetStar(starImage, isEarned);
+                    bool shouldHideForPendingReveal = hasPendingStarReveal
+                        && i >= previousStars;
+
+                    star.gameObject.SetActive(!shouldHideForPendingReveal);
                 }
             }
         }
@@ -182,6 +210,51 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
             return stars;
         }
         return 0;
+    }
+
+    private bool HasRecordedLevelProgress(int levelId)
+    {
+        if (!IsSaveDataReady())
+            return false;
+
+        GameData gameData = SaveManager.Instance.GetGameData();
+        if (gameData == null)
+            return false;
+
+        if (gameData.levelStars != null && gameData.levelStars.ContainsKey(levelId))
+            return true;
+
+        if (gameData.levelProgressData != null
+            && gameData.levelProgressData.TryGetValue(levelId, out LevelProgressData progress))
+        {
+            return progress != null
+                && (progress.totalAttempts > 0
+                    || progress.isCompleted
+                    || progress.maxStarsEarned > 0
+                    || progress.completedObjectiveIds != null && progress.completedObjectiveIds.Count > 0
+                    || progress.bestTimeSeconds < float.MaxValue
+                    || progress.bestMoves < int.MaxValue);
+        }
+
+        return false;
+    }
+
+    private bool IsSaveDataReady()
+    {
+        return SaveManager.Instance != null && SaveManager.Instance.IsDataLoaded;
+    }
+
+    private void HideAllStarContainers()
+    {
+        foreach (Button levelButton in levelButtons)
+        {
+            if (levelButton == null)
+                continue;
+
+            Transform starsContainer = levelButton.transform.Find("Stars");
+            if (starsContainer != null)
+                starsContainer.gameObject.SetActive(false);
+        }
     }
 
     void UpdateButtonProgression()
@@ -405,6 +478,7 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
                 sequence.Kill(false);
         }
         activeButtonSequences.Clear();
+        KillAllStarTweens();
 
         foreach (var kvp in savedButtonPositions)
         {
@@ -422,6 +496,114 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
             var img = btn.GetComponent<Image>();
             if (img != null)
                 DOTween.Kill(img);
+        }
+    }
+
+    public void TryPlayPendingStarRevealAnimations()
+    {
+        if (LevelProgressionManager.Instance == null)
+            return;
+
+        for (int i = 0; i < levelButtons.Length; i++)
+        {
+            Button levelButton = levelButtons[i];
+            if (levelButton == null || !levelButton.gameObject.activeInHierarchy)
+                continue;
+
+            Transform starsContainer = levelButton.transform.Find("Stars");
+            if (starsContainer == null || !starsContainer.gameObject.activeInHierarchy)
+                continue;
+
+            int levelId = i + 1;
+            if (!LevelProgressionManager.Instance.ConsumePendingStarReveal(levelId, out int previousStars, out int newStars))
+                continue;
+
+            AnimateNewStars(starsContainer, previousStars, newStars, levelId);
+        }
+    }
+
+    private void AnimateNewStars(Transform starsContainer, int previousStars, int newStars, int levelId)
+    {
+        if (starsContainer == null)
+            return;
+
+        int clampedPrevious = Mathf.Clamp(previousStars, 0, starsContainer.childCount);
+        int clampedNew = Mathf.Clamp(newStars, clampedPrevious, starsContainer.childCount);
+        if (clampedNew <= clampedPrevious)
+            return;
+
+        Debug.Log($"[ButtonManager] StarReveal -> Level={levelId} | Previous={clampedPrevious} | New={clampedNew}");
+
+        float revealSpacing = Mathf.Max(_starRevealStagger, _starPunchDuration + 0.06f);
+        int revealEnd = starsContainer.childCount;
+
+        for (int i = clampedPrevious; i < revealEnd; i++)
+        {
+            if (!(starsContainer.GetChild(i) is RectTransform starRect))
+                continue;
+
+            Image starImage = starRect.GetComponent<Image>();
+            if (starImage == null)
+                continue;
+
+            DOTween.Kill(starRect);
+            starRect.localScale = Vector3.one;
+            starRect.gameObject.SetActive(false);
+
+            Sequence starSequence = DOTween.Sequence();
+            _activeStarSequences.Add(starSequence);
+
+            float delay = (i - clampedPrevious) * revealSpacing;
+            starSequence.AppendInterval(delay);
+            starSequence.AppendCallback(() =>
+            {
+                if (starRect == null)
+                    return;
+
+                starRect.gameObject.SetActive(true);
+                starRect.localScale = Vector3.one;
+                starRect.DOPunchScale(_starPunchStrength, _starPunchDuration, vibrato: 1, elasticity: 0.4f);
+            });
+            starSequence.AppendInterval(_starPunchDuration);
+            starSequence.OnKill(() =>
+            {
+                _activeStarSequences.Remove(starSequence);
+                if (starRect != null)
+                {
+                    starRect.gameObject.SetActive(true);
+                    starRect.localScale = Vector3.one;
+                }
+            });
+        }
+    }
+
+    private void KillAllStarTweens()
+    {
+        foreach (Sequence sequence in _activeStarSequences.ToList())
+        {
+            if (sequence != null && sequence.IsActive())
+                sequence.Kill(false);
+        }
+
+        _activeStarSequences.Clear();
+
+        foreach (Button levelButton in levelButtons)
+        {
+            if (levelButton == null)
+                continue;
+
+            Transform starsContainer = levelButton.transform.Find("Stars");
+            if (starsContainer == null)
+                continue;
+
+            for (int i = 0; i < starsContainer.childCount; i++)
+            {
+                if (starsContainer.GetChild(i) is RectTransform starRect)
+                {
+                    DOTween.Kill(starRect);
+                    starRect.localScale = Vector3.one;
+                }
+            }
         }
     }
 

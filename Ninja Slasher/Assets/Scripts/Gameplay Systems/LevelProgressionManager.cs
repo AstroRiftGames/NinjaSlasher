@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 [Serializable]
@@ -12,12 +13,25 @@ public class LevelProgressionInfo
 
 public class LevelProgressionManager : MonoBehaviourSingleton<LevelProgressionManager>
 {
+    private struct PendingStarRevealData
+    {
+        public int PreviousStars;
+        public int NewStars;
+
+        public PendingStarRevealData(int previousStars, int newStars)
+        {
+            PreviousStars = previousStars;
+            NewStars = newStars;
+        }
+    }
+
     private int LevelsPerArea => GameConfigManager.Config.levelsPerArea;
     private int TotalAreas => GameConfigManager.Config.totalAreas;
 
     private bool isInitialized = false;
 
     private int _pendingAreaUnlockAnimationId = -1;
+    private readonly Dictionary<int, PendingStarRevealData> _pendingStarRevealByLevel = new();
 
     public Action OnProgressionUpdated;
     public Action<int> OnNewAreaUnlocked;
@@ -163,7 +177,16 @@ public class LevelProgressionManager : MonoBehaviourSingleton<LevelProgressionMa
 
     public void HandleLevelCompletion(int levelId, int starsEarned)
     {
+        int previousStars = GetPersistedStarsForLevel(levelId);
+
         SaveManager.Instance?.UpdateLevelProgression(levelId, starsEarned);
+
+        int persistedStars = GetPersistedStarsForLevel(levelId);
+        if (persistedStars > previousStars)
+        {
+            RegisterPendingStarReveal(levelId, previousStars, persistedStars);
+            GameEvents.RaiseStarsUpdated(levelId, persistedStars);
+        }
 
         var (currentHighest, currentArea, totalStars) = SaveManager.Instance?.GetProgressionData() ?? (1, 1, 0);
 
@@ -187,6 +210,53 @@ public class LevelProgressionManager : MonoBehaviourSingleton<LevelProgressionMa
         }
 
         OnProgressionUpdated?.Invoke();
+    }
+
+    public bool ConsumePendingStarReveal(int levelId, out int previousStars, out int newStars)
+    {
+        previousStars = 0;
+        newStars = 0;
+
+        if (!_pendingStarRevealByLevel.TryGetValue(levelId, out PendingStarRevealData pendingData))
+            return false;
+
+        _pendingStarRevealByLevel.Remove(levelId);
+        previousStars = pendingData.PreviousStars;
+        newStars = pendingData.NewStars;
+        return true;
+    }
+
+    public bool TryGetPendingStarReveal(int levelId, out int previousStars, out int newStars)
+    {
+        previousStars = 0;
+        newStars = 0;
+
+        if (!_pendingStarRevealByLevel.TryGetValue(levelId, out PendingStarRevealData pendingData))
+            return false;
+
+        previousStars = pendingData.PreviousStars;
+        newStars = pendingData.NewStars;
+        return true;
+    }
+
+    private int GetPersistedStarsForLevel(int levelId)
+    {
+        GameData gameData = SaveManager.Instance?.GetGameData();
+        if (gameData == null || gameData.levelStars == null)
+            return 0;
+
+        return gameData.levelStars.TryGetValue(levelId, out int stars) ? stars : 0;
+    }
+
+    private void RegisterPendingStarReveal(int levelId, int previousStars, int newStars)
+    {
+        if (_pendingStarRevealByLevel.TryGetValue(levelId, out PendingStarRevealData existing))
+        {
+            previousStars = Mathf.Min(existing.PreviousStars, previousStars);
+            newStars = Mathf.Max(existing.NewStars, newStars);
+        }
+
+        _pendingStarRevealByLevel[levelId] = new PendingStarRevealData(previousStars, newStars);
     }
 
     private bool ShouldUnlockNextLevel(int nextLevel)

@@ -6,6 +6,7 @@ using UnityEngine.UI;
 public class LevelsScreen : UIScreenBase
 {
     [SerializeField] private float _delayBeforeAnimation = 0.3f;
+    [SerializeField] private float _postTransitionStarRevealDelay = 0.15f;
     [SerializeField] private GameObject _infoRoot;
     [SerializeField] private GameObject _buttonsRoot;
     [SerializeField] private AreaSectionController[] _areaSections;
@@ -15,6 +16,7 @@ public class LevelsScreen : UIScreenBase
     private bool _isWaitingForStartupSequence = false;
     private bool _isBlockedByForegroundSignal = false;
     private bool _isForegroundVisible = true;
+    private Coroutine _pendingStarRevealRoutine;
 
     protected override void Awake()
     {
@@ -42,6 +44,7 @@ public class LevelsScreen : UIScreenBase
         UIEvents.OnStartupSequenceStarted -= OnStartupSequenceStarted;
         UIEvents.OnStartupSequenceCompleted -= OnStartupSequenceCompleted;
         UIPanel.OnBlockingPanelVisibilityChanged -= OnBlockingPanelVisibilityChanged;
+        CancelPendingStarReveal("OnDisable");
 
         if (_areaSections == null) return;
         foreach (var area in _areaSections)
@@ -85,6 +88,7 @@ public class LevelsScreen : UIScreenBase
         {
             ExitStartupSuppressedState("Show/SessionBootstrapCompleted");
             ShowLevelButtonsInstantly();
+            SchedulePendingStarReveal("Show/SessionBootstrapCompleted");
         }
 
         NotifyPanelShown();
@@ -98,6 +102,7 @@ public class LevelsScreen : UIScreenBase
         _isVisible = false;
 
         SetPanelInputEnabled(false);
+        CancelPendingStarReveal("Hide");
 
         _buttonManager?.StopAllButtonAnimations();
 
@@ -239,6 +244,11 @@ public class LevelsScreen : UIScreenBase
                 _presenter.OnForegroundHidden(reason);
         }
 
+        if (visible)
+            SchedulePendingStarReveal($"ForegroundVisible:{reason ?? "Unspecified"}");
+        else
+            CancelPendingStarReveal($"ForegroundHidden:{reason ?? "Unspecified"}");
+
         Debug.Log($"[LevelsScreen] Foreground -> {(visible ? "Visible" : "Hidden")} | Reason={reason ?? "Unspecified"} | Signals={GetForegroundSignalSummary()} | BlockingStack={UIPanel.GetBlockingPanelDebugSummary()} | ScreenVisible={_isVisible}");
     }
 
@@ -274,6 +284,39 @@ public class LevelsScreen : UIScreenBase
         }
 
         return uiManager.ShouldRunLevelSelectionStartupFlowOnNextEntry();
+    }
+
+    private void SchedulePendingStarReveal(string reason)
+    {
+        if (_buttonManager == null || !isActiveAndEnabled || !_isVisible || !_isForegroundVisible)
+            return;
+
+        CancelPendingStarReveal($"{reason}/Reschedule");
+        _pendingStarRevealRoutine = StartCoroutine(PlayPendingStarRevealAfterDelay(reason));
+    }
+
+    private void CancelPendingStarReveal(string reason)
+    {
+        if (_pendingStarRevealRoutine == null)
+            return;
+
+        StopCoroutine(_pendingStarRevealRoutine);
+        _pendingStarRevealRoutine = null;
+        Debug.Log($"[LevelsScreen] StarReveal -> Cancelled | Reason={reason}");
+    }
+
+    private IEnumerator PlayPendingStarRevealAfterDelay(string reason)
+    {
+        if (_postTransitionStarRevealDelay > 0f)
+            yield return WaitForSecondsUnscaled(_postTransitionStarRevealDelay);
+
+        _pendingStarRevealRoutine = null;
+
+        if (!isActiveAndEnabled || !_isVisible || !_isForegroundVisible)
+            yield break;
+
+        Debug.Log($"[LevelsScreen] StarReveal -> Triggered | Reason={reason}");
+        _buttonManager?.TryPlayPendingStarRevealAnimations();
     }
 
     private void SyncExternalForegroundSignals(string reason)
