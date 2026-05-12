@@ -51,6 +51,7 @@ public class PreGameUIManager : MonoBehaviour
 
     private UIAudioContext _audioContext;
     private bool _isLevelSelected;
+    private bool _isInPreGameSelection;
 
     private void Awake()
     {
@@ -68,18 +69,31 @@ public class PreGameUIManager : MonoBehaviour
     private void OnEnable()
     {
         GameEvents.OnRewardClaimed += OnDailyRewardClaimedRefresh;
+        GameEvents.OnLivesChanged += OnLivesChangedRefresh;
     }
 
     private void OnDisable()
     {
         GameEvents.OnRewardClaimed -= OnDailyRewardClaimedRefresh;
+        GameEvents.OnLivesChanged -= OnLivesChangedRefresh;
         StopAllAnimations();
         HidePowerUpConfirmationImmediate();
     }
 
     private void SetupButtonListeners()
     {
+        _playButton.onClick.RemoveListener(OnPlayButtonClicked);
         _playButton.onClick.AddListener(OnPlayButtonClicked);
+    }
+
+    private void EnsurePlayButtonBound()
+    {
+        if (_playButton == null)
+            return;
+
+        _playButton.onClick.RemoveListener(OnPlayButtonClicked);
+        _playButton.onClick.AddListener(OnPlayButtonClicked);
+        _isInPreGameSelection = _isLevelSelected;
     }
 
     private void CacheBaseVisualState()
@@ -197,6 +211,7 @@ public class PreGameUIManager : MonoBehaviour
 
         _pendingSceneName = sceneName;
         _isLevelSelected = true;
+        _isInPreGameSelection = true;
 
         UIEvents.RequestShowPregameModal();
 
@@ -308,7 +323,7 @@ public class PreGameUIManager : MonoBehaviour
 
     private void OnPlayButtonClicked()
     {
-        if (_isLevelSelected)
+        if (_isInPreGameSelection && _isLevelSelected)
         {
             OnConfirmLevelSelection();
             return;
@@ -324,15 +339,10 @@ public class PreGameUIManager : MonoBehaviour
             : LifeManager.Instance != null && LifeManager.Instance.CanPlay();
 
         if (!canStartLevel)
-        {
-            AbortPendingLevelSelectionForLifeWall();
-            if (LevelSessionManager.Instance == null)
-                UIEvents.RequestShowNoLivesModal();
             return;
-        }
 
         StopAllAnimations();
-        _isLevelSelected = false;
+        _isInPreGameSelection = false;
         UIEvents.RequestSceneTransition(_pendingSceneName);
     }
 
@@ -340,14 +350,31 @@ public class PreGameUIManager : MonoBehaviour
     {
         StopAllAnimations();
         HidePowerUpConfirmationImmediate();
-        _isLevelSelected = false;
-        _pendingSceneName = null;
-        UIEvents.RequestHidePregameModal();
     }
 
     private void OnDailyRewardClaimedRefresh(DailyReward _)
     {
         ShowPreGamePowerUps();
+    }
+
+    public void RefreshPreGameAfterAdClaim()
+    {
+        if (!_isLevelSelected)
+            return;
+
+        _isInPreGameSelection = true;
+        ShowPreGamePowerUps();
+        ApplyObjectiveCompletionVisuals();
+        EnsurePlayButtonBound();
+    }
+
+    private void OnLivesChangedRefresh(int lives)
+    {
+        if (!_isLevelSelected)
+            return;
+
+        ShowPreGamePowerUps();
+        EnsurePlayButtonBound();
     }
 
     private void ShowPreGameTitle()
