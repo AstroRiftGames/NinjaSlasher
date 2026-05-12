@@ -5,6 +5,11 @@ using UnityEngine.UI;
 
 public abstract class UIOverlayBase : UIPanel
 {
+    private const string OpenTriggerName = "Open";
+    private const string CloseTriggerName = "Close";
+    private const string OpenStateName = "Open";
+    private const string CloseStateName = "Close";
+
     [Header("Overlay Settings")]
     [SerializeField] protected Image _backgroundImage;
     [SerializeField] protected Color _backgroundColor = new Color(0, 0, 0, 0.7f);
@@ -40,15 +45,8 @@ public abstract class UIOverlayBase : UIPanel
         if (_canvasGroup == null)
             _canvasGroup = GetComponent<CanvasGroup>();
 
-        if (_backgroundImage != null)
-        {
-            _backgroundImage.color = new Color(
-                _backgroundColor.r,
-                _backgroundColor.g,
-                _backgroundColor.b,
-                0f
-            );
-        }
+        ApplyHiddenVisualState();
+        SetPanelInputEnabled(false);
     }
 
     public override void Show()
@@ -84,7 +82,7 @@ public abstract class UIOverlayBase : UIPanel
         _isVisible = false;
         SetPanelInputEnabled(false);
         OnHidden();
-        ResetVisualState();
+        ApplyHiddenVisualState();
         gameObject.SetActive(false);
         OnHideAnimationCompleted();
     }
@@ -142,12 +140,11 @@ public abstract class UIOverlayBase : UIPanel
 
         if (_panelAnimator != null)
         {
-            _panelSequence.InsertCallback(maxFadeDuration, () =>
-            {
-                _panelAnimator.SetTrigger("Open");
-            });
+            PrepareAnimatorForOpenPlayback();
 
-            _panelSequence.AppendInterval(_animatorOpenDuration);
+            float remainingAnimatorDuration = Mathf.Max(0f, _animatorOpenDuration - maxFadeDuration);
+            if (remainingAnimatorDuration > 0f)
+                _panelSequence.AppendInterval(remainingAnimatorDuration);
         }
 
         _panelSequence
@@ -178,7 +175,10 @@ public abstract class UIOverlayBase : UIPanel
         {
             _panelSequence.InsertCallback(currentTime, () =>
             {
-                _panelAnimator.SetTrigger("Close");
+                _panelAnimator.ResetTrigger(OpenTriggerName);
+                _panelAnimator.ResetTrigger(CloseTriggerName);
+                _panelAnimator.Play(CloseStateName, 0, 0f);
+                _panelAnimator.Update(0f);
             });
 
             currentTime += _animatorCloseDuration;
@@ -206,7 +206,7 @@ public abstract class UIOverlayBase : UIPanel
         {
             _panelSequence = null;
             gameObject.SetActive(false);
-            ResetVisualState();
+            ApplyHiddenVisualState();
             OnHideAnimationCompleted();
         });
 
@@ -220,7 +220,7 @@ public abstract class UIOverlayBase : UIPanel
         DOTween.Kill(_canvasGroup);
         DOTween.Kill(_panelTransform);
         KillActiveSequence();
-        ResetVisualState();
+        ApplyHiddenVisualState();
 
         if (!_blockRaycastsWhenHidden)
             SetPanelInputEnabled(false);
@@ -243,13 +243,17 @@ public abstract class UIOverlayBase : UIPanel
         _panelSequence = null;
     }
 
-    private void ResetVisualState()
+    private void ApplyHiddenVisualState()
     {
+        PrepareAnimatorForHiddenState();
+
         if (_canvasGroup != null)
-            _canvasGroup.alpha = 1f;
+            _canvasGroup.alpha = 0f;
 
         if (_panelTransform != null)
-            _panelTransform.localScale = Vector3.one;
+            _panelTransform.localScale = _useContentScaleAnimation
+                ? Vector3.one * _hiddenContentScaleMultiplier
+                : Vector3.one;
 
         if (_backgroundImage != null)
         {
@@ -260,5 +264,29 @@ public abstract class UIOverlayBase : UIPanel
                 0f
             );
         }
+    }
+
+    private void PrepareAnimatorForOpenPlayback()
+    {
+        if (_panelAnimator == null)
+            return;
+
+        _panelAnimator.Rebind();
+        _panelAnimator.ResetTrigger(OpenTriggerName);
+        _panelAnimator.ResetTrigger(CloseTriggerName);
+        _panelAnimator.Play(OpenStateName, 0, 0f);
+        _panelAnimator.Update(0f);
+    }
+
+    private void PrepareAnimatorForHiddenState()
+    {
+        if (_panelAnimator == null)
+            return;
+
+        _panelAnimator.Rebind();
+        _panelAnimator.ResetTrigger(OpenTriggerName);
+        _panelAnimator.ResetTrigger(CloseTriggerName);
+        _panelAnimator.Play(CloseStateName, 0, 1f);
+        _panelAnimator.Update(0f);
     }
 }
