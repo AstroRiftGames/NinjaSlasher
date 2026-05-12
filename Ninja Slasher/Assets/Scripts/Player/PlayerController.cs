@@ -30,6 +30,7 @@ public class PlayerController : MonoBehaviour
     private bool _isDashing = false;
     public bool IsParrying => _isParrying;
     private bool _isParrying = false;
+    public bool IsDeadOrDying => _isKO;
     private bool _isKO = false;
     private bool _hasHandledGameplayClosed = false;
 
@@ -380,11 +381,10 @@ public class PlayerController : MonoBehaviour
 
     private void Grab(Vector2 normal, Vector2 contactPoint, Collider2D surfaceCollider)
     {
-        if (_isDashing)
-        {
-            GameEvents.RaiseDashEnded();
-        }
-        _isDashing = false;
+        bool wasDashing = _isDashing;
+        if (wasDashing)
+            _isDashing = false;
+
         _lastNormal = normal;
         _view.Animator.SetBool("IsGrounded", true);
         RotateSprites(Vector2.zero);
@@ -416,6 +416,11 @@ public class PlayerController : MonoBehaviour
         
         _view.SetLandingParticlesSurface(material);
         _view.LandingParticles.Play();
+
+        if (wasDashing)
+        {
+            GameEvents.RaiseDashEnded();
+        }
     }
 
     public void Die()
