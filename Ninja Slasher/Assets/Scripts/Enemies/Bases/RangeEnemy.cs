@@ -19,6 +19,7 @@ public class RangeEnemy : Enemy
     private float _lastAttack;
     private ObjectPool<Projectile> _pool;
     protected void SetLastAttack() => _lastAttack = Time.time;
+    [SerializeField] [Range(0, 100)] private float _parryableChance;
 
     protected override void Awake()
     {
@@ -45,7 +46,7 @@ public class RangeEnemy : Enemy
     protected void UpdateTarget()
     {
         _hasTarget = _target != null;
-        if(_hasTarget)
+        if (_hasTarget)
         {
             _dirToTarget = _target.position - _unitCenter.position;
             _hasLOS = CheckLOS();
@@ -54,7 +55,7 @@ public class RangeEnemy : Enemy
 
     public virtual void TryAttack()
     {
-        if(CheckCooldown())
+        if (CheckCooldown())
         {
             Attack();
         }
@@ -95,9 +96,10 @@ public class RangeEnemy : Enemy
         projectile.OnRequestDespawn -= HandleProjectileDespawn;
         projectile.OnRequestDespawn += HandleProjectileDespawn;
 
-        projectile.Initialize(_dirToTarget.normalized, transform);
-    }
 
+        projectile.Initialize(_dirToTarget.normalized, transform, DecideParryable());
+    }
+    protected virtual bool DecideParryable() => Random.Range(0, 100) < _parryableChance;
     private void HandleProjectileDespawn(Projectile projectile)
     {
         if (projectile == null)

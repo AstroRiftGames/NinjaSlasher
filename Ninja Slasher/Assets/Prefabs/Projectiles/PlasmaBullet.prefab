@@ -77,7 +77,7 @@ SpriteRenderer:
   m_SortingLayer: 3
   m_SortingOrder: 1
   m_Sprite: {fileID: 336867658361970136, guid: 1c79c8e5d49b8024898fd48f0f1ddf20, type: 3}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 1, g: 0, b: 0, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
@@ -216,7 +216,13 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 192
   _animator: {fileID: 7495953772521434643}
+  _col: {fileID: 5223763193030913284}
+  _renderers:
+  - {fileID: 6983226640213939067}
+  - {fileID: 6219018914984041680}
+  - {fileID: 1890993742826860275}
   _particleSystem: {fileID: 7082136015081228041}
+  _projColor: {r: 1, g: 0, b: 0, a: 1}
   isParryable: 1
   _maxBounces: 5
   _ricochetSfx: {fileID: 11400000, guid: 8b7c1356ba695a54c96506a7a2011202, type: 2}
@@ -367,7 +373,7 @@ SpriteRenderer:
   m_SortingLayer: 3
   m_SortingOrder: 5
   m_Sprite: {fileID: -6533744949826273099, guid: 1c79c8e5d49b8024898fd48f0f1ddf20, type: 3}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 1, g: 0, b: 0, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
@@ -454,7 +460,7 @@ SpriteRenderer:
   m_SortingLayer: 3
   m_SortingOrder: 2
   m_Sprite: {fileID: 962284781045957098, guid: 1c79c8e5d49b8024898fd48f0f1ddf20, type: 3}
-  m_Color: {r: 1, g: 1, b: 1, a: 0}
+  m_Color: {r: 1, g: 0, b: 0, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
@@ -687,7 +693,7 @@ ParticleSystem:
       serializedVersion: 2
       minMaxState: 0
       minColor: {r: 1, g: 1, b: 1, a: 1}
-      maxColor: {r: 1, g: 1, b: 1, a: 1}
+      maxColor: {r: 1, g: 0, b: 0, a: 1}
       maxGradient:
         serializedVersion: 2
         key0: {r: 1, g: 1, b: 1, a: 1}
