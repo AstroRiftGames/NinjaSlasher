@@ -5,6 +5,7 @@ using TMPro;
 using DG.Tweening;
 using System.Collections;
 using System.Collections.Generic;
+using Action = System.Action;
 
 public class ResultsUIManager : MonoBehaviourSingleton<ResultsUIManager>
 {
@@ -31,6 +32,13 @@ public class ResultsUIManager : MonoBehaviourSingleton<ResultsUIManager>
     private Vector2[] _originalStarPositions;
 
     private UIAudioContext _audioContext;
+    private readonly List<Tween> _activePresentationTweens = new();
+    private Coroutine _objectiveStrokeCoroutine;
+    private Action _sequenceCompletedCallback;
+    private int _sequenceVersion;
+    private int _pendingStarAnimations;
+    private int _pendingStrokeAnimations;
+    private bool _isSequenceRunning;
 
     public override void Awake()
     {
@@ -40,9 +48,14 @@ public class ResultsUIManager : MonoBehaviourSingleton<ResultsUIManager>
         _audioContext = GetComponentInParent<UIAudioContext>();
     }
 
+    private void OnDisable()
+    {
+        CancelResultsPresentation();
+    }
+
     public void PrepareResultsIntro()
     {
-        KillAllStarTweens();
+        CancelResultsPresentation();
         Canvas.ForceUpdateCanvases();
 
         if (_originalStarPositions == null || _originalStarPositions.Length == 0)
@@ -55,23 +68,67 @@ public class ResultsUIManager : MonoBehaviourSingleton<ResultsUIManager>
 
     public void ShowResultsPanel()
     {
+        ShowResultsPanel(null);
+    }
+
+    public void ShowResultsPanel(Action onSequenceCompleted)
+    {
         int levelId = GetLevelIdFromSceneName(SceneManager.GetActiveScene().name);
         var cfgMgr = LevelConfigurationManager.Instance;
         var config = cfgMgr != null ? cfgMgr.GetConfigurationForLevel(levelId) : null;
+
+        BeginResultsPresentation(onSequenceCompleted);
 
         if (config == null)
         {
             if (_primaryGoalText) _primaryGoalText.text = "Objetivos no configurados.";
             foreach (var t in _secondaryGoalTexts) if (t) t.text = string.Empty;
+            TryCompleteResultsPresentation(_sequenceVersion);
             return;
         }
 
         SetupGoalTextsAndStrokes(config, levelId);
 
-        AnimateStars(config, levelId);
+        _pendingStarAnimations = AnimateStars(config, levelId, _sequenceVersion);
+        _pendingStrokeAnimations = 0;
 
         if (useStrokeAnimations)
-            StartCoroutine(AnimateObjectiveStrokes(config, levelId));
+        {
+            List<Image> completedStrokeImages = BuildCompletedStrokeImages(config, levelId);
+            _pendingStrokeAnimations = completedStrokeImages.Count;
+
+            if (_pendingStrokeAnimations > 0)
+                _objectiveStrokeCoroutine = StartCoroutine(AnimateObjectiveStrokes(completedStrokeImages, _sequenceVersion));
+        }
+
+        TryCompleteResultsPresentation(_sequenceVersion);
+    }
+
+    public void CancelResultsPresentation()
+    {
+        _sequenceVersion++;
+        _isSequenceRunning = false;
+        _sequenceCompletedCallback = null;
+        _pendingStarAnimations = 0;
+        _pendingStrokeAnimations = 0;
+
+        if (_objectiveStrokeCoroutine != null)
+        {
+            StopCoroutine(_objectiveStrokeCoroutine);
+            _objectiveStrokeCoroutine = null;
+        }
+
+        for (int i = _activePresentationTweens.Count - 1; i >= 0; i--)
+        {
+            Tween tween = _activePresentationTweens[i];
+            if (tween != null && tween.IsActive())
+                tween.Kill();
+        }
+
+        _activePresentationTweens.Clear();
+        KillAllStarTweens();
+        KillAllStrokeTweens();
+        StopPresentationSfx();
     }
 
     private void SetupGoalTextsAndStrokes(LevelConfiguration config, int levelId)
@@ -117,37 +174,26 @@ public class ResultsUIManager : MonoBehaviourSingleton<ResultsUIManager>
         }
     }
 
-    private IEnumerator AnimateObjectiveStrokes(LevelConfiguration config, int levelId)
+    private IEnumerator AnimateObjectiveStrokes(List<Image> strokeImages, int sequenceVersion)
     {
         yield return new WaitForSeconds(strokeAnimationDelay);
 
-        var toAnimate = new List<Image>();
-
-        var primary = config.GetPrimaryObjective();
-        if (_primaryGoalText && primary != null)
+        for (int i = 0; i < strokeImages.Count; i++)
         {
-            bool completed = SaveManager.Instance?.IsObjectiveCompleted(levelId, primary) ?? false;
-            var img = GetSlashImage(_primaryGoalText);
-            if (completed && img && img.enabled) toAnimate.Add(img);
+            if (!IsSequenceValid(sequenceVersion))
+                yield break;
+
+            AnimateStrokeImage(strokeImages[i], sequenceVersion);
+
+            if (i < strokeImages.Count - 1)
+                yield return new WaitForSeconds(strokeStagger);
         }
 
-        var secondaries = config.GetSecondaryObjectives();
-        for (int i = 0; i < _secondaryGoalTexts.Length && i < secondaries.Length; i++)
-        {
-            if (!_secondaryGoalTexts[i] || secondaries[i] == null) continue;
-            bool completed = SaveManager.Instance?.IsObjectiveCompleted(levelId, secondaries[i]) ?? false;
-            var img = GetSlashImage(_secondaryGoalTexts[i]);
-            if (completed && img && img.enabled) toAnimate.Add(img);
-        }
-
-        for (int i = 0; i < toAnimate.Count; i++)
-        {
-            AnimateStrokeImage(toAnimate[i]);
-            if (i < toAnimate.Count - 1) yield return new WaitForSeconds(strokeStagger);
-        }
+        if (sequenceVersion == _sequenceVersion)
+            _objectiveStrokeCoroutine = null;
     }
 
-    private void AnimateStrokeImage(Image slashImage)
+    private void AnimateStrokeImage(Image slashImage, int sequenceVersion)
     {
         if (!slashImage) return;
 
@@ -156,11 +202,17 @@ public class ResultsUIManager : MonoBehaviourSingleton<ResultsUIManager>
         DOTween.Kill(slashImage, false);
 
         var seq = DOTween.Sequence();
+        TrackPresentationTween(seq);
         seq.Append(slashImage.transform.DOScaleX(1f, slashEffectDuration * 1.5f).SetEase(Ease.OutQuart));
         seq.Join(slashImage.DOFade(1f, slashEffectDuration * 1.2f));
         seq.AppendCallback(() =>
         {
-            slashImage.transform.DOPunchScale(Vector3.one * 0.1f, 0.1f, 1, 0.8f);
+            if (!IsSequenceValid(sequenceVersion))
+                return;
+
+            Tween punchTween = slashImage.transform.DOPunchScale(Vector3.one * 0.1f, 0.1f, 1, 0.8f);
+            TrackPresentationTween(punchTween);
+            punchTween.OnComplete(() => NotifyStrokeAnimationCompleted(sequenceVersion));
             AudioService.Instance?.PlaySFX(_audioContext.Audio.tapSplash);
         });
     }
@@ -229,24 +281,29 @@ public class ResultsUIManager : MonoBehaviourSingleton<ResultsUIManager>
         }
     }
 
-    private void AnimateStars(LevelConfiguration config, int levelId)
+    private int AnimateStars(LevelConfiguration config, int levelId, int sequenceVersion)
     {
+        int animatedStars = 0;
         var primary = config.GetPrimaryObjective();
         bool primaryCompleted = SaveManager.Instance?.IsObjectiveCompleted(levelId, primary) ?? false;
-        AnimateStar(0, primaryCompleted, 0f);
+        if (AnimateStar(0, primaryCompleted, 0f, sequenceVersion))
+            animatedStars++;
 
         var secondaries = config.GetSecondaryObjectives();
         for (int i = 0; i < secondaries.Length && i < _starsContainer.childCount - 1; i++)
         {
             bool secondaryCompleted = SaveManager.Instance?.IsObjectiveCompleted(levelId, secondaries[i]) ?? false;
-            AnimateStar(i + 1, secondaryCompleted, (i + 1) * _starAnimationDelay);
+            if (AnimateStar(i + 1, secondaryCompleted, (i + 1) * _starAnimationDelay, sequenceVersion))
+                animatedStars++;
         }
+
+        return animatedStars;
     }
 
-    private void AnimateStar(int starIndex, bool isCompleted, float delay)
+    private bool AnimateStar(int starIndex, bool isCompleted, float delay, int sequenceVersion)
     {
-        if (starIndex >= _starsContainer.childCount) return;
-        if (!(_starsContainer.GetChild(starIndex) is RectTransform rt)) return;
+        if (starIndex >= _starsContainer.childCount) return false;
+        if (!(_starsContainer.GetChild(starIndex) is RectTransform rt)) return false;
 
         var targetPos = _originalStarPositions[starIndex];
 
@@ -254,15 +311,23 @@ public class ResultsUIManager : MonoBehaviourSingleton<ResultsUIManager>
         DOTween.Kill(rt, false);
 
         var seq = DOTween.Sequence();
+        TrackPresentationTween(seq);
         seq.Append(rt.DOAnchorPos(targetPos, _starAnimationDuration).SetEase(_starAnimationEase).SetDelay(delay));
         seq.Join(rt.DORotate(new Vector3(0, 0, 360 * 3), _starAnimationDuration, RotateMode.FastBeyond360)
                  .SetEase(Ease.Linear).SetDelay(delay));
         seq.OnComplete(() =>
         {
+            if (!IsSequenceValid(sequenceVersion))
+                return;
+
             SetStarSprite(starIndex, isCompleted);
             rt.rotation = Quaternion.identity;
-            rt.DOPunchScale(Vector3.one * 0.3f, 0.3f, 10, 0.5f);
+            Tween punchTween = rt.DOPunchScale(Vector3.one * 0.3f, 0.3f, 10, 0.5f);
+            TrackPresentationTween(punchTween);
+            punchTween.OnComplete(() => NotifyStarAnimationCompleted(sequenceVersion));
         });
+
+        return true;
     }
 
     private void SetStarSprite(int idx, bool acquired)
@@ -285,5 +350,133 @@ public class ResultsUIManager : MonoBehaviourSingleton<ResultsUIManager>
             if (_starsContainer.GetChild(i) is RectTransform rt)
                 DOTween.Kill(rt, false);
         }
+    }
+
+    private void BeginResultsPresentation(Action onSequenceCompleted)
+    {
+        CancelResultsPresentation();
+
+        _sequenceCompletedCallback = onSequenceCompleted;
+        _pendingStarAnimations = 0;
+        _pendingStrokeAnimations = 0;
+        _isSequenceRunning = true;
+    }
+
+    private List<Image> BuildCompletedStrokeImages(LevelConfiguration config, int levelId)
+    {
+        List<Image> completedStrokeImages = new List<Image>();
+
+        var primary = config.GetPrimaryObjective();
+        if (_primaryGoalText && primary != null)
+        {
+            bool completed = SaveManager.Instance?.IsObjectiveCompleted(levelId, primary) ?? false;
+            var img = GetSlashImage(_primaryGoalText);
+            if (completed && img && img.enabled)
+                completedStrokeImages.Add(img);
+        }
+
+        var secondaries = config.GetSecondaryObjectives();
+        for (int i = 0; i < _secondaryGoalTexts.Length && i < secondaries.Length; i++)
+        {
+            if (!_secondaryGoalTexts[i] || secondaries[i] == null)
+                continue;
+
+            bool completed = SaveManager.Instance?.IsObjectiveCompleted(levelId, secondaries[i]) ?? false;
+            var img = GetSlashImage(_secondaryGoalTexts[i]);
+            if (completed && img && img.enabled)
+                completedStrokeImages.Add(img);
+        }
+
+        return completedStrokeImages;
+    }
+
+    private void NotifyStarAnimationCompleted(int sequenceVersion)
+    {
+        if (!IsSequenceValid(sequenceVersion))
+            return;
+
+        _pendingStarAnimations = Mathf.Max(0, _pendingStarAnimations - 1);
+        TryCompleteResultsPresentation(sequenceVersion);
+    }
+
+    private void NotifyStrokeAnimationCompleted(int sequenceVersion)
+    {
+        if (!IsSequenceValid(sequenceVersion))
+            return;
+
+        _pendingStrokeAnimations = Mathf.Max(0, _pendingStrokeAnimations - 1);
+        TryCompleteResultsPresentation(sequenceVersion);
+    }
+
+    private void TryCompleteResultsPresentation(int sequenceVersion)
+    {
+        if (!IsSequenceValid(sequenceVersion))
+            return;
+
+        if (_pendingStarAnimations > 0 || _pendingStrokeAnimations > 0)
+            return;
+
+        _isSequenceRunning = false;
+
+        Action callback = _sequenceCompletedCallback;
+        _sequenceCompletedCallback = null;
+        callback?.Invoke();
+    }
+
+    private bool IsSequenceValid(int sequenceVersion)
+    {
+        return _isSequenceRunning &&
+               sequenceVersion == _sequenceVersion &&
+               gameObject.activeInHierarchy;
+    }
+
+    private void TrackPresentationTween(Tween tween)
+    {
+        if (tween == null)
+            return;
+
+        _activePresentationTweens.Add(tween);
+        tween.OnKill(() => _activePresentationTweens.Remove(tween));
+    }
+
+    private void KillAllStrokeTweens()
+    {
+        if (_primaryGoalText)
+        {
+            Image image = GetSlashImage(_primaryGoalText);
+            if (image)
+            {
+                DOTween.Kill(image.transform, false);
+                DOTween.Kill(image, false);
+            }
+        }
+
+        for (int i = 0; i < _secondaryGoalTexts.Length; i++)
+        {
+            if (!_secondaryGoalTexts[i])
+                continue;
+
+            Image image = GetSlashImage(_secondaryGoalTexts[i]);
+            if (!image)
+                continue;
+
+            DOTween.Kill(image.transform, false);
+            DOTween.Kill(image, false);
+        }
+    }
+
+    private void StopPresentationSfx()
+    {
+        if (AudioService.Instance == null || _audioContext == null || _audioContext.Audio == null)
+            return;
+
+        if (_audioContext.Audio.tapSplash != null)
+            AudioService.Instance.StopSFX(_audioContext.Audio.tapSplash);
+    }
+
+    protected override void OnDestroy()
+    {
+        CancelResultsPresentation();
+        base.OnDestroy();
     }
 }

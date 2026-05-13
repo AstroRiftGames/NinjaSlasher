@@ -9,6 +9,7 @@ public class SFXPlayer
 
     private readonly Dictionary<AudioEvent, PooledAudioSource> _loopingSources
     = new Dictionary<AudioEvent, PooledAudioSource>();
+    private readonly HashSet<PooledAudioSource> _activeSources = new();
 
     private bool isMuted = false;
 
@@ -35,6 +36,7 @@ public class SFXPlayer
 
         PooledAudioSource pooled = _pool.Get();
         pooled.Play(audioEvent, _settings, Vector3.zero, _pool);
+        RegisterActiveSource(audioEvent, pooled);
 
         if (audioEvent.loop)
         {
@@ -58,6 +60,7 @@ public class SFXPlayer
         PooledAudioSource pooled = _pool.Get();
         pooled.transform.position = position;
         pooled.Play(audioEvent, _settings, position, _pool);
+        RegisterActiveSource(audioEvent, pooled);
 
         if (audioEvent.loop)
         {
@@ -71,18 +74,36 @@ public class SFXPlayer
 
         if (_loopingSources.TryGetValue(audioEvent, out var pooled))
         {
-            pooled.Stop();
-            _pool.Release(pooled);
+            ReleaseSource(pooled);
             _loopingSources.Remove(audioEvent);
+        }
+
+        if (_activeSources.Count == 0)
+            return;
+
+        List<PooledAudioSource> activeSnapshot = new List<PooledAudioSource>(_activeSources);
+        for (int i = 0; i < activeSnapshot.Count; i++)
+        {
+            PooledAudioSource activeSource = activeSnapshot[i];
+            if (activeSource == null || activeSource.CurrentAudioEvent != audioEvent)
+                continue;
+
+            ReleaseSource(activeSource);
         }
     }
 
     public void StopAll()
     {
-        foreach (var kvp in _loopingSources)
+        if (_activeSources.Count == 0)
         {
-            kvp.Value.Stop();
-            _pool.Release(kvp.Value);
+            _loopingSources.Clear();
+            return;
+        }
+
+        List<PooledAudioSource> activeSnapshot = new List<PooledAudioSource>(_activeSources);
+        for (int i = 0; i < activeSnapshot.Count; i++)
+        {
+            ReleaseSource(activeSnapshot[i]);
         }
 
         _loopingSources.Clear();
@@ -133,5 +154,45 @@ public class SFXPlayer
                     _settings.GetChannelMultiplier(audioEvent.channel);
             }
         }
+    }
+
+    private void RegisterActiveSource(AudioEvent audioEvent, PooledAudioSource pooled)
+    {
+        if (pooled == null)
+            return;
+
+        pooled.ReleasedToPool -= OnSourceReleasedToPool;
+        pooled.ReleasedToPool += OnSourceReleasedToPool;
+        _activeSources.Add(pooled);
+    }
+
+    private void ReleaseSource(PooledAudioSource pooled)
+    {
+        if (pooled == null)
+            return;
+
+        pooled.Stop();
+        _pool.Release(pooled);
+    }
+
+    private void OnSourceReleasedToPool(PooledAudioSource pooled)
+    {
+        if (pooled == null)
+            return;
+
+        _activeSources.Remove(pooled);
+
+        AudioEvent loopEventToRemove = null;
+        foreach (var kvp in _loopingSources)
+        {
+            if (kvp.Value != pooled)
+                continue;
+
+            loopEventToRemove = kvp.Key;
+            break;
+        }
+
+        if (loopEventToRemove != null)
+            _loopingSources.Remove(loopEventToRemove);
     }
 }

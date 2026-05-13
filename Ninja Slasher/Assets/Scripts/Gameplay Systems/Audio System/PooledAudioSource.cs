@@ -5,6 +5,10 @@ using UnityEngine;
 public class PooledAudioSource : MonoBehaviour, IPoolable
 {
     public AudioSource Source { get; private set; }
+    public AudioEvent CurrentAudioEvent { get; private set; }
+
+    public event System.Action<PooledAudioSource> ReleasedToPool;
+
     private ObjectPool<PooledAudioSource> _pool;
     private Coroutine _releaseCoroutine;
 
@@ -27,6 +31,8 @@ public class PooledAudioSource : MonoBehaviour, IPoolable
             Source.spatialBlend = 0f;
         }
 
+        CurrentAudioEvent = null;
+
         if (_releaseCoroutine != null)
         {
             StopCoroutine(_releaseCoroutine);
@@ -47,6 +53,9 @@ public class PooledAudioSource : MonoBehaviour, IPoolable
             Source.Stop();
             Source.clip = null;
         }
+
+        CurrentAudioEvent = null;
+        ReleasedToPool?.Invoke(this);
     }
 
     #endregion
@@ -54,6 +63,7 @@ public class PooledAudioSource : MonoBehaviour, IPoolable
     public void Play(AudioEvent audioEvent, AudioSettingsSO settings, Vector3 position, ObjectPool<PooledAudioSource> pool)
     {
         _pool = pool;
+        CurrentAudioEvent = audioEvent;
 
         Source.clip = audioEvent.clip;
         Source.volume = audioEvent.volume * settings.GetChannelMultiplier(audioEvent.channel);
@@ -106,5 +116,7 @@ public class PooledAudioSource : MonoBehaviour, IPoolable
             Source.Stop();
             Source.clip = null;
         }
+
+        CurrentAudioEvent = null;
     }
 }

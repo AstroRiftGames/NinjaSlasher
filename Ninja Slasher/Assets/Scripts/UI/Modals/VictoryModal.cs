@@ -34,6 +34,13 @@ public class VictoryModal : UIModalBase
 
     protected override void OnHidden()
     {
+        ResultsUIManager.Instance?.CancelResultsPresentation();
+    }
+
+    protected override void OnDisable()
+    {
+        ResultsUIManager.Instance?.CancelResultsPresentation();
+        base.OnDisable();
     }
 
     private void SetupButtons()
@@ -50,6 +57,7 @@ public class VictoryModal : UIModalBase
 
     private void OnContinueClicked()
     {
+        ResultsUIManager.Instance?.CancelResultsPresentation();
         SetPanelInputEnabled(false);
         UIEvents.RaiseQuitToMenuPressed();
     }
