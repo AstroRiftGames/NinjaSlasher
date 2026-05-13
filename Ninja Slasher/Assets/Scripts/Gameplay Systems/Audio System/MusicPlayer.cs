@@ -31,6 +31,14 @@ public class MusicPlayer
 
         _intendedVolume = audioEvent.volume * _settings.GetChannelMultiplier(AudioChannel.Music);
 
+        if (IsSameTrackAlreadyPlaying(audioEvent))
+        {
+            _source.pitch = audioEvent.GetPitch();
+            _source.loop = audioEvent.loop;
+            _source.volume = _isMuted ? 0f : _intendedVolume;
+            return;
+        }
+
         if (fadeTime > 0f && _source.isPlaying)
         {
             _coroutineRunner.StartCoroutine(CrossfadeCoroutine(audioEvent, fadeTime));
@@ -100,6 +108,14 @@ public class MusicPlayer
             }
             _source.volume = _intendedVolume;
         }
+    }
+
+    private bool IsSameTrackAlreadyPlaying(AudioEvent audioEvent)
+    {
+        return _source.isPlaying &&
+               _source.clip == audioEvent.clip &&
+               Mathf.Approximately(_source.pitch, audioEvent.GetPitch()) &&
+               _source.loop == audioEvent.loop;
     }
 
     private IEnumerator FadeOutCoroutine(float fadeTime)

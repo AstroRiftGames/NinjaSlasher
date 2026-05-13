@@ -96,6 +96,11 @@ public class LevelsScreen : UIScreenBase
         OnShown();
     }
 
+    protected override void OnShown()
+    {
+        MusicEvents.OnEnterLevelSelection?.Invoke();
+    }
+
     public override void Hide()
     {
         if (!_isVisible) return;

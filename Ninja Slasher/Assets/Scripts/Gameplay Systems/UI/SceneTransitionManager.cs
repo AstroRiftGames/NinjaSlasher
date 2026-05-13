@@ -169,8 +169,6 @@ public class SceneTransitionManager : MonoBehaviour
         _katanaTransition.PlayEnterLevelTransition();
         yield return WaitForKatanaTransitionToComplete();
 
-        MusicEvents.OnEnterLevelSelection?.Invoke();
-        
         SceneManager.sceneLoaded += OnLevelSelectorSceneLoaded;
         SceneManager.LoadScene(_levelSelectorSceneName);
     }
@@ -197,8 +195,6 @@ public class SceneTransitionManager : MonoBehaviour
 
         yield return PlayLegacyTransitionAndWait("OpeningStart");
 
-        MusicEvents.OnEnterLevelSelection?.Invoke();
-        
         SceneManager.sceneLoaded += OnLevelSelectorSceneLoaded;
         SceneManager.LoadScene(_levelSelectorSceneName);
     }
