@@ -21,6 +21,11 @@ public class GameDataDTO
     public int currentLives;
     public string lastLifeRegenTime;
     public bool canRegenLives;
+    public string lastKnownLocalUtc;
+    public string lastTrustedUtc;
+    public string lastTimeValidationUtc;
+    public bool trustedTimeAvailable;
+    public bool suspiciousTimeDetected;
 
     public int consecutiveLevelWins;
     public int lastCompletedLevel;
@@ -103,6 +108,11 @@ public static class GameDataMapper
             currentLives = d.currentLives,
             lastLifeRegenTime = d.lastLifeRegenTime,
             canRegenLives = d.canRegenLives,
+            lastKnownLocalUtc = d.lastKnownLocalUtc,
+            lastTrustedUtc = d.lastTrustedUtc,
+            lastTimeValidationUtc = d.lastTimeValidationUtc,
+            trustedTimeAvailable = d.trustedTimeAvailable,
+            suspiciousTimeDetected = d.suspiciousTimeDetected,
 
             activePowerUps = d.activePowerUps.ConvertAll(p => new PowerUpDataDTO
             {
@@ -188,6 +198,11 @@ public static class GameDataMapper
             currentLives = dto.currentLives,
             lastLifeRegenTime = dto.lastLifeRegenTime ?? "",
             canRegenLives = dto.canRegenLives,
+            lastKnownLocalUtc = dto.lastKnownLocalUtc ?? "",
+            lastTrustedUtc = dto.lastTrustedUtc ?? "",
+            lastTimeValidationUtc = dto.lastTimeValidationUtc ?? "",
+            trustedTimeAvailable = dto.trustedTimeAvailable,
+            suspiciousTimeDetected = dto.suspiciousTimeDetected,
 
             activePowerUps = dto.activePowerUps?.ConvertAll(p =>
             {

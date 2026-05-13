@@ -79,7 +79,6 @@ public class LoadManager : MonoBehaviour
 
                     yield return new WaitForSeconds(2);
 
-                    MusicEvents.OnEnterLevelSelection?.Invoke();
                     asyncOperation.allowSceneActivation = true;
                 }
 #endif

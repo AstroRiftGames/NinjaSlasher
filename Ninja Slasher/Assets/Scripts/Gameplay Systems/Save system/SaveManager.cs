@@ -146,6 +146,7 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
         isSaving = true;
         try
         {
+            UnityEngine.Object.FindFirstObjectByType<TrustedTimeService>()?.PopulatePersistence(gameData);
             gameData.lastPlayDate = DateTime.Now;
 
             string directory = Path.GetDirectoryName(saveFilePath);
