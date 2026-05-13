@@ -17,7 +17,7 @@ public class PregameModal : UIModalBase
     [Header("Managers")]
     [SerializeField] private PreGameUIManager _preGameUIManager;
     [SerializeField] private ButtonManager _buttonManager;
-    [SerializeField] private CanvasGroup _overlayCanvasGroup;
+
 
     private Tween _moveTween;
     private Tween _scaleTween;

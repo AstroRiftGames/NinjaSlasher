@@ -15,7 +15,7 @@ public class PauseOverlay : UIOverlayBase
     [SerializeField] private BackToLevelSelectionConfirmationPopUp _backToLevelSelectionConfirmationPopUp;
 
     [Header("Background")]
-    [SerializeField] private Image _backgroundImage;
+    // Inherits _backgroundImage from UIOverlayBase
 
     [Header("Info")]
     [SerializeField] private GameObject _infoRoot;
