@@ -148,6 +148,26 @@ public class PauseOverlay : UIOverlayBase
 
     private void OnRestartClicked()
     {
+        bool canRestart = true;
+        if (LevelSessionManager.Instance != null && LifeManager.Instance != null)
+        {
+            bool includePendingExitCost = LifeManager.Instance.HasPendingDeduction();
+            canRestart = LevelSessionManager.Instance.CanStartLevelAttempt(includePendingExitCost);
+        }
+        else if (LifeManager.Instance != null)
+        {
+            canRestart = LifeManager.Instance.CanPlay();
+        }
+
+        if (!canRestart)
+        {
+            Debug.Log($"[PauseOverlay] Restart blocked: No available lives. realLives={LifeManager.Instance?.GetRealLives()} | unlimited={LifeManager.Instance?.HasTimedUnlimitedLives}");
+            UIEvents.RequestShowNoLivesModal();
+            Hide();
+            return;
+        }
+
+        Debug.Log("[PauseOverlay] Restart authorized by UI validation. Showing confirmation pop-up.");
         if (_restartConfirmationPopUp != null)
         {
             _restartConfirmationPopUp.ShowConfirmation(ConfirmRestartLevel);
