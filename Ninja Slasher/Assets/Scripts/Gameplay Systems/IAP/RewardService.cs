@@ -51,7 +51,7 @@ public class RewardService : MonoBehaviourSingleton<RewardService>
         else if (reward.regularLivesCount > 0)
         {
             for (int i = 0; i < reward.regularLivesCount; i++)
-                LifeManager.Instance?.AddLife(LifeRestoreSource.IapPurchase);
+                LifeManager.Instance?.GrantExternalLife(LifeRestoreSource.IapPurchase);
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             Debug.Log($"[RewardService] +{reward.regularLivesCount} lives | Total={LifeManager.Instance?.GetRealLives()}");
 #endif

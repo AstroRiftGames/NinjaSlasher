@@ -238,7 +238,7 @@ public sealed class TrustedTimeService : MonoBehaviour
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void EnsureBootstrapInstance()
     {
-        if (Object.FindFirstObjectByType<TrustedTimeService>() != null)
+        if (UnityEngine.Object.FindFirstObjectByType<TrustedTimeService>() != null)
             return;
 
         GameObject bootstrap = new GameObject(BootstrapObjectName);

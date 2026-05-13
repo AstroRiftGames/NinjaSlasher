@@ -146,7 +146,7 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
     {
         ShowRewardedAd(() =>
         {
-            LifeManager.Instance?.AddLife(LifeRestoreSource.AdReward);
+            LifeManager.Instance?.GrantExternalLife(LifeRestoreSource.AdReward);
             Debug.Log("[AdsManager] Extra life granted from rewarded ad.");
         }, "extra_life");
     }

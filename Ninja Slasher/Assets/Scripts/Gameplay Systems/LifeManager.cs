@@ -689,7 +689,17 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
 
     public void AddLife(LifeRestoreSource source = LifeRestoreSource.Unknown)
     {
+        GrantExternalLife(source);
+    }
+
+    public void GrantExternalLife(LifeRestoreSource source = LifeRestoreSource.Unknown)
+    {
         if (CurrentLives >= MaxLives) return;
+
+        // Manual grants must not reset recharge progress. The recharge anchor only
+        // moves when a real life is consumed, a natural regeneration is applied,
+        // or an invalid time state is normalized.
+        DateTime rechargeAnchorUtc = _lastLifeUsedUtc;
 
         CurrentLives++;
 
@@ -713,6 +723,7 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
             AnalyticsManager.Instance?.RecordLifeWallResolved(WallOutcomeFromSource(source), wallLevelId);
         }
 
+        _lastLifeUsedUtc = rechargeAnchorUtc;
         Persist("Vida ganada");
         EmitDisplayLivesChanged();
     }
@@ -721,8 +732,12 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
     {
         if (CurrentLives >= MaxLives) return;
 
+        // Manual full refills follow the same rule as single-life grants: do not
+        // move the recharge anchor unless the caller explicitly needs a reset.
+        DateTime rechargeAnchorUtc = _lastLifeUsedUtc;
+
         CurrentLives = MaxLives;
-        _lastLifeUsedUtc = GetCurrentUtcNowOrFallback();
+        _lastLifeUsedUtc = rechargeAnchorUtc;
 
         if (_hasVirtualDeduction)
             _virtualLives = Mathf.Max(0, CurrentLives - 1);
