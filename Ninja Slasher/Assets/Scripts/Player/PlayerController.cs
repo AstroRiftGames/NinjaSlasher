@@ -1,5 +1,6 @@
 using CandyCoded.HapticFeedback;
 using System;
+using System.Collections;
 using System.Linq;
 using UnityEngine;
 
@@ -24,6 +25,9 @@ public class PlayerController : MonoBehaviour
 
     [Header("Audio")]
     [SerializeField] private PlayerAudioSet _audio;
+
+    [Header("Smoke Bomb Settings")]
+    [SerializeField] private float _smokeBombVisibilityDelay = 0.15f;
 
 
     public bool IsDashing => _isDashing;
@@ -135,6 +139,8 @@ public class PlayerController : MonoBehaviour
         _swipeDetection.OnSwipe += TryDash;
         _swipeDetection.OnInputStart += CalculateAngleRange;
         _swipeDetection.OnTap += TryParry;
+
+        UIEvents.OnTransitionFinished += PlaySmokeBomb;
     }
 
     private void OnDisable()
@@ -144,6 +150,8 @@ public class PlayerController : MonoBehaviour
         _swipeDetection.OnSwipe -= TryDash;
         _swipeDetection.OnInputStart -= CalculateAngleRange;
         _swipeDetection.OnTap -= TryParry;
+
+        UIEvents.OnTransitionFinished -= PlaySmokeBomb;
     }
 
     private Vector2 GetFinalDirection(Vector2 startDir)
@@ -319,6 +327,25 @@ public class PlayerController : MonoBehaviour
         _view.SpriteContainer.transform.rotation = Quaternion.Euler(0, 0, angle);
         SetFlipped(angle);
         SetMirrored(false);
+    }
+    
+    private void PlaySmokeBomb()
+    {
+        if (_view.SmokeBombParticles != null)
+        {
+            _view.SmokeBombParticles.Play();
+            StartCoroutine(ShowCharacterAfterDelay(_smokeBombVisibilityDelay));
+        }
+        else
+        {
+            _view.SetSpriteVisibility(true);
+        }
+    }
+
+    private IEnumerator ShowCharacterAfterDelay(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        _view.SetSpriteVisibility(true);
     }
 
 

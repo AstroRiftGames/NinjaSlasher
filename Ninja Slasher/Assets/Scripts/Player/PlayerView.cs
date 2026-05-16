@@ -15,14 +15,19 @@ public class PlayerView : MonoBehaviour
 
     public GameObject SpriteContainer => _spriteContainer;
     [SerializeField] GameObject _spriteContainer;
+    [SerializeField] GameObject _ninjaSprites;
 
     public Portal LastUsedPortal { get; set; }
 
     private TrailRenderer _trailRenderer;
     public TrailRenderer TrailRendererComponent => _trailRenderer;
 
-    private ParticleSystem _landingParticles;
+    [Header("Effects")]
+    [SerializeField] private ParticleSystem _landingParticles;
     public ParticleSystem LandingParticles => _landingParticles;
+
+    [SerializeField] private ParticleSystem _smokeBombParticles;
+    public ParticleSystem SmokeBombParticles => _smokeBombParticles;
 
     [System.Serializable]
     public struct SurfaceSpriteSet
@@ -31,7 +36,7 @@ public class PlayerView : MonoBehaviour
         public Sprite[] sprites;
     }
 
-    [Header("Landing Particles")]
+    [Header("Landing Particles Settings")]
     [SerializeField] private SurfaceSpriteSet[] _surfaceParticleSets;
 
     public void SetLandingParticlesSurface(SurfaceMaterial material)
@@ -86,6 +91,14 @@ public class PlayerView : MonoBehaviour
     [SerializeField] private TrailRenderer _dashTrailRenderer;
     public TrailRenderer SlashTrail => _dashTrailRenderer;
 
+    public void SetSpriteVisibility(bool visible)
+    {
+        if (_ninjaSprites != null)
+        {
+            _ninjaSprites.SetActive(visible);
+        }
+    }
+
     void Awake()
     {
         _trailRenderer = GetComponent<TrailRenderer>();
@@ -95,11 +108,16 @@ public class PlayerView : MonoBehaviour
             _trailRenderer.emitting = false;
         }
 
-        _landingParticles = GetComponentInChildren<ParticleSystem>();
+        if (_landingParticles == null)
+        {
+            _landingParticles = GetComponentInChildren<ParticleSystem>();
+        }
 
         if (_dashTrailRenderer != null)
         {
             _dashTrailRenderer.emitting = false;
         }
+
+        SetSpriteVisibility(false);
     }
 }

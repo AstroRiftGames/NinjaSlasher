@@ -351,6 +351,7 @@ public static class UIEvents
     public static event Action OnLoadLevelSelectorSceneRequested;
 
     public static event Action OnLevelSelectorReady;
+    public static event Action OnTransitionFinished;
 
     public static void RequestSceneTransition(string sceneName)
     {
@@ -375,6 +376,11 @@ public static class UIEvents
     public static void RaiseLevelSelectorReady()
     {
         OnLevelSelectorReady?.Invoke();
+    }
+
+    public static void RaiseTransitionFinished()
+    {
+        OnTransitionFinished?.Invoke();
     }
 
     #endregion
@@ -603,6 +609,7 @@ public static class UIEvents
         OnRestartLevelRequested = null;
         OnLoadLevelSelectorSceneRequested = null;
         OnLevelSelectorReady = null;
+        OnTransitionFinished = null;
     }
 
     public static void ClearButtonEvents()

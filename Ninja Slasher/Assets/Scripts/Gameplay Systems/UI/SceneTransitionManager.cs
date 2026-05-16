@@ -92,6 +92,8 @@ public class SceneTransitionManager : MonoBehaviour
         _katanaTransition.PlayExitLevelTransition();
         yield return WaitForKatanaTransitionToComplete();
 
+        UIEvents.RaiseTransitionFinished();
+
         EndTransitionPause();
         EndSceneTransition();
         uiManager?.SetGameplayHUDEnabled(true);
@@ -121,6 +123,8 @@ public class SceneTransitionManager : MonoBehaviour
         yield return WaitForScenePresentationFrame();
 
         yield return PlayLegacyTransitionAndWait("End", playSlashSfx: true);
+
+        UIEvents.RaiseTransitionFinished();
 
         EndTransitionPause();
         EndSceneTransition();
