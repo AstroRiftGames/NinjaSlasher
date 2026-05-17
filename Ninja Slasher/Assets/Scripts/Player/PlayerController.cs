@@ -470,7 +470,7 @@ public class PlayerController : MonoBehaviour
         _view.RB.bodyType = RigidbodyType2D.Dynamic;
         _view.RB.gravityScale = 1f;
 
-
+        RotateSprites(Vector2.zero);
         _view.Animator.SetTrigger("OnKO");
 
         if (CameraShake.Instance != null)
