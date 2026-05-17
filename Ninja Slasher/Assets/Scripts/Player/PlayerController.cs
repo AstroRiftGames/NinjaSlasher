@@ -455,6 +455,11 @@ public class PlayerController : MonoBehaviour
         Debug.Log("Player Died");
         if (_isKO) return;
 
+        if(_currentPlatform != null)
+        {
+            _currentPlatform.OnPlayerExit(gameObject, true);
+            _currentPlatform = null;
+        }
         PlayKnockOutSfx();
 
         _isKO = true;
