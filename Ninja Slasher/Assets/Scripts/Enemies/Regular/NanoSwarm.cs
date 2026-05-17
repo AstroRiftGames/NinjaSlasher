@@ -39,7 +39,6 @@ public class NanoSwarm : FlyingEnemy
         }
     }
 
-    Vector2[] posiblePos = new Vector2[10];
     private Vector2 GetSafeSpawnPosition()
     {
         for (int i = 0; i < MaxSpawnAttempts; i++)
@@ -48,21 +47,11 @@ public class NanoSwarm : FlyingEnemy
                 transform.position.x + Random.Range(-2f, 2f),
                 transform.position.y + Random.Range(-2f, 2f)
             );
-            posiblePos = posiblePos.Append(candidate).ToArray();
             Collider2D hit = Physics2D.OverlapCircle(candidate, SpawnCheckRadius, _obstaclesLayer);
             if (hit == null || (!hit.CompareTag("Obstacle") && !hit.CompareTag("Scenario")))
                 return candidate;
         }
 
         return transform.position + new Vector3(Random.Range(-.5f, .5f), Random.Range(-.5f, .5f), transform.position.z);
-    }
-
-    private void OnDrawGizmos()
-    {
-        Gizmos.color = Color.green;
-        foreach (Vector2 pos in posiblePos)
-        {
-            Gizmos.DrawWireSphere(pos, SpawnCheckRadius);
-        }
     }
 }
