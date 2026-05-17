@@ -61,8 +61,9 @@ public class Enemy : MonoBehaviour
             HandleGameplayClosed();
             return;
         }
-
         _hasHandledGameplayClosed = false;
+
+        if (_isDead) return;
         CustomUpdate();
     }
 
