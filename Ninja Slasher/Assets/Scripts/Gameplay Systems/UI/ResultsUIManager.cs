@@ -64,6 +64,14 @@ public class ResultsUIManager : MonoBehaviourSingleton<ResultsUIManager>
         SetStarsToOffscreenPosition();
         ResetStarSprites();
         ResetAllStrokesVisuals();
+
+        if (TryGetCurrentResultsConfiguration(out LevelConfiguration config, out int levelId))
+        {
+            SetupGoalTextsAndStrokes(config, levelId);
+            return;
+        }
+
+        ClearGoalTexts();
     }
 
     public void ShowResultsPanel()
@@ -73,16 +81,15 @@ public class ResultsUIManager : MonoBehaviourSingleton<ResultsUIManager>
 
     public void ShowResultsPanel(Action onSequenceCompleted)
     {
-        int levelId = GetLevelIdFromSceneName(SceneManager.GetActiveScene().name);
-        var cfgMgr = LevelConfigurationManager.Instance;
-        var config = cfgMgr != null ? cfgMgr.GetConfigurationForLevel(levelId) : null;
-
         BeginResultsPresentation(onSequenceCompleted);
 
-        if (config == null)
+        if (!TryGetCurrentResultsConfiguration(out LevelConfiguration config, out int levelId))
         {
-            if (_primaryGoalText) _primaryGoalText.text = "Objetivos no configurados.";
-            foreach (var t in _secondaryGoalTexts) if (t) t.text = string.Empty;
+            ClearGoalTexts();
+
+            if (_primaryGoalText)
+                _primaryGoalText.text = "Objetivos no configurados.";
+
             TryCompleteResultsPresentation(_sequenceVersion);
             return;
         }
@@ -176,7 +183,7 @@ public class ResultsUIManager : MonoBehaviourSingleton<ResultsUIManager>
 
     private IEnumerator AnimateObjectiveStrokes(List<Image> strokeImages, int sequenceVersion)
     {
-        yield return new WaitForSeconds(strokeAnimationDelay);
+        yield return new WaitForSecondsRealtime(strokeAnimationDelay);
 
         for (int i = 0; i < strokeImages.Count; i++)
         {
@@ -186,7 +193,7 @@ public class ResultsUIManager : MonoBehaviourSingleton<ResultsUIManager>
             AnimateStrokeImage(strokeImages[i], sequenceVersion);
 
             if (i < strokeImages.Count - 1)
-                yield return new WaitForSeconds(strokeStagger);
+                yield return new WaitForSecondsRealtime(strokeStagger);
         }
 
         if (sequenceVersion == _sequenceVersion)
@@ -201,7 +208,7 @@ public class ResultsUIManager : MonoBehaviourSingleton<ResultsUIManager>
         DOTween.Kill(slashImage.transform, false);
         DOTween.Kill(slashImage, false);
 
-        var seq = DOTween.Sequence();
+        var seq = DOTween.Sequence().SetUpdate(true);
         TrackPresentationTween(seq);
         seq.Append(slashImage.transform.DOScaleX(1f, slashEffectDuration * 1.5f).SetEase(Ease.OutQuart));
         seq.Join(slashImage.DOFade(1f, slashEffectDuration * 1.2f));
@@ -210,7 +217,9 @@ public class ResultsUIManager : MonoBehaviourSingleton<ResultsUIManager>
             if (!IsSequenceValid(sequenceVersion))
                 return;
 
-            Tween punchTween = slashImage.transform.DOPunchScale(Vector3.one * 0.1f, 0.1f, 1, 0.8f);
+            Tween punchTween = slashImage.transform
+                .DOPunchScale(Vector3.one * 0.1f, 0.1f, 1, 0.8f)
+                .SetUpdate(true);
             TrackPresentationTween(punchTween);
             punchTween.OnComplete(() => NotifyStrokeAnimationCompleted(sequenceVersion));
             AudioService.Instance?.PlaySFX(_audioContext.Audio.tapSplash);
@@ -243,6 +252,26 @@ public class ResultsUIManager : MonoBehaviourSingleton<ResultsUIManager>
     private Image GetSlashImage(TextMeshProUGUI text)
     {
         return text ? text.GetComponentInChildren<Image>(true) : null;
+    }
+
+    private bool TryGetCurrentResultsConfiguration(out LevelConfiguration config, out int levelId)
+    {
+        levelId = GetLevelIdFromSceneName(SceneManager.GetActiveScene().name);
+        var cfgMgr = LevelConfigurationManager.Instance;
+        config = cfgMgr != null ? cfgMgr.GetConfigurationForLevel(levelId) : null;
+        return config != null;
+    }
+
+    private void ClearGoalTexts()
+    {
+        if (_primaryGoalText)
+            _primaryGoalText.text = string.Empty;
+
+        for (int i = 0; i < _secondaryGoalTexts.Length; i++)
+        {
+            if (_secondaryGoalTexts[i])
+                _secondaryGoalTexts[i].text = string.Empty;
+        }
     }
 
     private void CacheOriginalStarPositions()
@@ -310,7 +339,7 @@ public class ResultsUIManager : MonoBehaviourSingleton<ResultsUIManager>
         rt.rotation = Quaternion.Euler(0, 0, Random.Range(0, 360));
         DOTween.Kill(rt, false);
 
-        var seq = DOTween.Sequence();
+        var seq = DOTween.Sequence().SetUpdate(true);
         TrackPresentationTween(seq);
         seq.Append(rt.DOAnchorPos(targetPos, _starAnimationDuration).SetEase(_starAnimationEase).SetDelay(delay));
         seq.Join(rt.DORotate(new Vector3(0, 0, 360 * 3), _starAnimationDuration, RotateMode.FastBeyond360)
@@ -322,7 +351,9 @@ public class ResultsUIManager : MonoBehaviourSingleton<ResultsUIManager>
 
             SetStarSprite(starIndex, isCompleted);
             rt.rotation = Quaternion.identity;
-            Tween punchTween = rt.DOPunchScale(Vector3.one * 0.3f, 0.3f, 10, 0.5f);
+            Tween punchTween = rt
+                .DOPunchScale(Vector3.one * 0.3f, 0.3f, 10, 0.5f)
+                .SetUpdate(true);
             TrackPresentationTween(punchTween);
             punchTween.OnComplete(() => NotifyStarAnimationCompleted(sequenceVersion));
         });
