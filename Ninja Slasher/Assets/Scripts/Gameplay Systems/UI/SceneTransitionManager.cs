@@ -96,7 +96,7 @@ public class SceneTransitionManager : MonoBehaviour
 
         EndTransitionPause();
         EndSceneTransition();
-        uiManager?.SetGameplayHUDEnabled(true);
+        uiManager?.RefreshGameplayHUDSessionVisibility();
 
         yield return new WaitForEndOfFrame();
         SetHUDActive(true);
@@ -128,7 +128,7 @@ public class SceneTransitionManager : MonoBehaviour
 
         EndTransitionPause();
         EndSceneTransition();
-        uiManager?.SetGameplayHUDEnabled(true);
+        uiManager?.RefreshGameplayHUDSessionVisibility();
 
         yield return new WaitForEndOfFrame();
         SetHUDActive(true);
