@@ -205,7 +205,7 @@ public class PlayerController : MonoBehaviour
 
         _hasHandledGameplayClosed = false;
 
-        if (_swipeDetection.IsPressing)
+        if (_swipeDetection.IsPressing && _swipeDetection.Direction.magnitude >= .5f)
         {
             _trajectoryRenderer.ShowTrajectory(transform.position, GetFinalDirection(_swipeDetection.Direction));
         }
