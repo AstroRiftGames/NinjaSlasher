@@ -33,6 +33,7 @@ public class PauseController : MonoBehaviourSingleton<PauseController>
     private void OnEnable()
     {
         SceneManager.sceneLoaded += OnSceneLoaded;
+        UIEvents.OnPauseButtonPressed += OnPauseButtonPressed;
 
         if (GameStateManager.Instance != null)
             GameStateManager.Instance.OnStateChanged += OnGameStateChanged;
@@ -43,6 +44,7 @@ public class PauseController : MonoBehaviourSingleton<PauseController>
     private void OnDisable()
     {
         SceneManager.sceneLoaded -= OnSceneLoaded;
+        UIEvents.OnPauseButtonPressed -= OnPauseButtonPressed;
 
         if (GameStateManager.Instance != null)
             GameStateManager.Instance.OnStateChanged -= OnGameStateChanged;
@@ -83,6 +85,11 @@ public class PauseController : MonoBehaviourSingleton<PauseController>
         return source != PauseSource.None && _activePauseSources.Contains(source);
     }
 
+    public bool CanAcceptUserPauseRequest()
+    {
+        return LevelSessionManager.Instance != null && LevelSessionManager.Instance.IsSessionRunning;
+    }
+
     private void ApplyPauseState(string reason)
     {
         bool isPaused = IsPaused;
@@ -121,6 +128,19 @@ public class PauseController : MonoBehaviourSingleton<PauseController>
             return;
 
         ApplyPauseState($"GameStateChanged:{change.CurrentState}");
+    }
+
+    private void OnPauseButtonPressed()
+    {
+        if (!CanAcceptUserPauseRequest())
+        {
+            if (ShouldLog())
+                Debug.Log("[Pause] User pause request ignored because the session is not running.");
+
+            return;
+        }
+
+        UIEvents.RequestTogglePauseOverlay();
     }
 
     private void RefreshDebugView()
