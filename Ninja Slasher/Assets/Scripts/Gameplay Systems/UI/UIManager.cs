@@ -222,6 +222,9 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
 
     private void SubscribeToGameEvents()
     {
+        GameEvents.OnLevelStarted += OnLevelStarted;
+        GameEvents.OnAllEnemiesDefeated += OnAllEnemiesDefeated;
+        GameEvents.OnLevelEnded += OnLevelEnded;
         GameEvents.OnLevelResultReady += OnLevelResultReady;
     }
 
@@ -285,10 +288,28 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
 
     private void UnsubscribeFromGameEvents()
     {
+        GameEvents.OnLevelStarted -= OnLevelStarted;
+        GameEvents.OnAllEnemiesDefeated -= OnAllEnemiesDefeated;
+        GameEvents.OnLevelEnded -= OnLevelEnded;
         GameEvents.OnLevelResultReady -= OnLevelResultReady;
     }
 
     #endregion
+
+    private void OnLevelStarted()
+    {
+        ShowGameplayHUD();
+    }
+
+    private void OnAllEnemiesDefeated(LevelStats _)
+    {
+        HideGameplayHUD();
+    }
+
+    private void OnLevelEnded(LevelResult _)
+    {
+        HideGameplayHUD();
+    }
 
     private void OnLevelResultReady(LevelResult result)
     {
@@ -439,6 +460,11 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
             ShowGameplayHUD();
         else
             HideGameplayHUD();
+    }
+
+    public void RefreshGameplayHUDSessionVisibility()
+    {
+        SetGameplayHUDEnabled(LevelSessionManager.Instance != null && LevelSessionManager.Instance.IsSessionRunning);
     }
 
     public void SetGameplayHUDTopRightInfoVisible(bool visible)

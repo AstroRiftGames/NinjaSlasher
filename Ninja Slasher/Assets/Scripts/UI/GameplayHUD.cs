@@ -100,7 +100,7 @@ public class GameplayHUD : UIPanel
 
     private void OnPauseClicked()
     {
-        UIEvents.RequestTogglePauseOverlay();
+        UIEvents.RaisePausePressed();
     }
 
     private void CacheCurrentOverlayVisibility()
