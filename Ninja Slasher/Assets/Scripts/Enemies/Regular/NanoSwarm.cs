@@ -1,3 +1,4 @@
+using System.Linq;
 using UnityEngine;
 
 public class NanoSwarm : FlyingEnemy
@@ -6,7 +7,7 @@ public class NanoSwarm : FlyingEnemy
     [SerializeField] GameObject _miniSwarmBot;
     private bool _isDying = false;
 
-    private const float SpawnCheckRadius = 0.5f;
+    private const float SpawnCheckRadius = 1f;
     private const int MaxSpawnAttempts = 10;
 
     public override void Die()
@@ -38,20 +39,30 @@ public class NanoSwarm : FlyingEnemy
         }
     }
 
+    Vector2[] posiblePos = new Vector2[10];
     private Vector2 GetSafeSpawnPosition()
     {
         for (int i = 0; i < MaxSpawnAttempts; i++)
         {
             Vector2 candidate = new Vector2(
-                transform.position.x + Random.Range(-3f, 3f),
-                transform.position.y + Random.Range(-1.5f, 1.5f)
+                transform.position.x + Random.Range(-2f, 2f),
+                transform.position.y + Random.Range(-2f, 2f)
             );
-            Debug.DrawLine(transform.position, candidate, Color.red, 1f);
-            Collider2D hit = Physics2D.OverlapCircle(candidate, SpawnCheckRadius);
+            posiblePos = posiblePos.Append(candidate).ToArray();
+            Collider2D hit = Physics2D.OverlapCircle(candidate, SpawnCheckRadius, _obstaclesLayer);
             if (hit == null || (!hit.CompareTag("Obstacle") && !hit.CompareTag("Scenario")))
                 return candidate;
         }
 
-        return transform.position;
+        return transform.position + new Vector3(Random.Range(-.5f, .5f), Random.Range(-.5f, .5f), transform.position.z);
+    }
+
+    private void OnDrawGizmos()
+    {
+        Gizmos.color = Color.green;
+        foreach (Vector2 pos in posiblePos)
+        {
+            Gizmos.DrawWireSphere(pos, SpawnCheckRadius);
+        }
     }
 }
