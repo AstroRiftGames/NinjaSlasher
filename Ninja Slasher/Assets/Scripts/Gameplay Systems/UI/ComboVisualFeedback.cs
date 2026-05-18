@@ -8,31 +8,62 @@ public class ComboVisualFeedback : MonoBehaviour
     [Header("Pool")]
     [SerializeField] private FloatingTextPool textPool;
 
-    [Header("Canvas Target")]
+    [Header("Presentation")]
     [SerializeField] private Canvas targetCanvas;
+    [SerializeField] private RectTransform feedbackContainer;
     [SerializeField] private bool autoFindCanvas = true;
+
+    private RectTransform _defaultFeedbackContainer;
 
     private void Awake()
     {
+        _defaultFeedbackContainer = transform as RectTransform;
         ValidateReferences();
+        ResolvePresentationTargets();
+    }
+
+    private void Start()
+    {
+        ResolvePresentationTargets();
     }
 
     private void OnEnable()
     {
         GameEvents.OnComboUpdated += HandleComboUpdated;
+        GameEvents.OnLevelStarted += HandleLevelStarted;
+        GameEvents.OnLevelResultReady += HandleLevelResultReady;
+        GameEvents.OnLevelSessionClosed += HandleLevelSessionClosed;
     }
 
     private void OnDisable()
     {
         GameEvents.OnComboUpdated -= HandleComboUpdated;
+        GameEvents.OnLevelStarted -= HandleLevelStarted;
+        GameEvents.OnLevelResultReady -= HandleLevelResultReady;
+        GameEvents.OnLevelSessionClosed -= HandleLevelSessionClosed;
+
+        ClearActiveFeedbacks();
     }
 
-    private void Start()
+    public void ClearActiveFeedbacks()
     {
-        if (autoFindCanvas && targetCanvas == null)
-        {
-            targetCanvas = FindGameplayCanvas();
-        }
+        textPool?.ReleaseAllActive();
+    }
+
+    private void HandleLevelStarted()
+    {
+        ResolvePresentationTargets();
+        ClearActiveFeedbacks();
+    }
+
+    private void HandleLevelResultReady(LevelResult _)
+    {
+        ClearActiveFeedbacks();
+    }
+
+    private void HandleLevelSessionClosed()
+    {
+        ClearActiveFeedbacks();
     }
 
     private void ValidateReferences()
@@ -48,8 +79,81 @@ public class ComboVisualFeedback : MonoBehaviour
         }
     }
 
+    private void HandleComboUpdated(int comboLevel, Vector3 enemyPosition)
+    {
+        if (!CanShowFeedback(comboLevel))
+            return;
+
+        ComboLevelData data = config.GetComboData(comboLevel);
+        if (data == null)
+        {
+            Debug.LogWarning($"[ComboVisualFeedback] No hay datos para combo nivel {comboLevel}");
+            return;
+        }
+
+        ShowFloatingText(data.message, enemyPosition, data.color);
+    }
+
+    private bool CanShowFeedback(int comboLevel)
+    {
+        if (config == null || textPool == null)
+            return false;
+
+        if (!config.ShouldShowFeedback(comboLevel))
+            return false;
+
+        if (!IsGameplaySessionRunning())
+            return false;
+
+        return ResolvePresentationTargets();
+    }
+
+    private void ShowFloatingText(string message, Vector3 worldPosition, Color color)
+    {
+        FloatingComboText text = textPool.Get();
+        if (text == null)
+        {
+            Debug.LogError("[ComboVisualFeedback] No se pudo obtener texto del pool");
+            return;
+        }
+
+        RectTransform container = GetFeedbackContainer();
+        if (container == null || targetCanvas == null)
+        {
+            textPool.ReleaseAllActive();
+            return;
+        }
+
+        if (text.transform.parent != container)
+            text.transform.SetParent(container, false);
+
+        text.Show(message, worldPosition, color, targetCanvas, container);
+    }
+
+    private bool ResolvePresentationTargets()
+    {
+        if (autoFindCanvas && targetCanvas == null)
+        {
+            targetCanvas = FindGameplayCanvas();
+        }
+
+        return targetCanvas != null && GetFeedbackContainer() != null;
+    }
+
+    private RectTransform GetFeedbackContainer()
+    {
+        if (feedbackContainer != null)
+            return feedbackContainer;
+
+        return _defaultFeedbackContainer;
+    }
+
     private Canvas FindGameplayCanvas()
     {
+        Canvas parentCanvas = GetComponentInParent<Canvas>(true);
+        if (parentCanvas != null)
+            return parentCanvas;
+
         Canvas[] allCanvases = FindObjectsOfType<Canvas>(true);
 
         foreach (Canvas canvas in allCanvases)
@@ -61,7 +165,7 @@ public class ComboVisualFeedback : MonoBehaviour
             }
         }
 
-        Canvas fallbackCanvas = FindObjectOfType<Canvas>();
+        Canvas fallbackCanvas = FindObjectOfType<Canvas>(true);
         if (fallbackCanvas != null)
         {
             Debug.LogWarning($"[ComboVisualFeedback] Usando canvas por defecto: {fallbackCanvas.name}");
@@ -70,44 +174,8 @@ public class ComboVisualFeedback : MonoBehaviour
         return fallbackCanvas;
     }
 
-    private void HandleComboUpdated(int comboLevel, Vector3 enemyPosition)
+    private static bool IsGameplaySessionRunning()
     {
-        if (!config.ShouldShowFeedback(comboLevel))
-        {
-            return;
-        }
-
-        ComboLevelData data = config.GetComboData(comboLevel);
-
-        if (data == null)
-        {
-            Debug.LogWarning($"[ComboVisualFeedback] No hay datos para combo nivel {comboLevel}");
-            return;
-        }
-
-        ShowFloatingText(data.message, enemyPosition, data.color);
-    }
-
-    private void ShowFloatingText(string message, Vector3 worldPosition, Color color)
-    {
-        if (textPool == null)
-        {
-            Debug.LogError("[ComboVisualFeedback] Pool no disponible");
-            return;
-        }
-
-        FloatingComboText text = textPool.Get();
-
-        if (text == null)
-        {
-            Debug.LogError("[ComboVisualFeedback] No se pudo obtener texto del pool");
-            return;
-        }
-
-        // Asegurar que el texto esté bajo el canvas correcto para que GetComponentInParent<Canvas>() funcione
-        if (targetCanvas != null && text.transform.parent != targetCanvas.transform)
-            text.transform.SetParent(targetCanvas.transform, false);
-
-        text.Show(message, worldPosition, color);
+        return LevelSessionManager.Instance != null && LevelSessionManager.Instance.IsSessionRunning;
     }
 }

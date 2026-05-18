@@ -223,8 +223,6 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
     private void SubscribeToGameEvents()
     {
         GameEvents.OnLevelStarted += OnLevelStarted;
-        GameEvents.OnAllEnemiesDefeated += OnAllEnemiesDefeated;
-        GameEvents.OnLevelEnded += OnLevelEnded;
         GameEvents.OnLevelResultReady += OnLevelResultReady;
     }
 
@@ -289,8 +287,6 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
     private void UnsubscribeFromGameEvents()
     {
         GameEvents.OnLevelStarted -= OnLevelStarted;
-        GameEvents.OnAllEnemiesDefeated -= OnAllEnemiesDefeated;
-        GameEvents.OnLevelEnded -= OnLevelEnded;
         GameEvents.OnLevelResultReady -= OnLevelResultReady;
     }
 
@@ -301,18 +297,10 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
         ShowGameplayHUD();
     }
 
-    private void OnAllEnemiesDefeated(LevelStats _)
-    {
-        HideGameplayHUD();
-    }
-
-    private void OnLevelEnded(LevelResult _)
-    {
-        HideGameplayHUD();
-    }
-
     private void OnLevelResultReady(LevelResult result)
     {
+        HideGameplayHUD();
+
         switch (result)
         {
             case LevelResult.Victory:
@@ -451,7 +439,7 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
     private void HideGameplayHUD()
     {
         _shouldGameplayHUDBeVisible = false;
-        HidePanel(_gameplayHUD);
+        ApplyGameplayHUDVisibility(force: true);
     }
 
     public void SetGameplayHUDEnabled(bool enabled)
@@ -586,9 +574,25 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
         bool shouldShowHUD = _shouldGameplayHUDBeVisible && !UIPanel.HasVisibleBlockingPanel;
 
         if (shouldShowHUD)
-            ShowPanel(_gameplayHUD);
+            ApplyGameplayHUDVisibility(force: true);
         else
-            HidePanel(_gameplayHUD);
+            ApplyGameplayHUDVisibility(force: true);
+    }
+
+    private void ApplyGameplayHUDVisibility(bool force)
+    {
+        if (_gameplayHUD == null)
+            return;
+
+        bool shouldShowHUD = _shouldGameplayHUDBeVisible && !UIPanel.HasVisibleBlockingPanel;
+
+        if (!force && ShouldIgnoreUIRequest())
+            return;
+
+        if (shouldShowHUD)
+            ShowPanelInternal(_gameplayHUD);
+        else
+            HidePanelInternal(_gameplayHUD);
     }
 
     private TutorialUIOverlay ResolveTutorialOverlay()

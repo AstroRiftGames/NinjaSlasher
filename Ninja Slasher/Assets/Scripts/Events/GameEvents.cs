@@ -41,6 +41,7 @@ public static class GameEvents
     public static event Action<LevelStats> OnLevelCompleted;
     public static event Action<LevelFailedContext> OnLevelFailed;
     public static event Action<LevelResult> OnLevelEnded;
+    public static event Action OnLevelSessionClosed;
     public static event Action<LevelResult> OnLevelResultReady;
     public static event Action<float> OnLevelTimeChanged;
     public static event Action OnLevelTimeExpired;
@@ -63,6 +64,11 @@ public static class GameEvents
     public static void RaiseLevelEnded(LevelResult result)
     {
         OnLevelEnded?.Invoke(result);
+    }
+
+    public static void RaiseLevelSessionClosed()
+    {
+        OnLevelSessionClosed?.Invoke();
     }
 
     public static void RaiseLevelResultReady(LevelResult result)
@@ -329,6 +335,7 @@ public static class GameEvents
         OnLevelCompleted = null;
         OnLevelFailed = null;
         OnLevelEnded = null;
+        OnLevelSessionClosed = null;
         OnLevelResultReady = null;
         OnLevelTimeChanged = null;
         OnLevelTimeExpired = null;

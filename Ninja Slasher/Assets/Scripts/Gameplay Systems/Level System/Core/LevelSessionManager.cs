@@ -543,6 +543,7 @@ public class LevelSessionManager : MonoBehaviourSingleton<LevelSessionManager>
             trackingService?.Dispose();
             timerService?.Dispose();
             currentSession?.Clear();
+            GameEvents.RaiseLevelSessionClosed();
 
             currentSession = null;
             trackingService = null;
