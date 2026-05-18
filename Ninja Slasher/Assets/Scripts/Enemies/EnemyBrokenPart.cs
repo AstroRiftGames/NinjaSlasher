@@ -1,4 +1,3 @@
-using System;
 using UnityEngine;
 using DG.Tweening;
 
@@ -8,11 +7,14 @@ public class EnemyBrokenPart : MonoBehaviour
     [SerializeField] private SpriteRenderer _spriteRenderer;
 
     private float _spawnTime;
+    private bool _fadeStarted;
     [SerializeField] private float _timeToDestroy = 3.5f;
     [SerializeField] private float _fadingTime = 1f;
+
     private void Start()
     {
         _spawnTime = Time.time;
+        _fadeStarted = false;
     }
 
     private void Update()
@@ -30,10 +32,13 @@ public class EnemyBrokenPart : MonoBehaviour
 
     private void CheckTime()
     {
-        if (Time.time >= _spawnTime + _timeToDestroy)
+        if (_fadeStarted || Time.time < _spawnTime + _timeToDestroy)
         {
-            _spriteRenderer.DOFade(0, _fadingTime);
+            return;
         }
+
+        _fadeStarted = true;
+        _spriteRenderer.DOFade(0f, _fadingTime);
     }
 
 }

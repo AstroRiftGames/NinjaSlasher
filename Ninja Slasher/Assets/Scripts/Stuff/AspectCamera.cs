@@ -1,34 +1,119 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
 
 [RequireComponent(typeof(Camera))]
 public class AspectCamera : MonoBehaviour
 {
+    private const float TargetAspect = 16f / 9f;
+    private const float MonitorIntervalSeconds = 0.25f;
+
     [SerializeField] private Camera mainCamera;
     [SerializeField] private string sortingLayerName = "UI";
     [SerializeField] private int sortingOrder = 0;
 
-    private float targetAspect = 16f / 9f;
+    private int _lastScreenWidth = -1;
+    private int _lastScreenHeight = -1;
+    private int _lastCanvasSignature;
+    private Coroutine _monitorRoutine;
 
-    void Start()
+    private void Start()
+    {
+        RefreshLayout(force: true);
+    }
+
+    private void OnEnable()
+    {
+        RefreshLayout(force: true);
+        StartMonitor();
+    }
+
+    private void OnDisable()
+    {
+        StopMonitor();
+    }
+
+    private void StartMonitor()
+    {
+        if (_monitorRoutine != null)
+        {
+            return;
+        }
+
+        _monitorRoutine = StartCoroutine(MonitorLayoutChanges());
+    }
+
+    private void StopMonitor()
+    {
+        if (_monitorRoutine == null)
+        {
+            return;
+        }
+
+        StopCoroutine(_monitorRoutine);
+        _monitorRoutine = null;
+    }
+
+    private IEnumerator MonitorLayoutChanges()
+    {
+        WaitForSecondsRealtime wait = new WaitForSecondsRealtime(MonitorIntervalSeconds);
+
+        while (enabled)
+        {
+            yield return wait;
+            RefreshLayout();
+        }
+    }
+
+    private void RefreshLayout(bool force = false)
+    {
+        EnsureCamera();
+
+        int currentWidth = Screen.width;
+        int currentHeight = Screen.height;
+        int currentCanvasSignature = GetCanvasSignature();
+
+        bool screenChanged = force || currentWidth != _lastScreenWidth || currentHeight != _lastScreenHeight;
+        bool canvasesChanged = force || currentCanvasSignature != _lastCanvasSignature;
+
+        if (canvasesChanged)
+        {
+            SetupCanvases();
+            _lastCanvasSignature = currentCanvasSignature;
+        }
+
+        if (screenChanged)
+        {
+            AdjustAspectRatio(currentWidth, currentHeight);
+            _lastScreenWidth = currentWidth;
+            _lastScreenHeight = currentHeight;
+        }
+    }
+
+    private void EnsureCamera()
     {
         if (mainCamera == null)
         {
             mainCamera = GetComponent<Camera>();
         }
-
-        SetupCanvases();
-        AdjustAspectRatio();
     }
 
-    void Update()
+    private int GetCanvasSignature()
     {
-        AdjustAspectRatio();
+        Canvas[] allCanvases = FindObjectsByType<Canvas>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        int signature = allCanvases.Length;
+
+        foreach (Canvas canvas in allCanvases)
+        {
+            signature = unchecked((signature * 397) ^ canvas.GetInstanceID());
+        }
+
+        return signature;
     }
 
-    void SetupCanvases()
+    private void SetupCanvases()
     {
-        Canvas[] allCanvases = FindObjectsOfType<Canvas>(true);
+        Canvas[] allCanvases = FindObjectsByType<Canvas>(FindObjectsInactive.Include, FindObjectsSortMode.None);
 
         foreach (Canvas canvas in allCanvases)
         {
@@ -49,12 +134,12 @@ public class AspectCamera : MonoBehaviour
         }
     }
 
-    void AdjustAspectRatio()
+    private void AdjustAspectRatio(int screenWidth, int screenHeight)
     {
-        if (mainCamera == null) return;
+        if (mainCamera == null || screenWidth <= 0 || screenHeight <= 0) return;
 
-        float windowAspect = (float)Screen.width / (float)Screen.height;
-        float scaleHeight = windowAspect / targetAspect;
+        float windowAspect = (float)screenWidth / screenHeight;
+        float scaleHeight = windowAspect / TargetAspect;
 
         if (scaleHeight < 1.0f)
         {
