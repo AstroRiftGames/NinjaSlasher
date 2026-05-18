@@ -1,7 +1,6 @@
 using CandyCoded.HapticFeedback;
 using System;
 using System.Collections;
-using System.Linq;
 using UnityEngine;
 
 public enum NinjaStates
@@ -22,6 +21,7 @@ public class PlayerController : MonoBehaviour
     [SerializeField] InputDetection _swipeDetection;
     [SerializeField] TrajectoryRenderer _trajectoryRenderer;
     [SerializeField] private GameObject _slashVFX;
+    [SerializeField] private Camera _mainCamera;
 
     [Header("Audio")]
     [SerializeField] private PlayerAudioSet _audio;
@@ -56,11 +56,20 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private LayerMask _proyectilesLayer;
     [SerializeField] private LayerMask _obstaclesLayer;
 
-    private string[] colMatrix = { "Obstacle", "Scenario", "Floor"};
-    private string[] deadlyMatrix = { "Enemy", "Spikes", "EnemyShield", };
+    private readonly Collider2D[] _parryHitsBuffer = new Collider2D[16];
+    private BoxCollider2D[] _boxColliders;
 
     public Action<bool> OnHit;
     public Action<bool> OnParry;
+
+    private void Awake()
+    {
+        _boxColliders = GetComponents<BoxCollider2D>();
+        if (_mainCamera == null)
+        {
+            _mainCamera = Camera.main;
+        }
+    }
 
     private void SetFlipped(float angle)
     {
@@ -356,7 +365,14 @@ public class PlayerController : MonoBehaviour
 
         if (!_isKO && !_isDashing && !_isParrying && CheckParryCD())
         {
-            Vector2 worldTapPos = Camera.main.ScreenToWorldPoint(tapPos);
+            if (_mainCamera == null)
+            {
+                _mainCamera = Camera.main;
+            }
+
+            Vector2 worldTapPos = _mainCamera != null
+                ? _mainCamera.ScreenToWorldPoint(tapPos)
+                : tapPos;
             Parry(worldTapPos);
         }
     }
@@ -374,13 +390,14 @@ public class PlayerController : MonoBehaviour
         _isParrying = true;
 
         _lastParry = Time.time;
-        Collider2D[] hitColliders = Physics2D.OverlapCircleAll(transform.position, _parryRange, _proyectilesLayer);
+        int hitCount = Physics2D.OverlapCircleNonAlloc(transform.position, _parryRange, _parryHitsBuffer, _proyectilesLayer);
 
         _view.Animator.SetTrigger("OnParry");
         AudioService.Instance.PlaySFXAtPosition(_audio.parrySwing, transform.position);
 
-        foreach (var col in hitColliders)
+        for (int i = 0; i < hitCount; i++)
         {
+            Collider2D col = _parryHitsBuffer[i];
             if (col.TryGetComponent(out Projectile projectile)
                 && projectile.Shooter != transform
                 && projectile.IsParryable)
@@ -395,6 +412,7 @@ public class PlayerController : MonoBehaviour
             }
         }
 
+        ClearParryHitsBuffer(hitCount);
         _isParrying = false;
     }
 
@@ -520,9 +538,13 @@ public class PlayerController : MonoBehaviour
             return;
 
         string colTag = collision.gameObject.tag;
-        if (colMatrix.Contains(colTag))
+        if (IsSurfaceTag(colTag))
         {
-            var lastContact = collision.contacts.Last();
+            int contactCount = collision.contactCount;
+            if (contactCount == 0)
+                return;
+
+            ContactPoint2D lastContact = collision.GetContact(contactCount - 1);
             ProcessSurfaceCollision(collision.collider, lastContact.normal, lastContact.point);
         }
     }
@@ -535,10 +557,12 @@ public class PlayerController : MonoBehaviour
         if (!_isDashing) return;
 
         string colTag = collision.gameObject.tag;
-        if (colMatrix.Contains(colTag))
+        if (IsSurfaceTag(colTag))
         {
-            foreach (ContactPoint2D contact in collision.contacts)
+            int contactCount = collision.contactCount;
+            for (int i = 0; i < contactCount; i++)
             {
+                ContactPoint2D contact = collision.GetContact(i);
                 if (Vector2.Dot(contact.normal, _lastMoveDirection) < -0.5f)
                 {
                     ProcessSurfaceCollision(collision.collider, contact.normal, contact.point);
@@ -608,7 +632,7 @@ public class PlayerController : MonoBehaviour
 
         string colTag = collision.gameObject.tag;
 
-        if (deadlyMatrix.Contains(colTag))
+        if (IsDeadlyTag(colTag))
         {
             switch (colTag)
             {
@@ -634,9 +658,9 @@ public class PlayerController : MonoBehaviour
                     Die();
                     break;
                 default:
-                    BoxCollider2D[] boxCollider2Ds = GetComponents<BoxCollider2D>();
-                    foreach(var col in boxCollider2Ds)
+                    for (int i = 0; i < _boxColliders.Length; i++)
                     {
+                        BoxCollider2D col = _boxColliders[i];
                         if (col.IsTouching(collision))
                         {
                             Die();
@@ -712,6 +736,25 @@ public class PlayerController : MonoBehaviour
             return;
 
         _hasHandledGameplayClosed = true;
+    }
+
+    private void ClearParryHitsBuffer(int hitCount)
+    {
+        int clearCount = Mathf.Min(hitCount, _parryHitsBuffer.Length);
+        for (int i = 0; i < clearCount; i++)
+        {
+            _parryHitsBuffer[i] = null;
+        }
+    }
+
+    private static bool IsSurfaceTag(string tag)
+    {
+        return tag == "Obstacle" || tag == "Scenario" || tag == "Floor";
+    }
+
+    private static bool IsDeadlyTag(string tag)
+    {
+        return tag == "Enemy" || tag == "Spikes" || tag == "EnemyShield";
     }
 
     #endregion

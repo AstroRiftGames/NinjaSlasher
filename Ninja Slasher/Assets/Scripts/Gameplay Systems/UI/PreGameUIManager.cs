@@ -1,6 +1,5 @@
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using DG.Tweening;
 using TMPro;
 using UnityEngine;
@@ -43,6 +42,7 @@ public class PreGameUIManager : MonoBehaviour
 
     private readonly Dictionary<TextMeshProUGUI, Color> _baseTextColors = new();
     private readonly Dictionary<TextMeshProUGUI, bool> _objectiveCompletionStates = new();
+    private readonly Dictionary<TextMeshProUGUI, Image> _objectiveSlashImages = new();
     private readonly Dictionary<Image, Vector2> _objectiveSlashBasePositions = new();
     private readonly Dictionary<Image, Color> _objectiveSlashBaseColors = new();
     private readonly Dictionary<Image, bool> _objectiveSlashBaseEnabled = new();
@@ -189,6 +189,7 @@ public class PreGameUIManager : MonoBehaviour
         if (slashImage == null)
             return;
 
+        _objectiveSlashImages[objectiveText] = slashImage;
         _objectiveSlashBasePositions[slashImage] = slashImage.rectTransform.anchoredPosition;
         _objectiveSlashBaseColors[slashImage] = slashImage.color;
         _objectiveSlashBaseEnabled[slashImage] = slashImage.enabled;
@@ -227,8 +228,9 @@ public class PreGameUIManager : MonoBehaviour
     {
         StopAllCoroutines();
 
-        foreach (Sequence sequence in _activeSequences.ToList())
+        for (int i = _activeSequences.Count - 1; i >= 0; i--)
         {
+            Sequence sequence = _activeSequences[i];
             if (sequence != null && sequence.IsActive())
                 sequence.Kill(false);
         }
@@ -241,7 +243,7 @@ public class PreGameUIManager : MonoBehaviour
         {
             DOTween.Kill(objectiveText);
 
-            Image slashImage = objectiveText.GetComponentInChildren<Image>(true);
+            Image slashImage = GetObjectiveSlashImage(objectiveText);
             if (slashImage != null)
             {
                 DOTween.Kill(slashImage);
@@ -266,7 +268,7 @@ public class PreGameUIManager : MonoBehaviour
             if (_baseTextColors.TryGetValue(objectiveText, out Color baseColor))
                 objectiveText.color = baseColor;
 
-            Image slashImage = objectiveText.GetComponentInChildren<Image>(true);
+            Image slashImage = GetObjectiveSlashImage(objectiveText);
             if (slashImage != null)
             {
                 RestoreObjectiveSlashBaseline(slashImage);
@@ -279,7 +281,7 @@ public class PreGameUIManager : MonoBehaviour
     {
         foreach (TextMeshProUGUI objectiveText in GetObjectiveTexts())
         {
-            Image slashImage = objectiveText.GetComponentInChildren<Image>(true);
+            Image slashImage = GetObjectiveSlashImage(objectiveText);
             ApplyObjectiveSlashCompletionState(objectiveText, slashImage);
         }
     }
@@ -608,5 +610,20 @@ public class PreGameUIManager : MonoBehaviour
     {
         if (PowerUpManager.Instance != null && PowerUpManager.Instance.ActivatePowerUpFromInventory(powerUpType))
             ShowPreGamePowerUps();
+    }
+
+    private Image GetObjectiveSlashImage(TextMeshProUGUI objectiveText)
+    {
+        if (objectiveText == null)
+            return null;
+
+        if (_objectiveSlashImages.TryGetValue(objectiveText, out Image slashImage) && slashImage != null)
+            return slashImage;
+
+        slashImage = objectiveText.GetComponentInChildren<Image>(true);
+        if (slashImage != null)
+            _objectiveSlashImages[objectiveText] = slashImage;
+
+        return slashImage;
     }
 }

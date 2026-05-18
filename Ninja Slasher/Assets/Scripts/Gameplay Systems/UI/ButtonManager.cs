@@ -1,7 +1,6 @@
 using DG.Tweening;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -38,6 +37,9 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
     private List<Sequence> activeButtonSequences = new List<Sequence>();
     private List<Sequence> _activeStarSequences = new List<Sequence>();
     private Dictionary<Button, Vector2> savedButtonPositions = new Dictionary<Button, Vector2>();
+    private readonly Dictionary<Button, RectTransform> _buttonRectTransforms = new();
+    private readonly Dictionary<Button, Image> _buttonImages = new();
+    private readonly Dictionary<Button, RectTransform> _buttonStarsContainers = new();
     private readonly Stack<StarRevealCelebrationEffect> _availableCelebrationEffects = new();
     private readonly HashSet<StarRevealCelebrationEffect> _activeCelebrationEffects = new();
 
@@ -140,12 +142,21 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
     private void SaveButtonPositions()
     {
         savedButtonPositions.Clear();
+        _buttonRectTransforms.Clear();
+        _buttonImages.Clear();
+        _buttonStarsContainers.Clear();
         foreach (var btn in levelButtons)
         {
             if (btn != null)
             {
                 RectTransform rt = btn.GetComponent<RectTransform>();
+                _buttonRectTransforms[btn] = rt;
+                _buttonImages[btn] = btn.GetComponent<Image>();
                 savedButtonPositions[btn] = rt.anchoredPosition;
+
+                Transform starsContainer = btn.transform.Find("Stars");
+                if (starsContainer is RectTransform starsRect)
+                    _buttonStarsContainers[btn] = starsRect;
             }
         }
     }
@@ -176,9 +187,7 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
         if (levelButton == null)
             return;
 
-        Transform buttonTransform = levelButton.transform;
-        Transform starsContainer = buttonTransform.Find("Stars");
-        if (starsContainer == null)
+        if (!TryGetStarsContainer(levelButton, out RectTransform starsContainer))
             return;
 
         if (!IsSaveDataReady())
@@ -274,8 +283,7 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
             if (levelButton == null)
                 continue;
 
-            Transform starsContainer = levelButton.transform.Find("Stars");
-            if (starsContainer != null)
+            if (TryGetStarsContainer(levelButton, out RectTransform starsContainer))
                 starsContainer.gameObject.SetActive(false);
         }
     }
@@ -385,7 +393,7 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
 
             btn.gameObject.SetActive(true);
 
-            var rt = btn.GetComponent<RectTransform>();
+            RectTransform rt = GetButtonRectTransform(btn);
             if (rt != null)
             {
                 DOTween.Kill(rt);
@@ -397,7 +405,7 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
                 rt.localScale = Vector3.one;
             }
 
-            var img = btn.GetComponent<Image>();
+            Image img = GetButtonImage(btn);
             if (img != null)
                 DOTween.Kill(img);
         }
@@ -407,7 +415,9 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
     {
         if (button == null) return;
 
-        RectTransform rectTransform = button.GetComponent<RectTransform>();
+        RectTransform rectTransform = GetButtonRectTransform(button);
+        if (rectTransform == null)
+            return;
 
         Vector2 finalPosition = savedButtonPositions.TryGetValue(button, out var saved)
             ? saved
@@ -455,14 +465,16 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
     {
         if (button == null || button.gameObject == null) return;
 
-        RectTransform rectTransform = button.GetComponent<RectTransform>();
+        RectTransform rectTransform = GetButtonRectTransform(button);
+        if (rectTransform == null)
+            return;
 
         Vector2 sideShake = new Vector2(UnityEngine.Random.Range(-15f, 15f), 0f);
         rectTransform.DOPunchAnchorPos(sideShake, 0.4f, 8, 1f);
 
         rectTransform.DOPunchScale(Vector3.one * 0.2f, 0.3f, 6, 0.8f);
 
-        Image buttonImage = button.GetComponent<Image>();
+        Image buttonImage = GetButtonImage(button);
         if (buttonImage != null)
         {
             Color originalColor = buttonImage.color;
@@ -485,8 +497,9 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
     {
         StopStarRevealPresentation();
 
-        foreach (var sequence in activeButtonSequences.ToList())
+        for (int i = activeButtonSequences.Count - 1; i >= 0; i--)
         {
+            Sequence sequence = activeButtonSequences[i];
             if (sequence != null && sequence.IsActive())
                 sequence.Kill(false);
         }
@@ -497,7 +510,7 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
             var btn = kvp.Key;
             if (btn == null) continue;
 
-            var rt = btn.GetComponent<RectTransform>();
+            RectTransform rt = GetButtonRectTransform(btn);
             if (rt != null)
             {
                 DOTween.Kill(rt);
@@ -505,7 +518,7 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
                 rt.localRotation = Quaternion.identity;
             }
 
-            var img = btn.GetComponent<Image>();
+            Image img = GetButtonImage(btn);
             if (img != null)
                 DOTween.Kill(img);
         }
@@ -546,7 +559,7 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
             if (levelButton == null || !levelButton.gameObject.activeInHierarchy)
                 continue;
 
-            if (!(levelButton.transform.Find("Stars") is RectTransform starsContainer) || !starsContainer.gameObject.activeInHierarchy)
+            if (!TryGetStarsContainer(levelButton, out RectTransform starsContainer) || !starsContainer.gameObject.activeInHierarchy)
                 continue;
 
             int levelId = i + 1;
@@ -658,7 +671,7 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
             return;
 
         Canvas sourceCanvas = reveal.Button.GetComponentInParent<Canvas>();
-        RectTransform anchor = reveal.StarsContainer != null ? reveal.StarsContainer : reveal.Button.GetComponent<RectTransform>();
+        RectTransform anchor = reveal.StarsContainer != null ? reveal.StarsContainer : GetButtonRectTransform(reveal.Button);
         Vector3 localPosition = anchor != null && anchor != reveal.Button.transform
             ? anchor.localPosition
             : Vector3.zero;
@@ -709,10 +722,17 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
 
     private void StopAllCelebrationEffects()
     {
-        foreach (StarRevealCelebrationEffect effect in _activeCelebrationEffects.ToList())
+        while (_activeCelebrationEffects.Count > 0)
         {
+            StarRevealCelebrationEffect effect = null;
+            foreach (StarRevealCelebrationEffect activeEffect in _activeCelebrationEffects)
+            {
+                effect = activeEffect;
+                break;
+            }
+
             if (effect == null)
-                continue;
+                break;
 
             effect.StopAndRelease();
         }
@@ -720,8 +740,9 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
 
     private void KillAllStarTweens()
     {
-        foreach (Sequence sequence in _activeStarSequences.ToList())
+        for (int i = _activeStarSequences.Count - 1; i >= 0; i--)
         {
+            Sequence sequence = _activeStarSequences[i];
             if (sequence != null && sequence.IsActive())
                 sequence.Kill(false);
         }
@@ -733,8 +754,7 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
             if (levelButton == null)
                 continue;
 
-            Transform starsContainer = levelButton.transform.Find("Stars");
-            if (starsContainer == null)
+            if (!TryGetStarsContainer(levelButton, out RectTransform starsContainer))
                 continue;
 
             for (int i = 0; i < starsContainer.childCount; i++)
@@ -759,5 +779,43 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
     public Button[] GetLevelButtons()
     {
         return levelButtons;
+    }
+
+    private RectTransform GetButtonRectTransform(Button button)
+    {
+        if (button == null)
+            return null;
+
+        if (_buttonRectTransforms.TryGetValue(button, out RectTransform rectTransform))
+            return rectTransform;
+
+        rectTransform = button.GetComponent<RectTransform>();
+        _buttonRectTransforms[button] = rectTransform;
+        return rectTransform;
+    }
+
+    private Image GetButtonImage(Button button)
+    {
+        if (button == null)
+            return null;
+
+        if (_buttonImages.TryGetValue(button, out Image image))
+            return image;
+
+        image = button.GetComponent<Image>();
+        _buttonImages[button] = image;
+        return image;
+    }
+
+    private bool TryGetStarsContainer(Button button, out RectTransform starsContainer)
+    {
+        if (button != null && _buttonStarsContainers.TryGetValue(button, out starsContainer) && starsContainer != null)
+            return true;
+
+        starsContainer = button != null ? button.transform.Find("Stars") as RectTransform : null;
+        if (button != null && starsContainer != null)
+            _buttonStarsContainers[button] = starsContainer;
+
+        return starsContainer != null;
     }
 }

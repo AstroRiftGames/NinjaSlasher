@@ -23,12 +23,17 @@ public class PauseOverlay : UIOverlayBase
     [SerializeField] private TextMeshProUGUI _livesAmountText;
 
     private Texture2D _backgroundTexture;
+    private Sprite _backgroundSprite;
+    private Camera _mainCamera;
     private AudioSettingsUI _audioSettingsUI;
+    private int _lastShownTotalStars = int.MinValue;
+    private int _lastShownLives = int.MinValue;
 
     protected override void Awake()
     {
         base.Awake();
         _audioSettingsUI = GetComponentInParent<AudioSettingsUI>();
+        _mainCamera = Camera.main;
         ResolvePopupReferences();
         SetupButtons();
     }
@@ -66,6 +71,8 @@ public class PauseOverlay : UIOverlayBase
         CaptureScreen();
 
         PauseController.Instance?.RequestPause(PauseSource.PauseOverlay);
+        _lastShownTotalStars = int.MinValue;
+        _lastShownLives = int.MinValue;
         RefreshInfo();
         UIManager.Instance?.SetGameplayHUDTopRightInfoVisible(false);
         UIEvents.RaisePause(true);
@@ -79,7 +86,7 @@ public class PauseOverlay : UIOverlayBase
         int width = Screen.width;
         int height = Screen.height;
 
-        if (_backgroundTexture == null || _backgroundTexture.width != width)
+        if (_backgroundTexture == null || _backgroundTexture.width != width || _backgroundTexture.height != height)
         {
             _backgroundTexture = new Texture2D(width, height, TextureFormat.RGB24, false);
         }
@@ -88,7 +95,10 @@ public class PauseOverlay : UIOverlayBase
         RenderTexture previous = RenderTexture.active;
         RenderTexture.active = renderTexture;
 
-        Camera mainCamera = Camera.main;
+        if (_mainCamera == null)
+            _mainCamera = Camera.main;
+
+        Camera mainCamera = _mainCamera;
         if (mainCamera != null)
         {
             mainCamera.targetTexture = renderTexture;
@@ -102,8 +112,14 @@ public class PauseOverlay : UIOverlayBase
         RenderTexture.active = previous;
         RenderTexture.ReleaseTemporary(renderTexture);
 
-        Sprite sprite = Sprite.Create(_backgroundTexture, new Rect(0, 0, width, height), Vector2.one * 0.5f);
-        _backgroundImage.sprite = sprite;
+        if (_backgroundSprite != null)
+        {
+            Destroy(_backgroundSprite);
+            _backgroundSprite = null;
+        }
+
+        _backgroundSprite = Sprite.Create(_backgroundTexture, new Rect(0, 0, width, height), Vector2.one * 0.5f);
+        _backgroundImage.sprite = _backgroundSprite;
     }
 
     protected override void OnHidden()
@@ -231,6 +247,12 @@ public class PauseOverlay : UIOverlayBase
             _backgroundTexture = null;
         }
 
+        if (_backgroundSprite != null)
+        {
+            Destroy(_backgroundSprite);
+            _backgroundSprite = null;
+        }
+
         _resumeButton?.onClick.RemoveListener(OnResumeClicked);
         _restartButton?.onClick.RemoveListener(OnRestartClicked);
         _quitButton?.onClick.RemoveListener(OnQuitClicked);
@@ -243,7 +265,11 @@ public class PauseOverlay : UIOverlayBase
         if (_totalStarsText != null)
         {
             var (_, _, totalStars) = SaveManager.Instance?.GetProgressionData() ?? (1, 1, 0);
-            _totalStarsText.text = totalStars.ToString();
+            if (totalStars != _lastShownTotalStars)
+            {
+                _lastShownTotalStars = totalStars;
+                _totalStarsText.text = totalStars.ToString();
+            }
         }
 
         LifeManager lifeManager = LifeManager.Instance;
@@ -251,6 +277,13 @@ public class PauseOverlay : UIOverlayBase
             return;
 
         if (_livesAmountText != null)
-            _livesAmountText.text = lifeManager.GetDisplayLives().ToString();
+        {
+            int displayLives = lifeManager.GetDisplayLives();
+            if (displayLives != _lastShownLives)
+            {
+                _lastShownLives = displayLives;
+                _livesAmountText.text = displayLives.ToString();
+            }
+        }
     }
 }
