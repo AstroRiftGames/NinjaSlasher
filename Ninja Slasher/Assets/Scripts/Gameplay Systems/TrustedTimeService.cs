@@ -235,6 +235,13 @@ public sealed class TrustedTimeService : MonoBehaviour
     public ITrustedTimeProvider Provider => _provider;
     public bool IsInitialized => _provider != null && _provider.IsInitialized;
 
+    private static void LogTrustedTimeInfo(string message)
+    {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        Debug.Log(message);
+#endif
+    }
+
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void EnsureBootstrapInstance()
     {
@@ -252,7 +259,7 @@ public sealed class TrustedTimeService : MonoBehaviour
         _provider ??= new TrustedTimeProvider(
             () => DateTime.UtcNow,
             () => Time.realtimeSinceStartupAsDouble,
-            message => Debug.Log(message),
+            LogTrustedTimeInfo,
             message => Debug.LogWarning(message));
     }
 
@@ -313,7 +320,9 @@ public sealed class TrustedTimeService : MonoBehaviour
 
         _provider.Initialize(CreatePersistenceState(data));
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
         Debug.Log($"[TrustedTimeService] Bootstrap | canApplyOfflineProgress={_provider.CanApplyOfflineProgress} | suspicious={_provider.HasSuspiciousTimeJump} | trusted={_provider.IsTimeTrusted}");
+#endif
 
         _provider.RegisterAppStartOrForeground();
     }

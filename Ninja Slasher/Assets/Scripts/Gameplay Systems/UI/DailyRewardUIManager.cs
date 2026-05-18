@@ -110,7 +110,6 @@ public class DailyRewardUIManager : MonoBehaviourSingleton<DailyRewardUIManager>
         GameEvents.OnRewardAvailabilityChanged += OnRewardAvailabilityChanged;
         GameEvents.OnRewardDoubled += OnRewardDoubled;
         _eventsSubscribed = true;
-        Debug.Log("[DailyRewardUIManager] Events -> Subscribed");
     }
 
     void UnsubscribeFromEvents()
@@ -122,7 +121,6 @@ public class DailyRewardUIManager : MonoBehaviourSingleton<DailyRewardUIManager>
         GameEvents.OnRewardAvailabilityChanged -= OnRewardAvailabilityChanged;
         GameEvents.OnRewardDoubled -= OnRewardDoubled;
         _eventsSubscribed = false;
-        Debug.Log("[DailyRewardUIManager] Events -> Unsubscribed");
     }
 
     void EnsureInitialized()
@@ -132,7 +130,6 @@ public class DailyRewardUIManager : MonoBehaviourSingleton<DailyRewardUIManager>
 
         SetupWeeklyRewards();
         isInitialized = true;
-        Debug.Log("[DailyRewardUIManager] Bootstrap -> Initialized");
     }
 
     void SetupWeeklyRewards()
@@ -171,7 +168,6 @@ public class DailyRewardUIManager : MonoBehaviourSingleton<DailyRewardUIManager>
             }
         }
 
-        Debug.Log($"[DailyRewardUIManager] WeeklyProgress -> Refreshed | canClaimToday={canClaimToday} | Reason={reason}");
     }
 
     DayState GetDayState(int dayIndex, int currentDay, bool isClaimed, bool canClaimToday)
@@ -220,9 +216,6 @@ public class DailyRewardUIManager : MonoBehaviourSingleton<DailyRewardUIManager>
                 claimButtonText.text = buttonText;
         }
 
-        if (interactableChanged || textChanged)
-            Debug.Log($"[DailyRewardUIManager] ClaimButton -> canClaim={canClaim} | text={buttonText} | Reason={reason}");
-
         _lastClaimButtonInteractable = canClaim;
         _lastClaimButtonText = buttonText;
     }
@@ -243,7 +236,6 @@ public class DailyRewardUIManager : MonoBehaviourSingleton<DailyRewardUIManager>
 
             nextRewardTimeText.text = nextRewardText;
             _lastNextRewardTimerText = nextRewardText;
-            Debug.Log($"[DailyRewardUIManager] NextRewardTimer -> {nextRewardText} | Reason={reason}");
         }
     }
 
@@ -276,7 +268,6 @@ public class DailyRewardUIManager : MonoBehaviourSingleton<DailyRewardUIManager>
 
         if (dailyRewardSystem != null && dailyRewardSystem.CanClaimToday())
         {
-            Debug.Log("[DailyRewardUIManager] CheckAndShowDailyRewardOnGameStart -> Reward available after bootstrap.");
         }
     }
 
@@ -292,7 +283,6 @@ public class DailyRewardUIManager : MonoBehaviourSingleton<DailyRewardUIManager>
 
         if (dailyRewardSystem.ClaimReward())
         {
-            Debug.Log("[DailyRewardUIManager] Claim -> Reward claimed successfully");
         }
     }
 
@@ -304,7 +294,6 @@ public class DailyRewardUIManager : MonoBehaviourSingleton<DailyRewardUIManager>
 
     private void OnRewardDoubled()
     {
-        Debug.Log("[DailyRewardUIManager] Recompensa duplicada");
         UpdateDoubleRewardButton("GameEvents.OnRewardDoubled", force: true);
     }
 
@@ -348,9 +337,6 @@ public class DailyRewardUIManager : MonoBehaviourSingleton<DailyRewardUIManager>
                 _doubleRewardButtonText.text = buttonText;
         }
 
-        if (interactableChanged || textChanged)
-            Debug.Log($"[DailyRewardUIManager] DoubleRewardButton -> interactable={canDouble} | text={buttonText} | Reason={reason}");
-
         _lastDoubleRewardInteractable = canDouble;
         _lastDoubleRewardButtonText = buttonText;
     }
@@ -361,13 +347,17 @@ public class DailyRewardUIManager : MonoBehaviourSingleton<DailyRewardUIManager>
 
         if (!dailyRewardSystem.CanDoubleToday())
         {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
             Debug.LogWarning("[DailyRewardUIManager] No se puede duplicar la recompensa hoy");
+#endif
             return;
         }
 
         if (!AdsManager.Instance.IsRewardedAdReady())
         {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
             Debug.LogWarning("[DailyRewardUIManager] Anuncio no esta listo");
+#endif
             return;
         }
 
@@ -376,7 +366,9 @@ public class DailyRewardUIManager : MonoBehaviourSingleton<DailyRewardUIManager>
 
     private void OnRewardSystemBootstrapped()
     {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
         Debug.Log("[DailyRewardUIManager] Signal -> DailyRewardSystem.OnBootstrapped");
+#endif
         TryBootstrapAndRefresh("DailyRewardSystem.OnBootstrapped");
     }
 
@@ -400,9 +392,6 @@ public class DailyRewardUIManager : MonoBehaviourSingleton<DailyRewardUIManager>
         UpdateClaimButton(canClaimToday, reason, force || availabilityChanged);
         UpdateNextRewardTimer(reason, force || availabilityChanged);
 
-        if (availabilityChanged)
-            Debug.Log($"[DailyRewardUIManager] Availability -> canClaimToday={canClaimToday} | Reason={reason}");
-
         _lastCanClaimToday = canClaimToday;
     }
 
@@ -412,7 +401,6 @@ public class DailyRewardUIManager : MonoBehaviourSingleton<DailyRewardUIManager>
             return;
 
         _rewardUiTickRoutine = StartCoroutine(RewardUiTickLoop());
-        Debug.Log("[DailyRewardUIManager] Tick -> Started (1Hz)");
     }
 
     private void StopRewardUiTick()
@@ -422,7 +410,6 @@ public class DailyRewardUIManager : MonoBehaviourSingleton<DailyRewardUIManager>
 
         StopCoroutine(_rewardUiTickRoutine);
         _rewardUiTickRoutine = null;
-        Debug.Log("[DailyRewardUIManager] Tick -> Stopped");
     }
 
     private IEnumerator RewardUiTickLoop()
@@ -450,7 +437,9 @@ public class DailyRewardUIManager : MonoBehaviourSingleton<DailyRewardUIManager>
         if (!IsRewardSystemReady())
         {
             _awaitingBootstrap = true;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
             Debug.Log($"[DailyRewardUIManager] Bootstrap -> Waiting | Reason={reason} | systemExists={dailyRewardSystem != null} | saveLoaded={SaveManager.Instance != null && SaveManager.Instance.IsDataLoaded} | rewardBootstrapped={dailyRewardSystem != null && dailyRewardSystem.IsBootstrapped}");
+#endif
             return false;
         }
 
@@ -459,7 +448,9 @@ public class DailyRewardUIManager : MonoBehaviourSingleton<DailyRewardUIManager>
         RefreshVisibleState(reason, force: true);
         _awaitingBootstrap = false;
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
         Debug.Log($"[DailyRewardUIManager] Bootstrap -> Ready | Reason={reason} | initialized={isInitialized} | recoveredFromWaiting={wasAwaitingBootstrap}");
+#endif
         return true;
     }
 

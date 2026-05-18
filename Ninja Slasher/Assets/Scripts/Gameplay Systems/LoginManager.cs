@@ -97,8 +97,10 @@ public class LoginManager : MonoBehaviourSingleton<LoginManager>
     {
         if (isInitialized || isInitializing)
         {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
             if (debugMode)
                 Debug.Log("[LoginManager] Already initialized or initializing, skipping...");
+#endif
             return;
         }
 
@@ -110,14 +112,18 @@ public class LoginManager : MonoBehaviourSingleton<LoginManager>
 
             PlayGamesPlatform.Activate();
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
             if (debugMode)
                 Debug.Log("[LoginManager] Unity Gaming Services initialized");
+#endif
 
             isInitialized = true;
             isInitializing = false;
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
             if (debugMode)
                 Debug.Log("[LoginManager] Services initialized successfully");
+#endif
 
             if (autoSignIn && !AuthenticationService.Instance.IsSignedIn)
             {
@@ -132,8 +138,10 @@ public class LoginManager : MonoBehaviourSingleton<LoginManager>
 
                 if (!cachedSuccess)
                 {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
                     if (debugMode)
                         Debug.Log("[LoginManager] No cached user, signing in anonymously...");
+#endif
 
                     await SignInAnonymously();
                 }
@@ -141,8 +149,10 @@ public class LoginManager : MonoBehaviourSingleton<LoginManager>
             else if (AuthenticationService.Instance.IsSignedIn)
             {
                 RefreshPlayerProfile();
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
                 if (debugMode)
                     Debug.Log($"[LoginManager] User already authenticated: {PlayerId}");
+#endif
 
                 OnSignInCompleted?.Invoke(PlayerId);
                 OnAuthenticationStateChanged?.Invoke(true);
@@ -167,8 +177,10 @@ public class LoginManager : MonoBehaviourSingleton<LoginManager>
 
         try
         {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
             if (debugMode)
                 Debug.Log("[LoginManager] Starting Google Play Games sign-in...");
+#endif
 
             bool gpgSuccess = await AuthenticateWithGooglePlayGames();
 
@@ -191,16 +203,20 @@ public class LoginManager : MonoBehaviourSingleton<LoginManager>
                 catch (RequestFailedException ex) when (ex is not AuthenticationException)
                 {
                     lastNetworkException = ex;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
                     if (debugMode)
                         Debug.LogWarning($"[LoginManager] UGS sign-in intento {attempt + 1}/2 falló: {ex.Message}");
+#endif
                 }
             }
             if (lastNetworkException != null) throw lastNetworkException;
 
             RefreshPlayerProfile();
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
             if (debugMode)
                 Debug.Log($"[LoginManager] Sign-in successful! Player: {PlayerId}");
+#endif
 
             OnSignInCompleted?.Invoke(PlayerId);
             OnAuthenticationStateChanged?.Invoke(true);
@@ -237,15 +253,19 @@ public class LoginManager : MonoBehaviourSingleton<LoginManager>
 
         try
         {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
             if (debugMode)
                 Debug.Log("[LoginManager] Starting anonymous sign-in...");
+#endif
 
             await AuthenticationService.Instance.SignInAnonymouslyAsync();
 
             RefreshPlayerProfile(GuestPlayerName);
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
             if (debugMode)
                 Debug.Log($"[LoginManager] Anonymous sign-in successful! Player: {PlayerId}");
+#endif
 
             OnSignInCompleted?.Invoke(PlayerId);
             OnAuthenticationStateChanged?.Invoke(true);
@@ -270,8 +290,10 @@ public class LoginManager : MonoBehaviourSingleton<LoginManager>
 
         try
         {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
             if (debugMode)
                 Debug.Log("[LoginManager] Linking with Google Play Games...");
+#endif
 
             bool gpgSuccess = await AuthenticateWithGooglePlayGames();
 
@@ -285,8 +307,10 @@ public class LoginManager : MonoBehaviourSingleton<LoginManager>
 
             RefreshPlayerProfile();
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
             if (debugMode)
                 Debug.Log("[LoginManager] Account linking successful!");
+#endif
 
             OnSignInCompleted?.Invoke(PlayerId);
 
@@ -314,8 +338,10 @@ public class LoginManager : MonoBehaviourSingleton<LoginManager>
             authToken = "";
             ResetPlayerProfile();
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
             if (debugMode)
                 Debug.Log("[LoginManager] User signed out");
+#endif
 
             OnAuthenticationStateChanged?.Invoke(false);
         }
@@ -334,8 +360,10 @@ public class LoginManager : MonoBehaviourSingleton<LoginManager>
             authToken = "";
             ResetPlayerProfile();
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
             if (debugMode)
                 Debug.Log("[LoginManager] Account deleted successfully");
+#endif
 
             OnAuthenticationStateChanged?.Invoke(false);
 
@@ -358,15 +386,19 @@ public class LoginManager : MonoBehaviourSingleton<LoginManager>
         {
             if (AuthenticationService.Instance.SessionTokenExists)
             {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
                 if (debugMode)
                     Debug.Log("[LoginManager] Attempting to sign in cached user...");
+#endif
 
                 await AuthenticationService.Instance.SignInAnonymouslyAsync();
 
                 RefreshPlayerProfile();
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
                 if (debugMode)
                     Debug.Log($"[LoginManager] Cached user signed in: {PlayerId}");
+#endif
 
                 OnSignInCompleted?.Invoke(PlayerId);
                 OnAuthenticationStateChanged?.Invoke(true);
@@ -376,8 +408,10 @@ public class LoginManager : MonoBehaviourSingleton<LoginManager>
         }
         catch (Exception ex)
         {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
             if (debugMode)
                 Debug.Log($"[LoginManager] Cached sign-in failed: {ex.Message}");
+#endif
         }
 
         return false;
@@ -387,20 +421,26 @@ public class LoginManager : MonoBehaviourSingleton<LoginManager>
     {
         try
         {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
             if (debugMode)
                 Debug.Log("[LoginManager] Attempting Google Play Games auto sign-in...");
+#endif
 
             bool signInSucceeded = await SignInWithGooglePlayGames();
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
             if (debugMode)
                 Debug.Log($"[LoginManager] Google Play Games auto sign-in result: {signInSucceeded}");
+#endif
 
             return signInSucceeded;
         }
         catch (Exception ex)
         {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
             if (debugMode)
                 Debug.Log($"[LoginManager] Google Play Games auto sign-in failed: {ex.Message}");
+#endif
 
             return false;
         }
@@ -418,8 +458,10 @@ public class LoginManager : MonoBehaviourSingleton<LoginManager>
             return false;
         }
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
         if (debugMode)
             Debug.Log("[LoginManager] Google Play Games authentication successful");
+#endif
 
         for (int attempt = 0; attempt < 2; attempt++)
         {
@@ -430,12 +472,16 @@ public class LoginManager : MonoBehaviourSingleton<LoginManager>
             if (!string.IsNullOrEmpty(code))
             {
                 authToken = code;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
                 if (debugMode)
                     Debug.Log("[LoginManager] Authorization code received");
+#endif
                 return true;
             }
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
             Debug.LogWarning($"[LoginManager] Auth code vacío, intento {attempt + 1}/2");
+#endif
         }
 
         Debug.LogError("[LoginManager] No se pudo obtener el auth code tras 2 intentos");
@@ -538,10 +584,12 @@ public class LoginManager : MonoBehaviourSingleton<LoginManager>
 
         if (request.result != UnityWebRequest.Result.Success)
         {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
             if (debugMode)
             {
                 Debug.LogWarning($"[LoginManager] Failed to load avatar from '{avatarUrl}': {request.error}");
             }
+#endif
 
             yield break;
         }
@@ -549,10 +597,12 @@ public class LoginManager : MonoBehaviourSingleton<LoginManager>
         Texture2D avatarTexture = DownloadHandlerTexture.GetContent(request);
         if (!IsUsableAvatarTexture(avatarTexture))
         {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
             if (debugMode)
             {
                 Debug.LogWarning("[LoginManager] Avatar download completed but returned an invalid texture.");
             }
+#endif
 
             yield break;
         }

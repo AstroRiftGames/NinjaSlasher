@@ -146,7 +146,7 @@ public class LevelSessionManager : MonoBehaviourSingleton<LevelSessionManager>
 
         if (!TryAuthorizeLevelAttempt())
         {
-            Debug.LogWarning("[LevelSessionManager] StartLevel blocked by life validation.");
+            LogDebug("[LevelSessionManager] StartLevel blocked by life validation.");
             return;
         }
 
@@ -227,7 +227,7 @@ public class LevelSessionManager : MonoBehaviourSingleton<LevelSessionManager>
 
     public void FailLevel(string reason)
     {
-        Debug.Log($"[LSM] FailLevel | reason={reason} | HasActiveSession={HasActiveSession} | session={currentSession != null} | IsFailed={currentSession?.IsFailed} | IsComplete={currentSession?.IsComplete}");
+        LogDebug($"[LSM] FailLevel | reason={reason} | HasActiveSession={HasActiveSession} | session={currentSession != null} | IsFailed={currentSession?.IsFailed} | IsComplete={currentSession?.IsComplete}");
         if (_pendingVictory)
         {
             LogDebug($"[LevelSessionManager] Pending victory cancelled by defeat | reason={reason}");

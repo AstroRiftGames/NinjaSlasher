@@ -202,13 +202,17 @@ public class AutoSaveManager : MonoBehaviourSingleton<AutoSaveManager>
     public void SuspendAutoSave()
     {
         _isSuspended = true;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
         Debug.Log("[AutoSaveManager] AutoSave SUSPENDIDO");
+#endif
     }
 
     public void ResumeAutoSave()
     {
         _isSuspended = false;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
         Debug.Log("[AutoSaveManager] AutoSave REANUDADO");
+#endif
     }
 
     public void FactoryResetLocalOnly(bool notify = true)
@@ -221,7 +225,9 @@ public class AutoSaveManager : MonoBehaviourSingleton<AutoSaveManager>
         {
             ShowSaveIndicator("RESET...");
             saveManager.ResetAllLocalSaves(notify);
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
             Debug.Log("[AutoSaveManager] FactoryResetLocalOnly completado.");
+#endif
         }
         finally
         {
@@ -242,7 +248,9 @@ public class AutoSaveManager : MonoBehaviourSingleton<AutoSaveManager>
 
             await Task.Yield();
             saveManager.ResetAllLocalSaves(notify);
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
             Debug.Log("[AutoSaveManager] FactoryResetLocalAndCloudAsync completado.");
+#endif
         }
         finally
         {

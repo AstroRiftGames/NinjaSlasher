@@ -17,11 +17,5 @@ public class PowerUpHawkVision : PowerUpBase
 
     public override void OnUseConsumed(PowerUpContext context)
     {
-        Debug.Log($"[HawkVision] Uso consumido. Restantes: {context.HawkVisionUsesRemaining}");
-
-        if (context.HawkVisionUsesRemaining == 1)
-        {
-            Debug.LogWarning("[HawkVision] Ultimo uso disponible");
-        }
     }
 }

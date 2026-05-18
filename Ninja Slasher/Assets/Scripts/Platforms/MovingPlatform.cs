@@ -29,7 +29,6 @@ public class MovingPlatform : PlatformBase
 
         foreach (var behaviour in _behaviors)
         {
-            Debug.Log("comportamiento: " + behaviour.GetType().Name);
         }
     }
 

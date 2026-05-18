@@ -218,7 +218,6 @@ public class StoreService : MonoBehaviourSingleton<StoreService>
             SaveManager.Instance != null &&
             SaveManager.Instance.GetAdsRemoved())
         {
-            Debug.Log("[StoreService] Ads already removed.");
             return;
         }
 

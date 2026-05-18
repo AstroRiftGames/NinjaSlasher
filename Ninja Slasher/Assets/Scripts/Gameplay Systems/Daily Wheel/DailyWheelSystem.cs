@@ -201,7 +201,9 @@ public class DailyWheelSystem : MonoBehaviourSingleton<DailyWheelSystem>
             currentWeight += reward.weight;
             if (randomValue <= currentWeight)
             {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
                 Debug.Log($"[DailyWheel] Rolled {randomValue}/{totalWeight}. Selected: {reward.displayName}");
+#endif
                 return reward;
             }
         }
@@ -245,7 +247,9 @@ public class DailyWheelSystem : MonoBehaviourSingleton<DailyWheelSystem>
         if (!_bootstrapSignalEmitted)
         {
             _bootstrapSignalEmitted = true;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
             Debug.Log("[DailyWheelSystem] Bootstrap -> Completed");
+#endif
             OnBootstrapped?.Invoke();
         }
 
@@ -346,7 +350,9 @@ public class DailyWheelSystem : MonoBehaviourSingleton<DailyWheelSystem>
             return;
 
         wheelData.pendingFreeSpins += spinsToAdd;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
         Debug.Log($"[DailyWheel] Granted {spinsToAdd} free spin(s). Pending={wheelData.pendingFreeSpins}");
+#endif
     }
 
     private void AddPowerUpToInventory(WheelReward reward)

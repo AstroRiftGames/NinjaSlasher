@@ -174,7 +174,9 @@ public class LevelSelectionScreenController : MonoBehaviour
 
     private void HandleNewAreaUnlocked(int areaId)
     {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
         Debug.Log($"[LevelSelectionScreenController] Area {areaId} unlocked.");
+#endif
     }
 
     private void OnAreaUnlockAnimationComplete(AreaSectionController area)
@@ -186,7 +188,6 @@ public class LevelSelectionScreenController : MonoBehaviour
             return;
         }
 
-        Debug.Log("[LevelSelectionScreenController] Presenter -> RefreshLevelProgression after area unlock animation.");
         _buttonManager.RefreshLevelProgression();
     }
 
@@ -255,7 +256,9 @@ public class LevelSelectionScreenController : MonoBehaviour
 
     public void OnForegroundShown(string reason = null)
     {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
         Debug.Log($"[LevelSelectionScreenController] Presenter -> ForegroundShown | Reason={reason ?? "Unspecified"}");
+#endif
         RebindDailyButtonAnimators();
         RefreshLivesWidget($"OnForegroundShown:{reason ?? "Unspecified"}", force: true);
         RefreshDailyButtonVisuals($"OnForegroundShown:{reason ?? "Unspecified"}", force: true);
@@ -263,7 +266,9 @@ public class LevelSelectionScreenController : MonoBehaviour
 
     public void OnForegroundHidden(string reason = null)
     {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
         Debug.Log($"[LevelSelectionScreenController] Presenter -> ForegroundHidden | Reason={reason ?? "Unspecified"}");
+#endif
     }
 
     private void RefreshDailyButtonVisuals(string reason, bool force = false)
@@ -310,11 +315,6 @@ public class LevelSelectionScreenController : MonoBehaviour
         {
             if (timerChanged)
                 _livesTimerText.text = newTimerValue;
-        }
-
-        if (amountChanged || timerChanged)
-        {
-            Debug.Log($"[LevelSelectionScreenController] LivesWidget -> amount={newLivesAmount} | timer={newTimerValue} | unlimited={hasUnlimitedLives} | Reason={reason}");
         }
 
         _lastLivesAmountValue = newLivesAmount;
@@ -425,7 +425,6 @@ public class LevelSelectionScreenController : MonoBehaviour
             return;
 
         _presenterTickRoutine = StartCoroutine(PresenterTickLoop());
-        Debug.Log("[LevelSelectionScreenController] PresenterTick -> Started (1Hz)");
     }
 
     private void StopPresenterTick()
@@ -435,7 +434,6 @@ public class LevelSelectionScreenController : MonoBehaviour
 
         StopCoroutine(_presenterTickRoutine);
         _presenterTickRoutine = null;
-        Debug.Log("[LevelSelectionScreenController] PresenterTick -> Stopped");
     }
 
     private IEnumerator PresenterTickLoop()
@@ -457,7 +455,9 @@ public class LevelSelectionScreenController : MonoBehaviour
 
         SetDailyButtonAvailability(_dailyRewardButtonAnimator, isAvailable);
         _lastDailyRewardAvailability = isAvailable;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
         Debug.Log($"[LevelSelectionScreenController] DailyRewardAvailability -> {isAvailable} | Reason={reason}");
+#endif
     }
 
     private void ApplyDailyWheelAvailability(bool isAvailable, string reason, bool force = false)
@@ -468,6 +468,8 @@ public class LevelSelectionScreenController : MonoBehaviour
 
         SetDailyButtonAvailability(_dailyWheelButtonAnimator, isAvailable);
         _lastDailyWheelAvailability = isAvailable;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
         Debug.Log($"[LevelSelectionScreenController] DailyWheelAvailability -> {isAvailable} | Reason={reason}");
+#endif
     }
 }

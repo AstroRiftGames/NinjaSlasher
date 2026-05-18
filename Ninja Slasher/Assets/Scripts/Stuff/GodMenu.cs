@@ -116,7 +116,6 @@ public class GodMenu : MonoBehaviour
 
     private void OpenClose()
     {
-        Debug.Log("Open/Close");
         _isOpen = !_isOpen;
         _menuCanvasANIM.SetTrigger(_isOpen ? "Open" : "Close");
     }

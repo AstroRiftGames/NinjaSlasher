@@ -52,7 +52,6 @@ public class GeyserPlatform : PlatformBase
         base.OnCollisionEnter2D(collision);
         if (collision.gameObject == _crater)
         {
-            Debug.Log("Geyser Platform landed");
             _geyser.Animator.SetTrigger("OnLanding");
             SetValues(false);
         }

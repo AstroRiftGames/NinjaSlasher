@@ -173,7 +173,9 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
         ITrustedTimeProvider timeProvider = TimeProvider;
         DateTime currentUtc = GetCurrentUtcNowOrFallback();
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
         Debug.Log($"[LifeManager] LoadLives | savedLives={data?.currentLives} | savedTimestamp='{data?.lastLifeRegenTime}' | canRegen={data?.canRegenLives} | unlimitedLivesEndUtc={data?.unlimitedLivesEndUtc} | canApplyOfflineProgress={timeProvider != null && timeProvider.CanApplyOfflineProgress}");
+#endif
 
         DateTime lastRegenUtc = currentUtc;
         bool validDate = data != null && DateTime.TryParse(
@@ -204,7 +206,9 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
             data == null ||
             !hasValidLives;
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
         Debug.Log($"[LifeManager] InitializeFromSave | validTimestamp={validDate} | shouldResetToStartingLives={shouldResetToStartingLives} | parsedTimestamp={lastRegenUtc:O} | dataNull={data == null} | hasValidLives={hasValidLives}");
+#endif
 
         if (shouldResetToStartingLives)
         {
@@ -257,7 +261,9 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
 
         _virtualLives = CurrentLives;
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
         Debug.Log($"[LifeManager] RuntimeLivesFinal | currentLives={CurrentLives} | displayLives={GetDisplayLives()} | timerBaseUtc={_lastLifeUsedUtc:O} | unlimitedLivesActive={HasTimedUnlimitedLives}");
+#endif
     }
 
     private void ApplyConservativeOfflineTimePolicy(DateTime currentUtc, ITrustedTimeProvider timeProvider)
@@ -268,7 +274,9 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
             if (timeProvider != null && timeProvider.TryFreezeElapsedSince(_lastLifeUsedUtc, maxFrozenElapsedSeconds, out DateTime rebasedLifeAnchorUtc))
             {
                 _lastLifeUsedUtc = rebasedLifeAnchorUtc;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
                 Debug.Log($"[LifeManager] Offline life regeneration frozen | rebasedAnchorUtc={_lastLifeUsedUtc:O}");
+#endif
             }
             else
             {
@@ -317,7 +325,9 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
             _unlimitedLivesStartUtc = currentUtc;
         }
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
         Debug.Log($"[LifeManager] Offline unlimited lives frozen | remainingSeconds={remainingUnlimitedSeconds:F0} | rebasedEndUtc={_unlimitedLivesEndUtc:O}");
+#endif
     }
 
     private void ClearUnlimitedLivesState()
@@ -435,7 +445,9 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
 
             if (seconds < LifeRechargeSeconds)
             {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
                 Debug.Log($"[LifeManager] OfflineRegen | savedLives={savedLives} | elapsedSeconds={seconds:F0} | generated=0 | resultLives={CurrentLives} | nextTimestamp='{_lastLifeUsedUtc:O}'");
+#endif
                 return;
             }
 
@@ -458,7 +470,9 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
 
             _virtualLives = _hasVirtualDeduction ? Mathf.Max(0, CurrentLives - 1) : CurrentLives;
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
             Debug.Log($"[LifeManager] OfflineRegen | savedLives={savedLives} | elapsedSeconds={seconds:F0} | generated={toGenerate} | resultLives={CurrentLives} | nextTimestamp='{_lastLifeUsedUtc:O}'");
+#endif
 
             Persist("Vidas offline regeneradas");
             EmitDisplayLivesChanged();
@@ -498,11 +512,13 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
 
         PersistUnlimitedLivesState();
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
         Debug.Log($"[LifeManager] ActivateUnlimitedLives: {durationMinutes} min | " +
                   $"StartUtc={_unlimitedLivesStartUtc:O} | " +
                   $"EndUtc={_unlimitedLivesEndUtc:O} | " +
                   $"HasTimedUnlimitedLives={HasTimedUnlimitedLives} | " +
                   $"SaveManager={(SaveManager.Instance != null ? "OK" : "NULL")}");
+#endif
 
         EmitDisplayLivesChanged();
     }
@@ -860,10 +876,6 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
 
     private void ResetLossCounter()
     {
-        if (currentConsecutiveLosses > 0)
-        {
-            Debug.Log($"[LifeManager] Contador de derrotas reseteado (era: {currentConsecutiveLosses})");
-        }
         currentConsecutiveLosses = 0;
     }
 

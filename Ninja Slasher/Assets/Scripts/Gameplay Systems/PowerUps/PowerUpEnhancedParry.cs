@@ -23,11 +23,5 @@ public class PowerUpEnhancedParry : PowerUpBase
 
     public override void OnUseConsumed(PowerUpContext context)
     {
-        Debug.Log($"[EnhancedParry] Uso consumido. Restantes: {context.EnhancedParryUsesRemaining}");
-
-        if (context.EnhancedParryUsesRemaining == 1)
-        {
-            Debug.LogWarning("[EnhancedParry] Ultimo uso disponible");
-        }
     }
 }

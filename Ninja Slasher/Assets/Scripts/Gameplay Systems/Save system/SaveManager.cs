@@ -119,7 +119,9 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
             }
 
             ValidateAndInitializeProgressionData();
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
             Debug.Log($"[SaveManager] LoadLives | path='{path}' | lives={gameData.currentLives} | timestamp='{gameData.lastLifeRegenTime}' | canRegen={gameData.canRegenLives} | unlimitedLivesEndUtc={gameData.unlimitedLivesEndUtc}");
+#endif
             return true;
         }
         catch (Exception e)
@@ -156,7 +158,9 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
             var dto = GameDataMapper.ToDto(gameData);
             string json = JsonUtility.ToJson(dto, true);
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
             Debug.Log($"[SaveManager] SaveData | path='{saveFilePath}' | lives={gameData.currentLives} | timestamp='{gameData.lastLifeRegenTime}' | canRegen={gameData.canRegenLives} | unlimitedLivesEndUtc={gameData.unlimitedLivesEndUtc}");
+#endif
 
             string tempPath   = saveFilePath + ".tmp";
             string backupPath = saveFilePath + ".bak";
@@ -291,7 +295,9 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
 
     public void UpdateLives(int lives, DateTime lastRegen, bool canRegen)
     {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
         Debug.Log($"[SaveManager] SaveLives | lives={lives} | timestamp='{lastRegen:o}' | canRegen={canRegen} | kind={lastRegen.Kind}");
+#endif
         var data = GetGameData();
         data.currentLives = lives;
         data.lastLifeRegenTime = lastRegen.ToString("o");

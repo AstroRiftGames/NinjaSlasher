@@ -64,7 +64,9 @@ public class LevelsScreen : UIScreenBase
             return;
         }
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
         Debug.Log($"[LevelsScreen] Reveal -> AreaUnlocked | Buttons={buttons.Length}");
+#endif
         _buttonManager.AnimateLevelButtonsReveal(buttons, "AreaUnlocked");
     }
 
@@ -157,7 +159,9 @@ public class LevelsScreen : UIScreenBase
         }
 
         var visibleButtons = CollectUnlockedAreaButtons();
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
         Debug.Log($"[LevelsScreen] Reveal -> IntroSequence | Buttons={visibleButtons.Count}");
+#endif
         _buttonManager.AnimateLevelButtonsReveal(visibleButtons, "IntroSequence");
     }
 
@@ -261,7 +265,9 @@ public class LevelsScreen : UIScreenBase
             _buttonManager?.StopStarRevealPresentation();
         }
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
         Debug.Log($"[LevelsScreen] Foreground -> {(visible ? "Visible" : "Hidden")} | Reason={reason ?? "Unspecified"} | Signals={GetForegroundSignalSummary()} | BlockingStack={UIPanel.GetBlockingPanelDebugSummary()} | ScreenVisible={_isVisible}");
+#endif
     }
 
     private bool ShouldForegroundBeVisible()
@@ -314,7 +320,9 @@ public class LevelsScreen : UIScreenBase
 
         StopCoroutine(_pendingStarRevealRoutine);
         _pendingStarRevealRoutine = null;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
         Debug.Log($"[LevelsScreen] StarReveal -> Cancelled | Reason={reason}");
+#endif
     }
 
     private IEnumerator PlayPendingStarRevealAfterDelay(string reason)
@@ -327,7 +335,9 @@ public class LevelsScreen : UIScreenBase
         if (!isActiveAndEnabled || !_isVisible || !_isForegroundVisible)
             yield break;
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
         Debug.Log($"[LevelsScreen] StarReveal -> Triggered | Reason={reason}");
+#endif
         _buttonManager?.TryPlayPendingStarRevealAnimations();
     }
 
@@ -340,13 +350,17 @@ public class LevelsScreen : UIScreenBase
     {
         if (_isWaitingForStartupSequence == active)
         {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
             Debug.Log($"[LevelsScreen] Signal -> StartupSequence unchanged | Active={active} | Reason={reason} | Signals={GetForegroundSignalSummary()}");
+#endif
             RefreshForegroundVisibility($"{reason}/StartupSequenceUnchanged");
             return;
         }
 
         _isWaitingForStartupSequence = active;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
         Debug.Log($"[LevelsScreen] Signal -> StartupSequence {(active ? "Requested" : "Released")} | Reason={reason} | Signals={GetForegroundSignalSummary()}");
+#endif
         RefreshForegroundVisibility(reason);
     }
 
@@ -354,13 +368,17 @@ public class LevelsScreen : UIScreenBase
     {
         if (_isBlockedByForegroundSignal == active)
         {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
             Debug.Log($"[LevelsScreen] Signal -> BlockingPanel unchanged | Active={active} | Reason={reason} | Stack={UIPanel.GetBlockingPanelDebugSummary()} | Signals={GetForegroundSignalSummary()}");
+#endif
             RefreshForegroundVisibility($"{reason}/BlockingPanelUnchanged");
             return;
         }
 
         _isBlockedByForegroundSignal = active;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
         Debug.Log($"[LevelsScreen] Signal -> BlockingPanel {(active ? "Requested" : "Released")} | Reason={reason} | Stack={UIPanel.GetBlockingPanelDebugSummary()} | Signals={GetForegroundSignalSummary()}");
+#endif
         RefreshForegroundVisibility(reason);
     }
 

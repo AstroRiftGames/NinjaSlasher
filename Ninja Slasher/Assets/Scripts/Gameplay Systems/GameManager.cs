@@ -152,7 +152,9 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
         int currentLives = LifeManager.Instance != null ? LifeManager.Instance.GetRealLives() : 0;
         bool canPlay = LifeManager.Instance != null && LifeManager.Instance.CanPlay();
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
         Debug.Log($"[GameManager] Resolve defeat UI | realLives={currentLives} | canPlay={canPlay} | unlimitedLives={LifeManager.Instance.HasTimedUnlimitedLives}");
+#endif
         GameEvents.RaiseLevelResultReady(finalResult);
     }
 
@@ -184,10 +186,6 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
 
     private void OnLivesChanged(int newLives)
     {
-        if (newLives > 0)
-        {
-            Debug.Log($"[LevelManager] lives updated: {newLives}");
-        }
     }
 
     private int GetLevelIdForAnalytics()

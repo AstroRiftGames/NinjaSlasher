@@ -23,8 +23,6 @@ public static class ParryKillTracker
         }
 
         LevelSessionManager.Instance.RegisterParryKill();
-        
-        Debug.Log("[ParryKillTrackerAdapter] Parry kill registrado");
     }
 }
 

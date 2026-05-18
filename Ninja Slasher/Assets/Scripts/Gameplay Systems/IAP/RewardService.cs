@@ -7,10 +7,6 @@ public class RewardService : MonoBehaviourSingleton<RewardService>
     {
         _grantCounter++;
 
-        Debug.Log(
-            $"[RewardService] Grant call #{_grantCounter} | productId={product.PrimaryProductId}"
-        );
-
         if (product == null)
         {
             Debug.LogWarning("[RewardService] Grant called with null product.");
@@ -37,7 +33,6 @@ public class RewardService : MonoBehaviourSingleton<RewardService>
 
     private void GrantBundleReward(BundleRewardData reward)
     {
-        Debug.Log("BUNDLE EXECUTED");
         if (reward == null) return;
 
         // Lives

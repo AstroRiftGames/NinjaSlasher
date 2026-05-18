@@ -160,7 +160,9 @@ public class ComboVisualFeedback : MonoBehaviour
         {
             if (canvas.name.Contains("Gameplay") || canvas.name.Contains("gameplay"))
             {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
                 Debug.Log($"[ComboVisualFeedback] Canvas de gameplay encontrado: {canvas.name}");
+#endif
                 return canvas;
             }
         }

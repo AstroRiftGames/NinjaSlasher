@@ -161,13 +161,14 @@ public class PauseOverlay : UIOverlayBase
 
         if (!canRestart)
         {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
             Debug.Log($"[PauseOverlay] Restart blocked: No available lives. realLives={LifeManager.Instance?.GetRealLives()} | unlimited={LifeManager.Instance?.HasTimedUnlimitedLives}");
+#endif
             UIEvents.RequestShowNoLivesModal();
             Hide();
             return;
         }
 
-        Debug.Log("[PauseOverlay] Restart authorized by UI validation. Showing confirmation pop-up.");
         if (_restartConfirmationPopUp != null)
         {
             _restartConfirmationPopUp.ShowConfirmation(ConfirmRestartLevel);

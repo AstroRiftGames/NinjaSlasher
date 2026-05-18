@@ -381,7 +381,9 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
 
     private void ShowEmergencyBundleModal(EmergencyBundleOffer offer)
     {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
         Debug.Log($"[UIManager] ShowEmergencyBundleModal | modal assigned={_emergencyBundleModal != null}");
+#endif
         StartManagedUIFlow(ShowEmergencyBundleModalRoutine(offer));
     }
 
@@ -771,13 +773,17 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
         if (panel == null || !panel.BlocksUnderlyingUIForFlow)
             return;
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
         Debug.Log($"[UIManager] Signal -> BlockingPanelShown | Source={panel.name}");
+#endif
         UIEvents.RaiseBlockingPanelShown(panel.name);
     }
 
     private static void RaiseBlockingPanelHidden(string panelName)
     {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
         Debug.Log($"[UIManager] Signal -> BlockingPanelHidden | Source={panelName}");
+#endif
         UIEvents.RaiseBlockingPanelHidden(panelName);
     }
 

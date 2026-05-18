@@ -452,7 +452,6 @@ public class PlayerController : MonoBehaviour
 
     public void Die()
     {
-        Debug.Log("Player Died");
         if (_isKO) return;
 
         if(_currentPlatform != null)

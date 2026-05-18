@@ -19,11 +19,5 @@ public class PowerUpComboMaster : PowerUpBase
 
     public override void OnUseConsumed(PowerUpContext context)
     {
-        Debug.Log($"[ComboMaster] Uso consumido. Restantes: {context.ComboMasterUsesRemaining}");
-
-        if (context.ComboMasterUsesRemaining == 1)
-        {
-            Debug.LogWarning("[ComboMaster] Ultimo uso disponible");
-        }
     }
 }

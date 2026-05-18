@@ -199,7 +199,9 @@ public class PowerUpManager : MonoBehaviourSingleton<PowerUpManager>
         {
             if (activePowerUps.Contains(powerUpToActivate))
             {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
                 Debug.LogWarning($"[PowerUpManager] {powerUpToActivate.name} ya está activo.");
+#endif
                 return false;
             }
 
@@ -338,7 +340,9 @@ public class PowerUpManager : MonoBehaviourSingleton<PowerUpManager>
         UpdateContextActiveState(type, true);
         UpdateContextRemainingUses(type, usesToSet);
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
         Debug.Log($"[PowerUpManager] Power-up {type} activado - Usos: {usesToSet}");
+#endif
 
         GameEvents.RaisePowerUpActivated(type, usesToSet);
 
@@ -486,7 +490,6 @@ public class PowerUpManager : MonoBehaviourSingleton<PowerUpManager>
             ConsumePowerUpUse(type);
         }
 
-        Debug.Log("[PowerUpManager] Consumo completado");
     }
 
     #region DEBUG

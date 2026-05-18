@@ -293,20 +293,12 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
     {
         if (LevelProgressionManager.Instance == null)
         {
-            Debug.Log($"[ButtonManager] Nivel {levelId} esta bloqueado");
             return;
         }
 
         int requiredStars = LevelProgressionManager.Instance.GetRequiredStarsForBoss(levelId);
         if (requiredStars > 0)
         {
-            var (_, _, totalStars) = SaveManager.Instance?.GetProgressionData() ?? (1, 1, 0);
-            int deficit = requiredStars - totalStars;
-            Debug.Log($"[ButtonManager] Nivel {levelId} es un nivel jefe. Necesitas {requiredStars} estrellas (te faltan {Mathf.Max(0, deficit)}).");
-        }
-        else
-        {
-            Debug.Log($"[ButtonManager] Nivel {levelId} esta bloqueado");
         }
     }
 
@@ -366,8 +358,6 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
 
     public void HideAllLevelButtons()
     {
-        Debug.Log("[ButtonManager] Render -> HideAllLevelButtons");
-
         foreach (var btn in levelButtons)
         {
             if (btn != null)
@@ -377,13 +367,11 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
 
     public void ShowAllLevelButtonsInstantly()
     {
-        Debug.Log("[ButtonManager] Render -> ShowAllLevelButtonsInstantly");
         ShowButtonsInstantly(levelButtons);
     }
 
     public void AnimateLevelButtonsReveal(IEnumerable<Button> buttons, string reason = null)
     {
-        Debug.Log($"[ButtonManager] Render -> AnimateLevelButtonsReveal | Reason={reason ?? "Unspecified"}");
         AnimateButtons(buttons);
     }
 
@@ -609,7 +597,9 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
         if (clampedNew <= clampedPrevious)
             return 0f;
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
         Debug.Log($"[ButtonManager] StarReveal -> Level={levelId} | Previous={clampedPrevious} | New={clampedNew}");
+#endif
 
         float revealSpacing = Mathf.Max(_starRevealStagger, _starPunchDuration + 0.06f);
         int revealEnd = starsContainer.childCount;

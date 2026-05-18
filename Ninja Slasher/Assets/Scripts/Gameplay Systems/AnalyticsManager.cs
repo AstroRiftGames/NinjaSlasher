@@ -32,7 +32,6 @@ public class AnalyticsManager : MonoBehaviourSingleton<AnalyticsManager>
     {
         if (!enableAnalyticsInEditor && Application.isEditor)
         {
-            Debug.Log("[AnalyticsManager] Analytics deshabilitado en editor (enableAnalyticsInEditor = false).");
             return;
         }
 
@@ -855,13 +854,11 @@ public class AnalyticsManager : MonoBehaviourSingleton<AnalyticsManager>
 
         if (!isInitialized)
         {
-            Debug.LogWarning("[AnalyticsManager] Evento descartado: analytics no inicializado.");
             return false;
         }
 
         if (!isDataCollectionActive)
         {
-            Debug.Log("[AnalyticsManager] Evento descartado: recolección de datos inactiva.");
             return false;
         }
 

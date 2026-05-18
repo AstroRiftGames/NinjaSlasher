@@ -825,7 +825,9 @@ public class DailyWheelUI : MonoBehaviour
 
     private void OnWheelSystemBootstrapped()
     {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
         Debug.Log("[DailyWheelUI] Signal -> DailyWheelSystem.OnBootstrapped");
+#endif
         TryRefreshWheelState("DailyWheelSystem.OnBootstrapped");
     }
 
@@ -836,13 +838,17 @@ public class DailyWheelUI : MonoBehaviour
             bool saveLoaded = SaveManager.Instance != null && SaveManager.Instance.IsDataLoaded;
             bool systemExists = DailyWheelSystem.Instance != null;
             bool wheelBootstrapped = systemExists && DailyWheelSystem.Instance.IsBootstrapped;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
             Debug.Log($"[DailyWheelUI] Bootstrap -> Waiting | Reason={reason} | systemExists={systemExists} | saveLoaded={saveLoaded} | wheelBootstrapped={wheelBootstrapped}");
+#endif
             return false;
         }
 
         RefreshWheelState();
         RefreshNoSpinsPopupState();
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
         Debug.Log($"[DailyWheelUI] Bootstrap -> Ready | Reason={reason}");
+#endif
         return true;
     }
 

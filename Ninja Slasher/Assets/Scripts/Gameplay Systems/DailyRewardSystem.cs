@@ -76,7 +76,9 @@ public class DailyRewardSystem : MonoBehaviourSingleton<DailyRewardSystem>
         if (!_bootstrapSignalEmitted)
         {
             _bootstrapSignalEmitted = true;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
             Debug.Log("[DailyRewardSystem] Bootstrap -> Completed");
+#endif
             OnBootstrapped?.Invoke();
         }
 
@@ -150,13 +152,17 @@ public class DailyRewardSystem : MonoBehaviourSingleton<DailyRewardSystem>
     {
         if (_hasDoubledToday)
         {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
             Debug.LogWarning("Ya se duplicó la recompensa de hoy");
+#endif
             return;
         }
 
         if (rewardData.claimedDays[rewardData.currentWeekDay])
         {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
             Debug.LogWarning("No se puede duplicar una recompensa ya reclamada");
+#endif
             return;
         }
 
@@ -523,18 +529,24 @@ public sealed class SaveBootstrapSync : IDisposable
     {
         if (SaveManager.Instance == null)
         {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
             Debug.Log($"[{_systemName}] Bootstrap -> Waiting | Reason={reason} | saveManagerMissing=true");
+#endif
             return false;
         }
 
         if (!SaveManager.Instance.IsDataLoaded)
         {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
             Debug.Log($"[{_systemName}] Bootstrap -> Waiting | Reason={reason} | dataLoaded=false");
+#endif
             return false;
         }
 
         _bootstrapFromSave?.Invoke();
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
         Debug.Log($"[{_systemName}] Bootstrap -> Synced | Reason={reason} | alreadyBootstrapped={_isAlreadyBootstrapped()}");
+#endif
         return true;
     }
 
