@@ -27,8 +27,8 @@ public struct TrustedTimePersistenceState
 
 public sealed class TrustedTimeProvider : ITrustedTimeProvider
 {
-    private const double UnvalidatedOfflineGapToleranceSeconds = 90d;
     private const double ClockJumpToleranceSeconds = 15d;
+    private const double MaxAcceptedOfflineGapSeconds = 365d * 24d * 60d * 60d;
 
     private readonly Func<DateTime> _localUtcNowSource;
     private readonly Func<double> _monotonicSecondsSource;
@@ -168,7 +168,16 @@ public sealed class TrustedTimeProvider : ITrustedTimeProvider
     private bool EvaluateOfflineContinuity(DateTime currentLocalUtc)
     {
         if (!_hasPersistedLastKnownLocalUtc || !_hasPersistedLastTrustedUtc)
+        {
+            _logInfo?.Invoke("[TrustedTimeProvider] Offline progress unavailable because no persisted continuity state was found.");
             return false;
+        }
+
+        if (HasSuspiciousTimeJump)
+        {
+            _logWarning?.Invoke("[TrustedTimeProvider] Offline progress is frozen because the previous session already flagged a suspicious time jump.");
+            return false;
+        }
 
         double offlineGapSeconds = (currentLocalUtc - _persistedLastKnownLocalUtc).TotalSeconds;
         if (double.IsNaN(offlineGapSeconds) || double.IsInfinity(offlineGapSeconds))
@@ -181,15 +190,21 @@ public sealed class TrustedTimeProvider : ITrustedTimeProvider
             return false;
         }
 
-        if (offlineGapSeconds > UnvalidatedOfflineGapToleranceSeconds)
+        if (offlineGapSeconds < 0d)
         {
-            HasSuspiciousTimeJump = true;
-            _logWarning?.Invoke($"[TrustedTimeProvider] Startup detected an unvalidated forward local clock gap ({offlineGapSeconds:F1}s). Offline progress will be frozen.");
+            _logWarning?.Invoke($"[TrustedTimeProvider] Startup detected a small negative local clock drift ({offlineGapSeconds:F1}s). Offline progress will be frozen.");
             return false;
         }
 
-        _logInfo?.Invoke("[TrustedTimeProvider] Cold-start offline progress is disabled without an external trusted time source. Stored timer progress will be preserved conservatively.");
-        return false;
+        if (offlineGapSeconds > MaxAcceptedOfflineGapSeconds)
+        {
+            HasSuspiciousTimeJump = true;
+            _logWarning?.Invoke($"[TrustedTimeProvider] Startup detected an excessive local clock gap ({offlineGapSeconds:F1}s). Offline progress will be frozen.");
+            return false;
+        }
+
+        _logInfo?.Invoke($"[TrustedTimeProvider] Offline progress enabled from persisted local continuity ({offlineGapSeconds:F1}s elapsed).");
+        return true;
     }
 
     private void ValidateLocalClock()
