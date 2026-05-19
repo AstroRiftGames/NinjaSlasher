@@ -93,6 +93,7 @@ public class Enemy : MonoBehaviour
         AudioService.Instance.PlaySFXAtPosition(_audioContext.Audio.hit, transform.position);
         _col.excludeLayers += LayerMask.GetMask("Player");
         _triggerCol.excludeLayers += LayerMask.GetMask("Player");
+        _rb.simulated = false;
         StartCoroutine(BreakEnemy());
     }
 
