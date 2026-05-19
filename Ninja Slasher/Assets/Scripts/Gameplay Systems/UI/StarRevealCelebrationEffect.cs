@@ -8,11 +8,16 @@ using UnityEditor;
 public sealed class StarRevealCelebrationEffect : MonoBehaviour
 {
     [SerializeField] private ParticleSystem[] _particleSystems;
+    [SerializeField, Min(0f)] private float _sfxDelay = 0.2f;
+    [SerializeField, Min(0f)] private float _minimumSecondsBetweenSounds = 0.35f;
     [SerializeField, Min(0f)] private float _leadDelayBeforeStarReveal = 0.12f;
     [SerializeField, Min(0f)] private float _totalDuration = 0.9f;
 
     private Action<StarRevealCelebrationEffect> _releaseAction;
     private Coroutine _releaseRoutine;
+    private Coroutine _soundRoutine;
+    private float _lastSfxRequestTime = float.NegativeInfinity;
+    private UIAudioContext _audioContext;
 #if UNITY_EDITOR
     private bool _isEditorPreviewPlaying;
     private double _editorPreviewStartTime;
@@ -27,12 +32,14 @@ public sealed class StarRevealCelebrationEffect : MonoBehaviour
     public void Initialize(Action<StarRevealCelebrationEffect> releaseAction)
     {
         _releaseAction = releaseAction;
+        _audioContext ??= GetComponentInParent<UIAudioContext>();
     }
 
     public void Play()
     {
         gameObject.SetActive(true);
         StopReleaseRoutine();
+        StopSoundRoutine();
 
         bool hasValidParticleSystem = false;
         for (int i = 0; i < _particleSystems.Length; i++)
@@ -55,12 +62,14 @@ public sealed class StarRevealCelebrationEffect : MonoBehaviour
             return;
         }
 
+        TryPlayCelebrationSfx();
         _releaseRoutine = StartCoroutine(ReleaseAfterPlayback());
     }
 
     public void Stop()
     {
         StopReleaseRoutine();
+        StopSoundRoutine();
 
         for (int i = 0; i < _particleSystems.Length; i++)
         {
@@ -84,6 +93,55 @@ public sealed class StarRevealCelebrationEffect : MonoBehaviour
         ReleaseToPool();
     }
 
+    private void TryPlayCelebrationSfx()
+    {
+        AudioEvent celebrationSfx = GetCelebrationSfx();
+        if (celebrationSfx == null)
+            return;
+
+        if (AudioService.Instance == null)
+            return;
+
+        float currentUnscaledTime = Time.unscaledTime;
+        if (currentUnscaledTime - _lastSfxRequestTime < _minimumSecondsBetweenSounds)
+            return;
+
+        _lastSfxRequestTime = currentUnscaledTime;
+
+        if (_sfxDelay <= 0f)
+        {
+            PlayCelebrationSfxNow();
+            return;
+        }
+
+        _soundRoutine = StartCoroutine(PlayCelebrationSfxAfterDelay());
+    }
+
+    private IEnumerator PlayCelebrationSfxAfterDelay()
+    {
+        yield return new WaitForSecondsRealtime(_sfxDelay);
+        _soundRoutine = null;
+        PlayCelebrationSfxNow();
+    }
+
+    private void PlayCelebrationSfxNow()
+    {
+        AudioService audioService = AudioService.Instance;
+        AudioEvent celebrationSfx = GetCelebrationSfx();
+        if (audioService == null || celebrationSfx == null)
+            return;
+
+        audioService.PlaySFX(celebrationSfx);
+    }
+
+    private AudioEvent GetCelebrationSfx()
+    {
+        _audioContext ??= GetComponentInParent<UIAudioContext>();
+        return _audioContext != null && _audioContext.Audio != null
+            ? _audioContext.Audio.starRevealFireworks
+            : null;
+    }
+
     private IEnumerator ReleaseAfterPlayback()
     {
         if (_totalDuration > 0f)
@@ -100,6 +158,15 @@ public sealed class StarRevealCelebrationEffect : MonoBehaviour
 
         StopCoroutine(_releaseRoutine);
         _releaseRoutine = null;
+    }
+
+    private void StopSoundRoutine()
+    {
+        if (_soundRoutine == null)
+            return;
+
+        StopCoroutine(_soundRoutine);
+        _soundRoutine = null;
     }
 
     private void ReleaseToPool()
@@ -132,6 +199,8 @@ public sealed class StarRevealCelebrationEffect : MonoBehaviour
     private void OnValidate()
     {
         CacheParticleSystems();
+        _sfxDelay = Mathf.Max(0f, _sfxDelay);
+        _minimumSecondsBetweenSounds = Mathf.Max(0f, _minimumSecondsBetweenSounds);
         _leadDelayBeforeStarReveal = Mathf.Max(0f, _leadDelayBeforeStarReveal);
         _totalDuration = Mathf.Max(_leadDelayBeforeStarReveal, _totalDuration);
     }
@@ -259,6 +328,7 @@ public sealed class StarRevealCelebrationEffect : MonoBehaviour
     private void OnDisable()
     {
         _releaseRoutine = null;
+        _soundRoutine = null;
 #if UNITY_EDITOR
         StopEditorPreview(clearParticles: false);
 #endif
