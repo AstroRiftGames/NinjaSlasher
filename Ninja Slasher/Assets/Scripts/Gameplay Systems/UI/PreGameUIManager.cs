@@ -47,7 +47,7 @@ public class PreGameUIManager : MonoBehaviour
     private readonly Dictionary<Image, Color> _objectiveSlashBaseColors = new();
     private readonly Dictionary<Image, bool> _objectiveSlashBaseEnabled = new();
     private readonly List<Sequence> _activeSequences = new();
-    private readonly List<PowerUpSlotUI> _slots = new();
+    private readonly List<PowerUpSlotUI> _powerUpSlots = new();
 
     private UIAudioContext _audioContext;
     private bool _isLevelSelected;
@@ -421,21 +421,94 @@ public class PreGameUIManager : MonoBehaviour
 
     public void ShowPreGamePowerUps()
     {
-        foreach (PowerUpSlotUI slot in _slots)
-            Destroy(slot.gameObject);
-        _slots.Clear();
+        if (_powerUpsContainer == null)
+        {
+            Debug.LogWarning("[PreGameUIManager] Power ups container not assigned.");
+            DisableUnusedPowerUpSlots(0);
+            return;
+        }
 
-        List<PowerUpInventoryItem> inventory = SaveManager.Instance.GetGameData().powerUpInventory;
+        if (_powerUpSlotPrefab == null)
+        {
+            Debug.LogWarning("[PreGameUIManager] Power up slot prefab not assigned.");
+            DisableUnusedPowerUpSlots(0);
+            return;
+        }
+
+        if (allPowerUpBases == null || allPowerUpBases.Length == 0)
+        {
+            DisableUnusedPowerUpSlots(0);
+            return;
+        }
+
+        List<PowerUpInventoryItem> inventory = SaveManager.Instance?.GetGameData()?.powerUpInventory;
+        int visibleSlotCount = 0;
 
         foreach (PowerUpBase powerUpBase in allPowerUpBases)
         {
-            PowerUpInventoryItem item = inventory.Find(i => i.type == powerUpBase.powerUpType);
-            if (item == null)
-                item = new PowerUpInventoryItem(powerUpBase.powerUpType, 0);
+            if (powerUpBase == null)
+            {
+                Debug.LogWarning("[PreGameUIManager] Null power up base found in pregame list.");
+                continue;
+            }
 
-            PowerUpSlotUI slot = Instantiate(_powerUpSlotPrefab, _powerUpsContainer);
+            PowerUpSlotUI slot = GetOrCreatePowerUpSlot(visibleSlotCount);
+            if (slot == null)
+                break;
+
+            PowerUpInventoryItem item = inventory?.Find(i => i.type == powerUpBase.powerUpType)
+                ?? new PowerUpInventoryItem(powerUpBase.powerUpType, 0);
+
+            slot.gameObject.SetActive(true);
+            slot.transform.SetSiblingIndex(visibleSlotCount);
             slot.Setup(item, powerUpBase, OnPowerUpInteractClicked);
-            _slots.Add(slot);
+            visibleSlotCount++;
+        }
+
+        DisableUnusedPowerUpSlots(visibleSlotCount);
+    }
+
+    private PowerUpSlotUI GetOrCreatePowerUpSlot(int index)
+    {
+        while (_powerUpSlots.Count <= index)
+        {
+            PowerUpSlotUI newSlot = Instantiate(_powerUpSlotPrefab, _powerUpsContainer);
+            if (newSlot == null)
+            {
+                Debug.LogWarning("[PreGameUIManager] Failed to instantiate power up slot.");
+                return null;
+            }
+
+            newSlot.gameObject.SetActive(false);
+            _powerUpSlots.Add(newSlot);
+        }
+
+        PowerUpSlotUI slot = _powerUpSlots[index];
+        if (slot != null)
+            return slot;
+
+        PowerUpSlotUI replacementSlot = Instantiate(_powerUpSlotPrefab, _powerUpsContainer);
+        if (replacementSlot == null)
+        {
+            Debug.LogWarning("[PreGameUIManager] Failed to replace missing power up slot.");
+            return null;
+        }
+
+        replacementSlot.gameObject.SetActive(false);
+        _powerUpSlots[index] = replacementSlot;
+        return replacementSlot;
+    }
+
+    private void DisableUnusedPowerUpSlots(int usedSlotCount)
+    {
+        for (int i = usedSlotCount; i < _powerUpSlots.Count; i++)
+        {
+            PowerUpSlotUI slot = _powerUpSlots[i];
+            if (slot == null)
+                continue;
+
+            slot.Clear();
+            slot.gameObject.SetActive(false);
         }
     }
 

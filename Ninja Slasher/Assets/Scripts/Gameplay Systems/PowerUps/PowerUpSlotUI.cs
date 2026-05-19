@@ -54,23 +54,77 @@ public class PowerUpSlotUI : MonoBehaviour
         _item = item;
         _onInteractCallback = onInteract;
         _powerUpBase = powerUpBase;
-        _powerUpType = powerUpBase.powerUpType;
+        _powerUpType = powerUpBase != null ? powerUpBase.powerUpType : default;
 
-        iconImage.sprite = powerUpBase.icon;
-        nameText.text = powerUpBase.displayName;
+        if (iconImage != null)
+            iconImage.sprite = powerUpBase != null ? powerUpBase.icon : null;
 
-        activateButton.onClick.RemoveAllListeners();
-        activateButton.onClick.AddListener(OnInteractPressed);
+        if (nameText != null)
+            nameText.text = powerUpBase != null ? powerUpBase.displayName : string.Empty;
+
+        BindInteractButton();
 
         EnsureActiveFrameOverlay();
         RefreshState();
     }
 
+    public void Clear()
+    {
+        _item = null;
+        _onInteractCallback = null;
+        _powerUpBase = null;
+        _powerUpType = default;
+
+        if (activateButton != null)
+        {
+            activateButton.onClick.RemoveAllListeners();
+            activateButton.interactable = false;
+        }
+
+        if (iconImage != null)
+            iconImage.sprite = null;
+
+        if (nameText != null)
+            nameText.text = string.Empty;
+
+        if (_quantityContainer != null)
+            _quantityContainer.SetActive(false);
+
+        if (_quantityText != null)
+            _quantityText.text = string.Empty;
+
+        if (usesText != null)
+        {
+            usesText.text = string.Empty;
+            usesText.gameObject.SetActive(false);
+        }
+
+        if (activeIndicator != null)
+            activeIndicator.SetActive(false);
+
+        if (_activeFrameOverlay != null)
+            _activeFrameOverlay.SetActive(false);
+    }
+
+    private void BindInteractButton()
+    {
+        if (activateButton == null)
+            return;
+
+        activateButton.onClick.RemoveAllListeners();
+        activateButton.onClick.AddListener(OnInteractPressed);
+    }
+
     private void RefreshState()
     {
-        if (_item == null) return;
+        if (_item == null || _powerUpBase == null)
+        {
+            Clear();
+            return;
+        }
 
-        bool isActive = PowerUpManager.Instance.IsPowerUpActive(_powerUpType);
+        PowerUpManager powerUpManager = PowerUpManager.Instance;
+        bool isActive = powerUpManager != null && powerUpManager.IsPowerUpActive(_powerUpType);
 
         if (_quantityContainer != null)
             _quantityContainer.SetActive(!isActive);
@@ -88,7 +142,7 @@ public class PowerUpSlotUI : MonoBehaviour
         {
             if (isActive)
             {
-                int usesRemaining = PowerUpManager.Instance.GetRemainingUses(_powerUpType);
+                int usesRemaining = powerUpManager != null ? powerUpManager.GetRemainingUses(_powerUpType) : 0;
                 usesText.gameObject.SetActive(true);
                 usesText.text = $"{usesRemaining} usos";
             }
@@ -98,7 +152,8 @@ public class PowerUpSlotUI : MonoBehaviour
             }
         }
 
-        activateButton.interactable = !isActive;
+        if (activateButton != null)
+            activateButton.interactable = !isActive;
     }
 
     private void OnInteractPressed()
