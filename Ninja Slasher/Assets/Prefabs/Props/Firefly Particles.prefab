@@ -1369,8 +1369,8 @@ ParticleSystem:
         m_NumAlphaKeys: 2
   UVModule:
     serializedVersion: 2
-    enabled: 0
-    mode: 0
+    enabled: 1
+    mode: 1
     timeMode: 0
     fps: 30
     frameOverTime:
@@ -1488,7 +1488,7 @@ ParticleSystem:
     uvChannelMask: -1
     rowMode: 1
     sprites:
-    - sprite: {fileID: 0}
+    - sprite: {fileID: -5878788460421733198, guid: 6e300d631141eb3439ff6885319df251, type: 3}
     flipU: 0
     flipV: 0
   VelocityModule:
@@ -4781,7 +4781,7 @@ ParticleSystemRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: a97c105638bdf8b4a8650670310a4cd3, type: 2}
+  - {fileID: 2100000, guid: 18f4aeab0be24d93b08733ecbd5b0ab1, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -4848,6 +4848,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   fireflySprite: {fileID: 386119260651886718, guid: 6e300d631141eb3439ff6885319df251, type: 3}
   fireflyLightSprite: {fileID: -5878788460421733198, guid: 6e300d631141eb3439ff6885319df251, type: 3}
+  _fireflyMaterial: {fileID: 2100000, guid: 18f4aeab0be24d93b08733ecbd5b0ab1, type: 2}
   maxParticles: 30
   emissionRate: 5
   spawnAreaSize: {x: 21.6, y: 13.3}
