@@ -40,6 +40,7 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
     private readonly Dictionary<Button, RectTransform> _buttonRectTransforms = new();
     private readonly Dictionary<Button, Image> _buttonImages = new();
     private readonly Dictionary<Button, RectTransform> _buttonStarsContainers = new();
+    private readonly Dictionary<Button, BossLevelProgressUI> _bossProgressByButton = new();
     private readonly Stack<StarRevealCelebrationEffect> _availableCelebrationEffects = new();
     private readonly HashSet<StarRevealCelebrationEffect> _activeCelebrationEffects = new();
 
@@ -50,17 +51,28 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
     {
         public readonly Button Button;
         public readonly RectTransform StarsContainer;
+        public readonly RectTransform FeedbackFxAnchor;
         public readonly int PreviousStars;
         public readonly int NewStars;
         public readonly int LevelId;
+        public readonly bool AnimateStars;
 
-        public PendingStarRevealPresentation(Button button, RectTransform starsContainer, int previousStars, int newStars, int levelId)
+        public PendingStarRevealPresentation(
+            Button button,
+            RectTransform starsContainer,
+            RectTransform feedbackFxAnchor,
+            int previousStars,
+            int newStars,
+            int levelId,
+            bool animateStars)
         {
             Button = button;
             StarsContainer = starsContainer;
+            FeedbackFxAnchor = feedbackFxAnchor;
             PreviousStars = previousStars;
             NewStars = newStars;
             LevelId = levelId;
+            AnimateStars = animateStars;
         }
     }
 
@@ -145,6 +157,7 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
         _buttonRectTransforms.Clear();
         _buttonImages.Clear();
         _buttonStarsContainers.Clear();
+        _bossProgressByButton.Clear();
         foreach (var btn in levelButtons)
         {
             if (btn != null)
@@ -157,6 +170,10 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
                 Transform starsContainer = btn.transform.Find("Stars");
                 if (starsContainer is RectTransform starsRect)
                     _buttonStarsContainers[btn] = starsRect;
+
+                BossLevelProgressUI bossProgress = btn.GetComponentInChildren<BossLevelProgressUI>(true);
+                if (bossProgress != null)
+                    _bossProgressByButton[btn] = bossProgress;
             }
         }
     }
@@ -526,14 +543,23 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
 
     public void TryPlayPendingStarRevealAnimations()
     {
+        TryPlayPendingCompletionAnimations(out _);
+    }
+
+    public bool TryPlayPendingCompletionAnimations(out float estimatedDuration)
+    {
+        estimatedDuration = 0f;
+
         if (LevelProgressionManager.Instance == null || _pendingStarRevealPlaybackRoutine != null)
-            return;
+            return false;
 
         List<PendingStarRevealPresentation> pendingReveals = CollectPendingStarRevealPresentations();
         if (pendingReveals.Count == 0)
-            return;
+            return false;
 
+        estimatedDuration = EstimatePendingRevealSequenceDuration(pendingReveals);
         _pendingStarRevealPlaybackRoutine = StartCoroutine(PlayPendingStarRevealSequence(pendingReveals));
+        return true;
     }
 
     public void StopStarRevealPresentation()
@@ -559,14 +585,40 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
             if (levelButton == null || !levelButton.gameObject.activeInHierarchy)
                 continue;
 
+            int levelId = i + 1;
+            bool isBossLevel = LevelProgressionManager.Instance.IsBossLevel(levelId);
+
+            if (isBossLevel)
+            {
+                if (!LevelProgressionManager.Instance.ConsumePendingBossCompletionFeedback(levelId))
+                    continue;
+
+                RectTransform feedbackFxAnchor = ResolveBossFeedbackFxAnchor(levelButton);
+                pendingReveals.Add(new PendingStarRevealPresentation(
+                    levelButton,
+                    starsContainer: null,
+                    feedbackFxAnchor,
+                    previousStars: 0,
+                    newStars: 0,
+                    levelId,
+                    animateStars: false));
+                continue;
+            }
+
             if (!TryGetStarsContainer(levelButton, out RectTransform starsContainer) || !starsContainer.gameObject.activeInHierarchy)
                 continue;
 
-            int levelId = i + 1;
             if (!LevelProgressionManager.Instance.ConsumePendingStarReveal(levelId, out int previousStars, out int newStars))
                 continue;
 
-            pendingReveals.Add(new PendingStarRevealPresentation(levelButton, starsContainer, previousStars, newStars, levelId));
+            pendingReveals.Add(new PendingStarRevealPresentation(
+                levelButton,
+                starsContainer,
+                starsContainer,
+                previousStars,
+                newStars,
+                levelId,
+                animateStars: true));
         }
 
         return pendingReveals;
@@ -581,17 +633,21 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
                 if (!isActiveAndEnabled)
                     yield break;
 
-                if (reveal.Button == null || !reveal.Button.gameObject.activeInHierarchy || reveal.StarsContainer == null)
+                if (reveal.Button == null || !reveal.Button.gameObject.activeInHierarchy)
                     continue;
 
-                PlayStarRevealCelebration(reveal, out float celebrationLeadDelay);
+                PlayStarRevealCelebration(reveal, out float celebrationLeadDelay, out float celebrationWaitDuration);
 
                 if (celebrationLeadDelay > 0f)
                     yield return new WaitForSecondsRealtime(celebrationLeadDelay);
 
-                float revealDuration = AnimateNewStars(reveal.StarsContainer, reveal.PreviousStars, reveal.NewStars, reveal.LevelId);
-                if (revealDuration > 0f)
-                    yield return new WaitForSecondsRealtime(revealDuration + _starRevealLevelGap);
+                float revealDuration = reveal.AnimateStars
+                    ? AnimateNewStars(reveal.StarsContainer, reveal.PreviousStars, reveal.NewStars, reveal.LevelId)
+                    : 0f;
+
+                float waitDuration = reveal.AnimateStars ? revealDuration : celebrationWaitDuration;
+                if (waitDuration > 0f)
+                    yield return new WaitForSecondsRealtime(waitDuration + _starRevealLevelGap);
             }
         }
         finally
@@ -659,9 +715,32 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
         return ((revealEnd - clampedPrevious - 1) * revealSpacing) + _starPunchDuration;
     }
 
-    private void PlayStarRevealCelebration(PendingStarRevealPresentation reveal, out float leadDelay)
+    private float EstimatePendingRevealSequenceDuration(List<PendingStarRevealPresentation> pendingReveals)
+    {
+        float totalDuration = 0f;
+        float celebrationLeadDelay = GetCelebrationLeadDelay();
+        float celebrationWaitDuration = GetCelebrationWaitDurationAfterLead();
+
+        for (int i = 0; i < pendingReveals.Count; i++)
+        {
+            PendingStarRevealPresentation reveal = pendingReveals[i];
+            totalDuration += celebrationLeadDelay;
+
+            float presentationDuration = reveal.AnimateStars
+                ? CalculateStarRevealDuration(reveal.StarsContainer, reveal.PreviousStars, reveal.NewStars)
+                : celebrationWaitDuration;
+
+            if (presentationDuration > 0f)
+                totalDuration += presentationDuration + _starRevealLevelGap;
+        }
+
+        return totalDuration;
+    }
+
+    private void PlayStarRevealCelebration(PendingStarRevealPresentation reveal, out float leadDelay, out float waitDurationAfterLead)
     {
         leadDelay = 0f;
+        waitDurationAfterLead = 0f;
 
         if (_starRevealCelebrationEffectPrefab == null || reveal.Button == null)
             return;
@@ -671,7 +750,9 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
             return;
 
         Canvas sourceCanvas = reveal.Button.GetComponentInParent<Canvas>();
-        RectTransform anchor = reveal.StarsContainer != null ? reveal.StarsContainer : GetButtonRectTransform(reveal.Button);
+        RectTransform anchor = reveal.FeedbackFxAnchor != null
+            ? reveal.FeedbackFxAnchor
+            : (reveal.StarsContainer != null ? reveal.StarsContainer : GetButtonRectTransform(reveal.Button));
         Vector3 localPosition = anchor != null && anchor != reveal.Button.transform
             ? anchor.localPosition
             : Vector3.zero;
@@ -683,8 +764,81 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
             scaleMultiplier = Mathf.Clamp(referenceSize / 48f, 0.85f, 1.25f);
         }
 
-        effect.Play(reveal.Button.transform, localPosition, _starAcquiredSprite, sourceCanvas, scaleMultiplier);
+        effect.Play(reveal.Button.transform, localPosition, ResolveCelebrationSprite(reveal), sourceCanvas, scaleMultiplier);
         leadDelay = effect.LeadDelayBeforeStarReveal;
+        waitDurationAfterLead = Mathf.Max(0f, effect.TotalDuration - leadDelay);
+    }
+
+    private float CalculateStarRevealDuration(RectTransform starsContainer, int previousStars, int newStars)
+    {
+        if (starsContainer == null)
+            return 0f;
+
+        int clampedPrevious = Mathf.Clamp(previousStars, 0, starsContainer.childCount);
+        int clampedNew = Mathf.Clamp(newStars, clampedPrevious, starsContainer.childCount);
+        if (clampedNew <= clampedPrevious)
+            return 0f;
+
+        float revealSpacing = Mathf.Max(_starRevealStagger, _starPunchDuration + 0.06f);
+        return ((clampedNew - clampedPrevious - 1) * revealSpacing) + _starPunchDuration;
+    }
+
+    private float GetCelebrationLeadDelay()
+    {
+        return _starRevealCelebrationEffectPrefab != null
+            ? _starRevealCelebrationEffectPrefab.LeadDelayBeforeStarReveal
+            : 0f;
+    }
+
+    private float GetCelebrationWaitDurationAfterLead()
+    {
+        if (_starRevealCelebrationEffectPrefab == null)
+            return 0f;
+
+        return Mathf.Max(0f, _starRevealCelebrationEffectPrefab.TotalDuration - _starRevealCelebrationEffectPrefab.LeadDelayBeforeStarReveal);
+    }
+
+    private Sprite ResolveCelebrationSprite(PendingStarRevealPresentation reveal)
+    {
+        if (reveal.FeedbackFxAnchor != null)
+        {
+            Image anchorImage = reveal.FeedbackFxAnchor.GetComponent<Image>();
+            if (anchorImage != null && anchorImage.sprite != null)
+                return anchorImage.sprite;
+        }
+
+        return _starAcquiredSprite;
+    }
+
+    private RectTransform ResolveBossFeedbackFxAnchor(Button button)
+    {
+        BossLevelProgressUI bossProgress = GetBossProgress(button);
+        if (bossProgress != null)
+        {
+            RectTransform configuredAnchor = bossProgress.GetCompletionFeedbackAnchor();
+            if (configuredAnchor != null)
+                return configuredAnchor;
+        }
+
+        if (TryGetStarsContainer(button, out RectTransform starsContainer))
+            return starsContainer;
+
+        return GetButtonRectTransform(button);
+    }
+
+    private BossLevelProgressUI GetBossProgress(Button button)
+    {
+        if (button == null)
+            return null;
+
+        if (_bossProgressByButton.TryGetValue(button, out BossLevelProgressUI bossProgress) && bossProgress != null)
+            return bossProgress;
+
+        bossProgress = button.GetComponentInChildren<BossLevelProgressUI>(true);
+        if (bossProgress != null)
+            _bossProgressByButton[button] = bossProgress;
+
+        return bossProgress;
     }
 
     private StarRevealCelebrationEffect GetCelebrationEffect()

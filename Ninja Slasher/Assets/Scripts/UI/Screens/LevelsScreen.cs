@@ -338,7 +338,17 @@ public class LevelsScreen : UIScreenBase
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         Debug.Log($"[LevelsScreen] StarReveal -> Triggered | Reason={reason}");
 #endif
-        _buttonManager?.TryPlayPendingStarRevealAnimations();
+        float completionFeedbackDuration = 0f;
+        if (_buttonManager != null)
+            _buttonManager.TryPlayPendingCompletionAnimations(out completionFeedbackDuration);
+
+        if (completionFeedbackDuration > 0f)
+            yield return WaitForSecondsUnscaled(completionFeedbackDuration);
+
+        if (!isActiveAndEnabled || !_isVisible || !_isForegroundVisible)
+            yield break;
+
+        _presenter?.TryPlayPendingAreaUnlockFeedback();
     }
 
     private void SyncExternalForegroundSignals(string reason)

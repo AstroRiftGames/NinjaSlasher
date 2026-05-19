@@ -179,6 +179,21 @@ public class LevelSelectionScreenController : MonoBehaviour
 #endif
     }
 
+    public bool TryPlayPendingAreaUnlockFeedback()
+    {
+        if (_areas == null)
+            return false;
+
+        for (int i = 0; i < _areas.Length; i++)
+        {
+            AreaSectionController area = _areas[i];
+            if (area != null && area.TryPlayPendingUnlockFeedback())
+                return true;
+        }
+
+        return false;
+    }
+
     private void OnAreaUnlockAnimationComplete(AreaSectionController area)
     {
         // Refresca los botones de niveles tras completar la animación de nubes

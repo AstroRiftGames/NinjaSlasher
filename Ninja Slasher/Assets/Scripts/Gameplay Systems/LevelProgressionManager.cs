@@ -32,6 +32,11 @@ public class LevelProgressionManager : MonoBehaviourSingleton<LevelProgressionMa
 
     private int _pendingAreaUnlockAnimationId = -1;
     private readonly Dictionary<int, PendingStarRevealData> _pendingStarRevealByLevel = new();
+    private readonly HashSet<int> _pendingBossCompletionFeedbackLevels = new();
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    private readonly HashSet<int> _debugForceUnlockedLevels = new();
+    private readonly HashSet<int> _debugForceUnlockedAreas = new();
+#endif
 
     public Action OnProgressionUpdated;
     public Action<int> OnNewAreaUnlocked;
@@ -77,6 +82,11 @@ public class LevelProgressionManager : MonoBehaviourSingleton<LevelProgressionMa
             Initialize();
         }
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        if (IsLevelForceUnlockedForDebug(levelId))
+            return true;
+#endif
+
         if (levelId == 1) return true;
 
         var (highestLevel, _, _) = SaveManager.Instance?.GetProgressionData() ?? (1, 1, 0);
@@ -118,6 +128,11 @@ public class LevelProgressionManager : MonoBehaviourSingleton<LevelProgressionMa
             return areaId == 1;
         }
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        if (IsAreaForceUnlockedForDebug(areaId))
+            return true;
+#endif
+
         var (_, highestArea, _) = SaveManager.Instance?.GetProgressionData() ?? (1, 1, 0);
         return areaId <= highestArea;
     }
@@ -144,10 +159,52 @@ public class LevelProgressionManager : MonoBehaviourSingleton<LevelProgressionMa
         return config.unlockRequirements.minimumStarsRequired;
     }
 
+    public bool IsBossLevel(int levelId)
+    {
+        if (LevelConfigurationManager.Instance == null)
+            return false;
+
+        var config = LevelConfigurationManager.Instance.GetConfigurationForLevel(levelId);
+        return config?.unlockRequirements != null && config.unlockRequirements.isBossLevel;
+    }
+
+    public bool IsLevelCompleted(int levelId)
+    {
+        GameData gameData = SaveManager.Instance?.GetGameData();
+        if (gameData == null)
+            return false;
+
+        if (gameData.levelProgressData != null
+            && gameData.levelProgressData.TryGetValue(levelId, out LevelProgressData progress)
+            && progress != null)
+        {
+            if (progress.isCompleted || progress.maxStarsEarned > 0)
+                return true;
+        }
+
+        return gameData.levelStars != null
+            && gameData.levelStars.TryGetValue(levelId, out int stars)
+            && stars > 0;
+    }
+
     public bool ConsumePendingAreaUnlock(int areaId)
     {
         if (_pendingAreaUnlockAnimationId != areaId) return false;
         _pendingAreaUnlockAnimationId = -1;
+        return true;
+    }
+
+    public bool HasPendingAreaUnlock(int areaId)
+    {
+        return _pendingAreaUnlockAnimationId == areaId;
+    }
+
+    public bool ConsumePendingBossCompletionFeedback(int levelId)
+    {
+        if (!_pendingBossCompletionFeedbackLevels.Contains(levelId))
+            return false;
+
+        _pendingBossCompletionFeedbackLevels.Remove(levelId);
         return true;
     }
 
@@ -178,15 +235,28 @@ public class LevelProgressionManager : MonoBehaviourSingleton<LevelProgressionMa
     public void HandleLevelCompletion(int levelId, int starsEarned)
     {
         int previousStars = GetPersistedStarsForLevel(levelId);
+        bool isBossLevel = false;
+        LevelConfiguration levelConfig = null;
+
+        if (LevelConfigurationManager.Instance != null)
+        {
+            levelConfig = LevelConfigurationManager.Instance.GetConfigurationForLevel(levelId);
+            isBossLevel = levelConfig?.unlockRequirements != null && levelConfig.unlockRequirements.isBossLevel;
+        }
 
         SaveManager.Instance?.UpdateLevelProgression(levelId, starsEarned);
 
         int persistedStars = GetPersistedStarsForLevel(levelId);
         if (persistedStars > previousStars)
         {
-            RegisterPendingStarReveal(levelId, previousStars, persistedStars);
+            if (!isBossLevel)
+                RegisterPendingStarReveal(levelId, previousStars, persistedStars);
+
             GameEvents.RaiseStarsUpdated(levelId, persistedStars);
         }
+
+        if (isBossLevel && IsLevelCompleted(levelId))
+            RegisterPendingBossCompletionFeedback(levelId);
 
         var (currentHighest, currentArea, totalStars) = SaveManager.Instance?.GetProgressionData() ?? (1, 1, 0);
 
@@ -200,14 +270,8 @@ public class LevelProgressionManager : MonoBehaviourSingleton<LevelProgressionMa
             }
         }
 
-        if (LevelConfigurationManager.Instance != null)
-        {
-            var config = LevelConfigurationManager.Instance.GetConfigurationForLevel(levelId);
-            if (config?.unlockRequirements != null && config.unlockRequirements.isBossLevel)
-            {
-                CheckAreaUnlock(config.unlockRequirements.areaId);
-            }
-        }
+        if (isBossLevel && levelConfig?.unlockRequirements != null)
+            CheckAreaUnlock(levelConfig.unlockRequirements.areaId);
 
         OnProgressionUpdated?.Invoke();
     }
@@ -259,6 +323,11 @@ public class LevelProgressionManager : MonoBehaviourSingleton<LevelProgressionMa
         _pendingStarRevealByLevel[levelId] = new PendingStarRevealData(previousStars, newStars);
     }
 
+    private void RegisterPendingBossCompletionFeedback(int levelId)
+    {
+        _pendingBossCompletionFeedbackLevels.Add(levelId);
+    }
+
     private bool ShouldUnlockNextLevel(int nextLevel)
     {
         int maxLevel = LevelsPerArea * TotalAreas;
@@ -298,7 +367,7 @@ public class LevelProgressionManager : MonoBehaviourSingleton<LevelProgressionMa
     }
 
 
-#if UNITY_EDITOR
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
     private void UnlockAllLevelsForDebug()
     {
         Debug.Log("[LevelProgressionManager] DEBUG MODE: Desbloqueando todos los niveles...");
@@ -540,6 +609,98 @@ public class LevelProgressionManager : MonoBehaviourSingleton<LevelProgressionMa
 
             Debug.Log($"Area {area} ({status}): {levelsCompleted}/{LevelsPerArea} niveles | {starsInArea} ⭐");
         }
+    }
+
+    [ContextMenu("Debug/Desbloquear Próximo Boss")]
+    private void ContextMenuUnlockNextBossLevelForDebug() => UnlockNextBossLevelForDebug();
+
+    [ContextMenu("Debug/Resetear Unlocks de Boss")]
+    private void ContextMenuResetBossDebugUnlocks() => ResetBossDebugUnlocks();
+
+    public void UnlockNextBossLevelForDebug()
+    {
+        LevelConfigurationManager configurationManager = LevelConfigurationManager.Instance;
+        if (configurationManager == null || configurationManager.levelConfigurations == null)
+        {
+            Debug.LogWarning("[LevelProgressionManager] No hay configuraciones de nivel disponibles para debug unlock de boss.");
+            return;
+        }
+
+        LevelConfiguration nextBossConfiguration = null;
+
+        for (int i = 0; i < configurationManager.levelConfigurations.Length; i++)
+        {
+            LevelConfiguration configuration = configurationManager.levelConfigurations[i];
+            if (configuration == null || configuration.unlockRequirements == null || !configuration.unlockRequirements.isBossLevel)
+                continue;
+
+            int candidateLevelId = configuration.levelId;
+            if (IsLevelCompleted(candidateLevelId) || IsLevelUnlocked(candidateLevelId))
+                continue;
+
+            if (nextBossConfiguration == null || candidateLevelId < nextBossConfiguration.levelId)
+                nextBossConfiguration = configuration;
+        }
+
+        if (nextBossConfiguration == null)
+        {
+            Debug.Log("[LevelProgressionManager] No se encontró un boss bloqueado para debug unlock.");
+            return;
+        }
+
+        UnlockBossLevelForDebug(nextBossConfiguration.levelId);
+    }
+
+    public void UnlockBossLevelForDebug(int bossLevelId)
+    {
+        LevelConfigurationManager configurationManager = LevelConfigurationManager.Instance;
+        if (configurationManager == null || configurationManager.levelConfigurations == null)
+        {
+            Debug.LogWarning("[LevelProgressionManager] No hay configuraciones de nivel disponibles para debug unlock de boss.");
+            return;
+        }
+
+        LevelConfiguration bossConfiguration = null;
+
+        for (int i = 0; i < configurationManager.levelConfigurations.Length; i++)
+        {
+            LevelConfiguration configuration = configurationManager.levelConfigurations[i];
+            if (configuration == null || configuration.levelId != bossLevelId)
+                continue;
+
+            bossConfiguration = configuration;
+            break;
+        }
+
+        if (bossConfiguration == null || bossConfiguration.unlockRequirements == null || !bossConfiguration.unlockRequirements.isBossLevel)
+        {
+            Debug.LogWarning($"[LevelProgressionManager] El nivel {bossLevelId} no es un boss válido para debug unlock.");
+            return;
+        }
+
+        _debugForceUnlockedLevels.Add(bossLevelId);
+        _debugForceUnlockedAreas.Add(Mathf.Max(1, bossConfiguration.unlockRequirements.areaId));
+
+        Debug.Log($"[LevelProgressionManager] DEBUG: Boss desbloqueado forzado -> Nivel {bossLevelId}, Área {bossConfiguration.unlockRequirements.areaId}");
+        OnProgressionUpdated?.Invoke();
+    }
+
+    public void ResetBossDebugUnlocks()
+    {
+        _debugForceUnlockedLevels.Clear();
+        _debugForceUnlockedAreas.Clear();
+        Debug.Log("[LevelProgressionManager] DEBUG: se limpiaron los unlocks forzados de boss.");
+        OnProgressionUpdated?.Invoke();
+    }
+
+    private bool IsLevelForceUnlockedForDebug(int levelId)
+    {
+        return _debugForceUnlockedLevels.Contains(levelId);
+    }
+
+    private bool IsAreaForceUnlockedForDebug(int areaId)
+    {
+        return _debugForceUnlockedAreas.Contains(areaId);
     }
 
 #endif
