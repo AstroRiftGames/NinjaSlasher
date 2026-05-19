@@ -50,6 +50,7 @@ public class PreGameUIManager : MonoBehaviour
     private readonly List<PowerUpSlotUI> _powerUpSlots = new();
 
     private UIAudioContext _audioContext;
+    private PowerUpHorizontalScrollButtons _powerUpScrollButtons;
     private bool _isLevelSelected;
     private bool _isInPreGameSelection;
 
@@ -220,7 +221,7 @@ public class PreGameUIManager : MonoBehaviour
         SetGoals();
         RefreshObjectiveSlashBaselines();
         ResetVisualState();
-        ShowPreGamePowerUps();
+        ShowPreGamePowerUps(true);
         ApplyObjectiveCompletionVisuals();
     }
 
@@ -419,12 +420,15 @@ public class PreGameUIManager : MonoBehaviour
         }
     }
 
-    public void ShowPreGamePowerUps()
+    public void ShowPreGamePowerUps(bool resetScrollToStart = false)
     {
+        PowerUpHorizontalScrollButtons powerUpScrollButtons = ResolvePowerUpScrollButtonsIfNeeded();
+
         if (_powerUpsContainer == null)
         {
             Debug.LogWarning("[PreGameUIManager] Power ups container not assigned.");
             DisableUnusedPowerUpSlots(0);
+            FinalizePowerUpScrollRefresh(powerUpScrollButtons, resetScrollToStart);
             return;
         }
 
@@ -432,12 +436,14 @@ public class PreGameUIManager : MonoBehaviour
         {
             Debug.LogWarning("[PreGameUIManager] Power up slot prefab not assigned.");
             DisableUnusedPowerUpSlots(0);
+            FinalizePowerUpScrollRefresh(powerUpScrollButtons, resetScrollToStart);
             return;
         }
 
         if (allPowerUpBases == null || allPowerUpBases.Length == 0)
         {
             DisableUnusedPowerUpSlots(0);
+            FinalizePowerUpScrollRefresh(powerUpScrollButtons, resetScrollToStart);
             return;
         }
 
@@ -466,6 +472,36 @@ public class PreGameUIManager : MonoBehaviour
         }
 
         DisableUnusedPowerUpSlots(visibleSlotCount);
+        FinalizePowerUpScrollRefresh(powerUpScrollButtons, resetScrollToStart);
+    }
+
+    private PowerUpHorizontalScrollButtons ResolvePowerUpScrollButtonsIfNeeded()
+    {
+        if (_powerUpScrollButtons != null)
+            return _powerUpScrollButtons;
+
+        if (_powerUpsContainer != null)
+            _powerUpScrollButtons = _powerUpsContainer.GetComponentInParent<PowerUpHorizontalScrollButtons>();
+
+        if (_powerUpScrollButtons == null)
+        {
+            PregameModal pregameModal = GetComponentInChildren<PregameModal>(true);
+            if (pregameModal != null)
+                _powerUpScrollButtons = pregameModal.GetComponentInChildren<PowerUpHorizontalScrollButtons>(true);
+        }
+
+        return _powerUpScrollButtons;
+    }
+
+    private static void FinalizePowerUpScrollRefresh(PowerUpHorizontalScrollButtons powerUpScrollButtons, bool resetScrollToStart)
+    {
+        if (powerUpScrollButtons == null)
+            return;
+
+        if (resetScrollToStart)
+            powerUpScrollButtons.ResetToStart();
+
+        powerUpScrollButtons.RefreshAfterLayout();
     }
 
     private PowerUpSlotUI GetOrCreatePowerUpSlot(int index)
