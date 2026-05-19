@@ -3,6 +3,9 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
 {
@@ -27,6 +30,9 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
     [SerializeField] private Vector3 _starPunchStrength = new Vector3(0.16f, 0.16f, 0f);
     [SerializeField] private StarRevealCelebrationEffect _starRevealCelebrationEffectPrefab;
     [SerializeField] private float _starRevealLevelGap = 0.08f;
+    [SerializeField, Min(1f)] private float _starRevealCelebrationReferenceButtonSize = 180f;
+    [SerializeField, Min(0.01f)] private float _starRevealCelebrationMinScale = 0.06f;
+    [SerializeField, Min(0.01f)] private float _starRevealCelebrationMaxScale = 0.125f;
 
     [Header("ANIMATION SETTINGS")]
     [SerializeField] private float fallDistance = 800f;
@@ -749,24 +755,39 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
         if (effect == null)
             return;
 
-        Canvas sourceCanvas = reveal.Button.GetComponentInParent<Canvas>();
         RectTransform anchor = reveal.FeedbackFxAnchor != null
             ? reveal.FeedbackFxAnchor
             : (reveal.StarsContainer != null ? reveal.StarsContainer : GetButtonRectTransform(reveal.Button));
-        Vector3 localPosition = anchor != null && anchor != reveal.Button.transform
-            ? anchor.localPosition
-            : Vector3.zero;
+        Transform effectParent = reveal.Button.transform;
+        Vector3 localPosition = Vector3.zero;
+        if (anchor != null && anchor != effectParent)
+            localPosition = effectParent.InverseTransformPoint(anchor.position);
 
-        float scaleMultiplier = 1f;
-        if (anchor != null)
-        {
-            float referenceSize = Mathf.Max(anchor.rect.width, anchor.rect.height);
-            scaleMultiplier = Mathf.Clamp(referenceSize / 48f, 0.85f, 1.25f);
-        }
-
-        effect.Play(reveal.Button.transform, localPosition, ResolveCelebrationSprite(reveal), sourceCanvas, scaleMultiplier);
+        effect.transform.SetParent(effectParent, false);
+        effect.transform.localPosition = localPosition;
+        effect.transform.localRotation = Quaternion.identity;
+        effect.transform.localScale = Vector3.one * CalculateCelebrationEffectScale(reveal.Button, anchor);
+        effect.Play();
         leadDelay = effect.LeadDelayBeforeStarReveal;
         waitDurationAfterLead = Mathf.Max(0f, effect.TotalDuration - leadDelay);
+    }
+
+    private float CalculateCelebrationEffectScale(Button button, RectTransform anchor)
+    {
+        float referenceSize = 0f;
+
+        RectTransform buttonRectTransform = GetButtonRectTransform(button);
+        if (buttonRectTransform != null)
+            referenceSize = Mathf.Max(referenceSize, buttonRectTransform.rect.width, buttonRectTransform.rect.height);
+
+        if (anchor != null)
+            referenceSize = Mathf.Max(referenceSize, anchor.rect.width, anchor.rect.height);
+
+        if (referenceSize <= 0f)
+            return _starRevealCelebrationMinScale;
+
+        float rawScale = referenceSize / _starRevealCelebrationReferenceButtonSize;
+        return Mathf.Clamp(rawScale, _starRevealCelebrationMinScale, _starRevealCelebrationMaxScale);
     }
 
     private float CalculateStarRevealDuration(RectTransform starsContainer, int previousStars, int newStars)
@@ -796,18 +817,6 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
             return 0f;
 
         return Mathf.Max(0f, _starRevealCelebrationEffectPrefab.TotalDuration - _starRevealCelebrationEffectPrefab.LeadDelayBeforeStarReveal);
-    }
-
-    private Sprite ResolveCelebrationSprite(PendingStarRevealPresentation reveal)
-    {
-        if (reveal.FeedbackFxAnchor != null)
-        {
-            Image anchorImage = reveal.FeedbackFxAnchor.GetComponent<Image>();
-            if (anchorImage != null && anchorImage.sprite != null)
-                return anchorImage.sprite;
-        }
-
-        return _starAcquiredSprite;
     }
 
     private RectTransform ResolveBossFeedbackFxAnchor(Button button)
@@ -891,6 +900,72 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
             effect.StopAndRelease();
         }
     }
+
+#if UNITY_EDITOR
+    [ContextMenu("Debug/Play Star Reveal Celebration Test")]
+    private void ContextMenuPlayStarRevealCelebrationTest()
+    {
+        if (!Application.isPlaying)
+        {
+            Debug.LogWarning("[ButtonManager] Star reveal celebration test requires Play Mode.", this);
+            return;
+        }
+
+        if (_starRevealCelebrationEffectPrefab == null)
+        {
+            Debug.LogWarning("[ButtonManager] Star reveal celebration effect prefab is not assigned.", this);
+            return;
+        }
+
+        Button targetButton = ResolveCelebrationTestButton();
+        if (targetButton == null)
+        {
+            Debug.LogWarning("[ButtonManager] No level button is available for star reveal celebration test.", this);
+            return;
+        }
+
+        StopAllCelebrationEffects();
+
+        RectTransform starsContainer = null;
+        TryGetStarsContainer(targetButton, out starsContainer);
+
+        PendingStarRevealPresentation reveal = new PendingStarRevealPresentation(
+            targetButton,
+            starsContainer,
+            ResolveBossFeedbackFxAnchor(targetButton),
+            previousStars: 0,
+            newStars: 3,
+            levelId: 0,
+            animateStars: false);
+
+        PlayStarRevealCelebration(reveal, out _, out _);
+    }
+
+    [ContextMenu("Debug/Stop Star Reveal Celebration Test")]
+    private void ContextMenuStopStarRevealCelebrationTest()
+    {
+        StopAllCelebrationEffects();
+    }
+
+    private Button ResolveCelebrationTestButton()
+    {
+        GameObject selectedObject = Selection.activeGameObject;
+        if (selectedObject != null)
+        {
+            Button selectedButton = selectedObject.GetComponentInParent<Button>();
+            if (selectedButton != null && selectedButton.gameObject.activeInHierarchy)
+                return selectedButton;
+        }
+
+        for (int i = 0; i < levelButtons.Length; i++)
+        {
+            if (levelButtons[i] != null && levelButtons[i].gameObject.activeInHierarchy)
+                return levelButtons[i];
+        }
+
+        return null;
+    }
+#endif
 
     private void KillAllStarTweens()
     {

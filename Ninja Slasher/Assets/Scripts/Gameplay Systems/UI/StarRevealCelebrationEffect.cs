@@ -1,89 +1,125 @@
 using System;
 using System.Collections;
 using UnityEngine;
-using UnityEngine.Rendering;
 
-[RequireComponent(typeof(ParticleSystem))]
-[RequireComponent(typeof(ParticleSystemRenderer))]
 public sealed class StarRevealCelebrationEffect : MonoBehaviour
 {
-    [Header("Timing")]
-    [SerializeField] private float _leadDelayBeforeStarReveal = 0.12f;
-    [SerializeField] private float _duration = 0.18f;
-    [SerializeField] private float _lifetimeMin = 0.24f;
-    [SerializeField] private float _lifetimeMax = 0.42f;
+    [SerializeField] private ParticleSystem[] _particleSystems;
+    [SerializeField] private Color[] _fireworkColors =
+    {
+        new Color(1f, 0.42f, 0.38f, 1f),     // red
+        new Color(0.46f, 1f, 0.6f, 1f),      // green
+        new Color(0.48f, 0.72f, 1f, 1f),     // blue
+        new Color(1f, 0.96f, 0.58f, 1f),     // yellow
+        new Color(0.86f, 0.58f, 1f, 1f),     // purple
+        new Color(1f, 0.74f, 0.42f, 1f),     // orange
+        new Color(1f, 0.99f, 0.98f, 1f),     // white / silver
+        new Color(1f, 0.88f, 0.54f, 1f)      // gold
+    };
+    [SerializeField, Min(0f)] private float _leadDelayBeforeStarReveal = 0.12f;
+    [SerializeField, Min(0f)] private float _releaseBufferAfterPlayback = 0.05f;
 
-    [Header("Burst")]
-    [SerializeField] private int _burstCount = 26;
-    [SerializeField] private float _shapeRadius = 6f;
-    [SerializeField] private float _startSpeedMin = 48f;
-    [SerializeField] private float _startSpeedMax = 84f;
-    [SerializeField] private float _startSizeMin = 12f;
-    [SerializeField] private float _startSizeMax = 22f;
-    [SerializeField] private float _rotationSpeedMin = -180f;
-    [SerializeField] private float _rotationSpeedMax = 180f;
-
-    [Header("Rendering")]
-    [SerializeField] private Sprite _particleSprite;
-    [SerializeField] private int _sortingOrderOffset = 1;
-
-    private ParticleSystem _particleSystem;
-    private ParticleSystemRenderer _particleRenderer;
-    private Material _runtimeMaterial;
-    private Sprite _appliedSprite;
     private Action<StarRevealCelebrationEffect> _releaseAction;
     private Coroutine _releaseRoutine;
+    private ParticleSystem.Particle[] _particleBuffer;
 
     public float LeadDelayBeforeStarReveal => _leadDelayBeforeStarReveal;
-    public float TotalDuration => _duration + _lifetimeMax + 0.05f;
+    public float TotalDuration => CalculateMaxPlaybackDuration() + _releaseBufferAfterPlayback;
 
     public void Initialize(Action<StarRevealCelebrationEffect> releaseAction)
     {
         _releaseAction = releaseAction;
-        ResolveComponents();
-        ConfigureParticleSystem();
     }
 
-    public void Play(Transform parent, Vector3 localPosition, Sprite particleSprite, Canvas sourceCanvas, float scaleMultiplier)
+    public void Play()
     {
-        ResolveComponents();
-        ApplySprite(particleSprite != null ? particleSprite : _particleSprite);
-        ApplySorting(sourceCanvas);
-        ConfigureParticleSystem();
-
-        transform.SetParent(parent, false);
-        transform.localPosition = localPosition;
-        transform.localRotation = Quaternion.identity;
-        transform.localScale = Vector3.one * scaleMultiplier;
+        if (!HasConfiguredParticleSystems(logWarning: true))
+        {
+            if (Application.isPlaying)
+                ReleaseToPool();
+            return;
+        }
 
         gameObject.SetActive(true);
-        _particleSystem.Clear(true);
-        _particleSystem.Play(true);
 
-        if (_releaseRoutine != null)
-            StopCoroutine(_releaseRoutine);
+        if (Application.isPlaying && !isActiveAndEnabled)
+        {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            Debug.LogWarning("[StarRevealCelebrationEffect] Play was requested while the effect is inactive in hierarchy.", this);
+#endif
+            ReleaseToPool();
+            return;
+        }
 
-        _releaseRoutine = StartCoroutine(ReleaseAfterPlayback());
+        float playbackDuration = 0f;
+        for (int i = 0; i < _particleSystems.Length; i++)
+        {
+            ParticleSystem particleSystem = _particleSystems[i];
+            if (particleSystem == null)
+                continue;
+
+            particleSystem.Clear(true);
+            particleSystem.Play(true);
+            if (Application.isPlaying)
+                StartCoroutine(ApplyFireworkColorsAfterEmission(particleSystem));
+            playbackDuration = Mathf.Max(playbackDuration, GetPlaybackDuration(particleSystem));
+        }
+
+        if (!Application.isPlaying)
+            return;
+
+        RestartReleaseRoutine(playbackDuration + _releaseBufferAfterPlayback);
+    }
+
+    public void Stop()
+    {
+        StopReleaseRoutine();
+
+        if (!HasConfiguredParticleSystems(logWarning: false))
+            return;
+
+        for (int i = 0; i < _particleSystems.Length; i++)
+        {
+            ParticleSystem particleSystem = _particleSystems[i];
+            if (particleSystem == null)
+                continue;
+
+            particleSystem.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+            particleSystem.Clear(true);
+        }
+    }
+
+    public void ResetEffect()
+    {
+        Stop();
     }
 
     public void StopAndRelease()
     {
-        ResolveComponents();
-
-        if (_releaseRoutine != null)
-        {
-            StopCoroutine(_releaseRoutine);
-            _releaseRoutine = null;
-        }
-
-        _particleSystem.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
-        _particleSystem.Clear(true);
+        Stop();
         ReleaseToPool();
     }
 
-    private IEnumerator ReleaseAfterPlayback()
+    private void RestartReleaseRoutine(float delay)
     {
-        yield return new WaitForSecondsRealtime(TotalDuration);
+        StopReleaseRoutine();
+        _releaseRoutine = StartCoroutine(ReleaseAfterPlayback(delay));
+    }
+
+    private void StopReleaseRoutine()
+    {
+        if (_releaseRoutine == null)
+            return;
+
+        StopCoroutine(_releaseRoutine);
+        _releaseRoutine = null;
+    }
+
+    private IEnumerator ReleaseAfterPlayback(float delay)
+    {
+        if (delay > 0f)
+            yield return new WaitForSecondsRealtime(delay);
+
         _releaseRoutine = null;
         ReleaseToPool();
     }
@@ -95,151 +131,166 @@ public sealed class StarRevealCelebrationEffect : MonoBehaviour
         _releaseAction?.Invoke(this);
     }
 
-    private void ResolveComponents()
+    private float CalculateMaxPlaybackDuration()
     {
-        if (_particleSystem == null)
-            _particleSystem = GetComponent<ParticleSystem>();
+        if (!HasConfiguredParticleSystems(logWarning: false))
+            return 0f;
 
-        if (_particleRenderer == null)
-            _particleRenderer = GetComponent<ParticleSystemRenderer>();
-    }
-
-    private void ConfigureParticleSystem()
-    {
-        ResolveComponents();
-
-        var main = _particleSystem.main;
-        main.loop = false;
-        main.playOnAwake = false;
-        main.useUnscaledTime = true;
-        main.duration = _duration;
-        main.maxParticles = Mathf.Max(_burstCount, 8);
-        main.simulationSpace = ParticleSystemSimulationSpace.Local;
-        main.scalingMode = ParticleSystemScalingMode.Hierarchy;
-        main.startLifetime = new ParticleSystem.MinMaxCurve(_lifetimeMin, _lifetimeMax);
-        main.startSpeed = new ParticleSystem.MinMaxCurve(_startSpeedMin, _startSpeedMax);
-        main.startSize = new ParticleSystem.MinMaxCurve(_startSizeMin, _startSizeMax);
-        main.startRotation = new ParticleSystem.MinMaxCurve(0f, Mathf.PI * 2f);
-        main.startColor = new ParticleSystem.MinMaxGradient(
-            new Color(1f, 0.9f, 0.25f, 1f),
-            new Color(0.25f, 0.95f, 1f, 1f));
-
-        var emission = _particleSystem.emission;
-        emission.enabled = true;
-        emission.rateOverTime = 0f;
-        emission.rateOverDistance = 0f;
-        emission.SetBursts(new[] { new ParticleSystem.Burst(0f, (short)_burstCount) });
-
-        var shape = _particleSystem.shape;
-        shape.enabled = true;
-        shape.shapeType = ParticleSystemShapeType.Circle;
-        shape.radius = _shapeRadius;
-        shape.radiusThickness = 0f;
-        shape.arc = 360f;
-
-        var velocityOverLifetime = _particleSystem.velocityOverLifetime;
-        velocityOverLifetime.enabled = true;
-        velocityOverLifetime.space = ParticleSystemSimulationSpace.Local;
-        velocityOverLifetime.speedModifier = new ParticleSystem.MinMaxCurve(1f, BuildCurve(1f, 0.28f));
-
-        var limitVelocity = _particleSystem.limitVelocityOverLifetime;
-        limitVelocity.enabled = true;
-        limitVelocity.space = ParticleSystemSimulationSpace.Local;
-        limitVelocity.dampen = 0.55f;
-        limitVelocity.limit = new ParticleSystem.MinMaxCurve(140f);
-
-        var sizeOverLifetime = _particleSystem.sizeOverLifetime;
-        sizeOverLifetime.enabled = true;
-        sizeOverLifetime.size = new ParticleSystem.MinMaxCurve(1f, BuildCurve(1f, 0.2f));
-
-        var colorOverLifetime = _particleSystem.colorOverLifetime;
-        colorOverLifetime.enabled = true;
-        colorOverLifetime.color = new ParticleSystem.MinMaxGradient(BuildColorGradient());
-
-        var rotationOverLifetime = _particleSystem.rotationOverLifetime;
-        rotationOverLifetime.enabled = true;
-        rotationOverLifetime.separateAxes = false;
-        rotationOverLifetime.z = new ParticleSystem.MinMaxCurve(_rotationSpeedMin * Mathf.Deg2Rad, _rotationSpeedMax * Mathf.Deg2Rad);
-
-        var noise = _particleSystem.noise;
-        noise.enabled = true;
-        noise.strength = 5f;
-        noise.frequency = 0.5f;
-        noise.scrollSpeed = 0.6f;
-        noise.damping = true;
-        noise.quality = ParticleSystemNoiseQuality.Medium;
-
-        var trails = _particleSystem.trails;
-        trails.enabled = false;
-
-        _particleRenderer.renderMode = ParticleSystemRenderMode.Billboard;
-        _particleRenderer.alignment = ParticleSystemRenderSpace.View;
-        _particleRenderer.shadowCastingMode = ShadowCastingMode.Off;
-        _particleRenderer.receiveShadows = false;
-        _particleRenderer.allowOcclusionWhenDynamic = false;
-        _particleRenderer.enableGPUInstancing = false;
-    }
-
-    private void ApplySorting(Canvas sourceCanvas)
-    {
-        ResolveComponents();
-
-        if (sourceCanvas == null)
-            return;
-
-        _particleRenderer.sortingLayerID = sourceCanvas.sortingLayerID;
-        _particleRenderer.sortingOrder = sourceCanvas.sortingOrder + _sortingOrderOffset;
-    }
-
-    private void ApplySprite(Sprite sprite)
-    {
-        ResolveComponents();
-
-        if (sprite == null || _appliedSprite == sprite && _runtimeMaterial != null)
-            return;
-
-        _appliedSprite = sprite;
-
-        if (_runtimeMaterial == null)
+        float maxDuration = 0f;
+        for (int i = 0; i < _particleSystems.Length; i++)
         {
-            Shader spriteShader = Shader.Find("Sprites/Default");
-            _runtimeMaterial = new Material(spriteShader != null ? spriteShader : Shader.Find("Universal Render Pipeline/Unlit"));
-            _runtimeMaterial.name = $"{nameof(StarRevealCelebrationEffect)}RuntimeMaterial";
+            ParticleSystem particleSystem = _particleSystems[i];
+            if (particleSystem == null)
+                continue;
+
+            maxDuration = Mathf.Max(maxDuration, GetPlaybackDuration(particleSystem));
         }
 
-        _runtimeMaterial.mainTexture = sprite.texture;
-        _particleRenderer.material = _runtimeMaterial;
+        return maxDuration;
     }
 
-    private static AnimationCurve BuildCurve(float startValue, float endValue)
+    private void ApplyFireworkColors(ParticleSystem particleSystem)
     {
-        return AnimationCurve.EaseInOut(0f, startValue, 1f, endValue);
+        if (_fireworkColors == null || _fireworkColors.Length == 0)
+            return;
+
+        int particleCount = particleSystem.particleCount;
+        if (particleCount <= 0)
+            return;
+
+        EnsureParticleBufferCapacity(particleCount);
+        particleCount = particleSystem.GetParticles(_particleBuffer);
+
+        for (int i = 0; i < particleCount; i++)
+        {
+            Color color = _fireworkColors[UnityEngine.Random.Range(0, _fireworkColors.Length)];
+            _particleBuffer[i].startColor = color;
+        }
+
+        particleSystem.SetParticles(_particleBuffer, particleCount);
     }
 
-    private static Gradient BuildColorGradient()
+    private IEnumerator ApplyFireworkColorsAfterEmission(ParticleSystem particleSystem)
     {
-        Gradient gradient = new Gradient();
-        gradient.SetKeys(
-            new[]
+        yield return null;
+
+        if (particleSystem == null || !particleSystem.isPlaying)
+            yield break;
+
+        ApplyFireworkColors(particleSystem);
+    }
+
+    private void EnsureParticleBufferCapacity(int particleCount)
+    {
+        if (_particleBuffer != null && _particleBuffer.Length >= particleCount)
+            return;
+
+        _particleBuffer = new ParticleSystem.Particle[particleCount];
+    }
+
+    private bool HasConfiguredParticleSystems(bool logWarning)
+    {
+        if (_particleSystems == null || _particleSystems.Length == 0)
+        {
+            if (logWarning)
+                LogMissingReferenceWarning("Particle systems array is not configured.");
+            return false;
+        }
+
+        bool hasValidParticleSystem = false;
+        for (int i = 0; i < _particleSystems.Length; i++)
+        {
+            if (_particleSystems[i] != null)
             {
-                new GradientColorKey(new Color(1f, 1f, 1f, 1f), 0f),
-                new GradientColorKey(new Color(1f, 0.8f, 0.35f, 1f), 0.32f),
-                new GradientColorKey(new Color(1f, 0.3f, 0.65f, 1f), 0.68f),
-                new GradientColorKey(new Color(0.35f, 0.95f, 1f, 1f), 1f)
-            },
-            new[]
-            {
-                new GradientAlphaKey(0f, 0f),
-                new GradientAlphaKey(1f, 0.12f),
-                new GradientAlphaKey(0.92f, 0.72f),
-                new GradientAlphaKey(0f, 1f)
-            });
-        return gradient;
+                hasValidParticleSystem = true;
+                continue;
+            }
+
+            if (logWarning)
+                LogMissingReferenceWarning($"Particle system reference at index {i} is null.");
+        }
+
+        if (!hasValidParticleSystem && logWarning)
+            LogMissingReferenceWarning("No valid particle systems were found.");
+
+        return hasValidParticleSystem;
     }
 
-    private void OnDestroy()
+    private void LogMissingReferenceWarning(string message)
     {
-        if (_runtimeMaterial != null)
-            Destroy(_runtimeMaterial);
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        Debug.LogWarning($"[StarRevealCelebrationEffect] {message}", this);
+#endif
+    }
+
+    private static float GetPlaybackDuration(ParticleSystem particleSystem)
+    {
+        ParticleSystem.MainModule main = particleSystem.main;
+        return GetMaxCurveValue(main.startDelay) + main.duration + GetMaxCurveValue(main.startLifetime);
+    }
+
+    private static float GetMaxCurveValue(ParticleSystem.MinMaxCurve curve)
+    {
+        return curve.mode switch
+        {
+            ParticleSystemCurveMode.Constant => Mathf.Max(0f, curve.constant),
+            ParticleSystemCurveMode.TwoConstants => Mathf.Max(0f, Mathf.Max(curve.constantMin, curve.constantMax)),
+            ParticleSystemCurveMode.Curve => Mathf.Max(0f, GetMaxAnimationCurveValue(curve.curve) * curve.curveMultiplier),
+            ParticleSystemCurveMode.TwoCurves => Mathf.Max(
+                0f,
+                Mathf.Max(GetMaxAnimationCurveValue(curve.curveMin), GetMaxAnimationCurveValue(curve.curveMax)) * curve.curveMultiplier),
+            _ => 0f
+        };
+    }
+
+    private static float GetMaxAnimationCurveValue(AnimationCurve curve)
+    {
+        if (curve == null || curve.length == 0)
+            return 0f;
+
+        float maxValue = curve.keys[0].value;
+        for (int i = 1; i < curve.length; i++)
+            maxValue = Mathf.Max(maxValue, curve.keys[i].value);
+
+        return maxValue;
+    }
+
+#if UNITY_EDITOR
+    [ContextMenu("Debug/Play Test")]
+    private void ContextMenuPlayTest()
+    {
+        transform.localPosition = Vector3.zero;
+        transform.localRotation = Quaternion.identity;
+        Play();
+    }
+
+    [ContextMenu("Debug/Stop Test")]
+    private void ContextMenuStopTest()
+    {
+        Stop();
+    }
+
+    private void Reset()
+    {
+        CacheParticleSystems();
+    }
+
+    private void OnValidate()
+    {
+        CacheParticleSystems();
+        _leadDelayBeforeStarReveal = Mathf.Max(0f, _leadDelayBeforeStarReveal);
+        _releaseBufferAfterPlayback = Mathf.Max(0f, _releaseBufferAfterPlayback);
+    }
+
+    private void CacheParticleSystems()
+    {
+        if (_particleSystems == null || _particleSystems.Length == 0)
+            _particleSystems = GetComponentsInChildren<ParticleSystem>(true);
+    }
+#endif
+
+    private void OnDisable()
+    {
+        _releaseRoutine = null;
     }
 }
