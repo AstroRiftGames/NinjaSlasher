@@ -233,6 +233,7 @@ MonoBehaviour:
   _swipeDetection: {fileID: 340358578149418589}
   _trajectoryRenderer: {fileID: 6266108393372275380}
   _slashVFX: {fileID: 4165725868266791211, guid: 859ab33b6c4efc64c97bc80b9551761b, type: 3}
+  _mainCamera: {fileID: 0}
   _audio: {fileID: 11400000, guid: 4032d9d64165d6c4ab7b8746366dc31c, type: 2}
   _smokeBombVisibilityDelay: 0.3
   _proyectilesLayer:
@@ -6910,9 +6911,9 @@ ParticleSystem:
         m_RotationOrder: 4
     startColor:
       serializedVersion: 2
-      minMaxState: 0
-      minColor: {r: 1, g: 1, b: 1, a: 1}
-      maxColor: {r: 0.5754717, g: 0.5754717, b: 0.5754717, a: 1}
+      minMaxState: 2
+      minColor: {r: 0.7169812, g: 0.7169812, b: 0.7169812, a: 1}
+      maxColor: {r: 0.9254902, g: 0.9254902, b: 0.9254902, a: 1}
       maxGradient:
         serializedVersion: 2
         key0: {r: 1, g: 1, b: 1, a: 1}
@@ -8055,7 +8056,7 @@ ParticleSystem:
       maxColor: {r: 1, g: 1, b: 1, a: 1}
       maxGradient:
         serializedVersion: 2
-        key0: {r: 0.6320754, g: 0.6320754, b: 0.6320754, a: 1}
+        key0: {r: 0.9245283, g: 0.9245283, b: 0.9245283, a: 1}
         key1: {r: 0.6313726, g: 0.6313726, b: 0.6313726, a: 1}
         key2: {r: 0, g: 0, b: 0, a: 0}
         key3: {r: 0, g: 0, b: 0, a: 0}
@@ -8085,7 +8086,7 @@ ParticleSystem:
         m_NumAlphaKeys: 3
       minGradient:
         serializedVersion: 2
-        key0: {r: 0.4528302, g: 0.4528302, b: 0.4528302, a: 1}
+        key0: {r: 0.7176471, g: 0.7176471, b: 0.7176471, a: 1}
         key1: {r: 0.4509804, g: 0.4509804, b: 0.4509804, a: 1}
         key2: {r: 0, g: 0, b: 0, a: 0}
         key3: {r: 0, g: 0, b: 0, a: 0}
@@ -8234,10 +8235,10 @@ ParticleSystem:
     uvChannelMask: -1
     rowMode: 1
     sprites:
-    - sprite: {fileID: 6160378208907505357, guid: 0e43bfdcb4b48d3449199dc9af0ff9dc, type: 3}
-    - sprite: {fileID: 7523531823518602648, guid: 0e43bfdcb4b48d3449199dc9af0ff9dc, type: 3}
-    - sprite: {fileID: 103046337508317701, guid: 0e43bfdcb4b48d3449199dc9af0ff9dc, type: 3}
-    - sprite: {fileID: -7051482651628652977, guid: 0e43bfdcb4b48d3449199dc9af0ff9dc, type: 3}
+    - sprite: {fileID: 6888744052454451728, guid: 2be21b7c043809344b44918a93476279, type: 3}
+    - sprite: {fileID: -1600905038588433180, guid: 2be21b7c043809344b44918a93476279, type: 3}
+    - sprite: {fileID: -3363959098727540676, guid: 2be21b7c043809344b44918a93476279, type: 3}
+    - sprite: {fileID: 162213964, guid: 2be21b7c043809344b44918a93476279, type: 3}
     flipU: 0
     flipV: 0
   VelocityModule:
