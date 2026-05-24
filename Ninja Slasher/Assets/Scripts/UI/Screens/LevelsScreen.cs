@@ -6,22 +6,32 @@ using UnityEngine.UI;
 public class LevelsScreen : UIScreenBase
 {
     [SerializeField] private float _delayBeforeAnimation = 0.3f;
+    [SerializeField] private float _postTransitionStarRevealDelay = 0.15f;
     [SerializeField] private GameObject _infoRoot;
     [SerializeField] private GameObject _buttonsRoot;
     [SerializeField] private AreaSectionController[] _areaSections;
+    [SerializeField] private LevelSelectionScreenController _presenter;
+    [SerializeField] private ButtonManager _buttonManager;
 
-    private bool _hasPlayedIntroAnimation = false;
     private bool _isWaitingForStartupSequence = false;
+    private bool _isBlockedByForegroundSignal = false;
+    private bool _isForegroundVisible = true;
+    private Coroutine _pendingStarRevealRoutine;
 
     protected override void Awake()
     {
         base.Awake();
+        ResolveDependencies();
     }
 
     protected override void OnEnable()
     {
         base.OnEnable();
+        ResolveDependencies();
+        UIEvents.OnStartupSequenceStarted += OnStartupSequenceStarted;
         UIEvents.OnStartupSequenceCompleted += OnStartupSequenceCompleted;
+        UIPanel.OnBlockingPanelVisibilityChanged += OnBlockingPanelVisibilityChanged;
+        SyncExternalForegroundSignals("OnEnable");
 
         if (_areaSections == null) return;
         foreach (var area in _areaSections)
@@ -31,7 +41,11 @@ public class LevelsScreen : UIScreenBase
     protected override void OnDisable()
     {
         base.OnDisable();
+        UIEvents.OnStartupSequenceStarted -= OnStartupSequenceStarted;
         UIEvents.OnStartupSequenceCompleted -= OnStartupSequenceCompleted;
+        UIPanel.OnBlockingPanelVisibilityChanged -= OnBlockingPanelVisibilityChanged;
+        CancelPendingStarReveal("OnDisable");
+        _buttonManager?.StopStarRevealPresentation();
 
         if (_areaSections == null) return;
         foreach (var area in _areaSections)
@@ -41,8 +55,19 @@ public class LevelsScreen : UIScreenBase
     private void OnAreaUnlocked(AreaSectionController area)
     {
         var buttons = area.GetAreaButtons();
-        if (buttons.Length > 0)
-            ButtonManager.Instance?.AnimateButtons(buttons);
+        if (buttons.Length == 0)
+            return;
+
+        if (_buttonManager == null)
+        {
+            Debug.LogWarning("[LevelsScreen] ButtonManager was not found. Area unlock reveal was skipped.");
+            return;
+        }
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        Debug.Log($"[LevelsScreen] Reveal -> AreaUnlocked | Buttons={buttons.Length}");
+#endif
+        _buttonManager.AnimateLevelButtonsReveal(buttons, "AreaUnlocked");
     }
 
     public override void Show()
@@ -57,21 +82,25 @@ public class LevelsScreen : UIScreenBase
             _canvasGroup.alpha = 1f;
         }
 
-        if (!_hasPlayedIntroAnimation)
+        if (ShouldPlayStartupReveal())
         {
-            _isWaitingForStartupSequence = true;
-            SetStartupSequenceVisualsVisible(false);
+            EnterStartupSuppressedState("Show/SessionBootstrapPending");
             HideLevelButtons();
         }
         else
         {
-            _isWaitingForStartupSequence = false;
-            SetStartupSequenceVisualsVisible(true);
+            ExitStartupSuppressedState("Show/SessionBootstrapCompleted");
             ShowLevelButtonsInstantly();
+            SchedulePendingStarReveal("Show/SessionBootstrapCompleted");
         }
 
         NotifyPanelShown();
         OnShown();
+    }
+
+    protected override void OnShown()
+    {
+        MusicEvents.OnEnterLevelSelection?.Invoke();
     }
 
     public override void Hide()
@@ -81,8 +110,10 @@ public class LevelsScreen : UIScreenBase
         _isVisible = false;
 
         SetPanelInputEnabled(false);
+        CancelPendingStarReveal("Hide");
+        _buttonManager?.StopStarRevealPresentation();
 
-        ButtonManager.Instance?.StopAllButtonAnimations();
+        _buttonManager?.StopAllButtonAnimations();
 
         OnHidden();
 
@@ -94,22 +125,44 @@ public class LevelsScreen : UIScreenBase
         if (!_isWaitingForStartupSequence || !isActiveAndEnabled)
             return;
 
-        _isWaitingForStartupSequence = false;
-        _hasPlayedIntroAnimation = true;
-        SetStartupSequenceVisualsVisible(true);
+        ExitStartupSuppressedState("StartupSequenceCompleted");
         StartCoroutine(AnimateLevelButtonsSequence());
+    }
+
+    private void OnStartupSequenceStarted()
+    {
+        if (!isActiveAndEnabled)
+            return;
+
+        EnterStartupSuppressedState("StartupSequenceStartedSignal");
+    }
+
+    private void OnBlockingPanelVisibilityChanged()
+    {
+        if (!isActiveAndEnabled)
+            return;
+
+        ApplyBlockingPanelSignal(IsBlockedByHigherPanel, "UIPanel.OnBlockingPanelVisibilityChanged");
     }
 
     private IEnumerator AnimateLevelButtonsSequence()
     {
         yield return null;
-        yield return new WaitForSeconds(_delayBeforeAnimation);
-        yield return new WaitForSeconds(0.5f);
 
-        if (ButtonManager.Instance == null) yield break;
+        if (_delayBeforeAnimation > 0f)
+            yield return new WaitForSeconds(_delayBeforeAnimation);
+
+        if (_buttonManager == null)
+        {
+            Debug.LogWarning("[LevelsScreen] ButtonManager was not found. Intro reveal animation was skipped.");
+            yield break;
+        }
 
         var visibleButtons = CollectUnlockedAreaButtons();
-        ButtonManager.Instance.AnimateButtons(visibleButtons);
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        Debug.Log($"[LevelsScreen] Reveal -> IntroSequence | Buttons={visibleButtons.Count}");
+#endif
+        _buttonManager.AnimateLevelButtonsReveal(visibleButtons, "IntroSequence");
     }
 
     private List<Button> CollectUnlockedAreaButtons()
@@ -134,41 +187,213 @@ public class LevelsScreen : UIScreenBase
 
     private void HideLevelButtons()
     {
-        if (ButtonManager.Instance == null) return;
-
-        var levelButtons = ButtonManager.Instance.GetLevelButtons();
-        if (levelButtons == null) return;
-
-        foreach (var button in levelButtons)
+        if (_buttonManager == null)
         {
-            if (button != null)
-            {
-                button.gameObject.SetActive(false);
-            }
+            Debug.LogWarning("[LevelsScreen] ButtonManager was not found. HideLevelButtons was skipped.");
+            return;
         }
+
+        _buttonManager.HideAllLevelButtons();
     }
 
     private void ShowLevelButtonsInstantly()
     {
-        if (ButtonManager.Instance == null) return;
+        if (_buttonManager == null)
+        {
+            Debug.LogWarning("[LevelsScreen] ButtonManager was not found. ShowLevelButtonsInstantly was skipped.");
+            return;
+        }
 
-        ButtonManager.Instance.StopAllButtonAnimations();
-        ButtonManager.Instance.ShowButtonsInstantly(ButtonManager.Instance.GetLevelButtons());
+        _buttonManager.StopAllButtonAnimations();
+        _buttonManager.ShowAllLevelButtonsInstantly();
     }
 
     public void ResetAnimationStateForScreenReturn()
     {
-        _isWaitingForStartupSequence = false;
-        SetStartupSequenceVisualsVisible(true);
+        ExitStartupSuppressedState("ResetAnimationStateForScreenReturn");
         ShowLevelButtonsInstantly();
     }
 
-    private void SetStartupSequenceVisualsVisible(bool visible)
+    public void EnterStartupSuppressedState(string reason = null)
     {
+        ApplyStartupSequenceSignal(true, reason ?? "EnterStartupSuppressedState");
+    }
+
+    public void ExitStartupSuppressedState(string reason = null)
+    {
+        ApplyStartupSequenceSignal(false, reason ?? "ExitStartupSuppressedState");
+    }
+
+    private void RefreshForegroundVisibility(string reason = null)
+    {
+        bool shouldShow = ShouldForegroundBeVisible();
+        SetForegroundVisible(shouldShow, reason ?? "RefreshForegroundVisibility");
+    }
+
+    public void SetForegroundVisible(bool visible, string reason = null)
+    {
+        if (_isForegroundVisible == visible
+            && (_infoRoot == null || _infoRoot.activeSelf == visible)
+            && (_buttonsRoot == null || _buttonsRoot.activeSelf == visible))
+        {
+            return;
+        }
+
+        _isForegroundVisible = visible;
+
         if (_infoRoot != null)
             _infoRoot.SetActive(visible);
 
         if (_buttonsRoot != null)
             _buttonsRoot.SetActive(visible);
+
+        if (_presenter != null)
+        {
+            if (visible)
+                _presenter.OnForegroundShown(reason);
+            else
+                _presenter.OnForegroundHidden(reason);
+        }
+
+        if (visible)
+        {
+            SchedulePendingStarReveal($"ForegroundVisible:{reason ?? "Unspecified"}");
+        }
+        else
+        {
+            CancelPendingStarReveal($"ForegroundHidden:{reason ?? "Unspecified"}");
+            _buttonManager?.StopStarRevealPresentation();
+        }
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        Debug.Log($"[LevelsScreen] Foreground -> {(visible ? "Visible" : "Hidden")} | Reason={reason ?? "Unspecified"} | Signals={GetForegroundSignalSummary()} | BlockingStack={UIPanel.GetBlockingPanelDebugSummary()} | ScreenVisible={_isVisible}");
+#endif
+    }
+
+    private bool ShouldForegroundBeVisible()
+    {
+        return !_isWaitingForStartupSequence && !_isBlockedByForegroundSignal;
+    }
+
+    public bool IsForegroundVisible => _isForegroundVisible;
+
+    private void ResolveDependencies()
+    {
+        if (_presenter == null)
+            _presenter = GetComponent<LevelSelectionScreenController>() ?? GetComponentInChildren<LevelSelectionScreenController>(true);
+
+        if (_buttonManager == null)
+            _buttonManager = GetComponentInParent<ButtonManager>(true);
+
+        if (_presenter == null)
+            Debug.LogWarning("[LevelsScreen] LevelSelectionScreenController was not found.");
+
+        if (_buttonManager == null)
+            Debug.LogWarning("[LevelsScreen] ButtonManager was not found.");
+    }
+
+    private bool ShouldPlayStartupReveal()
+    {
+        UIManager uiManager = UIManager.Instance;
+        if (uiManager == null)
+        {
+            Debug.LogWarning("[LevelsScreen] UIManager was not found. Startup reveal will remain enabled by default.");
+            return true;
+        }
+
+        return uiManager.ShouldRunLevelSelectionStartupFlowOnNextEntry();
+    }
+
+    private void SchedulePendingStarReveal(string reason)
+    {
+        if (_buttonManager == null || !isActiveAndEnabled || !_isVisible || !_isForegroundVisible)
+            return;
+
+        CancelPendingStarReveal($"{reason}/Reschedule");
+        _pendingStarRevealRoutine = StartCoroutine(PlayPendingStarRevealAfterDelay(reason));
+    }
+
+    private void CancelPendingStarReveal(string reason)
+    {
+        if (_pendingStarRevealRoutine == null)
+            return;
+
+        StopCoroutine(_pendingStarRevealRoutine);
+        _pendingStarRevealRoutine = null;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        Debug.Log($"[LevelsScreen] StarReveal -> Cancelled | Reason={reason}");
+#endif
+    }
+
+    private IEnumerator PlayPendingStarRevealAfterDelay(string reason)
+    {
+        if (_postTransitionStarRevealDelay > 0f)
+            yield return WaitForSecondsUnscaled(_postTransitionStarRevealDelay);
+
+        _pendingStarRevealRoutine = null;
+
+        if (!isActiveAndEnabled || !_isVisible || !_isForegroundVisible)
+            yield break;
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        Debug.Log($"[LevelsScreen] StarReveal -> Triggered | Reason={reason}");
+#endif
+        float completionFeedbackDuration = 0f;
+        if (_buttonManager != null)
+            _buttonManager.TryPlayPendingCompletionAnimations(out completionFeedbackDuration);
+
+        if (completionFeedbackDuration > 0f)
+            yield return WaitForSecondsUnscaled(completionFeedbackDuration);
+
+        if (!isActiveAndEnabled || !_isVisible || !_isForegroundVisible)
+            yield break;
+
+        _presenter?.TryPlayPendingAreaUnlockFeedback();
+    }
+
+    private void SyncExternalForegroundSignals(string reason)
+    {
+        ApplyBlockingPanelSignal(IsBlockedByHigherPanel, $"{reason}/SyncBlockingPanel");
+    }
+
+    private void ApplyStartupSequenceSignal(bool active, string reason)
+    {
+        if (_isWaitingForStartupSequence == active)
+        {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            Debug.Log($"[LevelsScreen] Signal -> StartupSequence unchanged | Active={active} | Reason={reason} | Signals={GetForegroundSignalSummary()}");
+#endif
+            RefreshForegroundVisibility($"{reason}/StartupSequenceUnchanged");
+            return;
+        }
+
+        _isWaitingForStartupSequence = active;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        Debug.Log($"[LevelsScreen] Signal -> StartupSequence {(active ? "Requested" : "Released")} | Reason={reason} | Signals={GetForegroundSignalSummary()}");
+#endif
+        RefreshForegroundVisibility(reason);
+    }
+
+    private void ApplyBlockingPanelSignal(bool active, string reason)
+    {
+        if (_isBlockedByForegroundSignal == active)
+        {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            Debug.Log($"[LevelsScreen] Signal -> BlockingPanel unchanged | Active={active} | Reason={reason} | Stack={UIPanel.GetBlockingPanelDebugSummary()} | Signals={GetForegroundSignalSummary()}");
+#endif
+            RefreshForegroundVisibility($"{reason}/BlockingPanelUnchanged");
+            return;
+        }
+
+        _isBlockedByForegroundSignal = active;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        Debug.Log($"[LevelsScreen] Signal -> BlockingPanel {(active ? "Requested" : "Released")} | Reason={reason} | Stack={UIPanel.GetBlockingPanelDebugSummary()} | Signals={GetForegroundSignalSummary()}");
+#endif
+        RefreshForegroundVisibility(reason);
+    }
+
+    private string GetForegroundSignalSummary()
+    {
+        return $"StartupSequence={_isWaitingForStartupSequence}, BlockingPanel={_isBlockedByForegroundSignal}";
     }
 }

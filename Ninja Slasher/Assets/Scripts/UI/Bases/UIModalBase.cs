@@ -9,6 +9,7 @@ public abstract class UIModalBase : UIPanel, IPointerClickHandler
     [Header("Modal Background")]
     [SerializeField] protected bool _hasBackground = true;
     [SerializeField] protected Image _backgroundImage;
+    [SerializeField] protected CanvasGroup _overlayCanvasGroup;
     [SerializeField] protected bool _closeOnOutsideClick = false;
 
     [Header("Modal Animation")]
@@ -30,8 +31,10 @@ public abstract class UIModalBase : UIPanel, IPointerClickHandler
 
     protected override bool BlocksUnderlyingUI => true;
 
-    private Sequence _contentAnimationSequence;
+private Sequence _contentAnimationSequence;
+    private Tween _overlayFadeTween;
     private Coroutine _delayedDeactivateCoroutine;
+    private Coroutine _showCompletionCoroutine;
     protected virtual float ShowAnimationDuration => Mathf.Max(_fadeAnimationDuration, _showScaleDuration);
     protected virtual float HideAnimationDuration => 0.4f;
 
@@ -54,20 +57,53 @@ public abstract class UIModalBase : UIPanel, IPointerClickHandler
         if (_animatedContentCanvasGroup == null)
             _animatedContentCanvasGroup = ResolveAnimatedContentCanvasGroup();
 
+        ResolveOverlayCanvasGroup();
         EnsureBackgroundClickable();
         _isVisible = gameObject.activeSelf;
     }
 
-    public override void Show()
+    private void ResolveOverlayCanvasGroup()
+    {
+        if (_overlayCanvasGroup != null)
+            return;
+
+        if (_backgroundImage != null)
+        {
+            _overlayCanvasGroup = _backgroundImage.GetComponent<CanvasGroup>();
+            if (_overlayCanvasGroup == null)
+                _overlayCanvasGroup = _backgroundImage.gameObject.AddComponent<CanvasGroup>();
+
+            _overlayCanvasGroup.blocksRaycasts = true;
+        }
+    }
+
+    protected void EnsureOverlayStartsInvisible()
+    {
+        if (_overlayCanvasGroup != null)
+        {
+            _overlayCanvasGroup.alpha = 0f;
+            _overlayCanvasGroup.blocksRaycasts = false;
+        }
+    }
+
+    protected void EnsureOverlayBlocksRaycasts()
+    {
+        if (_overlayCanvasGroup != null && _hasBackground)
+            _overlayCanvasGroup.blocksRaycasts = true;
+    }
+
+public override void Show()
     {
         if (_isVisible) return;
 
         CancelPendingDeactivate();
+        CancelShowCompletion();
         KillActiveAnimation();
 
         gameObject.SetActive(true);
         _isVisible = true;
 
+        EnsureOverlayStartsInvisible();
         EnsureBackgroundClickable();
         PlayShowAnimation();
         NotifyPanelShown();
@@ -79,6 +115,7 @@ public abstract class UIModalBase : UIPanel, IPointerClickHandler
     {
         if (!_isVisible) return;
 
+        CancelShowCompletion();
         _isVisible = false;
         SetPanelInputEnabled(false);
 
@@ -88,9 +125,10 @@ public abstract class UIModalBase : UIPanel, IPointerClickHandler
         PlayHideAnimation();
     }
 
-    public override void HideImmediate()
+public override void HideImmediate()
     {
         CancelPendingDeactivate();
+        CancelShowCompletion();
         KillActiveAnimation();
 
         if (!_isVisible && !gameObject.activeSelf)
@@ -102,7 +140,9 @@ public abstract class UIModalBase : UIPanel, IPointerClickHandler
         NotifyUIManagerModalHidden();
         OnHidden();
         ResetContentVisualState();
+        ResetOverlayState();
         gameObject.SetActive(false);
+        OnHideAnimationCompleted();
     }
 
     public override IEnumerator ShowRoutine()
@@ -127,6 +167,7 @@ public abstract class UIModalBase : UIPanel, IPointerClickHandler
     {
         base.OnDisable();
         CancelPendingDeactivate();
+        CancelShowCompletion();
         KillActiveAnimation();
         NotifyUIManagerModalHidden();
     }
@@ -151,22 +192,36 @@ public abstract class UIModalBase : UIPanel, IPointerClickHandler
             RequestCloseFromOutsideClick();
     }
 
-    private void PlayShowAnimation()
+private void PlayShowAnimation()
     {
+        ResetContentVisualState();
+
         if (_modalAnimator != null)
         {
-            ResetContentVisualState();
             if (!string.IsNullOrEmpty(_closeTrigger))
                 _modalAnimator.ResetTrigger(_closeTrigger);
             if (!string.IsNullOrEmpty(_openTrigger))
                 _modalAnimator.SetTrigger(_openTrigger);
+            _showCompletionCoroutine = StartCoroutine(CompleteShowAfterAnimator());
             return;
         }
 
-        ResetContentVisualState();
-
         if (!_useCanvasGroupFadeWhenNoAnimator && !_useContentScaleWhenNoAnimator)
+        {
+            OnShowAnimationCompleted();
             return;
+        }
+
+        KillOverlayFade();
+
+        if (_overlayCanvasGroup != null && _hasBackground)
+        {
+            _overlayCanvasGroup.alpha = 0f;
+            _overlayCanvasGroup.blocksRaycasts = true;
+            _overlayFadeTween = _overlayCanvasGroup.DOFade(1f, _fadeAnimationDuration * 0.6f)
+                .SetEase(_showFadeEase)
+                .SetUpdate(true);
+        }
 
         _contentAnimationSequence = DOTween.Sequence().SetUpdate(true);
 
@@ -186,7 +241,11 @@ public abstract class UIModalBase : UIPanel, IPointerClickHandler
                     .SetEase(_showScaleEase));
         }
 
-        _contentAnimationSequence.OnComplete(() => _contentAnimationSequence = null);
+        _contentAnimationSequence.OnComplete(() =>
+        {
+            _contentAnimationSequence = null;
+OnShowAnimationCompleted();
+        });
     }
 
     private void PlayHideAnimation()
@@ -204,8 +263,19 @@ public abstract class UIModalBase : UIPanel, IPointerClickHandler
         if (!_useCanvasGroupFadeWhenNoAnimator && !_useContentScaleWhenNoAnimator)
         {
             ResetContentVisualState();
+            ResetOverlayState();
             gameObject.SetActive(false);
+            OnHideAnimationCompleted();
             return;
+        }
+
+        KillOverlayFade();
+
+        if (_overlayCanvasGroup != null && _hasBackground)
+        {
+            _overlayFadeTween = _overlayCanvasGroup.DOFade(0f, _fadeAnimationDuration * 0.5f)
+                .SetEase(_hideFadeEase)
+                .SetUpdate(true);
         }
 
         _contentAnimationSequence = DOTween.Sequence().SetUpdate(true);
@@ -228,7 +298,9 @@ public abstract class UIModalBase : UIPanel, IPointerClickHandler
         {
             _contentAnimationSequence = null;
             ResetContentVisualState();
+            ResetOverlayState();
             gameObject.SetActive(false);
+            OnHideAnimationCompleted();
         });
     }
 
@@ -238,6 +310,14 @@ public abstract class UIModalBase : UIPanel, IPointerClickHandler
         _delayedDeactivateCoroutine = null;
         ResetContentVisualState();
         gameObject.SetActive(false);
+        OnHideAnimationCompleted();
+    }
+
+    private IEnumerator CompleteShowAfterAnimator()
+    {
+        yield return WaitForAnimatorPlayback(_modalAnimator, ShowAnimationDuration);
+        _showCompletionCoroutine = null;
+        OnShowAnimationCompleted();
     }
 
     private void CancelPendingDeactivate()
@@ -245,6 +325,13 @@ public abstract class UIModalBase : UIPanel, IPointerClickHandler
         if (_delayedDeactivateCoroutine == null) return;
         StopCoroutine(_delayedDeactivateCoroutine);
         _delayedDeactivateCoroutine = null;
+    }
+
+    private void CancelShowCompletion()
+    {
+        if (_showCompletionCoroutine == null) return;
+        StopCoroutine(_showCompletionCoroutine);
+        _showCompletionCoroutine = null;
     }
 
     private CanvasGroup ResolveAnimatedContentCanvasGroup()
@@ -259,7 +346,7 @@ public abstract class UIModalBase : UIPanel, IPointerClickHandler
         return contentCanvasGroup != null ? contentCanvasGroup : _animatedContentTransform.gameObject.AddComponent<CanvasGroup>();
     }
 
-    private void ResetContentVisualState()
+private void ResetContentVisualState()
     {
         if (_animatedContentCanvasGroup != null)
             _animatedContentCanvasGroup.alpha = 1f;
@@ -267,11 +354,32 @@ public abstract class UIModalBase : UIPanel, IPointerClickHandler
             _animatedContentTransform.localScale = Vector3.one;
     }
 
+    protected void ResetOverlayState()
+    {
+        if (_overlayCanvasGroup != null)
+        {
+            _overlayCanvasGroup.alpha = 0f;
+            _overlayCanvasGroup.blocksRaycasts = false;
+        }
+    }
+
     private void KillActiveAnimation()
     {
-        if (_contentAnimationSequence == null) return;
-        _contentAnimationSequence.Kill();
-        _contentAnimationSequence = null;
+        if (_contentAnimationSequence != null)
+        {
+            _contentAnimationSequence.Kill();
+            _contentAnimationSequence = null;
+        }
+        KillOverlayFade();
+    }
+
+    private void KillOverlayFade()
+    {
+        if (_overlayFadeTween != null)
+        {
+            _overlayFadeTween.Kill();
+            _overlayFadeTween = null;
+        }
     }
 
     private IEnumerator WaitForShowAnimationToFinish()

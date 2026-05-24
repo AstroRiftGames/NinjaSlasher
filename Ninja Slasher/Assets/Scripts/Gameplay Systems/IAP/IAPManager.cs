@@ -93,7 +93,9 @@ public class IAPManager : MonoBehaviourSingleton<IAPManager>, IDetailedStoreList
         _isInitialized = true;
         _isInitializing = false;
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
         Debug.Log($"[IAPManager] IAP initialized with {controller.products.all.Length} store products.");
+#endif
         OnIAPInitialized?.Invoke();
     }
 
@@ -123,7 +125,9 @@ public class IAPManager : MonoBehaviourSingleton<IAPManager>, IDetailedStoreList
         var productId = product.definition.id;
         var transactionId = product.transactionID;
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
         Debug.Log($"[IAPManager] ProcessPurchase: '{productId}' | tx={transactionId}");
+#endif
 
         if (_processedTransactions.Contains(transactionId))
         {

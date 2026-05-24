@@ -85,6 +85,14 @@ public abstract class UIPanel : MonoBehaviour
     {
     }
 
+    protected virtual void OnShowAnimationCompleted()
+    {
+    }
+
+    protected virtual void OnHideAnimationCompleted()
+    {
+    }
+
     protected virtual void OnEnable()
     {
         if (_isVisible && BlocksUnderlyingUI)
@@ -247,4 +255,21 @@ public abstract class UIPanel : MonoBehaviour
 
     public bool IsVisible => _isVisible;
     public static bool HasVisibleBlockingPanel => BlockingPanels.Count > 0;
+    public bool IsBlockedByHigherPanel => _isBlockedByHigherPanel;
+    public bool BlocksUnderlyingUIForFlow => BlocksUnderlyingUI;
+
+    public static string GetBlockingPanelDebugSummary()
+    {
+        if (BlockingPanels.Count == 0)
+            return "None";
+
+        List<string> panelNames = new List<string>(BlockingPanels.Count);
+        for (int i = 0; i < BlockingPanels.Count; i++)
+        {
+            UIPanel panel = BlockingPanels[i];
+            panelNames.Add(panel != null ? panel.name : "NullPanel");
+        }
+
+        return string.Join(" > ", panelNames);
+    }
 }

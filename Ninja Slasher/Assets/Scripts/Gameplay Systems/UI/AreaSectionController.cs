@@ -43,13 +43,12 @@ public class AreaSectionController : MonoBehaviour
         bool locked = !IsAreaUnlocked();
 
         if (LevelProgressionManager.Instance != null &&
-            LevelProgressionManager.Instance.ConsumePendingAreaUnlock(_areaData.areaId))
+            LevelProgressionManager.Instance.HasPendingAreaUnlock(_areaData.areaId))
         {
             SetLockOverlay(true);
             SetButtonsInteractable(false);
             _lastKnownLockState = true;
             _lockStateInitialized = true;
-            PlayUnlock();
             return;
         }
 
@@ -70,6 +69,22 @@ public class AreaSectionController : MonoBehaviour
             PlayUnlock();
         else
             SetLocked(true);
+    }
+
+    public bool TryPlayPendingUnlockFeedback()
+    {
+        if (_areaData == null || LevelProgressionManager.Instance == null)
+            return false;
+
+        if (!LevelProgressionManager.Instance.ConsumePendingAreaUnlock(_areaData.areaId))
+            return false;
+
+        SetLockOverlay(true);
+        SetButtonsInteractable(false);
+        _lastKnownLockState = true;
+        _lockStateInitialized = true;
+        PlayUnlock();
+        return true;
     }
 
     private void PlayUnlock()

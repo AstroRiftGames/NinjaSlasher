@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -11,10 +12,13 @@ public class PauseController : MonoBehaviourSingleton<PauseController>
     [SerializeField] private List<PauseSource> _activePauseSourcesDebug = new();
 
     private readonly HashSet<PauseSource> _activePauseSources = new();
+    private bool _hasAppliedPauseState;
+    private bool _lastAppliedPauseState;
 
     public bool IsPaused => _activePauseSources.Count > 0;
     public bool HasActivePauseSources => _activePauseSources.Count > 0;
     public IReadOnlyCollection<PauseSource> ActivePauseSources => _activePauseSources;
+    public event Action<bool> PauseStateChanged;
 
     public override void Awake()
     {
@@ -29,6 +33,7 @@ public class PauseController : MonoBehaviourSingleton<PauseController>
     private void OnEnable()
     {
         SceneManager.sceneLoaded += OnSceneLoaded;
+        UIEvents.OnPauseButtonPressed += OnPauseButtonPressed;
 
         if (GameStateManager.Instance != null)
             GameStateManager.Instance.OnStateChanged += OnGameStateChanged;
@@ -39,6 +44,7 @@ public class PauseController : MonoBehaviourSingleton<PauseController>
     private void OnDisable()
     {
         SceneManager.sceneLoaded -= OnSceneLoaded;
+        UIEvents.OnPauseButtonPressed -= OnPauseButtonPressed;
 
         if (GameStateManager.Instance != null)
             GameStateManager.Instance.OnStateChanged -= OnGameStateChanged;
@@ -79,16 +85,30 @@ public class PauseController : MonoBehaviourSingleton<PauseController>
         return source != PauseSource.None && _activePauseSources.Contains(source);
     }
 
+    public bool CanAcceptUserPauseRequest()
+    {
+        return LevelSessionManager.Instance != null && LevelSessionManager.Instance.IsSessionRunning;
+    }
+
     private void ApplyPauseState(string reason)
     {
-        float targetTimeScale = IsPaused ? 0f : 1f;
-        if (Mathf.Approximately(Time.timeScale, targetTimeScale))
-            return;
+        bool isPaused = IsPaused;
+        float targetTimeScale = isPaused ? 0f : 1f;
+        bool pauseStateChanged = !_hasAppliedPauseState || _lastAppliedPauseState != isPaused;
 
-        Time.timeScale = targetTimeScale;
+        _hasAppliedPauseState = true;
+        _lastAppliedPauseState = isPaused;
 
-        if (ShouldLog())
-            Debug.Log($"[Pause] Applied {targetTimeScale:0.##} | Reason: {reason} | Active Sources: [{FormatActiveSources()}]");
+        if (!Mathf.Approximately(Time.timeScale, targetTimeScale))
+        {
+            Time.timeScale = targetTimeScale;
+
+            if (ShouldLog())
+                Debug.Log($"[Pause] Applied {targetTimeScale:0.##} | Reason: {reason} | Active Sources: [{FormatActiveSources()}]");
+        }
+
+        if (pauseStateChanged)
+            PauseStateChanged?.Invoke(isPaused);
     }
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
@@ -108,6 +128,19 @@ public class PauseController : MonoBehaviourSingleton<PauseController>
             return;
 
         ApplyPauseState($"GameStateChanged:{change.CurrentState}");
+    }
+
+    private void OnPauseButtonPressed()
+    {
+        if (!CanAcceptUserPauseRequest())
+        {
+            if (ShouldLog())
+                Debug.Log("[Pause] User pause request ignored because the session is not running.");
+
+            return;
+        }
+
+        UIEvents.RequestTogglePauseOverlay();
     }
 
     private void RefreshDebugView()

@@ -170,7 +170,6 @@ public class DemolitionSentinel : BossEnemy
     #region ATTACK COROUTINES
     private IEnumerator HeavyAttack()
     {
-        Debug.Log("Heavy Attack");
         _animator.SetTrigger("onHeavy");
 
         SetTargetDirection();
@@ -205,7 +204,6 @@ public class DemolitionSentinel : BossEnemy
 
     private IEnumerator DoubleAttack()
     {
-        Debug.Log("Double Attack");
         _animator.SetTrigger("onDouble");
         for (int i = 0; i < AmountOfAttacks; i++)
         {
@@ -297,7 +295,6 @@ public class DemolitionSentinel : BossEnemy
     public void AimArm(Transform arm)
     {
         float angle = (Mathf.Atan2(_targetDir.y, _targetDir.x) * Mathf.Rad2Deg);
-        Debug.Log($"Aiming {arm.name} at {angle}°");
         arm.transform.rotation = Quaternion.Euler(0, 0, angle);
     }
 

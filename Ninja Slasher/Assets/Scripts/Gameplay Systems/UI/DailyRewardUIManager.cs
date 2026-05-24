@@ -7,6 +7,8 @@ using System.Collections;
 
 public class DailyRewardUIManager : MonoBehaviourSingleton<DailyRewardUIManager>
 {
+    private static readonly WaitForSecondsRealtime RewardUiTickDelay = new(1f);
+
     public TextMeshProUGUI nextRewardTimeText;
     public DailyRewardDayUI[] weeklyRewardDays = new DailyRewardDayUI[7];
 
@@ -26,87 +28,107 @@ public class DailyRewardUIManager : MonoBehaviourSingleton<DailyRewardUIManager>
 
     private DailyRewardSystem dailyRewardSystem;
     private bool isInitialized = false;
+    private bool _eventsSubscribed;
+    private Coroutine _rewardUiTickRoutine;
+    private bool? _lastCanClaimToday;
+    private string _lastNextRewardTimerText;
+    private bool? _lastDoubleRewardInteractable;
+    private string _lastDoubleRewardButtonText;
+    private string _lastClaimButtonText;
+    private bool? _lastClaimButtonInteractable;
+    private bool _awaitingBootstrap;
 
     private UIAudioContext _audioContext;
 
-    void Start()
+    public override void Awake()
     {
-        dailyRewardSystem = DailyRewardSystem.Instance;
-        _audioContext = GetComponent<UIAudioContext>();
-        SubscribeToEvents();
-        InitializeUI();
+        base.Awake();
+        ResolveDependencies();
     }
 
     void OnEnable()
     {
-        if (dailyRewardSystem == null)
-            dailyRewardSystem = DailyRewardSystem.Instance;
-
+        ResolveDependencies();
         HookButtons();
         SubscribeToEvents();
-
-        if (!isInitialized)
-            InitializeUI();
+        DailyRewardSystem.OnBootstrapped += OnRewardSystemBootstrapped;
+        TryBootstrapAndRefresh("OnEnable");
+        StartRewardUiTick();
     }
 
     void OnDisable()
     {
+        StopRewardUiTick();
+        DailyRewardSystem.OnBootstrapped -= OnRewardSystemBootstrapped;
         UnsubscribeFromEvents();
     }
 
-    void OnDestroy()
+    protected override void OnDestroy()
     {
+        StopRewardUiTick();
+        DailyRewardSystem.OnBootstrapped -= OnRewardSystemBootstrapped;
         UnsubscribeFromEvents();
+        base.OnDestroy();
     }
 
-    void Update()
+    private void ResolveDependencies()
     {
-        UpdateNextRewardTimer();
+        if (dailyRewardSystem == null)
+            dailyRewardSystem = DailyRewardSystem.Instance;
+
+        if (_audioContext == null)
+            _audioContext = GetComponent<UIAudioContext>();
     }
 
     private void HookButtons()
     {
         if (claimButton != null)
         {
-            claimButton.onClick.RemoveAllListeners();
+            claimButton.onClick.RemoveListener(OnClaimPressed);
             claimButton.onClick.AddListener(OnClaimPressed);
         }
 
         if (closeButton != null)
         {
-            closeButton.onClick.RemoveAllListeners();
+            closeButton.onClick.RemoveListener(OnClosePressed);
             closeButton.onClick.AddListener(OnClosePressed);
         }
 
         if (_doubleDailyRewardButton != null)
         {
-            _doubleDailyRewardButton.onClick.RemoveAllListeners();
+            _doubleDailyRewardButton.onClick.RemoveListener(OnDoubleRewardPressed);
             _doubleDailyRewardButton.onClick.AddListener(OnDoubleRewardPressed);
         }
     }
 
     void SubscribeToEvents()
     {
+        if (_eventsSubscribed)
+            return;
+
         GameEvents.OnRewardClaimed += OnRewardClaimed;
         GameEvents.OnRewardAvailabilityChanged += OnRewardAvailabilityChanged;
-
         GameEvents.OnRewardDoubled += OnRewardDoubled;
+        _eventsSubscribed = true;
     }
 
     void UnsubscribeFromEvents()
     {
+        if (!_eventsSubscribed)
+            return;
+
         GameEvents.OnRewardClaimed -= OnRewardClaimed;
         GameEvents.OnRewardAvailabilityChanged -= OnRewardAvailabilityChanged;
-
         GameEvents.OnRewardDoubled -= OnRewardDoubled;
+        _eventsSubscribed = false;
     }
 
-    void InitializeUI()
+    void EnsureInitialized()
     {
         if (dailyRewardSystem == null) return;
+        if (isInitialized) return;
 
         SetupWeeklyRewards();
-        ShowDailyReward();
         isInitialized = true;
     }
 
@@ -123,20 +145,18 @@ public class DailyRewardUIManager : MonoBehaviourSingleton<DailyRewardUIManager>
 
     public void ShowDailyReward()
     {
-        if (!isInitialized || dailyRewardSystem == null) return;
-
-        UpdateWeeklyProgress();
-        UpdateClaimButton();
-        UpdateDoubleRewardButton();
+        if (!TryBootstrapAndRefresh("ShowDailyReward"))
+            return;
     }
 
-    void UpdateWeeklyProgress()
+    void UpdateWeeklyProgress(string reason)
     {
         if (dailyRewardSystem == null) return;
 
+        DailyAvailabilitySnapshot availability = dailyRewardSystem.GetAvailabilitySnapshot();
         bool[] claimedDays = dailyRewardSystem.GetWeeklyProgress();
         int currentDay = dailyRewardSystem.GetCurrentWeekDay();
-        bool canClaimToday = dailyRewardSystem.CanClaimToday();
+        bool canClaimToday = availability.IsAvailable;
 
         for (int i = 0; i < weeklyRewardDays.Length; i++)
         {
@@ -147,6 +167,7 @@ public class DailyRewardUIManager : MonoBehaviourSingleton<DailyRewardUIManager>
                 weeklyRewardDays[i].UpdateDayState(state, labelColor);
             }
         }
+
     }
 
     DayState GetDayState(int dayIndex, int currentDay, bool isClaimed, bool canClaimToday)
@@ -178,34 +199,49 @@ public class DailyRewardUIManager : MonoBehaviourSingleton<DailyRewardUIManager>
         }
     }
 
-    void UpdateClaimButton()
+    void UpdateClaimButton(bool canClaim, string reason, bool force = false)
     {
-        if (claimButton == null || dailyRewardSystem == null) return;
+        if (claimButton == null) return;
 
-        bool canClaim = dailyRewardSystem.CanClaimToday();
+        bool interactableChanged = force || !_lastClaimButtonInteractable.HasValue || _lastClaimButtonInteractable.Value != canClaim;
+        string buttonText = canClaim ? "RECLAMAR" : "RECLAMADO";
+        bool textChanged = force || !string.Equals(_lastClaimButtonText, buttonText, StringComparison.Ordinal);
 
-        claimButton.interactable = canClaim;
+        if (interactableChanged)
+            claimButton.interactable = canClaim;
 
         if (claimButtonText != null)
         {
-            claimButtonText.text = canClaim ? "RECLAMAR" : "RECLAMADO";
+            if (textChanged)
+                claimButtonText.text = buttonText;
         }
+
+        _lastClaimButtonInteractable = canClaim;
+        _lastClaimButtonText = buttonText;
     }
 
-    void UpdateNextRewardTimer()
+    void UpdateNextRewardTimer(string reason, bool force = false)
     {
         if (nextRewardTimeText != null && dailyRewardSystem != null)
         {
-            nextRewardTimeText.text = DailyAvailabilityUIFormatter.FormatLockedAvailability(
+            DailyAvailabilitySnapshot availability = dailyRewardSystem.GetAvailabilitySnapshot();
+            string nextRewardText = DailyAvailabilityUIFormatter.FormatLockedAvailability(
                 "Proxima recompensa: ",
-                dailyRewardSystem.GetNextRewardAvailabilityUtc(),
+                availability.NextAvailabilityUtc,
                 "DISPONIBLE AHORA");
+
+            bool timerChanged = force || !string.Equals(_lastNextRewardTimerText, nextRewardText, StringComparison.Ordinal);
+            if (!timerChanged)
+                return;
+
+            nextRewardTimeText.text = nextRewardText;
+            _lastNextRewardTimerText = nextRewardText;
         }
     }
 
     void OnRewardClaimed(DailyReward reward)
     {
-        ShowDailyReward();
+        RefreshVisibleState("GameEvents.OnRewardClaimed", force: true);
 
         if (_audioContext != null && _audioContext.Audio != null)
         {
@@ -216,9 +252,8 @@ public class DailyRewardUIManager : MonoBehaviourSingleton<DailyRewardUIManager>
     }
 
     void OnRewardAvailabilityChanged(bool isAvailable)
-    { 
-        //Debug.Log($"[DailyRewardUIManager] Disponibilidad cambiada: {isAvailable}");
-        UpdateClaimButton();
+    {
+        RefreshAvailabilityState(isAvailable, "GameEvents.OnRewardAvailabilityChanged", force: true);
     }
 
     IEnumerator ShowRewardClaimedFeedback(DailyReward reward)
@@ -228,9 +263,11 @@ public class DailyRewardUIManager : MonoBehaviourSingleton<DailyRewardUIManager>
 
     public void CheckAndShowDailyRewardOnGameStart()
     {
+        if (!TryBootstrapAndRefresh("CheckAndShowDailyRewardOnGameStart"))
+            return;
+
         if (dailyRewardSystem != null && dailyRewardSystem.CanClaimToday())
         {
-            ShowDailyReward();
         }
     }
 
@@ -246,15 +283,6 @@ public class DailyRewardUIManager : MonoBehaviourSingleton<DailyRewardUIManager>
 
         if (dailyRewardSystem.ClaimReward())
         {
-            //Debug.Log("[DailyRewardUIManager] Recompensa reclamada exitosamente");
-
-            ShowDailyReward();
-
-            // TO DO: Usar evento GameEvents.OnRewardClaimed en lugar de FindObjectOfType
-
-            var preGame = FindObjectOfType<PreGameUIManager>();
-            if (preGame != null && preGame.isActiveAndEnabled)
-                preGame.ShowPreGamePowerUps();
         }
     }
 
@@ -264,21 +292,12 @@ public class DailyRewardUIManager : MonoBehaviourSingleton<DailyRewardUIManager>
         UIEvents.RequestHideDailyRewardModal();
     }
 
-    private void OnAvailabilityChanged(bool canClaim)
-    {
-        if (claimButton)
-        {
-            claimButton.interactable = canClaim;
-        }
-    }
-
     private void OnRewardDoubled()
     {
-        Debug.Log("[DailyRewardUIManager] Recompensa duplicada");
-        UpdateDoubleRewardButton();
+        UpdateDoubleRewardButton("GameEvents.OnRewardDoubled", force: true);
     }
 
-    void UpdateDoubleRewardButton()
+    void UpdateDoubleRewardButton(string reason, bool force = false)
     {
         if (_doubleDailyRewardButton == null || dailyRewardSystem == null) return;
 
@@ -287,28 +306,39 @@ public class DailyRewardUIManager : MonoBehaviourSingleton<DailyRewardUIManager>
                         AdsManager.Instance.IsRewardedAdReady();
 
         bool hasDoubledToday = dailyRewardSystem.HasDoubledToday();
+        string buttonText;
 
-        _doubleDailyRewardButton.interactable = canDouble;
+        if (hasDoubledToday)
+        {
+            buttonText = "DUPLICADA!";
+        }
+        else if (canDouble)
+        {
+            buttonText = "VER ANUNCIO x2";
+        }
+        else if (AdsManager.Instance != null && !AdsManager.Instance.IsRewardedAdReady())
+        {
+            buttonText = "CARGANDO...";
+        }
+        else
+        {
+            buttonText = "NO DISPONIBLE";
+        }
+
+        bool interactableChanged = force || !_lastDoubleRewardInteractable.HasValue || _lastDoubleRewardInteractable.Value != canDouble;
+        bool textChanged = force || !string.Equals(_lastDoubleRewardButtonText, buttonText, StringComparison.Ordinal);
+
+        if (interactableChanged)
+            _doubleDailyRewardButton.interactable = canDouble;
 
         if (_doubleRewardButtonText != null)
         {
-            if (hasDoubledToday)
-            {
-                _doubleRewardButtonText.text = "DUPLICADA!";
-            }
-            else if (canDouble)
-            {
-                _doubleRewardButtonText.text = "VER ANUNCIO x2";
-            }
-            else if (AdsManager.Instance != null && !AdsManager.Instance.IsRewardedAdReady())
-            {
-                _doubleRewardButtonText.text = "CARGANDO...";
-            }
-            else
-            {
-                _doubleRewardButtonText.text = "NO DISPONIBLE";
-            }
+            if (textChanged)
+                _doubleRewardButtonText.text = buttonText;
         }
+
+        _lastDoubleRewardInteractable = canDouble;
+        _lastDoubleRewardButtonText = buttonText;
     }
 
     private void OnDoubleRewardPressed()
@@ -317,17 +347,122 @@ public class DailyRewardUIManager : MonoBehaviourSingleton<DailyRewardUIManager>
 
         if (!dailyRewardSystem.CanDoubleToday())
         {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
             Debug.LogWarning("[DailyRewardUIManager] No se puede duplicar la recompensa hoy");
+#endif
             return;
         }
 
         if (!AdsManager.Instance.IsRewardedAdReady())
         {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
             Debug.LogWarning("[DailyRewardUIManager] Anuncio no esta listo");
+#endif
             return;
         }
 
         AdsManager.Instance.ShowRewardedAdForDoubleDailyReward();
+    }
+
+    private void OnRewardSystemBootstrapped()
+    {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        Debug.Log("[DailyRewardUIManager] Signal -> DailyRewardSystem.OnBootstrapped");
+#endif
+        TryBootstrapAndRefresh("DailyRewardSystem.OnBootstrapped");
+    }
+
+    private void RefreshVisibleState(string reason, bool force = false)
+    {
+        if (!isInitialized || dailyRewardSystem == null)
+            return;
+
+        DailyAvailabilitySnapshot availability = dailyRewardSystem.GetAvailabilitySnapshot();
+        RefreshAvailabilityState(availability.IsAvailable, reason, force);
+        UpdateDoubleRewardButton(reason, force);
+    }
+
+    private void RefreshAvailabilityState(bool canClaimToday, string reason, bool force = false)
+    {
+        bool availabilityChanged = force || !_lastCanClaimToday.HasValue || _lastCanClaimToday.Value != canClaimToday;
+
+        if (availabilityChanged)
+            UpdateWeeklyProgress(reason);
+
+        UpdateClaimButton(canClaimToday, reason, force || availabilityChanged);
+        UpdateNextRewardTimer(reason, force || availabilityChanged);
+
+        _lastCanClaimToday = canClaimToday;
+    }
+
+    private void StartRewardUiTick()
+    {
+        if (_rewardUiTickRoutine != null)
+            return;
+
+        _rewardUiTickRoutine = StartCoroutine(RewardUiTickLoop());
+    }
+
+    private void StopRewardUiTick()
+    {
+        if (_rewardUiTickRoutine == null)
+            return;
+
+        StopCoroutine(_rewardUiTickRoutine);
+        _rewardUiTickRoutine = null;
+    }
+
+    private IEnumerator RewardUiTickLoop()
+    {
+        while (enabled)
+        {
+            yield return RewardUiTickDelay;
+
+            if (!IsRewardSystemReady())
+                continue;
+
+            if (!isInitialized || dailyRewardSystem == null)
+                continue;
+
+            DailyAvailabilitySnapshot availability = dailyRewardSystem.GetAvailabilitySnapshot();
+            RefreshAvailabilityState(availability.IsAvailable, "RewardUiTick");
+            UpdateNextRewardTimer("RewardUiTick");
+        }
+    }
+
+    private bool TryBootstrapAndRefresh(string reason)
+    {
+        ResolveDependencies();
+
+        if (!IsRewardSystemReady())
+        {
+            _awaitingBootstrap = true;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            Debug.Log($"[DailyRewardUIManager] Bootstrap -> Waiting | Reason={reason} | systemExists={dailyRewardSystem != null} | saveLoaded={SaveManager.Instance != null && SaveManager.Instance.IsDataLoaded} | rewardBootstrapped={dailyRewardSystem != null && dailyRewardSystem.IsBootstrapped}");
+#endif
+            return false;
+        }
+
+        bool wasAwaitingBootstrap = _awaitingBootstrap;
+        EnsureInitialized();
+        RefreshVisibleState(reason, force: true);
+        _awaitingBootstrap = false;
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        Debug.Log($"[DailyRewardUIManager] Bootstrap -> Ready | Reason={reason} | initialized={isInitialized} | recoveredFromWaiting={wasAwaitingBootstrap}");
+#endif
+        return true;
+    }
+
+    private bool IsRewardSystemReady()
+    {
+        if (dailyRewardSystem == null)
+            return false;
+
+        if (SaveManager.Instance == null || !SaveManager.Instance.IsDataLoaded)
+            return false;
+
+        return dailyRewardSystem.IsBootstrapped;
     }
 }
 

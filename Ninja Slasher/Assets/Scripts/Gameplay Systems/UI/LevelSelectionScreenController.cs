@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using UnityEngine;
 using TMPro;
 using DG.Tweening;
@@ -7,7 +8,6 @@ using UnityEngine.UI;
 public class LevelSelectionScreenController : MonoBehaviour
 {
     public static LevelSelectionScreenController Instance { get; private set; }
-    private const string InfiniteLivesText = "∞";
 
     [Header("Areas")]
     [SerializeField] private AreaSectionController[] _areas;
@@ -20,17 +20,24 @@ public class LevelSelectionScreenController : MonoBehaviour
     [SerializeField] private UIPunchScaleFeedback _livesWidgetFeedback;
     [SerializeField] private UIPunchScaleFeedback _livesAmountFeedback;
     [SerializeField] private Button _dailyRewardButton;
+    [SerializeField] private Button _storeButton;
     [SerializeField] private Button _dailyWheelButton;
-    [SerializeField] private GameObject _infoRoot;
-    [SerializeField] private GameObject _buttonsRoot;
     
     private const string DailyAvailabilityParameterName = "IsAvailable";
+    private static readonly WaitForSecondsRealtime PresenterTickDelay = new(1f);
     private Animator _dailyRewardButtonAnimator;
     private Animator _dailyWheelButtonAnimator;
+    private ButtonManager _buttonManager;
+    private Coroutine _presenterTickRoutine;
+    private string _lastLivesAmountValue;
+    private string _lastLivesTimerValue;
+    private bool? _lastDailyRewardAvailability;
+    private bool? _lastDailyWheelAvailability;
 
     private void Awake()
     {
         Instance = this;
+        ResolveButtonManager();
         ResolveLivesFeedbackReferences();
         CacheDailyButtons();
         StoreRewardFeedbackController.EnsureFor(this);
@@ -39,16 +46,18 @@ public class LevelSelectionScreenController : MonoBehaviour
     private void OnEnable()
     {
         Instance = this;
+        ResolveButtonManager();
         ResolveLivesFeedbackReferences();
         CacheDailyButtons();
         StoreRewardFeedbackController.EnsureFor(this);
         RefreshAll();
         UpdateTotalStarsDisplay();
-        RefreshLivesWidget();
-        RefreshDailyButtonVisuals();
+        RefreshLivesWidget("OnEnable", force: true);
+        RefreshDailyButtonVisuals("OnEnable", force: true);
         RegisterButtonListeners();
-        UpdateForegroundVisibility();
+        StartPresenterTick();
 
+        GameEvents.OnLivesChanged += OnLivesChanged;
         GameEvents.OnRewardAvailabilityChanged += OnRewardAvailabilityChanged;
         GameEvents.OnWheelAvailabilityChanged += OnWheelAvailabilityChanged;
 
@@ -70,6 +79,9 @@ public class LevelSelectionScreenController : MonoBehaviour
         if (Instance == this)
             Instance = null;
 
+        StopPresenterTick();
+
+        GameEvents.OnLivesChanged -= OnLivesChanged;
         GameEvents.OnRewardAvailabilityChanged -= OnRewardAvailabilityChanged;
         GameEvents.OnWheelAvailabilityChanged -= OnWheelAvailabilityChanged;
 
@@ -86,13 +98,6 @@ public class LevelSelectionScreenController : MonoBehaviour
         }
 
         UnregisterButtonListeners();
-    }
-
-    private void Update()
-    {
-        RefreshLivesWidget();
-        RefreshDailyButtonVisuals();
-        UpdateForegroundVisibility();
     }
 
     public RectTransform GetUnlimitedLivesFeedbackTarget()
@@ -116,7 +121,7 @@ public class LevelSelectionScreenController : MonoBehaviour
 
     public void PlayUnlimitedLivesArrivalFeedback()
     {
-        RefreshLivesWidget();
+        RefreshLivesWidget("PlayUnlimitedLivesArrivalFeedback", force: true);
         ResolveLivesFeedbackReferences();
 
         RectTransform target = GetUnlimitedLivesFeedbackTarget();
@@ -169,13 +174,36 @@ public class LevelSelectionScreenController : MonoBehaviour
 
     private void HandleNewAreaUnlocked(int areaId)
     {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
         Debug.Log($"[LevelSelectionScreenController] Area {areaId} unlocked.");
+#endif
+    }
+
+    public bool TryPlayPendingAreaUnlockFeedback()
+    {
+        if (_areas == null)
+            return false;
+
+        for (int i = 0; i < _areas.Length; i++)
+        {
+            AreaSectionController area = _areas[i];
+            if (area != null && area.TryPlayPendingUnlockFeedback())
+                return true;
+        }
+
+        return false;
     }
 
     private void OnAreaUnlockAnimationComplete(AreaSectionController area)
     {
         // Refresca los botones de niveles tras completar la animación de nubes
-        ButtonManager.Instance?.RefreshLevelProgression();
+        if (_buttonManager == null)
+        {
+            Debug.LogWarning("[LevelSelectionScreenController] ButtonManager was not found. Level progression refresh was skipped.");
+            return;
+        }
+
+        _buttonManager.RefreshLevelProgression();
     }
 
 #if UNITY_EDITOR
@@ -194,19 +222,26 @@ public class LevelSelectionScreenController : MonoBehaviour
 
     private void RegisterButtonListeners()
     {
-        if (_dailyWheelButton == null)
-            return;
+        _dailyRewardButton?.onClick.RemoveListener(OnDailyRewardButtonClicked);
+        _dailyRewardButton?.onClick.AddListener(OnDailyRewardButtonClicked);
 
-        _dailyWheelButton.onClick.RemoveListener(OnDailyWheelButtonClicked);
-        _dailyWheelButton.onClick.AddListener(OnDailyWheelButtonClicked);
+        _storeButton?.onClick.RemoveListener(OnStoreButtonClicked);
+        _storeButton?.onClick.AddListener(OnStoreButtonClicked);
+
+        _dailyWheelButton?.onClick.RemoveListener(OnDailyWheelButtonClicked);
+        _dailyWheelButton?.onClick.AddListener(OnDailyWheelButtonClicked);
     }
 
     private void UnregisterButtonListeners()
     {
-        if (_dailyWheelButton == null)
-            return;
+        _dailyRewardButton?.onClick.RemoveListener(OnDailyRewardButtonClicked);
+        _storeButton?.onClick.RemoveListener(OnStoreButtonClicked);
+        _dailyWheelButton?.onClick.RemoveListener(OnDailyWheelButtonClicked);
+    }
 
-        _dailyWheelButton.onClick.RemoveListener(OnDailyWheelButtonClicked);
+    private void OnDailyRewardButtonClicked()
+    {
+        UIEvents.RequestShowDailyRewardModal();
     }
 
     private void OnDailyWheelButtonClicked()
@@ -214,82 +249,91 @@ public class LevelSelectionScreenController : MonoBehaviour
         UIEvents.RequestShowDailyWheelModal();
     }
 
+    private void OnStoreButtonClicked()
+    {
+        UIEvents.RequestShowStoreModal();
+    }
+
     private void OnRewardAvailabilityChanged(bool isAvailable)
     {
-        SetDailyButtonAvailability(_dailyRewardButtonAnimator, isAvailable);
+        ApplyDailyRewardAvailability(isAvailable, "GameEvents.OnRewardAvailabilityChanged", force: true);
     }
 
     private void OnWheelAvailabilityChanged(bool isAvailable)
     {
-        SetDailyButtonAvailability(_dailyWheelButtonAnimator, isAvailable);
+        ApplyDailyWheelAvailability(isAvailable, "GameEvents.OnWheelAvailabilityChanged", force: true);
     }
 
-    private void UpdateForegroundVisibility()
+    private void OnLivesChanged(int lives)
     {
-        bool shouldShow = true;
-        bool buttonsVisibilityChanged = false;
-
-        if (UIManager.Instance != null)
-            shouldShow = !UIManager.Instance.HasBlockingPanelForLevelSelection();
-
-        if (DailyStartupSequence.IsSequenceRunning)
-            shouldShow = false;
-
-        if (_infoRoot != null && _infoRoot.activeSelf != shouldShow)
-            _infoRoot.SetActive(shouldShow);
-
-        if (_buttonsRoot != null && _buttonsRoot.activeSelf != shouldShow)
-        {
-            _buttonsRoot.SetActive(shouldShow);
-            buttonsVisibilityChanged = true;
-        }
-
-        if (buttonsVisibilityChanged && shouldShow)
-        {
-            RebindDailyButtonAnimators();
-            RefreshDailyButtonVisuals();
-        }
+        RefreshLivesWidget("GameEvents.OnLivesChanged", force: true);
     }
 
-    private void RefreshDailyButtonVisuals()
+    public void OnForegroundShown(string reason = null)
     {
-        if (_dailyRewardButtonAnimator != null && DailyRewardSystem.Instance != null)
-            SetDailyButtonAvailability(_dailyRewardButtonAnimator, DailyRewardSystem.Instance.CanClaimToday());
-
-        if (_dailyWheelButtonAnimator != null && DailyWheelSystem.Instance != null)
-            SetDailyButtonAvailability(_dailyWheelButtonAnimator, DailyWheelSystem.Instance.CanSpinToday());
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        Debug.Log($"[LevelSelectionScreenController] Presenter -> ForegroundShown | Reason={reason ?? "Unspecified"}");
+#endif
+        RebindDailyButtonAnimators();
+        RefreshLivesWidget($"OnForegroundShown:{reason ?? "Unspecified"}", force: true);
+        RefreshDailyButtonVisuals($"OnForegroundShown:{reason ?? "Unspecified"}", force: true);
     }
 
-    private void RefreshLivesWidget()
+    public void OnForegroundHidden(string reason = null)
+    {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        Debug.Log($"[LevelSelectionScreenController] Presenter -> ForegroundHidden | Reason={reason ?? "Unspecified"}");
+#endif
+    }
+
+    private void RefreshDailyButtonVisuals(string reason, bool force = false)
+    {
+        if (DailyRewardSystem.Instance != null)
+            ApplyDailyRewardAvailability(DailyRewardSystem.Instance.GetAvailabilitySnapshot().IsAvailable, reason, force);
+
+        if (DailyWheelSystem.Instance != null)
+            ApplyDailyWheelAvailability(DailyWheelSystem.Instance.GetAvailabilitySnapshot().IsAvailable, reason, force);
+    }
+
+    private void RefreshLivesWidget(string reason, bool force = false)
     {
         LifeManager lifeManager = LifeManager.Instance;
         if (lifeManager == null || !lifeManager.IsInitialized)
             return;
 
-        bool hasDebugInfiniteLives = GameConfigManager.IsReady() && GameConfigManager.Config.infiniteLives;
+        string newLivesAmount = lifeManager.GetDisplayLives().ToString();
+        string newTimerValue = string.Empty;
+        bool hasUnlimitedLives = lifeManager.HasTimedUnlimitedLives;
+
+        if (hasUnlimitedLives)
+        {
+            newTimerValue = FormatUnlimitedLivesTime(lifeManager.GetUnlimitedLivesRemainingTime());
+        }
+        else
+        {
+            TimeSpan nextLife = lifeManager.GetTimeToNextLife();
+            newTimerValue = nextLife.TotalSeconds > 0d
+                ? $"{nextLife.Minutes:D2}:{nextLife.Seconds:D2}"
+                : string.Empty;
+        }
+
+        bool amountChanged = force || !string.Equals(_lastLivesAmountValue, newLivesAmount, StringComparison.Ordinal);
+        bool timerChanged = force || !string.Equals(_lastLivesTimerValue, newTimerValue, StringComparison.Ordinal);
 
         if (_livesAmountText != null)
-            _livesAmountText.text = hasDebugInfiniteLives
-                ? InfiniteLivesText
-                : lifeManager.GetDisplayLives().ToString();
+        {
+            if (amountChanged)
+                _livesAmountText.text = newLivesAmount;
+        }
 
-        bool hasUnlimitedLives = lifeManager.HasTimedUnlimitedLives || hasDebugInfiniteLives;
         if (_livesTimerText != null)
         {
-            if (hasUnlimitedLives)
-            {
-                _livesTimerText.text = hasDebugInfiniteLives
-                    ? InfiniteLivesText
-                    : FormatUnlimitedLivesTime(lifeManager.GetUnlimitedLivesRemainingTime());
-            }
-            else
-            {
-                TimeSpan nextLife = lifeManager.GetTimeToNextLife();
-                _livesTimerText.text = nextLife.TotalSeconds > 0d
-                    ? $"{nextLife.Minutes:D2}:{nextLife.Seconds:D2}"
-                    : string.Empty;
-            }
+            if (timerChanged)
+                _livesTimerText.text = newTimerValue;
         }
+
+        _lastLivesAmountValue = newLivesAmount;
+        _lastLivesTimerValue = newTimerValue;
     }
 
     private string FormatUnlimitedLivesTime(TimeSpan remaining)
@@ -377,5 +421,70 @@ public class LevelSelectionScreenController : MonoBehaviour
         }
 
         return false;
+    }
+
+    private void ResolveButtonManager()
+    {
+        if (_buttonManager != null)
+            return;
+
+        _buttonManager = GetComponentInParent<ButtonManager>(true);
+
+        if (_buttonManager == null)
+            Debug.LogWarning("[LevelSelectionScreenController] ButtonManager was not found.");
+    }
+
+    private void StartPresenterTick()
+    {
+        if (_presenterTickRoutine != null)
+            return;
+
+        _presenterTickRoutine = StartCoroutine(PresenterTickLoop());
+    }
+
+    private void StopPresenterTick()
+    {
+        if (_presenterTickRoutine == null)
+            return;
+
+        StopCoroutine(_presenterTickRoutine);
+        _presenterTickRoutine = null;
+    }
+
+    private IEnumerator PresenterTickLoop()
+    {
+        while (enabled)
+        {
+            yield return PresenterTickDelay;
+
+            RefreshLivesWidget("PresenterTick");
+            RefreshDailyButtonVisuals("PresenterTick");
+        }
+    }
+
+    private void ApplyDailyRewardAvailability(bool isAvailable, string reason, bool force = false)
+    {
+        bool changed = force || !_lastDailyRewardAvailability.HasValue || _lastDailyRewardAvailability.Value != isAvailable;
+        if (!changed)
+            return;
+
+        SetDailyButtonAvailability(_dailyRewardButtonAnimator, isAvailable);
+        _lastDailyRewardAvailability = isAvailable;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        Debug.Log($"[LevelSelectionScreenController] DailyRewardAvailability -> {isAvailable} | Reason={reason}");
+#endif
+    }
+
+    private void ApplyDailyWheelAvailability(bool isAvailable, string reason, bool force = false)
+    {
+        bool changed = force || !_lastDailyWheelAvailability.HasValue || _lastDailyWheelAvailability.Value != isAvailable;
+        if (!changed)
+            return;
+
+        SetDailyButtonAvailability(_dailyWheelButtonAnimator, isAvailable);
+        _lastDailyWheelAvailability = isAvailable;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        Debug.Log($"[LevelSelectionScreenController] DailyWheelAvailability -> {isAvailable} | Reason={reason}");
+#endif
     }
 }

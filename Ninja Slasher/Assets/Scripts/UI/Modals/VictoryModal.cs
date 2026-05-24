@@ -1,12 +1,13 @@
 using UnityEngine;
-using System.Collections;
+using UnityEngine.UI;
 
 public class VictoryModal : UIModalBase
 {
     [SerializeField] private float _closeAnimationDuration = 0.4f;
-    [SerializeField] private float _delayBeforeShowingResults = 0.1f;
+    [SerializeField] private Button _continueButton;
 
-    private Coroutine _showResultsCoroutine;
+    private Button[] _navigationButtons;
+    private bool _isObjectiveSequenceRunning;
 
     protected override float HideAnimationDuration => _closeAnimationDuration;
 
@@ -16,37 +17,113 @@ public class VictoryModal : UIModalBase
 
         if (_modalAnimator == null)
             _modalAnimator = GetComponentInChildren<Animator>();
-    }
 
-    protected override void OnDisable()
-    {
-        base.OnDisable();
-        StopShowResultsCoroutine();
+        CacheNavigationButtons();
+        SetupButtons();
     }
 
     protected override void OnShown()
     {
         PlayVictoryAudio();
+        BeginObjectiveSequence();
 
         if (ResultsUIManager.Instance != null)
             ResultsUIManager.Instance.PrepareResultsIntro();
-
-        StopShowResultsCoroutine();
-        _showResultsCoroutine = StartCoroutine(ShowResultsDelayed());
     }
 
-    private IEnumerator ShowResultsDelayed()
+    protected override void OnShowAnimationCompleted()
     {
-        yield return new WaitForSecondsRealtime(_delayBeforeShowingResults);
-        _showResultsCoroutine = null;
-
         if (ResultsUIManager.Instance != null)
-            ResultsUIManager.Instance.ShowResultsPanel();
+        {
+            ResultsUIManager.Instance.ShowResultsPanel(HandleObjectiveSequenceCompleted);
+            return;
+        }
+
+        HandleObjectiveSequenceCompleted();
     }
 
     protected override void OnHidden()
     {
-        StopShowResultsCoroutine();
+        CancelObjectiveSequence();
+    }
+
+    protected override void OnDisable()
+    {
+        CancelObjectiveSequence();
+        base.OnDisable();
+    }
+
+    protected override void RequestCloseFromOutsideClick()
+    {
+        if (_isObjectiveSequenceRunning)
+            return;
+
+        base.RequestCloseFromOutsideClick();
+    }
+
+    private void CacheNavigationButtons()
+    {
+        _navigationButtons = GetComponentsInChildren<Button>(true);
+    }
+
+    private void SetupButtons()
+    {
+        if (_continueButton == null)
+        {
+            Debug.LogWarning("[VictoryModal] Continue button is not assigned.");
+            return;
+        }
+
+        _continueButton.onClick.RemoveListener(OnContinueClicked);
+        _continueButton.onClick.AddListener(OnContinueClicked);
+    }
+
+    private void BeginObjectiveSequence()
+    {
+        _isObjectiveSequenceRunning = true;
+        SetNavigationButtonsInteractable(false);
+    }
+
+    private void HandleObjectiveSequenceCompleted()
+    {
+        if (!isActiveAndEnabled || !_isVisible)
+            return;
+
+        _isObjectiveSequenceRunning = false;
+        SetNavigationButtonsInteractable(true);
+    }
+
+    private void CancelObjectiveSequence()
+    {
+        _isObjectiveSequenceRunning = false;
+        SetNavigationButtonsInteractable(false);
+        ResultsUIManager.Instance?.CancelResultsPresentation();
+    }
+
+    private void SetNavigationButtonsInteractable(bool interactable)
+    {
+        if (_navigationButtons == null || _navigationButtons.Length == 0)
+            CacheNavigationButtons();
+
+        if (_navigationButtons == null)
+            return;
+
+        for (int i = 0; i < _navigationButtons.Length; i++)
+        {
+            Button button = _navigationButtons[i];
+            if (button != null)
+                button.interactable = interactable;
+        }
+    }
+
+    private void OnContinueClicked()
+    {
+        if (_isObjectiveSequenceRunning)
+            return;
+
+        ResultsUIManager.Instance?.CancelResultsPresentation();
+        SetPanelInputEnabled(false);
+        UIEvents.RaiseQuitToMenuPressed();
     }
 
     private void PlayVictoryAudio()
@@ -61,12 +138,9 @@ public class VictoryModal : UIModalBase
             AudioService.Instance.PlaySFX(clip);
     }
 
-    private void StopShowResultsCoroutine()
+    private void OnDestroy()
     {
-        if (_showResultsCoroutine == null)
-            return;
-
-        StopCoroutine(_showResultsCoroutine);
-        _showResultsCoroutine = null;
+        if (_continueButton != null)
+            _continueButton.onClick.RemoveListener(OnContinueClicked);
     }
 }

@@ -16,6 +16,10 @@ public class Projectile : MonoBehaviour, IPoolable
     [SerializeField] protected LayerMask playerLayer;
     [SerializeField] protected LayerMask scenarioLayer;
     [SerializeField] protected Animator _animator;
+    [SerializeField] protected Collider2D _col;
+    [SerializeField] protected SpriteRenderer[] _renderers;
+    [SerializeField] protected ParticleSystem _particleSystem;
+    [SerializeField] protected Color _projColor;
 
     protected Rigidbody2D _rb;
 
@@ -24,14 +28,23 @@ public class Projectile : MonoBehaviour, IPoolable
     public void SetIsParryable(bool newValue)
     {
         isParryable = newValue;
-        _animator.SetBool("IsParryable", true);
+        if (_particleSystem != null)
+        {
+            _particleSystem.startColor = newValue ? new Color(1, 0, 1, 1) : _projColor;
+        }        
+        if(_renderers.Length > 0)
+        {
+            foreach (var renderer in _renderers)
+            {
+                renderer.color = newValue ? new Color(1, 0, 1, 1) : _projColor;
+            }
+        }
     }
 
     protected bool _isEnhancedParry = false;
     protected int _bouncesRemaining = 0;
     private float _velocityRetention = 1f;
     private HashSet<Enemy> _hitEnemies = new HashSet<Enemy>();
-    private Collider2D _projectileCollider;
     private Vector2 _currentDir;
     public Vector2 CurrentDir => _currentDir;
 
@@ -39,8 +52,9 @@ public class Projectile : MonoBehaviour, IPoolable
 
     public event Action<Projectile> OnRequestDespawn;
 
-    public virtual void Initialize(Vector2 direction, Transform owner)
+    public virtual void Initialize(Vector2 direction, Transform owner, bool isParryable = false)
     {
+        SetIsParryable(isParryable);
         InitializeAudioContext();
         SetOwner(owner);
         SetDirection(direction);
@@ -66,8 +80,12 @@ public class Projectile : MonoBehaviour, IPoolable
     public void OnSpawn()
     {
         if (_rb == null) TryGetComponent(out _rb);
-        if (_projectileCollider == null) TryGetComponent(out _projectileCollider);
         if (_animator == null) TryGetComponent(out _animator);
+        if(_col == null) TryGetComponent(out _col); 
+        if (_renderers == null)
+        {
+            _renderers = GetComponentsInChildren<SpriteRenderer>();
+        }
 
         _hitEnemies.Clear();
         _isEnhancedParry = false;
@@ -194,7 +212,10 @@ public class Projectile : MonoBehaviour, IPoolable
             DamageEnemy(collision.gameObject);
         }
 
+        _rb.linearVelocity = Vector2.zero;
         _animator.SetTrigger("OnImpact");
+        _particleSystem.Play();
+        _col.enabled = false;
         AudioService.Instance.PlaySFXAtPosition(_audioContext.Audio.impact, transform.position);
         _rb.linearVelocity = Vector2.zero;
     }
@@ -212,7 +233,7 @@ public class Projectile : MonoBehaviour, IPoolable
 
         _hitEnemies.Add(enemy);
 
-        Physics2D.IgnoreCollision(_projectileCollider, collider, true);
+        Physics2D.IgnoreCollision(_col, collider, true);
 
         DamageEnemy(enemy.gameObject);
         return true;

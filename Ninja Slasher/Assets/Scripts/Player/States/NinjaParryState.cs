@@ -11,7 +11,6 @@ public class NinjaParryState<NinjaStates> : State<NinjaStates>
 
     public override void Enter()
     {
-        Debug.Log("Tried Parry");
         Collider2D[] hits = Physics2D.OverlapCircleAll(_controller.transform.position, 2f, LayerMask.GetMask("Projectiles"));
 
         //_controller.StartParry(hits);

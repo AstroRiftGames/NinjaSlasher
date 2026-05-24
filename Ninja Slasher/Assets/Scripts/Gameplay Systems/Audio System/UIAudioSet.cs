@@ -17,6 +17,7 @@ public class UIAudioSet : ScriptableObject
     [Header("Results")]
     public AudioEvent victory;
     public AudioEvent defeat;
+    public AudioEvent starRevealFireworks;
 
     [Header("Diegetic UI")]
     public AudioEvent wheelSpin;

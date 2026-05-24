@@ -19,11 +19,5 @@ public class PowerUpParryPerfect : PowerUpBase
 
     public override void OnUseConsumed(PowerUpContext context)
     {
-        Debug.Log($"[ParryPerfect] Uso consumido. Restantes: {context.ParryPerfectUsesRemaining}");
-
-        if (context.ParryPerfectUsesRemaining == 1)
-        {
-            Debug.LogWarning("[ParryPerfect] Ultimo uso disponible");
-        }
     }
 }

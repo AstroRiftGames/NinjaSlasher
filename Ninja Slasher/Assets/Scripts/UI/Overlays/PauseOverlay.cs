@@ -5,17 +5,17 @@ using System;
 
 public class PauseOverlay : UIOverlayBase
 {
-    private const string InfiniteLivesText = "∞";
-
     [Header("Pause Buttons")]
     [SerializeField] private Button _resumeButton;
     [SerializeField] private Button _restartButton;
     [SerializeField] private Button _quitButton;
+    [SerializeField] private Button _musicButton;
+    [SerializeField] private Button _sfxButton;
     [SerializeField] private RestartConfirmationPopUp _restartConfirmationPopUp;
     [SerializeField] private BackToLevelSelectionConfirmationPopUp _backToLevelSelectionConfirmationPopUp;
 
     [Header("Background")]
-    [SerializeField] private UnityEngine.UI.Image _backgroundImage;
+    // Inherits _backgroundImage from UIOverlayBase
 
     [Header("Info")]
     [SerializeField] private GameObject _infoRoot;
@@ -23,9 +23,17 @@ public class PauseOverlay : UIOverlayBase
     [SerializeField] private TextMeshProUGUI _livesAmountText;
 
     private Texture2D _backgroundTexture;
+    private Sprite _backgroundSprite;
+    private Camera _mainCamera;
+    private AudioSettingsUI _audioSettingsUI;
+    private int _lastShownTotalStars = int.MinValue;
+    private int _lastShownLives = int.MinValue;
+
     protected override void Awake()
     {
         base.Awake();
+        _audioSettingsUI = GetComponentInParent<AudioSettingsUI>();
+        _mainCamera = Camera.main;
         ResolvePopupReferences();
         SetupButtons();
     }
@@ -40,21 +48,31 @@ public class PauseOverlay : UIOverlayBase
 
     private void SetupButtons()
     {
-        if (_resumeButton != null)
-            _resumeButton.onClick.AddListener(OnResumeClicked);
+        BindButton(_resumeButton, OnResumeClicked, "resume");
+        BindButton(_restartButton, OnRestartClicked, "restart");
+        BindButton(_quitButton, OnQuitClicked, "quit");
+        BindButton(_musicButton, OnMusicClicked, "music");
+        BindButton(_sfxButton, OnSfxClicked, "sfx");
+    }
 
-        if (_restartButton != null)
-            _restartButton.onClick.AddListener(OnRestartClicked);
+    private void BindButton(Button button, UnityEngine.Events.UnityAction callback, string buttonName)
+    {
+        if (button == null)
+        {
+            Debug.LogWarning($"[PauseOverlay] {buttonName} button is not assigned.");
+            return;
+        }
 
-        if (_quitButton != null)
-            _quitButton.onClick.AddListener(OnQuitClicked);
+        button.onClick.AddListener(callback);
     }
 
     protected override void OnShown()
     {
         CaptureScreen();
-        
-        PauseController.Instance.RequestPause(PauseSource.PauseOverlay);
+
+        PauseController.Instance?.RequestPause(PauseSource.PauseOverlay);
+        _lastShownTotalStars = int.MinValue;
+        _lastShownLives = int.MinValue;
         RefreshInfo();
         UIManager.Instance?.SetGameplayHUDTopRightInfoVisible(false);
         UIEvents.RaisePause(true);
@@ -68,7 +86,7 @@ public class PauseOverlay : UIOverlayBase
         int width = Screen.width;
         int height = Screen.height;
 
-        if (_backgroundTexture == null || _backgroundTexture.width != width)
+        if (_backgroundTexture == null || _backgroundTexture.width != width || _backgroundTexture.height != height)
         {
             _backgroundTexture = new Texture2D(width, height, TextureFormat.RGB24, false);
         }
@@ -77,7 +95,10 @@ public class PauseOverlay : UIOverlayBase
         RenderTexture previous = RenderTexture.active;
         RenderTexture.active = renderTexture;
 
-        Camera mainCamera = Camera.main;
+        if (_mainCamera == null)
+            _mainCamera = Camera.main;
+
+        Camera mainCamera = _mainCamera;
         if (mainCamera != null)
         {
             mainCamera.targetTexture = renderTexture;
@@ -91,16 +112,25 @@ public class PauseOverlay : UIOverlayBase
         RenderTexture.active = previous;
         RenderTexture.ReleaseTemporary(renderTexture);
 
-        Sprite sprite = Sprite.Create(_backgroundTexture, new Rect(0, 0, width, height), Vector2.one * 0.5f);
-        _backgroundImage.sprite = sprite;
+        if (_backgroundSprite != null)
+        {
+            Destroy(_backgroundSprite);
+            _backgroundSprite = null;
+        }
+
+        _backgroundSprite = Sprite.Create(_backgroundTexture, new Rect(0, 0, width, height), Vector2.one * 0.5f);
+        _backgroundImage.sprite = _backgroundSprite;
     }
 
     protected override void OnHidden()
     {
         _restartConfirmationPopUp?.HideImmediate();
         _backToLevelSelectionConfirmationPopUp?.HideImmediate();
+    }
 
-        PauseController.Instance.ReleasePause(PauseSource.PauseOverlay);
+    protected override void OnHideAnimationCompleted()
+    {
+        PauseController.Instance?.ReleasePause(PauseSource.PauseOverlay);
         UIManager.Instance?.SetGameplayHUDTopRightInfoVisible(true);
         UIEvents.RaisePause(false);
     }
@@ -110,8 +140,51 @@ public class PauseOverlay : UIOverlayBase
         Hide();
     }
 
+    private void OnMusicClicked()
+    {
+        if (_audioSettingsUI == null)
+        {
+            Debug.LogWarning("[PauseOverlay] AudioSettingsUI is not assigned.");
+            return;
+        }
+
+        _audioSettingsUI.MusicButtonPushed();
+    }
+
+    private void OnSfxClicked()
+    {
+        if (_audioSettingsUI == null)
+        {
+            Debug.LogWarning("[PauseOverlay] AudioSettingsUI is not assigned.");
+            return;
+        }
+
+        _audioSettingsUI.SFXButtonPushed();
+    }
+
     private void OnRestartClicked()
     {
+        bool canRestart = true;
+        if (LevelSessionManager.Instance != null && LifeManager.Instance != null)
+        {
+            bool includePendingExitCost = LifeManager.Instance.HasPendingDeduction();
+            canRestart = LevelSessionManager.Instance.CanStartLevelAttempt(includePendingExitCost);
+        }
+        else if (LifeManager.Instance != null)
+        {
+            canRestart = LifeManager.Instance.CanPlay();
+        }
+
+        if (!canRestart)
+        {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            Debug.Log($"[PauseOverlay] Restart blocked: No available lives. realLives={LifeManager.Instance?.GetRealLives()} | unlimited={LifeManager.Instance?.HasTimedUnlimitedLives}");
+#endif
+            UIEvents.RequestShowNoLivesModal();
+            Hide();
+            return;
+        }
+
         if (_restartConfirmationPopUp != null)
         {
             _restartConfirmationPopUp.ShowConfirmation(ConfirmRestartLevel);
@@ -170,18 +243,21 @@ public class PauseOverlay : UIOverlayBase
     {
         if (_backgroundTexture != null)
         {
-            UnityEngine.Object.Destroy(_backgroundTexture);
+            Destroy(_backgroundTexture);
             _backgroundTexture = null;
         }
 
-        if (_resumeButton != null)
-            _resumeButton.onClick.RemoveAllListeners();
+        if (_backgroundSprite != null)
+        {
+            Destroy(_backgroundSprite);
+            _backgroundSprite = null;
+        }
 
-        if (_restartButton != null)
-            _restartButton.onClick.RemoveAllListeners();
-
-        if (_quitButton != null)
-            _quitButton.onClick.RemoveAllListeners();
+        _resumeButton?.onClick.RemoveListener(OnResumeClicked);
+        _restartButton?.onClick.RemoveListener(OnRestartClicked);
+        _quitButton?.onClick.RemoveListener(OnQuitClicked);
+        _musicButton?.onClick.RemoveListener(OnMusicClicked);
+        _sfxButton?.onClick.RemoveListener(OnSfxClicked);
     }
 
     private void RefreshInfo()
@@ -189,7 +265,11 @@ public class PauseOverlay : UIOverlayBase
         if (_totalStarsText != null)
         {
             var (_, _, totalStars) = SaveManager.Instance?.GetProgressionData() ?? (1, 1, 0);
-            _totalStarsText.text = totalStars.ToString();
+            if (totalStars != _lastShownTotalStars)
+            {
+                _lastShownTotalStars = totalStars;
+                _totalStarsText.text = totalStars.ToString();
+            }
         }
 
         LifeManager lifeManager = LifeManager.Instance;
@@ -197,28 +277,13 @@ public class PauseOverlay : UIOverlayBase
             return;
 
         if (_livesAmountText != null)
-            _livesAmountText.text = GameConfigManager.IsReady() && GameConfigManager.Config.infiniteLives
-                ? InfiniteLivesText
-                : lifeManager.GetDisplayLives().ToString();
-    }
-
-    private void OnDailyWheelClicked()
-    {
-        UIEvents.RequestShowDailyWheelModal();
-    }
-
-    private static string FormatUnlimitedLivesTime(TimeSpan remaining)
-    {
-        if (remaining.TotalHours >= 1d)
-            return $"{Mathf.FloorToInt((float)remaining.TotalHours):D2}:{remaining.Minutes:D2}:{remaining.Seconds:D2}";
-
-        return $"{remaining.Minutes:D2}:{remaining.Seconds:D2}";
-    }
-
-    private static string FormatNextLifeTimer(TimeSpan remaining)
-    {
-        return remaining.TotalSeconds > 0d
-            ? $"{remaining.Minutes:D2}:{remaining.Seconds:D2}"
-            : string.Empty;
+        {
+            int displayLives = lifeManager.GetDisplayLives();
+            if (displayLives != _lastShownLives)
+            {
+                _lastShownLives = displayLives;
+                _livesAmountText.text = displayLives.ToString();
+            }
+        }
     }
 }

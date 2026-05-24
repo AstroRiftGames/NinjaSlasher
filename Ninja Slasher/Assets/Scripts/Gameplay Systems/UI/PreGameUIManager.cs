@@ -1,6 +1,5 @@
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using DG.Tweening;
 using TMPro;
 using UnityEngine;
@@ -43,14 +42,17 @@ public class PreGameUIManager : MonoBehaviour
 
     private readonly Dictionary<TextMeshProUGUI, Color> _baseTextColors = new();
     private readonly Dictionary<TextMeshProUGUI, bool> _objectiveCompletionStates = new();
+    private readonly Dictionary<TextMeshProUGUI, Image> _objectiveSlashImages = new();
     private readonly Dictionary<Image, Vector2> _objectiveSlashBasePositions = new();
     private readonly Dictionary<Image, Color> _objectiveSlashBaseColors = new();
     private readonly Dictionary<Image, bool> _objectiveSlashBaseEnabled = new();
     private readonly List<Sequence> _activeSequences = new();
-    private readonly List<PowerUpSlotUI> _slots = new();
+    private readonly List<PowerUpSlotUI> _powerUpSlots = new();
 
     private UIAudioContext _audioContext;
+    private PowerUpHorizontalScrollButtons _powerUpScrollButtons;
     private bool _isLevelSelected;
+    private bool _isInPreGameSelection;
 
     private void Awake()
     {
@@ -68,18 +70,31 @@ public class PreGameUIManager : MonoBehaviour
     private void OnEnable()
     {
         GameEvents.OnRewardClaimed += OnDailyRewardClaimedRefresh;
+        GameEvents.OnLivesChanged += OnLivesChangedRefresh;
     }
 
     private void OnDisable()
     {
         GameEvents.OnRewardClaimed -= OnDailyRewardClaimedRefresh;
+        GameEvents.OnLivesChanged -= OnLivesChangedRefresh;
         StopAllAnimations();
         HidePowerUpConfirmationImmediate();
     }
 
     private void SetupButtonListeners()
     {
+        _playButton.onClick.RemoveListener(OnPlayButtonClicked);
         _playButton.onClick.AddListener(OnPlayButtonClicked);
+    }
+
+    private void EnsurePlayButtonBound()
+    {
+        if (_playButton == null)
+            return;
+
+        _playButton.onClick.RemoveListener(OnPlayButtonClicked);
+        _playButton.onClick.AddListener(OnPlayButtonClicked);
+        _isInPreGameSelection = _isLevelSelected;
     }
 
     private void CacheBaseVisualState()
@@ -175,6 +190,7 @@ public class PreGameUIManager : MonoBehaviour
         if (slashImage == null)
             return;
 
+        _objectiveSlashImages[objectiveText] = slashImage;
         _objectiveSlashBasePositions[slashImage] = slashImage.rectTransform.anchoredPosition;
         _objectiveSlashBaseColors[slashImage] = slashImage.color;
         _objectiveSlashBaseEnabled[slashImage] = slashImage.enabled;
@@ -197,6 +213,7 @@ public class PreGameUIManager : MonoBehaviour
 
         _pendingSceneName = sceneName;
         _isLevelSelected = true;
+        _isInPreGameSelection = true;
 
         UIEvents.RequestShowPregameModal();
 
@@ -204,7 +221,7 @@ public class PreGameUIManager : MonoBehaviour
         SetGoals();
         RefreshObjectiveSlashBaselines();
         ResetVisualState();
-        ShowPreGamePowerUps();
+        ShowPreGamePowerUps(true);
         ApplyObjectiveCompletionVisuals();
     }
 
@@ -212,8 +229,9 @@ public class PreGameUIManager : MonoBehaviour
     {
         StopAllCoroutines();
 
-        foreach (Sequence sequence in _activeSequences.ToList())
+        for (int i = _activeSequences.Count - 1; i >= 0; i--)
         {
+            Sequence sequence = _activeSequences[i];
             if (sequence != null && sequence.IsActive())
                 sequence.Kill(false);
         }
@@ -226,7 +244,7 @@ public class PreGameUIManager : MonoBehaviour
         {
             DOTween.Kill(objectiveText);
 
-            Image slashImage = objectiveText.GetComponentInChildren<Image>(true);
+            Image slashImage = GetObjectiveSlashImage(objectiveText);
             if (slashImage != null)
             {
                 DOTween.Kill(slashImage);
@@ -251,7 +269,7 @@ public class PreGameUIManager : MonoBehaviour
             if (_baseTextColors.TryGetValue(objectiveText, out Color baseColor))
                 objectiveText.color = baseColor;
 
-            Image slashImage = objectiveText.GetComponentInChildren<Image>(true);
+            Image slashImage = GetObjectiveSlashImage(objectiveText);
             if (slashImage != null)
             {
                 RestoreObjectiveSlashBaseline(slashImage);
@@ -264,7 +282,7 @@ public class PreGameUIManager : MonoBehaviour
     {
         foreach (TextMeshProUGUI objectiveText in GetObjectiveTexts())
         {
-            Image slashImage = objectiveText.GetComponentInChildren<Image>(true);
+            Image slashImage = GetObjectiveSlashImage(objectiveText);
             ApplyObjectiveSlashCompletionState(objectiveText, slashImage);
         }
     }
@@ -308,7 +326,7 @@ public class PreGameUIManager : MonoBehaviour
 
     private void OnPlayButtonClicked()
     {
-        if (_isLevelSelected)
+        if (_isInPreGameSelection && _isLevelSelected)
         {
             OnConfirmLevelSelection();
             return;
@@ -324,15 +342,10 @@ public class PreGameUIManager : MonoBehaviour
             : LifeManager.Instance != null && LifeManager.Instance.CanPlay();
 
         if (!canStartLevel)
-        {
-            AbortPendingLevelSelectionForLifeWall();
-            if (LevelSessionManager.Instance == null)
-                UIEvents.RequestShowNoLivesModal();
             return;
-        }
 
         StopAllAnimations();
-        _isLevelSelected = false;
+        _isInPreGameSelection = false;
         UIEvents.RequestSceneTransition(_pendingSceneName);
     }
 
@@ -340,14 +353,31 @@ public class PreGameUIManager : MonoBehaviour
     {
         StopAllAnimations();
         HidePowerUpConfirmationImmediate();
-        _isLevelSelected = false;
-        _pendingSceneName = null;
-        UIEvents.RequestHidePregameModal();
     }
 
     private void OnDailyRewardClaimedRefresh(DailyReward _)
     {
         ShowPreGamePowerUps();
+    }
+
+    public void RefreshPreGameAfterAdClaim()
+    {
+        if (!_isLevelSelected)
+            return;
+
+        _isInPreGameSelection = true;
+        ShowPreGamePowerUps();
+        ApplyObjectiveCompletionVisuals();
+        EnsurePlayButtonBound();
+    }
+
+    private void OnLivesChangedRefresh(int lives)
+    {
+        if (!_isLevelSelected)
+            return;
+
+        ShowPreGamePowerUps();
+        EnsurePlayButtonBound();
     }
 
     private void ShowPreGameTitle()
@@ -390,23 +420,131 @@ public class PreGameUIManager : MonoBehaviour
         }
     }
 
-    public void ShowPreGamePowerUps()
+    public void ShowPreGamePowerUps(bool resetScrollToStart = false)
     {
-        foreach (PowerUpSlotUI slot in _slots)
-            Destroy(slot.gameObject);
-        _slots.Clear();
+        PowerUpHorizontalScrollButtons powerUpScrollButtons = ResolvePowerUpScrollButtonsIfNeeded();
 
-        List<PowerUpInventoryItem> inventory = SaveManager.Instance.GetGameData().powerUpInventory;
+        if (_powerUpsContainer == null)
+        {
+            Debug.LogWarning("[PreGameUIManager] Power ups container not assigned.");
+            DisableUnusedPowerUpSlots(0);
+            FinalizePowerUpScrollRefresh(powerUpScrollButtons, resetScrollToStart);
+            return;
+        }
+
+        if (_powerUpSlotPrefab == null)
+        {
+            Debug.LogWarning("[PreGameUIManager] Power up slot prefab not assigned.");
+            DisableUnusedPowerUpSlots(0);
+            FinalizePowerUpScrollRefresh(powerUpScrollButtons, resetScrollToStart);
+            return;
+        }
+
+        if (allPowerUpBases == null || allPowerUpBases.Length == 0)
+        {
+            DisableUnusedPowerUpSlots(0);
+            FinalizePowerUpScrollRefresh(powerUpScrollButtons, resetScrollToStart);
+            return;
+        }
+
+        List<PowerUpInventoryItem> inventory = SaveManager.Instance?.GetGameData()?.powerUpInventory;
+        int visibleSlotCount = 0;
 
         foreach (PowerUpBase powerUpBase in allPowerUpBases)
         {
-            PowerUpInventoryItem item = inventory.Find(i => i.type == powerUpBase.powerUpType);
-            if (item == null)
-                item = new PowerUpInventoryItem(powerUpBase.powerUpType, 0);
+            if (powerUpBase == null)
+            {
+                Debug.LogWarning("[PreGameUIManager] Null power up base found in pregame list.");
+                continue;
+            }
 
-            PowerUpSlotUI slot = Instantiate(_powerUpSlotPrefab, _powerUpsContainer);
+            PowerUpSlotUI slot = GetOrCreatePowerUpSlot(visibleSlotCount);
+            if (slot == null)
+                break;
+
+            PowerUpInventoryItem item = inventory?.Find(i => i.type == powerUpBase.powerUpType)
+                ?? new PowerUpInventoryItem(powerUpBase.powerUpType, 0);
+
+            slot.gameObject.SetActive(true);
+            slot.transform.SetSiblingIndex(visibleSlotCount);
             slot.Setup(item, powerUpBase, OnPowerUpInteractClicked);
-            _slots.Add(slot);
+            visibleSlotCount++;
+        }
+
+        DisableUnusedPowerUpSlots(visibleSlotCount);
+        FinalizePowerUpScrollRefresh(powerUpScrollButtons, resetScrollToStart);
+    }
+
+    private PowerUpHorizontalScrollButtons ResolvePowerUpScrollButtonsIfNeeded()
+    {
+        if (_powerUpScrollButtons != null)
+            return _powerUpScrollButtons;
+
+        if (_powerUpsContainer != null)
+            _powerUpScrollButtons = _powerUpsContainer.GetComponentInParent<PowerUpHorizontalScrollButtons>();
+
+        if (_powerUpScrollButtons == null)
+        {
+            PregameModal pregameModal = GetComponentInChildren<PregameModal>(true);
+            if (pregameModal != null)
+                _powerUpScrollButtons = pregameModal.GetComponentInChildren<PowerUpHorizontalScrollButtons>(true);
+        }
+
+        return _powerUpScrollButtons;
+    }
+
+    private static void FinalizePowerUpScrollRefresh(PowerUpHorizontalScrollButtons powerUpScrollButtons, bool resetScrollToStart)
+    {
+        if (powerUpScrollButtons == null)
+            return;
+
+        if (resetScrollToStart)
+            powerUpScrollButtons.ResetToStart();
+
+        powerUpScrollButtons.RefreshAfterLayout();
+    }
+
+    private PowerUpSlotUI GetOrCreatePowerUpSlot(int index)
+    {
+        while (_powerUpSlots.Count <= index)
+        {
+            PowerUpSlotUI newSlot = Instantiate(_powerUpSlotPrefab, _powerUpsContainer);
+            if (newSlot == null)
+            {
+                Debug.LogWarning("[PreGameUIManager] Failed to instantiate power up slot.");
+                return null;
+            }
+
+            newSlot.gameObject.SetActive(false);
+            _powerUpSlots.Add(newSlot);
+        }
+
+        PowerUpSlotUI slot = _powerUpSlots[index];
+        if (slot != null)
+            return slot;
+
+        PowerUpSlotUI replacementSlot = Instantiate(_powerUpSlotPrefab, _powerUpsContainer);
+        if (replacementSlot == null)
+        {
+            Debug.LogWarning("[PreGameUIManager] Failed to replace missing power up slot.");
+            return null;
+        }
+
+        replacementSlot.gameObject.SetActive(false);
+        _powerUpSlots[index] = replacementSlot;
+        return replacementSlot;
+    }
+
+    private void DisableUnusedPowerUpSlots(int usedSlotCount)
+    {
+        for (int i = usedSlotCount; i < _powerUpSlots.Count; i++)
+        {
+            PowerUpSlotUI slot = _powerUpSlots[i];
+            if (slot == null)
+                continue;
+
+            slot.Clear();
+            slot.gameObject.SetActive(false);
         }
     }
 
@@ -581,5 +719,20 @@ public class PreGameUIManager : MonoBehaviour
     {
         if (PowerUpManager.Instance != null && PowerUpManager.Instance.ActivatePowerUpFromInventory(powerUpType))
             ShowPreGamePowerUps();
+    }
+
+    private Image GetObjectiveSlashImage(TextMeshProUGUI objectiveText)
+    {
+        if (objectiveText == null)
+            return null;
+
+        if (_objectiveSlashImages.TryGetValue(objectiveText, out Image slashImage) && slashImage != null)
+            return slashImage;
+
+        slashImage = objectiveText.GetComponentInChildren<Image>(true);
+        if (slashImage != null)
+            _objectiveSlashImages[objectiveText] = slashImage;
+
+        return slashImage;
     }
 }

@@ -9,7 +9,8 @@ public static class UIEvents
     public static event Action<string> OnPanelCloseRequested;
     public static event Action<string> OnPanelToggleRequested;
     public static event Action OnAllPanelsCloseRequested;
-    public static event Action OnAnyModalShown;
+    public static event Action<string> OnBlockingPanelShown;
+    public static event Action<string> OnBlockingPanelHidden;
 
     public static void RequestOpenPanel(string panelName)
     {
@@ -31,9 +32,14 @@ public static class UIEvents
         OnAllPanelsCloseRequested?.Invoke();
     }
 
-    public static void RaiseAnyModalShown()
+    public static void RaiseBlockingPanelShown(string source)
     {
-        OnAnyModalShown?.Invoke();
+        OnBlockingPanelShown?.Invoke(source);
+    }
+
+    public static void RaiseBlockingPanelHidden(string source)
+    {
+        OnBlockingPanelHidden?.Invoke(source);
     }
 
     #endregion
@@ -142,6 +148,7 @@ public static class UIEvents
     public static event Action OnWheelSequenceCompleted;
     public static event Action OnDailyWheelModalClosed;
     public static event Action OnDailyRewardModalClosed;
+    public static event Action OnStartupSequenceStarted;
     public static event Action OnStartupSequenceCompleted;
 
     public static event Action OnShowStoreModalRequested;
@@ -277,6 +284,11 @@ public static class UIEvents
         OnDailyRewardModalClosed?.Invoke();
     }
 
+    public static void RaiseStartupSequenceStarted()
+    {
+        OnStartupSequenceStarted?.Invoke();
+    }
+
     public static void RaiseStartupSequenceCompleted()
     {
         OnStartupSequenceCompleted?.Invoke();
@@ -339,6 +351,7 @@ public static class UIEvents
     public static event Action OnLoadLevelSelectorSceneRequested;
 
     public static event Action OnLevelSelectorReady;
+    public static event Action OnTransitionFinished;
 
     public static void RequestSceneTransition(string sceneName)
     {
@@ -363,6 +376,11 @@ public static class UIEvents
     public static void RaiseLevelSelectorReady()
     {
         OnLevelSelectorReady?.Invoke();
+    }
+
+    public static void RaiseTransitionFinished()
+    {
+        OnTransitionFinished?.Invoke();
     }
 
     #endregion
@@ -513,6 +531,8 @@ public static class UIEvents
         OnPanelCloseRequested = null;
         OnPanelToggleRequested = null;
         OnAllPanelsCloseRequested = null;
+        OnBlockingPanelShown = null;
+        OnBlockingPanelHidden = null;
     }
 
     public static void ClearOverlayEvents()
@@ -558,6 +578,7 @@ public static class UIEvents
         OnWheelSequenceCompleted = null;
         OnDailyWheelModalClosed = null;
         OnDailyRewardModalClosed = null;
+        OnStartupSequenceStarted = null;
         OnStartupSequenceCompleted = null;
         OnShowStoreModalRequested = null;
         OnHideStoreModalRequested = null;
@@ -588,6 +609,7 @@ public static class UIEvents
         OnRestartLevelRequested = null;
         OnLoadLevelSelectorSceneRequested = null;
         OnLevelSelectorReady = null;
+        OnTransitionFinished = null;
     }
 
     public static void ClearButtonEvents()

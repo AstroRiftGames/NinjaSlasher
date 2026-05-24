@@ -15,6 +15,12 @@ public class BossLevelProgressUI : MonoBehaviour
     [Tooltip("Texto del progreso: '12/15'")]
     [SerializeField] private TextMeshProUGUI _progressLabel;
 
+    [Tooltip("Visual alternativo mostrado cuando el boss ya fue completado")]
+    [SerializeField] private GameObject _completedStarVisual;
+
+    [Tooltip("Anchor opcional para fireworks/completion FX. Si no está asignado, usa la estrella completada o este mismo bloque.")]
+    [SerializeField] private Transform _feedbackFxAnchor;
+
     private void OnEnable()
     {
         if (LevelProgressionManager.Instance != null)
@@ -46,29 +52,68 @@ public class BossLevelProgressUI : MonoBehaviour
 
     public void Refresh()
     {
-        if (_feedbackRoot == null || _progressLabel == null) return;
-        if (LevelProgressionManager.Instance == null || SaveManager.Instance == null) return;
+        RefreshBossLevelStatusVisual();
+    }
 
-        int required = LevelProgressionManager.Instance.GetRequiredStarsForBoss(_levelId);
-
-        if (required <= 0)
+    private void RefreshBossLevelStatusVisual()
+    {
+        if (LevelProgressionManager.Instance == null || SaveManager.Instance == null)
         {
-            _feedbackRoot.SetActive(false);
+            RefreshBossRequirementVisual(isBossLevel: false, isBossCompleted: false, totalStars: 0, requiredStars: 0);
+            RefreshBossCompletionVisual(isBossLevel: false, isBossCompleted: false);
             return;
         }
 
-        bool isUnlocked = LevelProgressionManager.Instance.IsLevelUnlocked(_levelId);
+        bool isBossLevel = LevelProgressionManager.Instance.IsBossLevel(_levelId);
+        bool isBossCompleted = isBossLevel && LevelProgressionManager.Instance.IsLevelCompleted(_levelId);
+        int requiredStars = isBossLevel ? LevelProgressionManager.Instance.GetRequiredStarsForBoss(_levelId) : 0;
+        int totalStars = 0;
 
-        if (isUnlocked)
+        if (isBossLevel && !isBossCompleted)
         {
-            _feedbackRoot.SetActive(false);
+            (_, _, totalStars) = SaveManager.Instance.GetProgressionData();
         }
-        else
+
+        RefreshBossRequirementVisual(isBossLevel, isBossCompleted, totalStars, requiredStars);
+        RefreshBossCompletionVisual(isBossLevel, isBossCompleted);
+    }
+
+    private void RefreshBossRequirementVisual(bool isBossLevel, bool isBossCompleted, int totalStars, int requiredStars)
+    {
+        if (_feedbackRoot == null)
+            return;
+
+        bool shouldShowRequirement = isBossLevel && !isBossCompleted;
+        _feedbackRoot.SetActive(shouldShowRequirement);
+
+        if (!shouldShowRequirement || _progressLabel == null)
+            return;
+
+        _progressLabel.text = $"{totalStars}/{requiredStars}";
+    }
+
+    private void RefreshBossCompletionVisual(bool isBossLevel, bool isBossCompleted)
+    {
+        if (_completedStarVisual == null)
         {
-            var (_, _, totalStars) = SaveManager.Instance.GetProgressionData();
-            _progressLabel.text = $"{totalStars}/{required}";
-            _feedbackRoot.SetActive(true);
+            return;
         }
+
+        _completedStarVisual.SetActive(isBossLevel && isBossCompleted);
+    }
+
+    public RectTransform GetCompletionFeedbackAnchor()
+    {
+        if (_feedbackFxAnchor is RectTransform configuredAnchor)
+            return configuredAnchor;
+
+        if (_completedStarVisual != null && _completedStarVisual.transform is RectTransform completedStarRect)
+            return completedStarRect;
+
+        if (_feedbackRoot != null && _feedbackRoot.transform is RectTransform feedbackRootRect)
+            return feedbackRootRect;
+
+        return transform as RectTransform;
     }
 
 #if UNITY_EDITOR

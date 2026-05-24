@@ -1,8 +1,10 @@
 using UnityEngine;
+using UnityEngine.UI;
 
 public class GameplayHUD : UIPanel
 {
     [Header("Overlay Visibility")]
+    [SerializeField] private Button _pauseButton;
     [SerializeField] private GameObject _pauseButtonObject;
     [SerializeField] private GameObject _timerIconObject;
     [SerializeField] private GameObject _timerTextObject;
@@ -20,6 +22,7 @@ public class GameplayHUD : UIPanel
             _panelTransform = GetComponent<RectTransform>();
 
         CacheOverlayReferences();
+        SetupButtons();
         _isVisible = gameObject.activeSelf;
     }
 
@@ -84,6 +87,22 @@ public class GameplayHUD : UIPanel
         return null;
     }
 
+    private void SetupButtons()
+    {
+        if (_pauseButton == null)
+        {
+            Debug.LogWarning("[GameplayHUD] Pause button is not assigned.");
+            return;
+        }
+
+        _pauseButton.onClick.AddListener(OnPauseClicked);
+    }
+
+    private void OnPauseClicked()
+    {
+        UIEvents.RaisePausePressed();
+    }
+
     private void CacheCurrentOverlayVisibility()
     {
         _cachedPauseButtonActive = _pauseButtonObject != null && _pauseButtonObject.activeSelf;
@@ -107,5 +126,10 @@ public class GameplayHUD : UIPanel
     {
         if (target != null)
             target.SetActive(active);
+    }
+
+    private void OnDestroy()
+    {
+        _pauseButton?.onClick.RemoveListener(OnPauseClicked);
     }
 }

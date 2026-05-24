@@ -28,11 +28,28 @@ public class ParrySense : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
-        SetIndicatorActive(true);
+        if(Physics2D.Raycast(transform.position, transform.position - collision.transform.position, _col.radius, LayerMask.GetMask("Obstacle", "Scenario")))
+        {
+            return;
+        }
+        if (collision.TryGetComponent(out Projectile proj))
+        {
+            if (proj == null)
+                return;
+            if(proj.IsParryable)
+                SetIndicatorActive(true);
+        }
     }
 
     private void OnTriggerExit2D(Collider2D collision)
     {
+        if(collision.TryGetComponent(out Projectile proj))
+        {
+            if (proj != null && proj.IsParryable)
+            {
+                SetIndicatorActive(false);
+            }
+        }
         SetIndicatorActive(false);
     }
 

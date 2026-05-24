@@ -5,6 +5,7 @@ using UnityEngine.SceneManagement;
 public sealed class GameStateBindings : MonoBehaviour
 {
     private GameStateManager _manager;
+    private bool _isStartupSequenceActive;
 
     private bool _rewardFlowWasActive;
     private bool _rewardRestorePending;
@@ -91,6 +92,7 @@ public sealed class GameStateBindings : MonoBehaviour
         UIEvents.OnShowVictoryModalRequested += OnShowVictoryModalRequested;
         UIEvents.OnShowDailyWheelModalRequested += OnShowDailyWheelModalRequested;
         UIEvents.OnShowDailyRewardModalRequested += OnShowDailyRewardModalRequested;
+        UIEvents.OnStartupSequenceStarted += OnStartupSequenceStarted;
         UIEvents.OnStartupSequenceCompleted += OnStartupSequenceCompleted;
         UIEvents.RaiseGamePaused += OnPauseStateChanged;
     }
@@ -111,6 +113,7 @@ public sealed class GameStateBindings : MonoBehaviour
         UIEvents.OnShowVictoryModalRequested -= OnShowVictoryModalRequested;
         UIEvents.OnShowDailyWheelModalRequested -= OnShowDailyWheelModalRequested;
         UIEvents.OnShowDailyRewardModalRequested -= OnShowDailyRewardModalRequested;
+        UIEvents.OnStartupSequenceStarted -= OnStartupSequenceStarted;
         UIEvents.OnStartupSequenceCompleted -= OnStartupSequenceCompleted;
         UIEvents.RaiseGamePaused -= OnPauseStateChanged;
     }
@@ -196,18 +199,24 @@ public sealed class GameStateBindings : MonoBehaviour
 
     private void OnShowDailyWheelModalRequested()
     {
-        if (DailyStartupSequence.IsSequenceRunning)
+        if (_isStartupSequenceActive)
             TrySetState(GameState.StartupModalSequence, "DailyWheelStartupModalRequested");
     }
 
     private void OnShowDailyRewardModalRequested()
     {
-        if (DailyStartupSequence.IsSequenceRunning)
+        if (_isStartupSequenceActive)
             TrySetState(GameState.StartupModalSequence, "DailyRewardStartupModalRequested");
+    }
+
+    private void OnStartupSequenceStarted()
+    {
+        _isStartupSequenceActive = true;
     }
 
     private void OnStartupSequenceCompleted()
     {
+        _isStartupSequenceActive = false;
         TrySetState(GameState.LevelSelection, "StartupSequenceCompleted");
     }
 

@@ -37,6 +37,8 @@ public class DailyRewardSaveData
 
 public class DailyRewardSystem : MonoBehaviourSingleton<DailyRewardSystem>
 {
+    public static event Action OnBootstrapped;
+
     [Header("SETTINGS")]
     public DailyReward[] weeklyRewards = new DailyReward[7];
     private int WeekLength => GameConfigManager.Config.dailyRewardWeekLength;
@@ -44,26 +46,24 @@ public class DailyRewardSystem : MonoBehaviourSingleton<DailyRewardSystem>
     private DailyRewardSaveData rewardData;
 
     private bool _hasDoubledToday = false;
+    public bool IsBootstrapped { get; private set; }
+    private bool _bootstrapSignalEmitted;
+    private SaveBootstrapSync _saveBootstrapSync;
 
-    void Start()
+    public override void Awake()
     {
-        if (SaveManager.Instance != null && SaveManager.Instance.IsDataLoaded)
-            BootstrapFromSave();
+        base.Awake();
+        _saveBootstrapSync = new SaveBootstrapSync("DailyRewardSystem", () => IsBootstrapped, BootstrapFromSave);
     }
 
     private void OnEnable()
     {
-        SaveManager.OnDataLoaded += HandleDataLoaded;
+        _saveBootstrapSync?.Enable();
     }
 
     private void OnDisable()
     {
-        SaveManager.OnDataLoaded -= HandleDataLoaded;
-    }
-
-    private void HandleDataLoaded(GameData _)
-    {
-        BootstrapFromSave();
+        _saveBootstrapSync?.Disable();
     }
 
     private void BootstrapFromSave()
@@ -71,8 +71,28 @@ public class DailyRewardSystem : MonoBehaviourSingleton<DailyRewardSystem>
         LoadRewardData();
         SyncRewardState();
         CheckDoubleRewardStatus();
+        IsBootstrapped = true;
+
+        if (!_bootstrapSignalEmitted)
+        {
+            _bootstrapSignalEmitted = true;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            Debug.Log("[DailyRewardSystem] Bootstrap -> Completed");
+#endif
+            OnBootstrapped?.Invoke();
+        }
 
         GameEvents.RaiseRewardAvailabilityChanged(CanClaimToday());
+    }
+
+    protected override void OnDestroy()
+    {
+        _saveBootstrapSync?.Dispose();
+
+        if (Instance == this)
+            OnBootstrapped = null;
+
+        base.OnDestroy();
     }
 
     void LoadRewardData()
@@ -132,13 +152,17 @@ public class DailyRewardSystem : MonoBehaviourSingleton<DailyRewardSystem>
     {
         if (_hasDoubledToday)
         {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
             Debug.LogWarning("Ya se duplicó la recompensa de hoy");
+#endif
             return;
         }
 
         if (rewardData.claimedDays[rewardData.currentWeekDay])
         {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
             Debug.LogWarning("No se puede duplicar una recompensa ya reclamada");
+#endif
             return;
         }
 
@@ -298,6 +322,16 @@ public class DailyRewardSystem : MonoBehaviourSingleton<DailyRewardSystem>
         return IsRewardAvailable();
     }
 
+    public DailyAvailabilitySnapshot GetAvailabilitySnapshot()
+    {
+        bool canClaimToday = CanClaimToday();
+        DateTime nextAvailabilityUtc = canClaimToday
+            ? DateTime.UtcNow
+            : GetNextRewardAvailabilityUtc();
+
+        return new DailyAvailabilitySnapshot(canClaimToday, nextAvailabilityUtc, canClaimToday ? 1 : 0);
+    }
+
     public DailyReward GetTodayReward()
     {
         SyncRewardState();
@@ -452,5 +486,86 @@ public class DailyRewardSystem : MonoBehaviourSingleton<DailyRewardSystem>
         {
             Debug.LogWarning($"weeklyRewards debe tener {WeekLength} elementos");
         }
+    }
+}
+
+public sealed class SaveBootstrapSync : IDisposable
+{
+    private readonly string _systemName;
+    private readonly Func<bool> _isAlreadyBootstrapped;
+    private readonly Action _bootstrapFromSave;
+    private readonly Action<GameData> _dataLoadedHandler;
+    private bool _isSubscribed;
+
+    public SaveBootstrapSync(string systemName, Func<bool> isAlreadyBootstrapped, Action bootstrapFromSave)
+    {
+        _systemName = systemName;
+        _isAlreadyBootstrapped = isAlreadyBootstrapped;
+        _bootstrapFromSave = bootstrapFromSave;
+        _dataLoadedHandler = _ => TryBootstrapFromCurrentSave("SaveManager.OnDataLoaded");
+    }
+
+    public void Enable()
+    {
+        if (!_isSubscribed)
+        {
+            SaveManager.OnDataLoaded += _dataLoadedHandler;
+            _isSubscribed = true;
+        }
+
+        TryBootstrapFromCurrentSave("OnEnable");
+    }
+
+    public void Disable()
+    {
+        if (!_isSubscribed)
+            return;
+
+        SaveManager.OnDataLoaded -= _dataLoadedHandler;
+        _isSubscribed = false;
+    }
+
+    public bool TryBootstrapFromCurrentSave(string reason)
+    {
+        if (SaveManager.Instance == null)
+        {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            Debug.Log($"[{_systemName}] Bootstrap -> Waiting | Reason={reason} | saveManagerMissing=true");
+#endif
+            return false;
+        }
+
+        if (!SaveManager.Instance.IsDataLoaded)
+        {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            Debug.Log($"[{_systemName}] Bootstrap -> Waiting | Reason={reason} | dataLoaded=false");
+#endif
+            return false;
+        }
+
+        _bootstrapFromSave?.Invoke();
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        Debug.Log($"[{_systemName}] Bootstrap -> Synced | Reason={reason} | alreadyBootstrapped={_isAlreadyBootstrapped()}");
+#endif
+        return true;
+    }
+
+    public void Dispose()
+    {
+        Disable();
+    }
+}
+
+public readonly struct DailyAvailabilitySnapshot
+{
+    public bool IsAvailable { get; }
+    public DateTime NextAvailabilityUtc { get; }
+    public int AvailableCount { get; }
+
+    public DailyAvailabilitySnapshot(bool isAvailable, DateTime nextAvailabilityUtc, int availableCount)
+    {
+        IsAvailable = isAvailable;
+        NextAvailabilityUtc = nextAvailabilityUtc;
+        AvailableCount = Math.Max(0, availableCount);
     }
 }

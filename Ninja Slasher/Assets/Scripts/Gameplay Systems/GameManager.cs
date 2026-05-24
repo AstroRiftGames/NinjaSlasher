@@ -152,7 +152,9 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
         int currentLives = LifeManager.Instance != null ? LifeManager.Instance.GetRealLives() : 0;
         bool canPlay = LifeManager.Instance != null && LifeManager.Instance.CanPlay();
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
         Debug.Log($"[GameManager] Resolve defeat UI | realLives={currentLives} | canPlay={canPlay} | unlimitedLives={LifeManager.Instance.HasTimedUnlimitedLives}");
+#endif
         GameEvents.RaiseLevelResultReady(finalResult);
     }
 
@@ -184,10 +186,6 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
 
     private void OnLivesChanged(int newLives)
     {
-        if (newLives > 0)
-        {
-            Debug.Log($"[LevelManager] lives updated: {newLives}");
-        }
     }
 
     private int GetLevelIdForAnalytics()
@@ -250,12 +248,12 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
     {
         if (LevelSessionManager.Instance == null || !LevelSessionManager.Instance.IsSessionRunning) return;
 
-        bool isManagedBackgroundPauseActive = PauseController.Instance.IsPauseSourceActive(PauseSource.ApplicationBackground);
+        bool isManagedBackgroundPauseActive = PauseController.Instance != null &&
+                                             PauseController.Instance.IsPauseSourceActive(PauseSource.ApplicationBackground);
 
         if (!isManagedBackgroundPauseActive)
         {
-            LevelSessionManager.Instance.PauseLevel();
-            PauseController.Instance.RequestPause(PauseSource.ApplicationBackground);
+            PauseController.Instance?.RequestPause(PauseSource.ApplicationBackground);
             _pausedByFocusLoss = true;
         }
     }
@@ -264,8 +262,7 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
     {
         if (!_pausedByFocusLoss) return;
 
-        LevelSessionManager.Instance?.ResumeLevel();
-        PauseController.Instance.ReleasePause(PauseSource.ApplicationBackground);
+        PauseController.Instance?.ReleasePause(PauseSource.ApplicationBackground);
         _pausedByFocusLoss = false;
     }
 }

@@ -23,7 +23,6 @@ public class ExplosiveProjectile : Projectile
     public override void SetDirection(Vector2 direction)
     {
         base.SetDirection(direction);
-        Debug.Log("Dir set");
     }
 
 #if UNITY_EDITOR

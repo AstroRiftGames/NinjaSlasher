@@ -5,14 +5,14 @@ public class ComboManager : MonoBehaviourSingleton<ComboManager>
     private float ComboTimeWindow => GameConfigManager.Config.comboTimeWindow;
     private int MaxComboLevel => GameConfigManager.Config.maxComboLevel;
 
-    private int killCount = 0;
-    private float comboTimer = 0f;
-    private bool comboActive = false;
+    private int killCount;
+    private float comboTimer;
+    private bool comboActive;
     private Vector3 lastEnemyPosition;
 
-    private float _currentComboDuration = 0f;
-    private float _maxComboDuration = 0f;
-    private int _maxComboLevelReached = 0;
+    private float _currentComboDuration;
+    private float _maxComboDuration;
+    private int _maxComboLevelReached;
 
     public float MaxComboDuration
     {
@@ -21,10 +21,11 @@ public class ComboManager : MonoBehaviourSingleton<ComboManager>
             return comboActive ? Mathf.Max(_maxComboDuration, _currentComboDuration) : _maxComboDuration;
         }
     }
+
     public int MaxComboLevelReached => _maxComboLevelReached;
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-    private int _debugTotalKillsReceived = 0;
+    private int _debugTotalKillsReceived;
 #endif
 
     public override void Awake()
@@ -35,25 +36,32 @@ public class ComboManager : MonoBehaviourSingleton<ComboManager>
     private void OnEnable()
     {
         GameEvents.OnEnemyKilled += HandleEnemyKilled;
+        GameEvents.OnLevelSessionClosed += HandleLevelSessionClosed;
     }
 
     private void OnDisable()
     {
         GameEvents.OnEnemyKilled -= HandleEnemyKilled;
+        GameEvents.OnLevelSessionClosed -= HandleLevelSessionClosed;
     }
 
     private void HandleEnemyKilled(Vector3 position)
     {
+        if (!IsGameplaySessionRunning())
+            return;
+
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         _debugTotalKillsReceived++;
-        Debug.Log($"[Combo] Kill #{_debugTotalKillsReceived} recibido | killCount antes: {killCount} → combo proyectado: x{Mathf.Clamp(killCount + 1, 1, MaxComboLevel)}");
+        Debug.Log($"[Combo] Kill #{_debugTotalKillsReceived} recibido | killCount antes: {killCount} -> combo proyectado: x{Mathf.Clamp(killCount + 1, 1, MaxComboLevel)}");
 #endif
+
         RegisterKill(position);
     }
 
-    void Update()
+    private void Update()
     {
-        if (!comboActive) return;
+        if (!comboActive)
+            return;
 
         comboTimer -= Time.deltaTime;
         _currentComboDuration += Time.deltaTime;
@@ -72,31 +80,27 @@ public class ComboManager : MonoBehaviourSingleton<ComboManager>
             _currentComboDuration = 0f;
 
         killCount++;
-        int level = Mathf.Clamp(killCount, 1, 5);
+        int level = Mathf.Clamp(killCount, 1, MaxComboLevel);
 
         if (level > _maxComboLevelReached)
             _maxComboLevelReached = level;
 
         comboTimer = level switch
         {
-            1 => ComboTimeWindow * 0.67f,  // ~2s si base es 3s
-            2 => ComboTimeWindow * 0.53f,  // ~1.6s
-            3 => ComboTimeWindow * 0.47f,  // ~1.4s
-            4 => ComboTimeWindow * 0.40f,  // ~1.2s
-            _ => ComboTimeWindow * 0.33f   // ~1s
+            1 => ComboTimeWindow * 0.67f,
+            2 => ComboTimeWindow * 0.53f,
+            3 => ComboTimeWindow * 0.47f,
+            4 => ComboTimeWindow * 0.40f,
+            _ => ComboTimeWindow * 0.33f
         };
 
         comboActive = true;
 
-        if (level >= 2)
-        {
-            GiveBonus(level);
+        if (level < 2)
+            return;
 
-
-            //Debug.Log($"[ComboManager] Combo x{level} activado en posici�n {lastEnemyPosition}");
-
-            GameEvents.RaiseComboUpdated(level, lastEnemyPosition);
-        }
+        GiveBonus(level);
+        GameEvents.RaiseComboUpdated(level, lastEnemyPosition);
     }
 
     private void GiveBonus(int level)
@@ -109,36 +113,55 @@ public class ComboManager : MonoBehaviourSingleton<ComboManager>
             _ => 3f
         };
 
-        var context = PowerUpManager.Instance?.context;
+        PowerUpContext context = PowerUpManager.Instance?.context;
         if (context != null && context.ComboMasterActive)
         {
             float percent = context.ComboBonusPercent;
             float bonusExtra = bonus * percent;
             bonus += bonusExtra;
-
-            //Debug.Log($"[ComboManager] Bonus aumentado por ComboMaster: {bonus:F1}s (base + {bonusExtra:F1}s)");
         }
 
         GameEvents.RaiseLevelTimeBonus(bonus);
-
-        //Debug.Log($"[ComboManager] Bonus de tiempo otorgado: +{bonus:F1}s");
     }
 
     private void ResetCombo()
     {
-        if (killCount > 1)
-        {
-            //Debug.Log($"[ComboManager] Combo x{killCount} terminado");
-        }
+        ClearComboState(notifyReset: true, resetSessionStats: false);
+    }
 
+    private void HandleLevelSessionClosed()
+    {
+        ClearComboState(notifyReset: false, resetSessionStats: true);
+    }
+
+    private void ClearComboState(bool notifyReset, bool resetSessionStats)
+    {
         if (_currentComboDuration > _maxComboDuration)
             _maxComboDuration = _currentComboDuration;
 
+        bool shouldNotifyReset = notifyReset && comboActive;
+
         _currentComboDuration = 0f;
         killCount = 0;
+        comboTimer = 0f;
         comboActive = false;
+        lastEnemyPosition = Vector3.zero;
 
-        GameEvents.RaiseComboReset();
+        if (resetSessionStats)
+        {
+            _maxComboDuration = 0f;
+            _maxComboLevelReached = 0;
+        }
+
+        if (shouldNotifyReset)
+        {
+            GameEvents.RaiseComboReset();
+        }
+    }
+
+    private static bool IsGameplaySessionRunning()
+    {
+        return LevelSessionManager.Instance != null && LevelSessionManager.Instance.IsSessionRunning;
     }
 
     public Vector3 GetLastEnemyPosition()

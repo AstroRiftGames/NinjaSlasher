@@ -9,6 +9,7 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
     private ButtonManager _buttonManager;
     private GameplayUIManager _gameplayUIManager;
     private PreGameUIManager _preGameUIManager;
+    private SceneTransitionManager _sceneTransitionManager;
 
     [Header("OVERLAYS")]
     [SerializeField] private PauseOverlay _pauseOverlay;
@@ -104,6 +105,7 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
         _buttonManager = GetComponent<ButtonManager>();
         _gameplayUIManager = GetComponent<GameplayUIManager>();
         _preGameUIManager = GetComponent<PreGameUIManager>();
+        _sceneTransitionManager = GetComponentInChildren<SceneTransitionManager>(true);
         ResolveTutorialOverlay();
 
         if (_buttonManager == null)
@@ -220,6 +222,7 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
 
     private void SubscribeToGameEvents()
     {
+        GameEvents.OnLevelStarted += OnLevelStarted;
         GameEvents.OnLevelResultReady += OnLevelResultReady;
     }
 
@@ -283,13 +286,21 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
 
     private void UnsubscribeFromGameEvents()
     {
+        GameEvents.OnLevelStarted -= OnLevelStarted;
         GameEvents.OnLevelResultReady -= OnLevelResultReady;
     }
 
     #endregion
 
+    private void OnLevelStarted()
+    {
+        ShowGameplayHUD();
+    }
+
     private void OnLevelResultReady(LevelResult result)
     {
+        HideGameplayHUD();
+
         switch (result)
         {
             case LevelResult.Victory:
@@ -337,6 +348,15 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
             _levelsScreen.ResetAnimationStateForScreenReturn();
     }
 
+    public bool ShouldRunLevelSelectionStartupFlowOnNextEntry()
+    {
+        if (_sceneTransitionManager == null)
+            _sceneTransitionManager = GetComponentInChildren<SceneTransitionManager>(true);
+
+        return _sceneTransitionManager != null
+            && _sceneTransitionManager.ShouldRunLevelSelectionStartupFlowOnNextEntry;
+    }
+
     #endregion
 
     #region MODALS
@@ -361,7 +381,9 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
 
     private void ShowEmergencyBundleModal(EmergencyBundleOffer offer)
     {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
         Debug.Log($"[UIManager] ShowEmergencyBundleModal | modal assigned={_emergencyBundleModal != null}");
+#endif
         StartManagedUIFlow(ShowEmergencyBundleModalRoutine(offer));
     }
 
@@ -419,7 +441,7 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
     private void HideGameplayHUD()
     {
         _shouldGameplayHUDBeVisible = false;
-        HidePanel(_gameplayHUD);
+        ApplyGameplayHUDVisibility(force: true);
     }
 
     public void SetGameplayHUDEnabled(bool enabled)
@@ -428,6 +450,11 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
             ShowGameplayHUD();
         else
             HideGameplayHUD();
+    }
+
+    public void RefreshGameplayHUDSessionVisibility()
+    {
+        SetGameplayHUDEnabled(LevelSessionManager.Instance != null && LevelSessionManager.Instance.IsSessionRunning);
     }
 
     public void SetGameplayHUDTopRightInfoVisible(bool visible)
@@ -549,9 +576,25 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
         bool shouldShowHUD = _shouldGameplayHUDBeVisible && !UIPanel.HasVisibleBlockingPanel;
 
         if (shouldShowHUD)
-            ShowPanel(_gameplayHUD);
+            ApplyGameplayHUDVisibility(force: true);
         else
-            HidePanel(_gameplayHUD);
+            ApplyGameplayHUDVisibility(force: true);
+    }
+
+    private void ApplyGameplayHUDVisibility(bool force)
+    {
+        if (_gameplayHUD == null)
+            return;
+
+        bool shouldShowHUD = _shouldGameplayHUDBeVisible && !UIPanel.HasVisibleBlockingPanel;
+
+        if (!force && ShouldIgnoreUIRequest())
+            return;
+
+        if (shouldShowHUD)
+            ShowPanelInternal(_gameplayHUD);
+        else
+            HidePanelInternal(_gameplayHUD);
     }
 
     private TutorialUIOverlay ResolveTutorialOverlay()
@@ -603,23 +646,6 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
         yield return SetPanelVisibilityRoutineInternal(_levelsScreen, visible);
     }
 
-    public bool HasBlockingPanelForLevelSelection()
-    {
-        return IsPanelVisible(_pauseOverlay)
-            || IsPanelVisible(ResolveTutorialOverlay())
-            || IsPanelVisible(_splashScreen)
-            || IsModalVisible(_pregameModal)
-            || IsModalVisible(_noLivesModal)
-            || IsModalVisible(_defeatModal)
-            || IsModalVisible(_emergencyBundleModal)
-            || IsModalVisible(_creditsModal)
-            || IsModalVisible(_profileModal)
-            || IsModalVisible(_dailyRewardModal)
-            || IsModalVisible(_dailyWheelModal)
-            || IsModalVisible(_storeModal)
-            || IsModalVisible(_victoryModal);
-    }
-
     private bool ShouldIgnoreUIRequest()
     {
         return IsUIBusy;
@@ -634,7 +660,7 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
         }
 
         modal.Show();
-        UIEvents.RaiseAnyModalShown();
+        RaiseBlockingPanelShownIfNeeded(modal);
     }
 
     private void CloseModalInternal(UIModalBase modal)
@@ -651,7 +677,7 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
     private void ShowPanelInternal(UIPanel panel)
     {
         panel.Show();
-        UIEvents.RaiseAnyModalShown();
+        RaiseBlockingPanelShownIfNeeded(panel);
     }
 
     private void HidePanelInternal(UIPanel panel)
@@ -712,8 +738,7 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
 
         yield return panel.ShowRoutine();
 
-        if (panel is UIModalBase)
-            UIEvents.RaiseAnyModalShown();
+        RaiseBlockingPanelShownIfNeeded(panel);
     }
 
     private IEnumerator HidePanelRoutineInternal(UIPanel panel)
@@ -721,7 +746,12 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
         if (panel == null)
             yield break;
 
+        bool wasBlocking = panel.BlocksUnderlyingUIForFlow;
+        string panelName = panel.name;
         yield return panel.HideRoutine();
+
+        if (wasBlocking)
+            RaiseBlockingPanelHidden(panelName);
     }
 
     private IEnumerator SetPanelVisibilityRoutineInternal(UIPanel panel, bool visible)
@@ -736,6 +766,25 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
     {
         if (panel is NoLivesModal noLivesModal)
             noLivesModal.PrepareForFlowTransitionClose();
+    }
+
+    private static void RaiseBlockingPanelShownIfNeeded(UIPanel panel)
+    {
+        if (panel == null || !panel.BlocksUnderlyingUIForFlow)
+            return;
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        Debug.Log($"[UIManager] Signal -> BlockingPanelShown | Source={panel.name}");
+#endif
+        UIEvents.RaiseBlockingPanelShown(panel.name);
+    }
+
+    private static void RaiseBlockingPanelHidden(string panelName)
+    {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        Debug.Log($"[UIManager] Signal -> BlockingPanelHidden | Source={panelName}");
+#endif
+        UIEvents.RaiseBlockingPanelHidden(panelName);
     }
 
     #endregion

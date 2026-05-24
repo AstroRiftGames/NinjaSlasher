@@ -19,6 +19,9 @@ public class SceneTransitionManager : MonoBehaviour
     private bool _isLoadingLevelSelectorScene;
     private bool _isSceneTransitionInProgress;
 
+    public bool ShouldRunLevelSelectionStartupFlowOnNextEntry =>
+        _dailyStartupSequence != null && _dailyStartupSequence.ShouldRunOnNextLevelSelectorReady;
+
     private void Awake()
     {
         _audioContext = GetComponentInParent<UIAudioContext>();
@@ -89,9 +92,11 @@ public class SceneTransitionManager : MonoBehaviour
         _katanaTransition.PlayExitLevelTransition();
         yield return WaitForKatanaTransitionToComplete();
 
+        UIEvents.RaiseTransitionFinished();
+
         EndTransitionPause();
         EndSceneTransition();
-        uiManager?.SetGameplayHUDEnabled(true);
+        uiManager?.RefreshGameplayHUDSessionVisibility();
 
         yield return new WaitForEndOfFrame();
         SetHUDActive(true);
@@ -112,17 +117,18 @@ public class SceneTransitionManager : MonoBehaviour
         if (uiManager != null)
             yield return uiManager.HideActivePanelsForSceneTransition(hideLevelsScreen: true);
 
-        _transitionAnim.SetTrigger("Start");
-        yield return new WaitForSecondsRealtime(_transitionTime);
+        yield return PlayLegacyTransitionAndWait("Start");
 
         SceneManager.LoadScene(sceneName);
+        yield return WaitForScenePresentationFrame();
 
-        _transitionAnim.SetTrigger("End");
-        AudioService.Instance?.PlaySFX(_audioContext.Audio.transitionSlash);
+        yield return PlayLegacyTransitionAndWait("End", playSlashSfx: true);
+
+        UIEvents.RaiseTransitionFinished();
 
         EndTransitionPause();
         EndSceneTransition();
-        uiManager?.SetGameplayHUDEnabled(true);
+        uiManager?.RefreshGameplayHUDSessionVisibility();
 
         yield return new WaitForEndOfFrame();
         SetHUDActive(true);
@@ -132,6 +138,8 @@ public class SceneTransitionManager : MonoBehaviour
     {
         if (_isLoadingLevelSelectorScene || !TryBeginSceneTransition())
             return;
+
+        ConfigureNextLevelSelectorEntry(shouldRunStartupSequence: false);
 
         if (HasKatanaTransition())
         {
@@ -165,8 +173,6 @@ public class SceneTransitionManager : MonoBehaviour
         _katanaTransition.PlayEnterLevelTransition();
         yield return WaitForKatanaTransitionToComplete();
 
-        MusicEvents.OnEnterLevelSelection?.Invoke();
-        
         SceneManager.sceneLoaded += OnLevelSelectorSceneLoaded;
         SceneManager.LoadScene(_levelSelectorSceneName);
     }
@@ -191,11 +197,8 @@ public class SceneTransitionManager : MonoBehaviour
         if (uiManager != null)
             yield return uiManager.HideActivePanelsForSceneTransition();
 
-        _transitionAnim.SetTrigger("OpeningStart");
-        yield return new WaitForSecondsRealtime(_transitionTime);
+        yield return PlayLegacyTransitionAndWait("OpeningStart");
 
-        MusicEvents.OnEnterLevelSelection?.Invoke();
-        
         SceneManager.sceneLoaded += OnLevelSelectorSceneLoaded;
         SceneManager.LoadScene(_levelSelectorSceneName);
     }
@@ -205,6 +208,8 @@ public class SceneTransitionManager : MonoBehaviour
         if (!TryBeginSceneTransition())
             return;
 
+        ConfigureNextLevelSelectorEntry(shouldRunStartupSequence: true);
+
         if (HasKatanaTransition())
         {
             StartCoroutine(ShowLevelSelectorWithKatanaCo());
@@ -212,6 +217,11 @@ public class SceneTransitionManager : MonoBehaviour
         }
 
         StartCoroutine(ShowLevelSelectorLegacyCo());
+    }
+
+    private void ConfigureNextLevelSelectorEntry(bool shouldRunStartupSequence)
+    {
+        _dailyStartupSequence?.ConfigureNextLevelSelectorEntry(shouldRunStartupSequence);
     }
 
     private IEnumerator ShowLevelSelectorWithKatanaCo()
@@ -264,16 +274,14 @@ public class SceneTransitionManager : MonoBehaviour
             yield return uiManager.HideActivePanelsForSceneTransition(hideSplashScreen: true);
         }
 
-        _transitionAnim.SetTrigger("OpeningStart");
-        yield return new WaitForSecondsRealtime(_transitionTime);
+        yield return PlayLegacyTransitionAndWait("OpeningStart");
 
         if (uiManager != null)
         {
             yield return uiManager.SetLevelsScreenVisibilityForTransition(true);
         }
 
-        _transitionAnim.SetTrigger("End");
-        AudioService.Instance?.PlaySFX(_audioContext.Audio.transitionSlash);
+        yield return PlayLegacyTransitionAndWait("End", playSlashSfx: true);
 
         UIEvents.RequestUpdateLivesUI(LifeManager.Instance?.CurrentLives ?? 0);
 
@@ -303,19 +311,24 @@ public class SceneTransitionManager : MonoBehaviour
 
         if (HasKatanaTransition())
         {
+            if (uiManager != null)
+            {
+                yield return uiManager.SetSplashScreenVisibilityForTransition(false);
+                yield return uiManager.SetLevelsScreenVisibilityForTransition(true);
+            }
+
             _katanaTransition.PlayExitLevelTransition();
             yield return WaitForKatanaTransitionToComplete();
         }
         else
         {
-            _transitionAnim.SetTrigger("End");
-            AudioService.Instance?.PlaySFX(_audioContext.Audio.transitionSlash);
-        }
+            if (uiManager != null)
+            {
+                yield return uiManager.SetSplashScreenVisibilityForTransition(false);
+                yield return uiManager.SetLevelsScreenVisibilityForTransition(true);
+            }
 
-        if (uiManager != null)
-        {
-            yield return uiManager.SetSplashScreenVisibilityForTransition(false);
-            yield return uiManager.SetLevelsScreenVisibilityForTransition(true);
+            yield return PlayLegacyTransitionAndWait("End", playSlashSfx: true);
         }
 
         UIEvents.RequestUpdateLivesUI(LifeManager.Instance?.CurrentLives ?? 0);
@@ -347,10 +360,95 @@ public class SceneTransitionManager : MonoBehaviour
         }
     }
 
+    private IEnumerator PlayLegacyTransitionAndWait(string triggerName, bool playSlashSfx = false)
+    {
+        if (_transitionAnim != null && !string.IsNullOrEmpty(triggerName))
+            _transitionAnim.SetTrigger(triggerName);
+
+        if (playSlashSfx)
+            AudioService.Instance?.PlaySFX(_audioContext.Audio.transitionSlash);
+
+        yield return WaitForLegacyTransitionToComplete();
+    }
+
+    private IEnumerator WaitForLegacyTransitionToComplete()
+    {
+        if (_transitionAnim == null)
+        {
+            yield return WaitForSecondsUnscaled(_transitionTime);
+            yield break;
+        }
+
+        yield return null;
+
+        if (_transitionAnim == null || !_transitionAnim.isActiveAndEnabled || !_transitionAnim.gameObject.activeInHierarchy)
+        {
+            yield return WaitForSecondsUnscaled(_transitionTime);
+            yield break;
+        }
+
+        float timeout = Mathf.Max(0.1f, _transitionTime + 0.5f);
+        float elapsed = 0f;
+        int initialStateHash = _transitionAnim.GetCurrentAnimatorStateInfo(0).fullPathHash;
+        bool observedPlayback = false;
+
+        while (elapsed < timeout)
+        {
+            if (_transitionAnim == null || !_transitionAnim.isActiveAndEnabled || !_transitionAnim.gameObject.activeInHierarchy)
+            {
+                yield return WaitForSecondsUnscaled(Mathf.Max(0f, _transitionTime - elapsed));
+                yield break;
+            }
+
+            AnimatorStateInfo state = _transitionAnim.GetCurrentAnimatorStateInfo(0);
+            if (_transitionAnim.IsInTransition(0) || state.fullPathHash != initialStateHash)
+            {
+                observedPlayback = true;
+                break;
+            }
+
+            elapsed += Time.unscaledDeltaTime;
+            yield return null;
+        }
+
+        if (!observedPlayback)
+        {
+            yield return WaitForSecondsUnscaled(_transitionTime);
+            yield break;
+        }
+
+        elapsed = 0f;
+        while (elapsed < timeout)
+        {
+            if (_transitionAnim == null || !_transitionAnim.isActiveAndEnabled || !_transitionAnim.gameObject.activeInHierarchy)
+                yield break;
+
+            AnimatorStateInfo state = _transitionAnim.GetCurrentAnimatorStateInfo(0);
+            if (!_transitionAnim.IsInTransition(0) && state.normalizedTime >= 1f)
+                yield break;
+
+            elapsed += Time.unscaledDeltaTime;
+            yield return null;
+        }
+    }
+
     private static IEnumerator WaitForScenePresentationFrame()
     {
         yield return null;
         yield return new WaitForEndOfFrame();
+    }
+
+    private static IEnumerator WaitForSecondsUnscaled(float duration)
+    {
+        if (duration <= 0f)
+            yield break;
+
+        float elapsed = 0f;
+        while (elapsed < duration)
+        {
+            elapsed += Time.unscaledDeltaTime;
+            yield return null;
+        }
     }
 
     private void BeginTransitionPause()

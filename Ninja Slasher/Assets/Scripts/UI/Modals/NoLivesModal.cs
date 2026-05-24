@@ -64,7 +64,9 @@ public class NoLivesModal : UIModalBase
 
     protected override void OnShown()
     {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
         Debug.Log($"[NoLivesModal] No lives available | realLives={LifeManager.Instance?.GetRealLives() ?? -1} | displayLives={LifeManager.Instance?.GetDisplayLives() ?? -1} | rewarded={AdsManager.Instance?.GetRewardedAvailabilityReason() ?? "ads_manager_missing"}");
+#endif
 
         UpdateMessage();
         UpdateTimer();
@@ -143,17 +145,15 @@ public class NoLivesModal : UIModalBase
             _closeButton.interactable = !_isClaimLifeFlowInProgress;
         }
 
-        if (_lastClaimLifeButtonVisible != claimVisible || _lastRecoveryState != recoveryState)
-        {
-            Debug.Log($"[NoLivesModal] UpdateButtons | claimVisible={claimVisible} | {recoveryState}");
-            _lastClaimLifeButtonVisible = claimVisible;
-            _lastRecoveryState = recoveryState;
-        }
+        _lastClaimLifeButtonVisible = claimVisible;
+        _lastRecoveryState = recoveryState;
     }
 
     private void OnClaimLifeClicked()
     {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
         Debug.Log($"[NoLivesModal] Claim life clicked | canPlay={LifeManager.Instance?.CanPlay() ?? false} | realLives={LifeManager.Instance?.GetRealLives() ?? -1} | rewarded={AdsManager.Instance?.GetRewardedAvailabilityReason() ?? "ads_manager_missing"}");
+#endif
 
         if (LifeManager.Instance != null && LifeManager.Instance.CanPlay())
         {
@@ -163,12 +163,16 @@ public class NoLivesModal : UIModalBase
 
         if (!CanWatchAdForRecovery())
         {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
             Debug.LogWarning($"[NoLivesModal] Extra life rewarded ad request rejected | reason={AdsManager.Instance?.GetRewardedAvailabilityReason() ?? "ads_manager_missing"}");
+#endif
             UpdateButtons();
             return;
         }
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
         Debug.Log("[NoLivesModal] Claim button requested extra life rewarded ad.");
+#endif
         _isClaimLifeFlowInProgress = true;
         UpdateButtons();
         AdsManager.Instance?.ShowRewardedAdForExtraLife();

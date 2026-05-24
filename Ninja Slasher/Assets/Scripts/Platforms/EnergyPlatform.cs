@@ -54,7 +54,6 @@ public class EnergyPlatform : PlatformBase
     {
         if (!isOn)
         {
-            Debug.Log("Jugador aterrizo en la plataforma apagada");
         }
     }
 

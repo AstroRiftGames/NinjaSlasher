@@ -18,9 +18,11 @@ public class PregameModal : UIModalBase
     [SerializeField] private PreGameUIManager _preGameUIManager;
     [SerializeField] private ButtonManager _buttonManager;
 
+
     private Tween _moveTween;
     private Tween _scaleTween;
     private Tween _fadeTween;
+    private Tween _overlayFadeTween;
     private Vector2 _shownAnchoredPosition;
     private Vector3 _shownScale;
 
@@ -50,7 +52,7 @@ public class PregameModal : UIModalBase
         }
     }
 
-    public override void Show()
+public override void Show()
     {
         if (_isVisible) return;
 
@@ -65,6 +67,15 @@ public class PregameModal : UIModalBase
             _buttonManager.StopAllButtonAnimations();
         }
 
+        if (_overlayCanvasGroup != null)
+        {
+            _overlayCanvasGroup.alpha = 0f;
+            _overlayCanvasGroup.blocksRaycasts = true;
+            _overlayFadeTween = _overlayCanvasGroup.DOFade(1f, _animationDuration * 0.6f)
+                .SetEase(Ease.OutQuad)
+                .SetUpdate(true);
+        }
+
         ApplyHiddenState();
         AnimateToShownState();
     }
@@ -77,7 +88,22 @@ public class PregameModal : UIModalBase
 
         SetPanelInputEnabled(false);
         KillActiveTweens();
-        SetBackgroundRaycastTarget(false);
+
+        NotifyUIManagerModalHidden();
+        OnHidden();
+
+        if (_overlayCanvasGroup != null)
+        {
+            _overlayCanvasGroup.blocksRaycasts = false;
+            _overlayFadeTween = _overlayCanvasGroup.DOFade(0f, _animationDuration * 0.5f)
+                .SetEase(Ease.InQuad)
+                .SetUpdate(true)
+                .OnComplete(() => OnHideAnimationCompleted());
+        }
+        else
+        {
+            OnHideAnimationCompleted();
+        }
 
         if (_preGameUIManager != null)
         {
@@ -85,9 +111,14 @@ public class PregameModal : UIModalBase
             _preGameUIManager.HidePowerUpConfirmationImmediate();
         }
 
-        NotifyUIManagerModalHidden();
-        OnHidden();
+        SetBackgroundRaycastTarget(false);
         AnimateToHiddenState();
+    }
+
+    private void OnHideAnimationCompleted()
+    {
+        ResetOverlayState();
+        gameObject.SetActive(false);
     }
 
     public override IEnumerator ShowRoutine()
@@ -164,8 +195,7 @@ public class PregameModal : UIModalBase
         _moveTween = _panelTransform
             .DOAnchorPos(_shownAnchoredPosition + _hiddenOffset, _animationDuration)
             .SetEase(_closeEase)
-            .SetUpdate(true)
-            .OnComplete(() => gameObject.SetActive(false));
+            .SetUpdate(true);
 
         _scaleTween = _panelTransform
             .DOScale(_shownScale * _hiddenScale, _animationDuration)
@@ -181,7 +211,7 @@ public class PregameModal : UIModalBase
         }
     }
 
-    private void ApplyHiddenState()
+private void ApplyHiddenState()
     {
         if (_panelTransform != null)
         {
@@ -195,15 +225,26 @@ public class PregameModal : UIModalBase
         }
     }
 
+    private void ResetOverlayState()
+    {
+        if (_overlayCanvasGroup != null)
+        {
+            _overlayCanvasGroup.alpha = 0f;
+            _overlayCanvasGroup.blocksRaycasts = false;
+        }
+    }
+
     private void KillActiveTweens()
     {
         _moveTween?.Kill();
         _scaleTween?.Kill();
         _fadeTween?.Kill();
+        _overlayFadeTween?.Kill();
 
         _moveTween = null;
         _scaleTween = null;
         _fadeTween = null;
+        _overlayFadeTween = null;
     }
 
     private IEnumerator WaitForTweensToFinish()

@@ -22,6 +22,11 @@ public class GameData
     public int currentLives;
     public string lastLifeRegenTime = "";
     public bool canRegenLives = true;
+    public string lastKnownLocalUtc = "";
+    public string lastTrustedUtc = "";
+    public string lastTimeValidationUtc = "";
+    public bool trustedTimeAvailable = false;
+    public bool suspiciousTimeDetected = false;
 
     // Sistema de Power-ups
     public List<PowerUpData> activePowerUps = new List<PowerUpData>();

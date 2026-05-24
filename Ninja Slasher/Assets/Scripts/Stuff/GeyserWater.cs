@@ -16,10 +16,8 @@ public class GeyserWater : MonoBehaviour
         List<ParticleCollisionEvent> list = new List<ParticleCollisionEvent>();
         int amount = ps.GetCollisionEvents(player.gameObject, list);
 
-        Debug.Log("Particles collided");
         if(amount > 1)
         {
-            Debug.Log("Particles killed player");
             player.Die();
         }
     }

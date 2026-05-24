@@ -4,6 +4,10 @@ using UnityEngine;
 
 public class LifeManager : MonoBehaviourSingleton<LifeManager>
 {
+    private const double MaxSupportedElapsedSeconds = 365d * 24d * 60d * 60d;
+
+    [SerializeField] private TrustedTimeService _trustedTimeService;
+
     public int CurrentLives { get; private set; }
 
     public int ConsecutiveLosses => currentConsecutiveLosses;
@@ -78,9 +82,160 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
 
     private bool _lifeWallActive = false;
 
-    private bool HasDebugInfiniteLives =>
-        GameConfigManager.IsReady() &&
-        GameConfigManager.Config.infiniteLives;
+    private ITrustedTimeProvider _timeProvider;
+
+    private ITrustedTimeProvider TimeProvider
+    {
+        get
+        {
+            if (_timeProvider != null)
+                return _timeProvider;
+
+            if (_trustedTimeService == null)
+                _trustedTimeService = FindFirstObjectByType<TrustedTimeService>();
+
+            _timeProvider = _trustedTimeService != null
+                ? _trustedTimeService.Provider
+                : null;
+
+            return _timeProvider;
+        }
+    }
+
+    private bool TryGetCurrentUtcNow(out DateTime utcNow)
+    {
+        utcNow = DateTime.MinValue;
+        return TimeProvider != null && TimeProvider.TryGetTrustedUtcNow(out utcNow);
+    }
+
+    private DateTime GetCurrentUtcNowOrFallback()
+    {
+        if (TryGetCurrentUtcNow(out DateTime utcNow))
+            return utcNow;
+
+        if (_lastLifeUsedUtc > DateTime.MinValue)
+            return _lastLifeUsedUtc;
+
+        return DateTime.MinValue;
+    }
+
+    private bool CanApplyOfflineLifeProgress(ITrustedTimeProvider timeProvider)
+    {
+        return timeProvider != null &&
+               timeProvider.IsInitialized &&
+               timeProvider.CanApplyOfflineProgress &&
+               !timeProvider.HasSuspiciousTimeJump;
+    }
+
+    private void UpdateVirtualLivesFromCurrentLives()
+    {
+        _virtualLives = _hasVirtualDeduction
+            ? Mathf.Max(0, CurrentLives - 1)
+            : CurrentLives;
+    }
+
+    private void UpdateRechargeAnchorAfterLifeSpent(int previousLives, DateTime currentUtc)
+    {
+        if (CurrentLives >= MaxLives)
+        {
+            _lastLifeUsedUtc = DateTime.MinValue;
+            return;
+        }
+
+        if (previousLives >= MaxLives || _lastLifeUsedUtc <= DateTime.MinValue)
+            _lastLifeUsedUtc = currentUtc;
+    }
+
+    private bool TrySynchronizeLivesWithTrustedTime(
+        string persistReason,
+        bool emitChange = true,
+        bool requireOfflineValidation = false)
+    {
+        if (requireOfflineValidation && !CanApplyOfflineLifeProgress(TimeProvider))
+            return false;
+
+        if (CurrentLives >= MaxLives)
+        {
+            if (_lastLifeUsedUtc <= DateTime.MinValue)
+                return false;
+
+            _lastLifeUsedUtc = DateTime.MinValue;
+            Persist(persistReason);
+            return false;
+        }
+
+        if (!TryGetCurrentUtcNow(out DateTime currentUtc))
+            return false;
+
+        if (_lastLifeUsedUtc <= DateTime.MinValue)
+        {
+            _lastLifeUsedUtc = currentUtc;
+            Persist("Repair missing life timer");
+            return false;
+        }
+
+        try
+        {
+            double elapsedSeconds = (currentUtc - _lastLifeUsedUtc).TotalSeconds;
+
+            if (elapsedSeconds < 0d || elapsedSeconds > MaxSupportedElapsedSeconds)
+            {
+                Debug.LogWarning($"[LifeManager] Tiempo de recarga invÃ¡lido: {elapsedSeconds}s. Reseteando timer.");
+                _lastLifeUsedUtc = currentUtc;
+                Persist("Reset por tiempo invÃ¡lido");
+                return false;
+            }
+
+            int recoveredLives = Mathf.FloorToInt((float)(elapsedSeconds / LifeRechargeSeconds));
+            if (recoveredLives <= 0)
+                return false;
+
+            int missingLives = MaxLives - CurrentLives;
+            if (recoveredLives > missingLives)
+                recoveredLives = missingLives;
+
+            int previousLives = CurrentLives;
+            CurrentLives += recoveredLives;
+
+            if (CurrentLives >= MaxLives)
+            {
+                _lastLifeUsedUtc = DateTime.MinValue;
+            }
+            else
+            {
+                double consumedSeconds = recoveredLives * (double)LifeRechargeSeconds;
+                _lastLifeUsedUtc = _lastLifeUsedUtc.AddSeconds(consumedSeconds);
+            }
+
+            UpdateVirtualLivesFromCurrentLives();
+
+            if (AnalyticsManager.Instance != null)
+            {
+                AnalyticsManager.Instance.RecordLifeRestored(
+                    CurrentLives,
+                    LifeRestoreSource.TimeRegeneration);
+            }
+
+            if (_lifeWallActive && previousLives == 0 && CurrentLives > 0)
+            {
+                _lifeWallActive = false;
+                int wallLevelId = LevelSessionManager.Instance?.CurrentSession?.LevelId ?? 0;
+                AnalyticsManager.Instance?.RecordLifeWallResolved(LifeWallOutcome.Waited, wallLevelId);
+            }
+
+            Persist(persistReason);
+            if (emitChange)
+                EmitDisplayLivesChanged();
+            return true;
+        }
+        catch (ArgumentOutOfRangeException e)
+        {
+            Debug.LogError($"[LifeManager] Error al sincronizar vidas: {e.Message}. Reseteando timer.");
+            _lastLifeUsedUtc = currentUtc;
+            Persist("Reset por error");
+            return false;
+        }
+    }
 
     #region INITIALIZATION
 
@@ -97,7 +252,9 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
     private IEnumerator InitializeWhenReady()
     {
         while (!GameConfigManager.IsReady() ||
-               SaveManager.Instance == null)
+               SaveManager.Instance == null ||
+               TimeProvider == null ||
+               !TimeProvider.IsInitialized)
         {
             yield return null;
         }
@@ -131,10 +288,14 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
     private void InitializeFromSave()
     {
         var data = SaveManager.Instance?.GetGameData();
+        ITrustedTimeProvider timeProvider = TimeProvider;
+        DateTime currentUtc = GetCurrentUtcNowOrFallback();
 
-        Debug.Log($"[LifeManager] LoadLives | savedLives={data?.currentLives} | savedTimestamp='{data?.lastLifeRegenTime}' | canRegen={data?.canRegenLives} | unlimitedLivesEndUtc={data?.unlimitedLivesEndUtc}");
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        Debug.Log($"[LifeManager] LoadLives | savedLives={data?.currentLives} | savedTimestamp='{data?.lastLifeRegenTime}' | canRegen={data?.canRegenLives} | unlimitedLivesEndUtc={data?.unlimitedLivesEndUtc} | canApplyOfflineProgress={timeProvider != null && timeProvider.CanApplyOfflineProgress}");
+#endif
 
-        DateTime lastRegenUtc = DateTime.UtcNow;
+        DateTime lastRegenUtc = currentUtc;
         bool validDate = data != null && DateTime.TryParse(
             data.lastLifeRegenTime, null,
             System.Globalization.DateTimeStyles.RoundtripKind,
@@ -146,7 +307,7 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
                 ? lastRegenUtc
                 : lastRegenUtc.ToUniversalTime();
 
-            TimeSpan timeDiff = DateTime.UtcNow - lastRegenUtc;
+            TimeSpan timeDiff = currentUtc - lastRegenUtc;
             if (timeDiff.TotalDays < -1 || timeDiff.TotalDays > 365)
             {
                 Debug.LogWarning($"[LifeManager] Fecha de regeneración corrupta: {lastRegenUtc}. Reseteando.");
@@ -163,24 +324,30 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
             data == null ||
             !hasValidLives;
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
         Debug.Log($"[LifeManager] InitializeFromSave | validTimestamp={validDate} | shouldResetToStartingLives={shouldResetToStartingLives} | parsedTimestamp={lastRegenUtc:O} | dataNull={data == null} | hasValidLives={hasValidLives}");
+#endif
 
         if (shouldResetToStartingLives)
         {
             CurrentLives = Mathf.Clamp(StartingLives, 0, MaxLives);
-            _lastLifeUsedUtc = DateTime.UtcNow;
+            _lastLifeUsedUtc = CurrentLives < MaxLives ? currentUtc : DateTime.MinValue;
             Persist("Init (default)");
         }
         else
         {
             CurrentLives = Mathf.Clamp(data.currentLives, 0, MaxLives);
-            if (validDate)
+            if (CurrentLives >= MaxLives)
+            {
+                _lastLifeUsedUtc = DateTime.MinValue;
+            }
+            else if (validDate)
             {
                 _lastLifeUsedUtc = lastRegenUtc;
             }
             else
             {
-                _lastLifeUsedUtc = DateTime.UtcNow;
+                _lastLifeUsedUtc = currentUtc;
                 Persist("Repair missing life timestamp");
             }
         }
@@ -193,9 +360,9 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
             {
                 _unlimitedLivesStartUtc = DateTimeOffset.FromUnixTimeSeconds(data.unlimitedLivesStartUtc).UtcDateTime;
             }
-            else if (DateTime.UtcNow < _unlimitedLivesEndUtc)
+            else if (currentUtc < _unlimitedLivesEndUtc)
             {
-                _unlimitedLivesStartUtc = DateTime.UtcNow;
+                _unlimitedLivesStartUtc = currentUtc;
                 PersistUnlimitedLivesState();
             }
         }
@@ -205,15 +372,103 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
             _unlimitedLivesEndUtc = DateTime.MinValue;
         }
 
-        CheckOfflineRegeneration();
-        _virtualLives = CurrentLives;
+        if (CanApplyOfflineLifeProgress(timeProvider))
+        {
+            CheckOfflineRegeneration();
+        }
+        else
+        {
+            ApplyConservativeOfflineTimePolicy(currentUtc, timeProvider);
+        }
 
+        UpdateVirtualLivesFromCurrentLives();
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
         Debug.Log($"[LifeManager] RuntimeLivesFinal | currentLives={CurrentLives} | displayLives={GetDisplayLives()} | timerBaseUtc={_lastLifeUsedUtc:O} | unlimitedLivesActive={HasTimedUnlimitedLives}");
+#endif
+    }
+
+    private void ApplyConservativeOfflineTimePolicy(DateTime currentUtc, ITrustedTimeProvider timeProvider)
+    {
+        if (CurrentLives >= MaxLives)
+        {
+            _lastLifeUsedUtc = DateTime.MinValue;
+        }
+        else if (_lastLifeUsedUtc <= DateTime.MinValue)
+        {
+            _lastLifeUsedUtc = currentUtc;
+        }
+        else
+        {
+            double maxFrozenElapsedSeconds = Math.Max(0d, LifeRechargeSeconds - 1d);
+            if (timeProvider != null && timeProvider.TryFreezeElapsedSince(_lastLifeUsedUtc, maxFrozenElapsedSeconds, out DateTime rebasedLifeAnchorUtc))
+            {
+                _lastLifeUsedUtc = rebasedLifeAnchorUtc;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+                Debug.Log($"[LifeManager] Offline life regeneration frozen | rebasedAnchorUtc={_lastLifeUsedUtc:O}");
+#endif
+            }
+            else
+            {
+                _lastLifeUsedUtc = currentUtc;
+                Debug.LogWarning("[LifeManager] Offline life regeneration disabled because trusted continuity was unavailable. Timer progress was reset conservatively.");
+            }
+        }
+
+        if (_unlimitedLivesEndUtc <= DateTime.MinValue)
+            return;
+
+        DateTime savedUnlimitedStartUtc = _unlimitedLivesStartUtc;
+        DateTime savedUnlimitedEndUtc = _unlimitedLivesEndUtc;
+
+        if (timeProvider == null ||
+            !timeProvider.TryFreezeRemainingDuration(savedUnlimitedEndUtc, MaxSupportedElapsedSeconds, out DateTime rebasedUnlimitedEndUtc))
+        {
+            ClearUnlimitedLivesState();
+            Debug.LogWarning("[LifeManager] Unlimited lives expired conservatively because trusted continuity was unavailable.");
+            return;
+        }
+
+        double remainingUnlimitedSeconds = (rebasedUnlimitedEndUtc - currentUtc).TotalSeconds;
+        if (remainingUnlimitedSeconds <= 0d)
+        {
+            ClearUnlimitedLivesState();
+            return;
+        }
+
+        _unlimitedLivesEndUtc = rebasedUnlimitedEndUtc;
+
+        if (savedUnlimitedStartUtc > DateTime.MinValue)
+        {
+            double savedTotalDurationSeconds = (savedUnlimitedEndUtc - savedUnlimitedStartUtc).TotalSeconds;
+            if (savedTotalDurationSeconds > 0d && savedTotalDurationSeconds <= MaxSupportedElapsedSeconds)
+            {
+                _unlimitedLivesStartUtc = _unlimitedLivesEndUtc.AddSeconds(-savedTotalDurationSeconds);
+            }
+            else
+            {
+                _unlimitedLivesStartUtc = currentUtc;
+            }
+        }
+        else
+        {
+            _unlimitedLivesStartUtc = currentUtc;
+        }
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        Debug.Log($"[LifeManager] Offline unlimited lives frozen | remainingSeconds={remainingUnlimitedSeconds:F0} | rebasedEndUtc={_unlimitedLivesEndUtc:O}");
+#endif
+    }
+
+    private void ClearUnlimitedLivesState()
+    {
+        _unlimitedLivesStartUtc = DateTime.MinValue;
+        _unlimitedLivesEndUtc = DateTime.MinValue;
     }
 
     private void Persist(string reason = "Autosave")
     {
-        bool hasTimer = CurrentLives < MaxLives;
+        bool hasTimer = CurrentLives < MaxLives && _lastLifeUsedUtc > DateTime.MinValue;
         if (AutoSaveManager.Instance != null)
         {
             AutoSaveManager.Instance.OnLivesChanged(CurrentLives, _lastLifeUsedUtc, hasTimer);
@@ -230,133 +485,15 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
 
     private void UpdateLifeRecharge()
     {
-        if (HasDebugInfiniteLives) return;
-        if (CurrentLives >= MaxLives) return;
-
-        try
-        {
-            double seconds = (DateTime.UtcNow - _lastLifeUsedUtc).TotalSeconds;
-
-            if (seconds < 0 || seconds > (365 * 24 * 60 * 60))
-            {
-                Debug.LogWarning($"[LifeManager] Tiempo desde última vida inválido: {seconds}s. Reseteando.");
-                _lastLifeUsedUtc = DateTime.UtcNow;
-                Persist("Reset por tiempo inválido");
-                return;
-            }
-
-            if (seconds < LifeRechargeSeconds) return;
-
-            int toGenerate = Mathf.FloorToInt((float)seconds / LifeRechargeSeconds);
-            int newLives = Mathf.Min(CurrentLives + toGenerate, MaxLives);
-
-            bool wasAtWall = _lifeWallActive && CurrentLives == 0;
-
-            double secondsToAdd = toGenerate * LifeRechargeSeconds;
-            if (secondsToAdd > int.MaxValue)
-            {
-                Debug.LogWarning("[LifeManager] Overflow detectado. Llenando vidas.");
-                CurrentLives = MaxLives;
-                _lastLifeUsedUtc = DateTime.UtcNow;
-                _virtualLives = CurrentLives;
-                Persist("Reset por overflow");
-                EmitDisplayLivesChanged();
-                return;
-            }
-
-            _lastLifeUsedUtc = _lastLifeUsedUtc.AddSeconds(secondsToAdd);
-            CurrentLives = newLives;
-
-            if (_hasVirtualDeduction)
-                _virtualLives = Mathf.Max(0, CurrentLives - 1);
-            else
-                _virtualLives = CurrentLives;
-
-            if (AnalyticsManager.Instance != null && toGenerate > 0)
-            {
-                AnalyticsManager.Instance.RecordLifeRestored(
-                    CurrentLives,
-                    LifeRestoreSource.TimeRegeneration
-                );
-            }
-
-            if (wasAtWall && CurrentLives > 0)
-            {
-                _lifeWallActive = false;
-                int wallLevelId = LevelSessionManager.Instance?.CurrentSession?.LevelId ?? 0;
-                AnalyticsManager.Instance?.RecordLifeWallResolved(LifeWallOutcome.Waited, wallLevelId);
-            }
-
-            Persist("Vida regenerada");
-            EmitDisplayLivesChanged();
-        }
-        catch (ArgumentOutOfRangeException e)
-        {
-            Debug.LogError($"[LifeManager] Error en UpdateLifeRecharge: {e.Message}. Reseteando.");
-            _lastLifeUsedUtc = DateTime.UtcNow;
-            CurrentLives = MaxLives;
-            _virtualLives = CurrentLives;
-            Persist("Reset por error");
-            EmitDisplayLivesChanged();
-        }
+        TrySynchronizeLivesWithTrustedTime("Vida regenerada");
     }
 
     private void CheckOfflineRegeneration()
     {
-        if (HasDebugInfiniteLives) return;
-        if (CurrentLives >= MaxLives) return;
-
-        try
-        {
-            int savedLives = CurrentLives;
-            double seconds = (DateTime.UtcNow - _lastLifeUsedUtc).TotalSeconds;
-
-            if (seconds < 0 || seconds > (365 * 24 * 60 * 60))
-            {
-                Debug.LogWarning($"[LifeManager] Tiempo offline inválido: {seconds}s. Reseteando.");
-                _lastLifeUsedUtc = DateTime.UtcNow;
-                return;
-            }
-
-            if (seconds < LifeRechargeSeconds)
-            {
-                Debug.Log($"[LifeManager] OfflineRegen | savedLives={savedLives} | elapsedSeconds={seconds:F0} | generated=0 | resultLives={CurrentLives} | nextTimestamp='{_lastLifeUsedUtc:O}'");
-                return;
-            }
-
-            int toGenerate = Mathf.FloorToInt((float)seconds / LifeRechargeSeconds);
-            int newLives = Mathf.Min(CurrentLives + toGenerate, MaxLives);
-
-            double secondsToAdd = toGenerate * LifeRechargeSeconds;
-            if (secondsToAdd > int.MaxValue)
-            {
-                CurrentLives = MaxLives;
-                _lastLifeUsedUtc = DateTime.UtcNow;
-                _virtualLives = CurrentLives;
-                Persist("Vidas completas (overflow offline)");
-                EmitDisplayLivesChanged();
-                return;
-            }
-
-            _lastLifeUsedUtc = _lastLifeUsedUtc.AddSeconds(secondsToAdd);
-            CurrentLives = newLives;
-
-            _virtualLives = _hasVirtualDeduction ? Mathf.Max(0, CurrentLives - 1) : CurrentLives;
-
-            Debug.Log($"[LifeManager] OfflineRegen | savedLives={savedLives} | elapsedSeconds={seconds:F0} | generated={toGenerate} | resultLives={CurrentLives} | nextTimestamp='{_lastLifeUsedUtc:O}'");
-
-            Persist("Vidas offline regeneradas");
-            EmitDisplayLivesChanged();
-        }
-        catch (ArgumentOutOfRangeException e)
-        {
-            Debug.LogError($"[LifeManager] Error en CheckOfflineRegeneration: {e.Message}. Reseteando.");
-            _lastLifeUsedUtc = DateTime.UtcNow;
-            CurrentLives = MaxLives;
-            _virtualLives = CurrentLives;
-            Persist("Reset por error offline");
-            EmitDisplayLivesChanged();
-        }
+        TrySynchronizeLivesWithTrustedTime(
+            "Vidas offline regeneradas",
+            emitChange: true,
+            requireOfflineValidation: true);
     }
 
     #endregion
@@ -365,21 +502,31 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
 
     public bool IsInitialized => _isInitialized;
 
-    public bool HasTimedUnlimitedLives => DateTime.UtcNow < _unlimitedLivesEndUtc;
+    public bool HasTimedUnlimitedLives
+    {
+        get
+        {
+            DateTime currentUtc = GetCurrentUtcNowOrFallback();
+            return currentUtc > DateTime.MinValue && currentUtc < _unlimitedLivesEndUtc;
+        }
+    }
 
     public void ActivateUnlimitedLives(float durationMinutes)
     {
-        DateTime baseTime = HasTimedUnlimitedLives ? _unlimitedLivesEndUtc : DateTime.UtcNow;
-        _unlimitedLivesStartUtc = DateTime.UtcNow;
+        DateTime currentUtc = GetCurrentUtcNowOrFallback();
+        DateTime baseTime = HasTimedUnlimitedLives ? _unlimitedLivesEndUtc : currentUtc;
+        _unlimitedLivesStartUtc = currentUtc;
         _unlimitedLivesEndUtc = baseTime.AddMinutes(durationMinutes);
 
         PersistUnlimitedLivesState();
 
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
         Debug.Log($"[LifeManager] ActivateUnlimitedLives: {durationMinutes} min | " +
                   $"StartUtc={_unlimitedLivesStartUtc:O} | " +
                   $"EndUtc={_unlimitedLivesEndUtc:O} | " +
                   $"HasTimedUnlimitedLives={HasTimedUnlimitedLives} | " +
                   $"SaveManager={(SaveManager.Instance != null ? "OK" : "NULL")}");
+#endif
 
         EmitDisplayLivesChanged();
     }
@@ -387,7 +534,7 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
     public TimeSpan GetUnlimitedLivesRemainingTime()
     {
         if (!HasTimedUnlimitedLives) return TimeSpan.Zero;
-        return _unlimitedLivesEndUtc - DateTime.UtcNow;
+        return _unlimitedLivesEndUtc - GetCurrentUtcNowOrFallback();
     }
 
     public float GetUnlimitedLivesFillAmount()
@@ -399,7 +546,7 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
         if (totalSeconds <= 0d)
             return 0f;
 
-        double remainingSeconds = (_unlimitedLivesEndUtc - DateTime.UtcNow).TotalSeconds;
+        double remainingSeconds = (_unlimitedLivesEndUtc - GetCurrentUtcNowOrFallback()).TotalSeconds;
         return Mathf.Clamp01((float)(remainingSeconds / totalSeconds));
     }
 
@@ -407,7 +554,7 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
     {
         if (HasTimedUnlimitedLives) return true;
 
-        if (HasDebugInfiniteLives)
+        if (GameConfigManager.IsReady() && GameConfigManager.Config.infiniteLives)
         {
             return true;
         }
@@ -419,7 +566,7 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
     {
         if (HasTimedUnlimitedLives) return true;
 
-        if (HasDebugInfiniteLives)
+        if (GameConfigManager.IsReady() && GameConfigManager.Config.infiniteLives)
         {
             return true;
         }
@@ -434,13 +581,6 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
     {
         _hasVirtualDeduction = false;
 
-        if (HasDebugInfiniteLives)
-        {
-            _virtualLives = CurrentLives;
-            _levelInProgress = false;
-            return;
-        }
-
         if (!HasTimedUnlimitedLives && CurrentLives > 0)
         {
             _virtualLives = Mathf.Max(0, CurrentLives - 1);
@@ -453,15 +593,6 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
 
     public void UseLife()
     {
-        if (HasDebugInfiniteLives)
-        {
-            _hasVirtualDeduction = false;
-            _virtualLives = CurrentLives;
-            _levelInProgress = false;
-            EmitDisplayLivesChanged();
-            return;
-        }
-
         var context = PowerUpManager.Instance?.context;
         if (context != null && context.SecondChanceActive)
         {
@@ -478,8 +609,10 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
 
         if (_hasVirtualDeduction)
         {
+            int previousLives = CurrentLives;
             CurrentLives = Mathf.Clamp(_virtualLives, 0, MaxLives);
-            _lastLifeUsedUtc = DateTime.UtcNow;
+            DateTime currentUtc = GetCurrentUtcNowOrFallback();
+            UpdateRechargeAnchorAfterLifeSpent(previousLives, currentUtc);
 
             _hasVirtualDeduction = false;
             _levelInProgress = false;
@@ -510,9 +643,11 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
         {
             if (CurrentLives <= 0) return;
 
+            int previousLives = CurrentLives;
             CurrentLives = Mathf.Max(0, CurrentLives - 1);
-            _lastLifeUsedUtc = DateTime.UtcNow;
-            _virtualLives = CurrentLives;
+            DateTime currentUtc = GetCurrentUtcNowOrFallback();
+            UpdateRechargeAnchorAfterLifeSpent(previousLives, currentUtc);
+            UpdateVirtualLivesFromCurrentLives();
 
             totalLivesLostThisSession++;
             if (AnalyticsManager.Instance != null)
@@ -556,7 +691,7 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
     {
         if (_hasVirtualDeduction)
         {
-            if (HasTimedUnlimitedLives || HasDebugInfiniteLives)
+            if (HasTimedUnlimitedLives)
             {
                 _virtualLives = CurrentLives;
                 _hasVirtualDeduction = false;
@@ -565,8 +700,10 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
             }
             else
             {
+                int previousLives = CurrentLives;
                 CurrentLives = Mathf.Clamp(_virtualLives, 0, MaxLives);
-                _lastLifeUsedUtc = DateTime.UtcNow;
+                DateTime currentUtc = GetCurrentUtcNowOrFallback();
+                UpdateRechargeAnchorAfterLifeSpent(previousLives, currentUtc);
 
                 _hasVirtualDeduction = false;
                 _levelInProgress = false;
@@ -582,14 +719,23 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
 
     public void AddLife(LifeRestoreSource source = LifeRestoreSource.Unknown)
     {
+        GrantExternalLife(source);
+    }
+
+    public void GrantExternalLife(LifeRestoreSource source = LifeRestoreSource.Unknown)
+    {
         if (CurrentLives >= MaxLives) return;
 
-        CurrentLives++;
+        // Manual grants must not reset recharge progress. The recharge anchor only
+        // moves when a real life is consumed, a natural regeneration is applied,
+        // or an invalid time state is normalized.
+        DateTime rechargeAnchorUtc = _lastLifeUsedUtc;
 
-        if (_hasVirtualDeduction)
-            _virtualLives = Mathf.Max(0, CurrentLives - 1);
-        else
-            _virtualLives = CurrentLives;
+        CurrentLives++;
+        if (CurrentLives >= MaxLives)
+            rechargeAnchorUtc = DateTime.MinValue;
+
+        UpdateVirtualLivesFromCurrentLives();
 
         if (AnalyticsManager.Instance != null)
         {
@@ -606,6 +752,7 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
             AnalyticsManager.Instance?.RecordLifeWallResolved(WallOutcomeFromSource(source), wallLevelId);
         }
 
+        _lastLifeUsedUtc = rechargeAnchorUtc;
         Persist("Vida ganada");
         EmitDisplayLivesChanged();
     }
@@ -614,13 +761,11 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
     {
         if (CurrentLives >= MaxLives) return;
 
+        // Manual full refills follow the same rule as single-life grants: do not
+        // move the recharge anchor unless the caller explicitly needs a reset.
         CurrentLives = MaxLives;
-        _lastLifeUsedUtc = DateTime.UtcNow;
-
-        if (_hasVirtualDeduction)
-            _virtualLives = Mathf.Max(0, CurrentLives - 1);
-        else
-            _virtualLives = CurrentLives;
+        _lastLifeUsedUtc = DateTime.MinValue;
+        UpdateVirtualLivesFromCurrentLives();
 
         Persist("Vidas completas");
         EmitDisplayLivesChanged();
@@ -632,8 +777,11 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
 
         try
         {
-            double seconds = (DateTime.UtcNow - _lastLifeUsedUtc).TotalSeconds;
-            if (seconds < 0 || seconds > (365 * 24 * 60 * 60))
+            if (!TryGetCurrentUtcNow(out DateTime currentUtc))
+                return 0f;
+
+            double seconds = (currentUtc - _lastLifeUsedUtc).TotalSeconds;
+            if (seconds < 0 || seconds > MaxSupportedElapsedSeconds)
                 return 0f;
 
             return Mathf.Clamp01((float)(seconds / LifeRechargeSeconds));
@@ -650,9 +798,12 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
 
         try
         {
-            double seconds = (DateTime.UtcNow - _lastLifeUsedUtc).TotalSeconds;
+            if (!TryGetCurrentUtcNow(out DateTime currentUtc))
+                return TimeSpan.Zero;
 
-            if (seconds < 0 || seconds > (365 * 24 * 60 * 60))
+            double seconds = (currentUtc - _lastLifeUsedUtc).TotalSeconds;
+
+            if (seconds < 0 || seconds > MaxSupportedElapsedSeconds)
                 return TimeSpan.Zero;
 
             double secondsLeft = LifeRechargeSeconds - seconds;
@@ -679,7 +830,41 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
 
     #region EVENTS
 
-    private void OnApplicationFocus(bool hasFocus) { }
+    private void RefreshStateAfterForeground(string syncReason)
+    {
+        ITrustedTimeProvider timeProvider = TimeProvider;
+
+        if (CanApplyOfflineLifeProgress(timeProvider))
+        {
+            TrySynchronizeLivesWithTrustedTime(
+                syncReason,
+                emitChange: false,
+                requireOfflineValidation: true);
+        }
+        else if (TryGetCurrentUtcNow(out DateTime currentUtc))
+        {
+            ApplyConservativeOfflineTimePolicy(currentUtc, timeProvider);
+        }
+
+        UpdateUnlimitedLivesState(false);
+        EmitDisplayLivesChanged();
+    }
+
+    private void OnApplicationFocus(bool hasFocus)
+    {
+        if (!hasFocus || !_isInitialized)
+            return;
+
+        RefreshStateAfterForeground("Sync en foco");
+    }
+
+    private void OnApplicationPause(bool pauseStatus)
+    {
+        if (pauseStatus || !_isInitialized)
+            return;
+
+        RefreshStateAfterForeground("Sync al reanudar");
+    }
 
     private void EmitDisplayLivesChanged()
     {
@@ -687,18 +872,21 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
         GameEvents.RaiseLivesChanged(displayLives);
     }
 
-    private void UpdateUnlimitedLivesState()
+    private bool UpdateUnlimitedLivesState(bool emitChange = true)
     {
         if (_unlimitedLivesEndUtc == DateTime.MinValue)
-            return;
+            return false;
 
-        if (DateTime.UtcNow < _unlimitedLivesEndUtc)
-            return;
+        DateTime currentUtc = GetCurrentUtcNowOrFallback();
+        if (currentUtc > DateTime.MinValue && currentUtc < _unlimitedLivesEndUtc)
+            return false;
 
-        _unlimitedLivesStartUtc = DateTime.MinValue;
-        _unlimitedLivesEndUtc = DateTime.MinValue;
+        ClearUnlimitedLivesState();
         PersistUnlimitedLivesState();
-        EmitDisplayLivesChanged();
+        if (emitChange)
+            EmitDisplayLivesChanged();
+
+        return true;
     }
 
     private void PersistUnlimitedLivesState()
@@ -732,10 +920,6 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
 
     private void ResetLossCounter()
     {
-        if (currentConsecutiveLosses > 0)
-        {
-            Debug.Log($"[LifeManager] Contador de derrotas reseteado (era: {currentConsecutiveLosses})");
-        }
         currentConsecutiveLosses = 0;
     }
 

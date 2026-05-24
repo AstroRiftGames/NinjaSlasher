@@ -13,6 +13,8 @@ public class LevelSessionManager : MonoBehaviourSingleton<LevelSessionManager>
 
     private bool isLevelActive;
     private bool gameplayMusicStarted;
+    private bool _pendingVictory;
+    private PlayerController _playerController;
 
     public LevelSession CurrentSession => currentSession;
     public bool HasActiveSession => currentSession != null && !currentSession.IsComplete && !currentSession.IsFailed;
@@ -32,13 +34,14 @@ public class LevelSessionManager : MonoBehaviourSingleton<LevelSessionManager>
         SceneManager.sceneLoaded += OnSceneLoaded;
 
         GameEvents.OnAllEnemiesDefeated += OnAllEnemiesDefeated;
+        GameEvents.OnDashEnded += OnDashEnded;
         GameEvents.OnLevelTimeExpired += OnLevelTimeExpired;
         GameEvents.OnLevelTimeBonus += OnComboTimeBonus;
 
         UIEvents.OnRestartLevelRequested += OnRestartLevelRequested;
         UIEvents.OnRetryButtonPressed += OnRetryButtonPressed;
         UIEvents.OnQuitToMenuPressed += OnQuitToMenuPressed;
-        UIEvents.RaiseGamePaused += OnPauseStateChanged;
+        SubscribeToPauseController();
     }
 
     private void OnDisable()
@@ -46,13 +49,14 @@ public class LevelSessionManager : MonoBehaviourSingleton<LevelSessionManager>
         SceneManager.sceneLoaded -= OnSceneLoaded;
 
         GameEvents.OnAllEnemiesDefeated -= OnAllEnemiesDefeated;
+        GameEvents.OnDashEnded -= OnDashEnded;
         GameEvents.OnLevelTimeExpired -= OnLevelTimeExpired;
         GameEvents.OnLevelTimeBonus -= OnComboTimeBonus;
 
         UIEvents.OnRestartLevelRequested -= OnRestartLevelRequested;
         UIEvents.OnRetryButtonPressed -= OnRetryButtonPressed;
         UIEvents.OnQuitToMenuPressed -= OnQuitToMenuPressed;
-        UIEvents.RaiseGamePaused -= OnPauseStateChanged;
+        UnsubscribeFromPauseController();
     }
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
@@ -122,6 +126,7 @@ public class LevelSessionManager : MonoBehaviourSingleton<LevelSessionManager>
 
         timerService.Initialize();
         currentSession.Initialize();
+        ResolvePlayerControllerReference();
         EnsureGameplayMusicStarted();
 
         isLevelActive = true;
@@ -141,7 +146,7 @@ public class LevelSessionManager : MonoBehaviourSingleton<LevelSessionManager>
 
         if (!TryAuthorizeLevelAttempt())
         {
-            Debug.LogWarning("[LevelSessionManager] StartLevel blocked by life validation.");
+            LogDebug("[LevelSessionManager] StartLevel blocked by life validation.");
             return;
         }
 
@@ -189,22 +194,28 @@ public class LevelSessionManager : MonoBehaviourSingleton<LevelSessionManager>
     {
         if (!IsSessionRunning) return;
 
-        if (GameManager.Instance != null && GameManager.Instance.PlayerHasDied)
-        {
-            return;
-        }
-
-        CompleteLevel();
+        _pendingVictory = true;
+        LogDebug("[LevelSessionManager] All enemies defeated -> pending victory");
+        TryCompletePendingVictory();
     }
 
     private void CompleteLevel()
     {
         if (!IsSessionRunning) return;
 
+        _pendingVictory = false;
         timerService.Stop();
         currentSession.Complete();
 
         EvaluateAndSave();
+    }
+
+    private void OnDashEnded()
+    {
+        if (!_pendingVictory) return;
+
+        LogDebug("[LevelSessionManager] Dash ended -> retry pending victory");
+        TryCompletePendingVictory();
     }
 
     private void OnLevelTimeExpired()
@@ -216,7 +227,12 @@ public class LevelSessionManager : MonoBehaviourSingleton<LevelSessionManager>
 
     public void FailLevel(string reason)
     {
-        Debug.Log($"[LSM] FailLevel | reason={reason} | HasActiveSession={HasActiveSession} | session={currentSession != null} | IsFailed={currentSession?.IsFailed} | IsComplete={currentSession?.IsComplete}");
+        LogDebug($"[LSM] FailLevel | reason={reason} | HasActiveSession={HasActiveSession} | session={currentSession != null} | IsFailed={currentSession?.IsFailed} | IsComplete={currentSession?.IsComplete}");
+        if (_pendingVictory)
+        {
+            LogDebug($"[LevelSessionManager] Pending victory cancelled by defeat | reason={reason}");
+        }
+        _pendingVictory = false;
         if (!CanFailCurrentSession()) return;
 
         timerService.Stop();
@@ -293,6 +309,58 @@ public class LevelSessionManager : MonoBehaviourSingleton<LevelSessionManager>
         if (!IsSessionRunning) return;
 
         timerService?.AddTime(bonusSeconds);
+    }
+
+    private void TryCompletePendingVictory()
+    {
+        if (!_pendingVictory) return;
+
+        if (!CanConfirmVictoryNow())
+            return;
+
+        LogDebug("[LevelSessionManager] Pending victory confirmed");
+        CompleteLevel();
+    }
+
+    private bool CanConfirmVictoryNow()
+    {
+        if (!IsSessionRunning)
+        {
+            LogDebug("[LevelSessionManager] Pending victory blocked because session is not running");
+            return false;
+        }
+
+        if (GameManager.Instance != null && GameManager.Instance.PlayerHasDied)
+        {
+            LogDebug("[LevelSessionManager] Pending victory blocked because player has died");
+            return false;
+        }
+
+        if (trackingService == null || trackingService.GetRemainingEnemies() > 0)
+        {
+            LogDebug("[LevelSessionManager] Pending victory blocked because enemies still remain");
+            return false;
+        }
+
+        if (!TryResolvePlayerControllerReference())
+        {
+            LogDebug("[LevelSessionManager] Pending victory blocked because PlayerController was not found");
+            return false;
+        }
+
+        if (_playerController.IsDashing)
+        {
+            LogDebug("[LevelSessionManager] Pending victory blocked because player is dashing");
+            return false;
+        }
+
+        if (_playerController.IsDeadOrDying)
+        {
+            LogDebug("[LevelSessionManager] Pending victory blocked because player is dead or dying");
+            return false;
+        }
+
+        return true;
     }
 
     public void RegisterMove()
@@ -399,6 +467,24 @@ public class LevelSessionManager : MonoBehaviourSingleton<LevelSessionManager>
         }
     }
 
+    private void SubscribeToPauseController()
+    {
+        if (PauseController.Instance == null)
+            return;
+
+        PauseController.Instance.PauseStateChanged -= OnPauseStateChanged;
+        PauseController.Instance.PauseStateChanged += OnPauseStateChanged;
+        OnPauseStateChanged(PauseController.Instance.IsPaused);
+    }
+
+    private void UnsubscribeFromPauseController()
+    {
+        if (PauseController.Instance == null)
+            return;
+
+        PauseController.Instance.PauseStateChanged -= OnPauseStateChanged;
+    }
+
     private void OnRetryButtonPressed()
     {
         if (!IsLevelScene(SceneManager.GetActiveScene().name) || LifeManager.Instance == null)
@@ -457,15 +543,48 @@ public class LevelSessionManager : MonoBehaviourSingleton<LevelSessionManager>
             trackingService?.Dispose();
             timerService?.Dispose();
             currentSession?.Clear();
+            GameEvents.RaiseLevelSessionClosed();
 
             currentSession = null;
             trackingService = null;
             timerService = null;
             objectiveService = null;
+            _pendingVictory = false;
+            _playerController = null;
 
             isLevelActive = false;
             gameplayMusicStarted = false;
         }
+        else
+        {
+            _pendingVictory = false;
+            _playerController = null;
+        }
+    }
+
+    private void ResolvePlayerControllerReference()
+    {
+        if (TryResolvePlayerControllerReference())
+            return;
+
+        Debug.LogWarning("[LevelSessionManager] PlayerController no encontrado al inicializar la sesión.");
+    }
+
+    private bool TryResolvePlayerControllerReference()
+    {
+        if (_playerController != null)
+            return true;
+
+        _playerController = Object.FindFirstObjectByType<PlayerController>();
+        return _playerController != null;
+    }
+
+    private void LogDebug(string message)
+    {
+        if (!enableDebugLogs)
+            return;
+
+        Debug.Log(message);
     }
 
     private bool TryPlayGameplayMusic()

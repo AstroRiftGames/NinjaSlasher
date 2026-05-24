@@ -15,11 +15,5 @@ public class PowerUpSecondChance : PowerUpBase
 
     public override void OnUseConsumed(PowerUpContext context)
     {
-        Debug.Log($"[SecondChance] Uso consumido. Restantes: {context.SecondChanceUsesRemaining}");
-
-        if (context.SecondChanceUsesRemaining == 1)
-        {
-            Debug.LogWarning("[SecondChance] Ultimo uso disponible");
-        }
     }
 }

@@ -3,12 +3,15 @@ using UnityEditor;
 #endif
 using UnityEngine;
 
-[RequireComponent(typeof(ParticleSystem))]
+[RequireComponent(typeof(ParticleSystem), typeof(ParticleSystemRenderer))]
 public class FireflyParticleSystem : MonoBehaviour
 {
     [Header("PARTICLES")]
     [SerializeField] private Sprite fireflySprite;
     [SerializeField] private Sprite fireflyLightSprite;
+
+    [Header("RENDERER")]
+    [SerializeField] private Material _fireflyMaterial;
 
     [Header("AMOUNT")]
     [SerializeField] private int maxParticles = 30;
@@ -35,8 +38,8 @@ public class FireflyParticleSystem : MonoBehaviour
     [SerializeField] private string sortingLayerName;
     [SerializeField] private int sortingOrder = 5;
 
-    private ParticleSystem particleSystem;
-    private ParticleSystemRenderer particleRenderer;
+    private ParticleSystem _particleSystem;
+    private ParticleSystemRenderer _particleRenderer;
 
     void Start()
     {
@@ -45,10 +48,10 @@ public class FireflyParticleSystem : MonoBehaviour
 
     private void ConfigureParticleSystem()
     {
-        particleSystem = GetComponent<ParticleSystem>();
-        particleRenderer = GetComponent<ParticleSystemRenderer>();
+        _particleSystem = GetComponent<ParticleSystem>();
+        _particleRenderer = GetComponent<ParticleSystemRenderer>();
 
-        var main = particleSystem.main;
+        var main = _particleSystem.main;
         main.loop = true;
         main.playOnAwake = true;
         main.maxParticles = maxParticles;
@@ -70,14 +73,14 @@ public class FireflyParticleSystem : MonoBehaviour
 
     private void ConfigureEmission()
     {
-        var emission = particleSystem.emission;
+        var emission = _particleSystem.emission;
         emission.enabled = true;
         emission.rateOverTime = emissionRate;
     }
 
     private void ConfigureShape()
     {
-        var shape = particleSystem.shape;
+        var shape = _particleSystem.shape;
         shape.enabled = true;
         shape.shapeType = ParticleSystemShapeType.Box;
         shape.scale = new Vector3(spawnAreaSize.x, spawnAreaSize.y, 0.1f);
@@ -85,16 +88,19 @@ public class FireflyParticleSystem : MonoBehaviour
 
     private void ConfigureVelocity()
     {
-        var velocityOverLifetime = particleSystem.velocityOverLifetime;
+        var velocityOverLifetime = _particleSystem.velocityOverLifetime;
         velocityOverLifetime.enabled = true;
         velocityOverLifetime.space = ParticleSystemSimulationSpace.World;
 
         velocityOverLifetime.x = new ParticleSystem.MinMaxCurve(-moveSpeed, moveSpeed);
         velocityOverLifetime.y = new ParticleSystem.MinMaxCurve(-moveSpeed * 0.5f, moveSpeed * 0.5f);
-        velocityOverLifetime.z = 0;
+        velocityOverLifetime.z = new ParticleSystem.MinMaxCurve(0f, 0f);
 
-        var noise = particleSystem.noise;
-        noise.enabled = true;
+        var noise = _particleSystem.noise;
+        noise.enabled = turbulence > 0f;
+        if (!noise.enabled)
+            return;
+
         noise.strength = turbulence;
         noise.frequency = 0.5f;
         noise.scrollSpeed = 0.2f;
@@ -104,7 +110,7 @@ public class FireflyParticleSystem : MonoBehaviour
 
     private void ConfigureColorOverLifetime()
     {
-        var colorModule = particleSystem.colorOverLifetime;
+        var colorModule = _particleSystem.colorOverLifetime;
         colorModule.enabled = true;
 
         if (colorOverLifetime == null || colorOverLifetime.colorKeys.Length == 0)
@@ -130,7 +136,7 @@ public class FireflyParticleSystem : MonoBehaviour
 
     private void ConfigureSizeOverLifetime()
     {
-        var sizeModule = particleSystem.sizeOverLifetime;
+        var sizeModule = _particleSystem.sizeOverLifetime;
         sizeModule.enabled = true;
 
         if (pulseCurve == null || pulseCurve.length == 0)
@@ -157,62 +163,60 @@ public class FireflyParticleSystem : MonoBehaviour
 
     private void ConfigureRenderer()
     {
-        particleRenderer.renderMode = ParticleSystemRenderMode.Billboard;
-        particleRenderer.alignment = ParticleSystemRenderSpace.View;
-        particleRenderer.sortingLayerName = sortingLayerName;
-        particleRenderer.sortingOrder = sortingOrder;
-        particleRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-        particleRenderer.receiveShadows = false;
+        _particleRenderer.renderMode = ParticleSystemRenderMode.Billboard;
+        _particleRenderer.alignment = ParticleSystemRenderSpace.View;
+        _particleRenderer.sortingLayerName = sortingLayerName;
+        _particleRenderer.sortingOrder = sortingOrder;
+        _particleRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+        _particleRenderer.receiveShadows = false;
 
-        if (fireflyLightSprite != null)
+        if (_fireflyMaterial == null)
         {
-            Material material = new Material(Shader.Find("Sprites/Default"));
-            material.mainTexture = fireflyLightSprite.texture;
-            particleRenderer.material = material;
+            LogMissingFireflyMaterialWarning();
+            return;
         }
-        else if (fireflySprite != null)
-        {
-            Material material = new Material(Shader.Find("Sprites/Default"));
-            material.mainTexture = fireflySprite.texture;
-            particleRenderer.material = material;
-        }
+
+        if (_particleRenderer.sharedMaterial != _fireflyMaterial)
+            _particleRenderer.sharedMaterial = _fireflyMaterial;
+
+        ValidateMaterialTextureConfiguration();
     }
 
     public void Play()
     {
-        if (particleSystem != null)
+        if (_particleSystem != null)
         {
-            particleSystem.Play();
+            _particleSystem.Play();
         }
     }
 
     public void Stop()
     {
-        if (particleSystem != null)
+        if (_particleSystem != null)
         {
-            particleSystem.Stop();
+            _particleSystem.Stop();
         }
     }
 
     public void Clear()
     {
-        if (particleSystem != null)
+        if (_particleSystem != null)
         {
-            particleSystem.Clear();
+            _particleSystem.Clear();
         }
     }
 
     public void SetEmissionRate(float rate)
     {
         emissionRate = rate;
-        var emission = particleSystem.emission;
+        var emission = _particleSystem.emission;
         emission.rateOverTime = rate;
     }
 
     public void SetMaxParticles(int max)
     {
         maxParticles = max;
-        var main = particleSystem.main;
+        var main = _particleSystem.main;
         main.maxParticles = max;
     }
 
@@ -226,5 +230,27 @@ public class FireflyParticleSystem : MonoBehaviour
     {
         Gizmos.color = new Color(1f, 0.8f, 0f, 0.5f);
         Gizmos.DrawWireCube(transform.position, new Vector3(spawnAreaSize.x, spawnAreaSize.y, 0.1f));
+    }
+
+    [System.Diagnostics.Conditional("UNITY_EDITOR")]
+    [System.Diagnostics.Conditional("DEVELOPMENT_BUILD")]
+    private void LogMissingFireflyMaterialWarning()
+    {
+        Debug.LogWarning($"{nameof(FireflyParticleSystem)} on '{name}' is missing {_fireflyMaterial?.name ?? nameof(_fireflyMaterial)}. Assign a shared material in the prefab/inspector.", this);
+    }
+
+    [System.Diagnostics.Conditional("UNITY_EDITOR")]
+    [System.Diagnostics.Conditional("DEVELOPMENT_BUILD")]
+    private void ValidateMaterialTextureConfiguration()
+    {
+        if (_fireflyMaterial == null || fireflyLightSprite == null)
+            return;
+
+        if (_fireflyMaterial.mainTexture != fireflyLightSprite.texture)
+        {
+            Debug.LogWarning(
+                $"{nameof(FireflyParticleSystem)} on '{name}' has a shared material whose main texture does not match the configured firefly light sprite texture.",
+                this);
+        }
     }
 }

@@ -7,10 +7,6 @@ public class RewardService : MonoBehaviourSingleton<RewardService>
     {
         _grantCounter++;
 
-        Debug.Log(
-            $"[RewardService] Grant call #{_grantCounter} | productId={product.PrimaryProductId}"
-        );
-
         if (product == null)
         {
             Debug.LogWarning("[RewardService] Grant called with null product.");
@@ -37,7 +33,6 @@ public class RewardService : MonoBehaviourSingleton<RewardService>
 
     private void GrantBundleReward(BundleRewardData reward)
     {
-        Debug.Log("BUNDLE EXECUTED");
         if (reward == null) return;
 
         // Lives
@@ -51,7 +46,7 @@ public class RewardService : MonoBehaviourSingleton<RewardService>
         else if (reward.regularLivesCount > 0)
         {
             for (int i = 0; i < reward.regularLivesCount; i++)
-                LifeManager.Instance?.AddLife(LifeRestoreSource.IapPurchase);
+                LifeManager.Instance?.GrantExternalLife(LifeRestoreSource.IapPurchase);
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             Debug.Log($"[RewardService] +{reward.regularLivesCount} lives | Total={LifeManager.Instance?.GetRealLives()}");
 #endif

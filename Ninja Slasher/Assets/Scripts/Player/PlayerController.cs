@@ -1,6 +1,6 @@
 using CandyCoded.HapticFeedback;
 using System;
-using System.Linq;
+using System.Collections;
 using UnityEngine;
 
 public enum NinjaStates
@@ -21,15 +21,20 @@ public class PlayerController : MonoBehaviour
     [SerializeField] InputDetection _swipeDetection;
     [SerializeField] TrajectoryRenderer _trajectoryRenderer;
     [SerializeField] private GameObject _slashVFX;
+    [SerializeField] private Camera _mainCamera;
 
     [Header("Audio")]
     [SerializeField] private PlayerAudioSet _audio;
+
+    [Header("Smoke Bomb Settings")]
+    [SerializeField] private float _smokeBombVisibilityDelay = 0.15f;
 
 
     public bool IsDashing => _isDashing;
     private bool _isDashing = false;
     public bool IsParrying => _isParrying;
     private bool _isParrying = false;
+    public bool IsDeadOrDying => _isKO;
     private bool _isKO = false;
     private bool _hasHandledGameplayClosed = false;
 
@@ -51,11 +56,20 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private LayerMask _proyectilesLayer;
     [SerializeField] private LayerMask _obstaclesLayer;
 
-    private string[] colMatrix = { "Obstacle", "Scenario", "Floor"};
-    private string[] deadlyMatrix = { "Enemy", "Spikes", "EnemyShield", };
+    private readonly Collider2D[] _parryHitsBuffer = new Collider2D[16];
+    private BoxCollider2D[] _boxColliders;
 
     public Action<bool> OnHit;
     public Action<bool> OnParry;
+
+    private void Awake()
+    {
+        _boxColliders = GetComponents<BoxCollider2D>();
+        if (_mainCamera == null)
+        {
+            _mainCamera = Camera.main;
+        }
+    }
 
     private void SetFlipped(float angle)
     {
@@ -134,6 +148,8 @@ public class PlayerController : MonoBehaviour
         _swipeDetection.OnSwipe += TryDash;
         _swipeDetection.OnInputStart += CalculateAngleRange;
         _swipeDetection.OnTap += TryParry;
+
+        UIEvents.OnTransitionFinished += PlaySmokeBomb;
     }
 
     private void OnDisable()
@@ -143,6 +159,8 @@ public class PlayerController : MonoBehaviour
         _swipeDetection.OnSwipe -= TryDash;
         _swipeDetection.OnInputStart -= CalculateAngleRange;
         _swipeDetection.OnTap -= TryParry;
+
+        UIEvents.OnTransitionFinished -= PlaySmokeBomb;
     }
 
     private Vector2 GetFinalDirection(Vector2 startDir)
@@ -196,7 +214,7 @@ public class PlayerController : MonoBehaviour
 
         _hasHandledGameplayClosed = false;
 
-        if (_swipeDetection.IsPressing)
+        if (_swipeDetection.IsPressing && _swipeDetection.Direction.magnitude >= .5f)
         {
             _trajectoryRenderer.ShowTrajectory(transform.position, GetFinalDirection(_swipeDetection.Direction));
         }
@@ -319,6 +337,25 @@ public class PlayerController : MonoBehaviour
         SetFlipped(angle);
         SetMirrored(false);
     }
+    
+    private void PlaySmokeBomb()
+    {
+        if (_view.SmokeBombParticles != null)
+        {
+            _view.SmokeBombParticles.Play();
+            StartCoroutine(ShowCharacterAfterDelay(_smokeBombVisibilityDelay));
+        }
+        else
+        {
+            _view.SetSpriteVisibility(true);
+        }
+    }
+
+    private IEnumerator ShowCharacterAfterDelay(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        _view.SetSpriteVisibility(true);
+    }
 
 
     private void TryParry(Vector2 tapPos)
@@ -328,7 +365,14 @@ public class PlayerController : MonoBehaviour
 
         if (!_isKO && !_isDashing && !_isParrying && CheckParryCD())
         {
-            Vector2 worldTapPos = Camera.main.ScreenToWorldPoint(tapPos);
+            if (_mainCamera == null)
+            {
+                _mainCamera = Camera.main;
+            }
+
+            Vector2 worldTapPos = _mainCamera != null
+                ? _mainCamera.ScreenToWorldPoint(tapPos)
+                : tapPos;
             Parry(worldTapPos);
         }
     }
@@ -346,13 +390,14 @@ public class PlayerController : MonoBehaviour
         _isParrying = true;
 
         _lastParry = Time.time;
-        Collider2D[] hitColliders = Physics2D.OverlapCircleAll(transform.position, _parryRange, _proyectilesLayer);
+        int hitCount = Physics2D.OverlapCircleNonAlloc(transform.position, _parryRange, _parryHitsBuffer, _proyectilesLayer);
 
         _view.Animator.SetTrigger("OnParry");
         AudioService.Instance.PlaySFXAtPosition(_audio.parrySwing, transform.position);
 
-        foreach (var col in hitColliders)
+        for (int i = 0; i < hitCount; i++)
         {
+            Collider2D col = _parryHitsBuffer[i];
             if (col.TryGetComponent(out Projectile projectile)
                 && projectile.Shooter != transform
                 && projectile.IsParryable)
@@ -367,6 +412,7 @@ public class PlayerController : MonoBehaviour
             }
         }
 
+        ClearParryHitsBuffer(hitCount);
         _isParrying = false;
     }
 
@@ -378,20 +424,18 @@ public class PlayerController : MonoBehaviour
         else return _model.ParryRange;
     }
 
-    private void Grab(Vector2 normal)
+    private void Grab(Vector2 normal, Vector2 contactPoint, Collider2D surfaceCollider)
     {
-        if (_isDashing)
-        {
-            GameEvents.RaiseDashEnded();
-        }
-        _isDashing = false;
+        bool wasDashing = _isDashing;
+        if (wasDashing)
+            _isDashing = false;
+
         _lastNormal = normal;
         _view.Animator.SetBool("IsGrounded", true);
         RotateSprites(Vector2.zero);
         _view.RB.linearVelocity = Vector2.zero;
         _view.Animator.SetBool("IsWallGrabbed", false);
         _view.Animator.SetBool("IsCeilingGrabbed", false);
-        _view.LandingParticles.Play();
 
         if (normal == Vector2.right || normal == Vector2.left)
         {
@@ -404,13 +448,35 @@ public class PlayerController : MonoBehaviour
             _view.Animator.SetBool("IsCeilingGrabbed", true);
             RotateSprites(Vector2.left);
         }
+        
+        // Reposition and align particles AFTER all rotations and mirroring
+        _view.LandingParticles.transform.position = contactPoint;
+        _view.LandingParticles.transform.up = normal;
+        
+        SurfaceMaterial material = SurfaceMaterial.General;
+        if (surfaceCollider != null && surfaceCollider.TryGetComponent(out SurfaceProperties surfaceProps))
+        {
+            material = surfaceProps.MaterialType;
+        }
+        
+        _view.SetLandingParticlesSurface(material);
+        _view.LandingParticles.Play();
+
+        if (wasDashing)
+        {
+            GameEvents.RaiseDashEnded();
+        }
     }
 
     public void Die()
     {
-        Debug.Log("Player Died");
         if (_isKO) return;
 
+        if(_currentPlatform != null)
+        {
+            _currentPlatform.OnPlayerExit(gameObject, true);
+            _currentPlatform = null;
+        }
         PlayKnockOutSfx();
 
         _isKO = true;
@@ -421,7 +487,7 @@ public class PlayerController : MonoBehaviour
         _view.RB.bodyType = RigidbodyType2D.Dynamic;
         _view.RB.gravityScale = 1f;
 
-
+        RotateSprites(Vector2.zero);
         _view.Animator.SetTrigger("OnKO");
 
         if (CameraShake.Instance != null)
@@ -472,9 +538,14 @@ public class PlayerController : MonoBehaviour
             return;
 
         string colTag = collision.gameObject.tag;
-        if (colMatrix.Contains(colTag))
+        if (IsSurfaceTag(colTag))
         {
-            ProcessSurfaceCollision(collision.collider, collision.contacts.Last().normal);
+            int contactCount = collision.contactCount;
+            if (contactCount == 0)
+                return;
+
+            ContactPoint2D lastContact = collision.GetContact(contactCount - 1);
+            ProcessSurfaceCollision(collision.collider, lastContact.normal, lastContact.point);
         }
     }
 
@@ -486,13 +557,15 @@ public class PlayerController : MonoBehaviour
         if (!_isDashing) return;
 
         string colTag = collision.gameObject.tag;
-        if (colMatrix.Contains(colTag))
+        if (IsSurfaceTag(colTag))
         {
-            foreach (ContactPoint2D contact in collision.contacts)
+            int contactCount = collision.contactCount;
+            for (int i = 0; i < contactCount; i++)
             {
+                ContactPoint2D contact = collision.GetContact(i);
                 if (Vector2.Dot(contact.normal, _lastMoveDirection) < -0.5f)
                 {
-                    ProcessSurfaceCollision(collision.collider, contact.normal);
+                    ProcessSurfaceCollision(collision.collider, contact.normal, contact.point);
                     break;
                 }
             }
@@ -511,7 +584,7 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    private void ProcessSurfaceCollision(Collider2D col, Vector2 normal)
+    private void ProcessSurfaceCollision(Collider2D col, Vector2 normal, Vector2 contactPoint)
     {
         Vector2 cleanNormal = GetCardinalNormal(normal);
 
@@ -527,12 +600,12 @@ public class PlayerController : MonoBehaviour
         if (platform == null)
         {
             AudioService.Instance.PlaySFXAtPosition(_audio.landGeneral, transform.position);
-            Grab(cleanNormal);
+            Grab(cleanNormal, contactPoint, col);
         }
         else if (platform.Type != PlatformTypes.Elastic)
         {
             _currentPlatform = platform;
-            Grab(cleanNormal);
+            Grab(cleanNormal, contactPoint, col);
         }
     }
 
@@ -559,7 +632,7 @@ public class PlayerController : MonoBehaviour
 
         string colTag = collision.gameObject.tag;
 
-        if (deadlyMatrix.Contains(colTag))
+        if (IsDeadlyTag(colTag))
         {
             switch (colTag)
             {
@@ -585,9 +658,9 @@ public class PlayerController : MonoBehaviour
                     Die();
                     break;
                 default:
-                    BoxCollider2D[] boxCollider2Ds = GetComponents<BoxCollider2D>();
-                    foreach(var col in boxCollider2Ds)
+                    for (int i = 0; i < _boxColliders.Length; i++)
                     {
+                        BoxCollider2D col = _boxColliders[i];
                         if (col.IsTouching(collision))
                         {
                             Die();
@@ -663,6 +736,25 @@ public class PlayerController : MonoBehaviour
             return;
 
         _hasHandledGameplayClosed = true;
+    }
+
+    private void ClearParryHitsBuffer(int hitCount)
+    {
+        int clearCount = Mathf.Min(hitCount, _parryHitsBuffer.Length);
+        for (int i = 0; i < clearCount; i++)
+        {
+            _parryHitsBuffer[i] = null;
+        }
+    }
+
+    private static bool IsSurfaceTag(string tag)
+    {
+        return tag == "Obstacle" || tag == "Scenario" || tag == "Floor";
+    }
+
+    private static bool IsDeadlyTag(string tag)
+    {
+        return tag == "Enemy" || tag == "Spikes" || tag == "EnemyShield";
     }
 
     #endregion
