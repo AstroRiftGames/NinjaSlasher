@@ -402,6 +402,12 @@ public class PlayerController : MonoBehaviour
                 && projectile.Shooter != transform
                 && projectile.IsParryable)
             {
+                Vector2 directionToProjectile = projectile.transform.position - transform.position;
+                float distanceToProjectile = directionToProjectile.magnitude;
+
+                if (Physics2D.Raycast(transform.position, directionToProjectile, distanceToProjectile, LayerMask.GetMask("Obstacle", "Scenario")))
+                    continue;
+
                 Vector2 dirToParry = (worldTapPos - (Vector2)projectile.transform.position).normalized;
                 projectile.ReflectBackwards(transform, dirToParry);
                 HapticFeedback.LightFeedback();

@@ -28,7 +28,8 @@ public class ParrySense : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
-        if(Physics2D.Raycast(transform.position, transform.position - collision.transform.position, _col.radius, LayerMask.GetMask("Obstacle", "Scenario")))
+        Vector2 directionToProjectile = collision.transform.position - transform.position;
+        if(Physics2D.Raycast(transform.position, directionToProjectile, _col.radius, LayerMask.GetMask("Obstacle", "Scenario")))
         {
             return;
         }
