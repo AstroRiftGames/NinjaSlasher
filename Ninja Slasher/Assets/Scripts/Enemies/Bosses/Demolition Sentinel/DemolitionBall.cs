@@ -112,8 +112,31 @@ public class DemolitionBall : MonoBehaviour
         {
             if(col.gameObject.CompareTag("Player"))
             {
+                Vector2 playerPos = col.transform.position;
+                RaycastHit2D[] hits = Physics2D.LinecastAll(playerPos, position);
+                
+                bool isBlocked = false;
+                foreach(var hit in hits)
+                {
+                    if (hit.collider != null && hit.collider.gameObject != col.gameObject && hit.collider.gameObject != this.gameObject)
+                    {
+                        string hitTag = hit.collider.tag;
+                        if (hitTag == "Scenario" || hitTag == "Obstacle" || hitTag == "Floor")
+                        {
+                            isBlocked = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (isBlocked)
+                    continue;
+
                 col.TryGetComponent(out PlayerController player);
-                player.Die();
+                if (player != null)
+                {
+                    player.Die();
+                }
             }
         }
     }
@@ -125,7 +148,7 @@ public class DemolitionBall : MonoBehaviour
         if (_heavyAttack)
         {
             _heavyAttack = false;
-            CreateDamageArea(collision.transform.position);
+            CreateDamageArea(collision.GetContact(0).point);
         }
         PlayerController controller = collision.gameObject.GetComponentInParent<PlayerController>();
         if (controller == null) controller = collision.gameObject.GetComponentInChildren<PlayerController>();
