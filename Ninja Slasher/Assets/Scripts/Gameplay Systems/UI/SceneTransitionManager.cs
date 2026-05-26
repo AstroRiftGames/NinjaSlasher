@@ -98,6 +98,7 @@ public class SceneTransitionManager : MonoBehaviour
         EndSceneTransition();
         uiManager?.RefreshGameplayHUDSessionVisibility();
 
+
         yield return new WaitForEndOfFrame();
         SetHUDActive(true);
     }
@@ -129,6 +130,7 @@ public class SceneTransitionManager : MonoBehaviour
         EndTransitionPause();
         EndSceneTransition();
         uiManager?.RefreshGameplayHUDSessionVisibility();
+
 
         yield return new WaitForEndOfFrame();
         SetHUDActive(true);

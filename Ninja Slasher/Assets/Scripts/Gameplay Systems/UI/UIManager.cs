@@ -156,6 +156,7 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
     {
         if (_gameplayUIManager != null)
             _gameplayUIManager.OnSceneLoaded();
+
     }
 
     #endregion

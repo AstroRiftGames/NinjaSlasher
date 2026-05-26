@@ -19,7 +19,6 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
     private bool _rewardedAdShowing;
     private bool _rewardGrantedForCurrentAd;
     private bool _awaitingRewardAfterClose;
-
     private bool   _interstitialPending = false;
     private string _pendingInterstitialPlacement = "";
     private int    _pendingInterstitialLevelId   = -1;

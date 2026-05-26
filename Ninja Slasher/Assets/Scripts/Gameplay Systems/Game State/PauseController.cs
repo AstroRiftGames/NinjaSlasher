@@ -109,6 +109,7 @@ public class PauseController : MonoBehaviourSingleton<PauseController>
 
         if (pauseStateChanged)
             PauseStateChanged?.Invoke(isPaused);
+
     }
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)

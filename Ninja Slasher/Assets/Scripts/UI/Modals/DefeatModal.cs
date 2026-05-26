@@ -10,8 +10,6 @@ public class DefeatModal : UIModalBase
     [SerializeField] private Button _continueButton;
     [SerializeField] private Button _quitButton;
 
-    private int _lastLivesRemaining;
-
     protected override void Awake()
     {
         base.Awake();
@@ -56,16 +54,14 @@ public class DefeatModal : UIModalBase
 
     private void UpdateUI(int livesRemaining)
     {
-        _lastLivesRemaining = livesRemaining;
+        int effectiveLives = LifeManager.Instance != null ? LifeManager.Instance.GetEffectiveLivesForCurrentAttempt() : livesRemaining;
+        int maxLives = LifeManager.Instance != null ? LifeManager.Instance.GetMaxLives() : GameConfigManager.Config?.maxLives ?? 5;
 
         if (_titleText != null)
-            _titleText.text = livesRemaining > 0 ? "Vida Perdida!" : "Sin Vidas";
+            _titleText.text = effectiveLives > 0 ? "Vida Perdida!" : "Sin Vidas";
 
         if (_livesRemainingText != null)
-        {
-            int maxLives = GameConfigManager.Config?.maxLives ?? 5;
-            _livesRemainingText.text = $"Vidas: {livesRemaining}/{maxLives}";
-        }
+            _livesRemainingText.text = $"Vidas: {effectiveLives}/{maxLives}";
 
         if (_continueButton != null)
         {

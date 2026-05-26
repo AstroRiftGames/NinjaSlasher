@@ -499,7 +499,8 @@ public class LevelSessionManager : MonoBehaviourSingleton<LevelSessionManager>
 
     private void OnRestartLevelRequested()
     {
-        if (!IsLevelScene(SceneManager.GetActiveScene().name))
+        string sceneName = SceneManager.GetActiveScene().name;
+        if (!IsLevelScene(sceneName))
             return;
 
         bool includePendingExitCost = LifeManager.Instance != null && LifeManager.Instance.HasPendingDeduction();
