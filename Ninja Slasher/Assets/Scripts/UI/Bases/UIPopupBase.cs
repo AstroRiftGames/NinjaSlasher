@@ -17,6 +17,8 @@ public abstract class UIPopupBase : UIPanel
 
         if (_panelTransform == null)
             _panelTransform = GetComponent<RectTransform>();
+
+        _panelTransform = ResolvePreferredPanelTransform();
     }
 
     public override void Show()

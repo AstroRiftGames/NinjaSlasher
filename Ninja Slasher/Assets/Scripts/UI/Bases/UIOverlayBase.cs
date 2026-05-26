@@ -42,6 +42,8 @@ public abstract class UIOverlayBase : UIPanel
         if (_panelTransform == null)
             _panelTransform = GetComponent<RectTransform>();
 
+        _panelTransform = ResolvePreferredPanelTransform(_backgroundImage != null ? _backgroundImage.transform : null);
+
         if (_canvasGroup == null)
             _canvasGroup = GetComponent<CanvasGroup>();
 

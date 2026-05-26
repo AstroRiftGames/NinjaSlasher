@@ -45,14 +45,16 @@ private Sequence _contentAnimationSequence;
         if (_panelTransform == null)
             _panelTransform = GetComponent<RectTransform>();
 
+        _panelTransform = ResolvePreferredPanelTransform(_backgroundImage != null ? _backgroundImage.transform : null);
+
         if (_canvasGroup == null)
             _canvasGroup = GetComponent<CanvasGroup>();
 
         if (_modalAnimator == null)
             _modalAnimator = GetComponent<Animator>();
 
-        if (_animatedContentTransform == null)
-            _animatedContentTransform = _panelTransform;
+        if (_animatedContentTransform == null || _animatedContentTransform == GetComponent<RectTransform>())
+            _animatedContentTransform = ResolvePreferredPanelTransform(_backgroundImage != null ? _backgroundImage.transform : null);
 
         if (_animatedContentCanvasGroup == null)
             _animatedContentCanvasGroup = ResolveAnimatedContentCanvasGroup();

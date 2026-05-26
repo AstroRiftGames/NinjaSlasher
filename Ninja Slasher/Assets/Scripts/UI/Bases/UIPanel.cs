@@ -33,6 +33,53 @@ public abstract class UIPanel : MonoBehaviour
         _audioContext = GetComponentInParent<UIAudioContext>();
     }
 
+    protected RectTransform ResolvePreferredPanelTransform(Transform excludedTransform = null)
+    {
+        RectTransform selfTransform = GetComponent<RectTransform>();
+        if (selfTransform == null)
+            return _panelTransform;
+
+        if (_panelTransform != null && _panelTransform != selfTransform)
+            return _panelTransform;
+
+        RectTransform resolvedTransform = FindPreferredAnimatedChildTransform(selfTransform, excludedTransform);
+        return resolvedTransform != null ? resolvedTransform : selfTransform;
+    }
+
+    private static RectTransform FindPreferredAnimatedChildTransform(RectTransform root, Transform excludedTransform)
+    {
+        RectTransform fallback = null;
+        RectTransform[] candidates = root.GetComponentsInChildren<RectTransform>(true);
+        for (int i = 0; i < candidates.Length; i++)
+        {
+            RectTransform candidate = candidates[i];
+            if (candidate == null || candidate == root)
+                continue;
+
+            if (excludedTransform != null &&
+                (candidate == excludedTransform ||
+                 candidate.IsChildOf(excludedTransform) ||
+                 excludedTransform.IsChildOf(candidate)))
+            {
+                continue;
+            }
+
+            fallback ??= candidate;
+
+            string candidateName = candidate.name.ToLowerInvariant();
+            if (candidateName.Contains("panel") ||
+                candidateName.Contains("content") ||
+                candidateName.Contains("container") ||
+                candidateName.Contains("popup") ||
+                candidateName.Contains("modal"))
+            {
+                return candidate;
+            }
+        }
+
+        return fallback;
+    }
+
     public virtual void Show()
     {
         if (_isVisible) return;
