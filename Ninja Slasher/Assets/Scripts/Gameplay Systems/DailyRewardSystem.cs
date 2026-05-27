@@ -38,10 +38,24 @@ public class DailyRewardSaveData
 public class DailyRewardSystem : MonoBehaviourSingleton<DailyRewardSystem>
 {
     public static event Action OnBootstrapped;
+    private const int DefaultWeekLength = 7;
 
     [Header("SETTINGS")]
     public DailyReward[] weeklyRewards = new DailyReward[7];
-    private int WeekLength => GameConfigManager.Config.dailyRewardWeekLength;
+    private int WeekLength
+    {
+        get
+        {
+            GameConfig config = GameConfigManager.GetConfig();
+            if (config != null && config.dailyRewardWeekLength > 0)
+                return config.dailyRewardWeekLength;
+
+            if (weeklyRewards != null && weeklyRewards.Length > 0)
+                return weeklyRewards.Length;
+
+            return DefaultWeekLength;
+        }
+    }
 
     private DailyRewardSaveData rewardData;
 

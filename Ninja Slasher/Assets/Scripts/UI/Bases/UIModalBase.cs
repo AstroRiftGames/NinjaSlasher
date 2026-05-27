@@ -35,6 +35,7 @@ public abstract class UIModalBase : UIPanel, IPointerClickHandler
     private Tween _overlayFadeTween;
     private Coroutine _delayedDeactivateCoroutine;
     private Coroutine _showCompletionCoroutine;
+    private bool _isWaitingForHideAnimationEvent;
     private float _overlayTargetGroupAlpha = 1f;
     private float _overlayTargetImageAlpha = 1f;
     private string _overlayTargetAlphaSource = "Fallback";
@@ -152,6 +153,7 @@ public override void HideImmediate()
         CancelPendingDeactivate();
         CancelShowCompletion();
         KillActiveAnimation();
+        _isWaitingForHideAnimationEvent = false;
 
         if (!_isVisible && !gameObject.activeSelf)
             return;
@@ -191,6 +193,7 @@ public override void HideImmediate()
         CancelPendingDeactivate();
         CancelShowCompletion();
         KillActiveAnimation();
+        _isWaitingForHideAnimationEvent = false;
         NotifyUIManagerModalHidden();
     }
 
@@ -268,6 +271,7 @@ OnShowAnimationCompleted();
 
         if (_modalAnimator != null)
         {
+            _isWaitingForHideAnimationEvent = true;
             if (!string.IsNullOrEmpty(_openTrigger))
                 _modalAnimator.ResetTrigger(_openTrigger);
             if (!string.IsNullOrEmpty(_closeTrigger))
@@ -315,11 +319,19 @@ OnShowAnimationCompleted();
 
     private IEnumerator DeactivateAfterHideAnimation()
     {
-        yield return WaitForAnimatorPlayback(_modalAnimator, HideAnimationDuration);
+        float timeout = Mathf.Max(0.1f, HideAnimationDuration + 0.75f);
+        float elapsed = 0f;
+
+        while (_isWaitingForHideAnimationEvent && elapsed < timeout)
+        {
+            elapsed += Time.unscaledDeltaTime;
+            yield return null;
+        }
+
         _delayedDeactivateCoroutine = null;
-        ResetContentVisualState();
-        gameObject.SetActive(false);
-        OnHideAnimationCompleted();
+
+        if (_isWaitingForHideAnimationEvent)
+            CompleteHideAfterVisuals();
     }
 
     private IEnumerator CompleteShowAfterAnimator()
@@ -454,6 +466,27 @@ OnShowAnimationCompleted();
     {
         if (_backgroundImage == null) return;
         _backgroundImage.raycastTarget = _closeOnOutsideClick && _isVisible;
+    }
+
+    public void AnimationEvent_NotifyHideVisualCompleted()
+    {
+        if (!_isWaitingForHideAnimationEvent)
+            return;
+
+        CompleteHideAfterVisuals();
+    }
+
+    private void CompleteHideAfterVisuals()
+    {
+        if (!_isWaitingForHideAnimationEvent)
+            return;
+
+        _isWaitingForHideAnimationEvent = false;
+        _delayedDeactivateCoroutine = null;
+        ResetContentVisualState();
+        ResetOverlayState();
+        gameObject.SetActive(false);
+        OnHideAnimationCompleted();
     }
 
     private void CacheOverlayTargetAlpha()
