@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using DG.Tweening;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -12,22 +13,33 @@ public class LevelsScreen : UIScreenBase
     [SerializeField] private AreaSectionController[] _areaSections;
     [SerializeField] private LevelSelectionScreenController _presenter;
     [SerializeField] private ButtonManager _buttonManager;
+    [Header("Foreground Transition")]
+    [SerializeField] private float _foregroundFadeDuration = 0.2f;
+    [SerializeField] private Ease _foregroundShowEase = Ease.OutQuad;
+    [SerializeField] private Ease _foregroundHideEase = Ease.InQuad;
 
     private bool _isWaitingForStartupSequence = false;
     private bool _isBlockedByForegroundSignal = false;
     private bool _isForegroundVisible = true;
     private Coroutine _pendingStarRevealRoutine;
+    private CanvasGroup _infoRootCanvasGroup;
+    private CanvasGroup _buttonsRootCanvasGroup;
+    private Tween _infoRootTween;
+    private Tween _buttonsRootTween;
 
     protected override void Awake()
     {
         base.Awake();
         ResolveDependencies();
+        ResolveForegroundCanvasGroups();
+        ApplyForegroundStateImmediate(_isForegroundVisible);
     }
 
     protected override void OnEnable()
     {
         base.OnEnable();
         ResolveDependencies();
+        ResolveForegroundCanvasGroups();
         UIEvents.OnStartupSequenceStarted += OnStartupSequenceStarted;
         UIEvents.OnStartupSequenceCompleted += OnStartupSequenceCompleted;
         UIPanel.OnBlockingPanelVisibilityChanged += OnBlockingPanelVisibilityChanged;
@@ -46,6 +58,7 @@ public class LevelsScreen : UIScreenBase
         UIPanel.OnBlockingPanelVisibilityChanged -= OnBlockingPanelVisibilityChanged;
         CancelPendingStarReveal("OnDisable");
         _buttonManager?.StopStarRevealPresentation();
+        KillForegroundTweens();
 
         if (_areaSections == null) return;
         foreach (var area in _areaSections)
@@ -240,12 +253,7 @@ public class LevelsScreen : UIScreenBase
         }
 
         _isForegroundVisible = visible;
-
-        if (_infoRoot != null)
-            _infoRoot.SetActive(visible);
-
-        if (_buttonsRoot != null)
-            _buttonsRoot.SetActive(visible);
+        PlayForegroundTransition(visible);
 
         if (_presenter != null)
         {
@@ -290,6 +298,126 @@ public class LevelsScreen : UIScreenBase
 
         if (_buttonManager == null)
             Debug.LogWarning("[LevelsScreen] ButtonManager was not found.");
+    }
+
+    private void ResolveForegroundCanvasGroups()
+    {
+        _infoRootCanvasGroup = GetOrCreateCanvasGroup(_infoRoot, _infoRootCanvasGroup);
+        _buttonsRootCanvasGroup = GetOrCreateCanvasGroup(_buttonsRoot, _buttonsRootCanvasGroup);
+    }
+
+    private static CanvasGroup GetOrCreateCanvasGroup(GameObject root, CanvasGroup current)
+    {
+        if (root == null)
+            return null;
+
+        if (current != null)
+            return current;
+
+        CanvasGroup canvasGroup = root.GetComponent<CanvasGroup>();
+        return canvasGroup != null ? canvasGroup : root.AddComponent<CanvasGroup>();
+    }
+
+    private void PlayForegroundTransition(bool visible)
+    {
+        ResolveForegroundCanvasGroups();
+        KillForegroundTweens();
+
+        PlayForegroundRootTransition(_infoRoot, _infoRootCanvasGroup, visible);
+        PlayForegroundRootTransition(_buttonsRoot, _buttonsRootCanvasGroup, visible);
+    }
+
+    private void PlayForegroundRootTransition(GameObject root, CanvasGroup canvasGroup, bool visible)
+    {
+        if (root == null)
+            return;
+
+        if (canvasGroup == null)
+        {
+            root.SetActive(visible);
+            return;
+        }
+
+        if (visible)
+        {
+            root.SetActive(true);
+            canvasGroup.alpha = Mathf.Clamp01(canvasGroup.alpha);
+            canvasGroup.interactable = false;
+            canvasGroup.blocksRaycasts = false;
+
+            Tween tween = canvasGroup.DOFade(1f, _foregroundFadeDuration)
+                .SetEase(_foregroundShowEase)
+                .SetUpdate(true)
+                .OnComplete(() =>
+                {
+                    canvasGroup.alpha = 1f;
+                    canvasGroup.interactable = true;
+                    canvasGroup.blocksRaycasts = true;
+                });
+
+            AssignForegroundTween(root, tween);
+            return;
+        }
+
+        canvasGroup.interactable = false;
+        canvasGroup.blocksRaycasts = false;
+
+        Tween hideTween = canvasGroup.DOFade(0f, _foregroundFadeDuration)
+            .SetEase(_foregroundHideEase)
+            .SetUpdate(true)
+            .OnComplete(() =>
+            {
+                canvasGroup.alpha = 0f;
+                root.SetActive(false);
+            });
+
+        AssignForegroundTween(root, hideTween);
+    }
+
+    private void AssignForegroundTween(GameObject root, Tween tween)
+    {
+        if (root == _infoRoot)
+            _infoRootTween = tween;
+        else if (root == _buttonsRoot)
+            _buttonsRootTween = tween;
+    }
+
+    private void KillForegroundTweens()
+    {
+        if (_infoRootTween != null)
+        {
+            _infoRootTween.Kill();
+            _infoRootTween = null;
+        }
+
+        if (_buttonsRootTween != null)
+        {
+            _buttonsRootTween.Kill();
+            _buttonsRootTween = null;
+        }
+    }
+
+    private void ApplyForegroundStateImmediate(bool visible)
+    {
+        ResolveForegroundCanvasGroups();
+        KillForegroundTweens();
+        ApplyForegroundRootStateImmediate(_infoRoot, _infoRootCanvasGroup, visible);
+        ApplyForegroundRootStateImmediate(_buttonsRoot, _buttonsRootCanvasGroup, visible);
+    }
+
+    private static void ApplyForegroundRootStateImmediate(GameObject root, CanvasGroup canvasGroup, bool visible)
+    {
+        if (root == null)
+            return;
+
+        root.SetActive(visible);
+
+        if (canvasGroup == null)
+            return;
+
+        canvasGroup.alpha = visible ? 1f : 0f;
+        canvasGroup.interactable = visible;
+        canvasGroup.blocksRaycasts = visible;
     }
 
     private bool ShouldPlayStartupReveal()
