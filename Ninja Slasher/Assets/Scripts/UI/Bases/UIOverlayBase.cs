@@ -32,6 +32,8 @@ public abstract class UIOverlayBase : UIPanel
     [SerializeField] protected float _animatorCloseDuration = 0.35f;
 
     private Sequence _panelSequence;
+    private float _backgroundTargetAlpha;
+    private string _backgroundTargetAlphaSource = "BackgroundColor";
 
     protected override bool BlocksUnderlyingUI => true;
 
@@ -47,6 +49,8 @@ public abstract class UIOverlayBase : UIPanel
         if (_canvasGroup == null)
             _canvasGroup = GetComponent<CanvasGroup>();
 
+        NormalizeBackgroundRectTransform();
+        CacheBackgroundTargetAlpha();
         ApplyHiddenVisualState();
         SetPanelInputEnabled(false);
     }
@@ -122,7 +126,8 @@ public abstract class UIOverlayBase : UIPanel
 
         if (_backgroundImage != null)
         {
-            _panelSequence.Insert(0f, _backgroundImage.DOFade(_backgroundColor.a, _backgroundFadeDuration)
+            NormalizeBackgroundRectTransform();
+            _panelSequence.Insert(0f, _backgroundImage.DOFade(_backgroundTargetAlpha, _backgroundFadeDuration)
                 .SetEase(_fadeEase));
         }
 
@@ -138,6 +143,11 @@ public abstract class UIOverlayBase : UIPanel
             _panelTransform.localScale = Vector3.one * _hiddenContentScaleMultiplier;
             _panelSequence.Insert(0f, _panelTransform.DOScale(1f, _contentShowScaleDuration)
                 .SetEase(_contentShowScaleEase));
+        }
+
+        if (_backgroundImage != null)
+        {
+            Debug.Log($"[OverlayVisual] Show panel={name} overlay={_backgroundImage.name} activeSelf={_backgroundImage.gameObject.activeSelf} alphaBefore={_backgroundImage.color.a:F3} targetAlpha={_backgroundTargetAlpha:F3} blocksRaycasts={_canvasGroup?.blocksRaycasts ?? false} interactable={_canvasGroup?.interactable ?? false} fadeEnabled={_backgroundFadeDuration > 0f} animatedTransform={_panelTransform?.name ?? "None"} panelVisualTransform={_panelTransform?.name ?? "None"} root={GetComponent<RectTransform>()?.name ?? "None"}");
         }
 
         if (_panelAnimator != null)
@@ -204,6 +214,11 @@ public abstract class UIOverlayBase : UIPanel
                 .SetEase(Ease.InQuad));
         }
 
+        if (_backgroundImage != null)
+        {
+            Debug.Log($"[OverlayVisual] Hide panel={name} overlay={_backgroundImage.name} alphaBefore={_backgroundImage.color.a:F3} targetHideAlpha=0.000 blocksRaycastsBefore={_canvasGroup?.blocksRaycasts ?? false} activeBefore={_backgroundImage.gameObject.activeSelf}");
+        }
+
         _panelSequence.OnComplete(() =>
         {
             _panelSequence = null;
@@ -259,6 +274,7 @@ public abstract class UIOverlayBase : UIPanel
 
         if (_backgroundImage != null)
         {
+            NormalizeBackgroundRectTransform();
             _backgroundImage.color = new Color(
                 _backgroundColor.r,
                 _backgroundColor.g,
@@ -266,6 +282,48 @@ public abstract class UIOverlayBase : UIPanel
                 0f
             );
         }
+    }
+
+    private void NormalizeBackgroundRectTransform()
+    {
+        if (_backgroundImage == null)
+            return;
+
+        RectTransform backgroundRect = _backgroundImage.rectTransform;
+        if (backgroundRect == null)
+            return;
+
+        backgroundRect.localScale = Vector3.one;
+        backgroundRect.anchoredPosition = Vector2.zero;
+    }
+
+    private void CacheBackgroundTargetAlpha()
+    {
+        if (_backgroundImage == null)
+            return;
+
+        if (_backgroundColor.a > 0.001f)
+        {
+            _backgroundTargetAlpha = _backgroundColor.a;
+            _backgroundTargetAlphaSource = "BackgroundColor";
+        }
+        else if (_backgroundImage.color.a > 0.001f)
+        {
+            _backgroundTargetAlpha = _backgroundImage.color.a;
+            _backgroundTargetAlphaSource = "ImageColor";
+        }
+        else
+        {
+            _backgroundTargetAlpha = 1f;
+            _backgroundTargetAlphaSource = "Fallback";
+        }
+
+        if (_panelTransform != null && _backgroundImage.transform.IsChildOf(_panelTransform))
+        {
+            Debug.LogWarning($"[OverlayVisual] OverlayInsideAnimatedTransform panel={name} overlay={_backgroundImage.name} animatedTransform={_panelTransform.name}");
+        }
+
+        Debug.Log($"[OverlayVisual] Initialize panel={name} overlay={_backgroundImage.name} targetAlpha={_backgroundTargetAlpha:F3} source={_backgroundTargetAlphaSource} root={GetComponent<RectTransform>()?.name ?? "None"} animatedTransform={_panelTransform?.name ?? "None"}");
     }
 
     private void PrepareAnimatorForOpenPlayback()
