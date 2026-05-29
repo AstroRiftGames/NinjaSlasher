@@ -58,6 +58,8 @@ public class EmergencyBundleModal : UIModalBase
         base.OnHidden();
         StopCountdown();
         _currentOffer = null;
+
+        EmergencyBundleService.Instance?.OnOfferDismissed();
     }
 
     #endregion

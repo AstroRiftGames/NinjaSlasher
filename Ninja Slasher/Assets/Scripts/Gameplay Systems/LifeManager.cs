@@ -624,6 +624,7 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
         var context = PowerUpManager.Instance?.context;
         if (context != null && context.SecondChanceActive)
         {
+            PowerUpManager.Instance.ConsumePowerUpUse(PowerUpType.SecondChance);
             EmitDisplayLivesChanged();
             return;
         }

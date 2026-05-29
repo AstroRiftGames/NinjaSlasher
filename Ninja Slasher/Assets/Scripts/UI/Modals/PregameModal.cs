@@ -109,6 +109,7 @@ public override void Show()
         {
             _preGameUIManager.StopAllAnimations();
             _preGameUIManager.HidePowerUpConfirmationImmediate();
+            _preGameUIManager.ClearPregameSelection();
         }
 
         SetBackgroundRaycastTarget(false);

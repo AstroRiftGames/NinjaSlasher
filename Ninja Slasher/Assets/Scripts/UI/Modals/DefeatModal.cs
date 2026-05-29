@@ -104,6 +104,11 @@ public class DefeatModal : UIModalBase
             _quitButton.onClick.RemoveAllListeners();
     }
 
+    protected override void RequestCloseFromOutsideClick()
+    {
+        OnQuitClicked();
+    }
+
     private void RequestClose()
     {
         if (UIManager.Instance != null)

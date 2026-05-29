@@ -52,7 +52,6 @@ public class PowerUpManager : MonoBehaviourSingleton<PowerUpManager>
     void Start()
     {
         LoadActivePowerUpsFromGameData();
-        RefreshActivePowerUpState();
     }
 
     void OnEnable()
@@ -88,7 +87,15 @@ public class PowerUpManager : MonoBehaviourSingleton<PowerUpManager>
             return;
         }
 
-        int index = _activeUsages.FindIndex(x => x.powerUp == powerUpRef);
+        int index = -1;
+        for (int i = 0; i < _activeUsages.Count; i++)
+        {
+            if (_activeUsages[i].powerUp == powerUpRef)
+            {
+                index = i;
+                break;
+            }
+        }
         if (index == -1) return;
 
         var (pu, usesRemaining) = _activeUsages[index];
@@ -273,7 +280,11 @@ public class PowerUpManager : MonoBehaviourSingleton<PowerUpManager>
         if (powerUpToDeactivate != null && activePowerUps.Contains(powerUpToDeactivate))
         {
             DeactivatePowerUpInternal(powerUpToDeactivate);
-            _activeUsages.RemoveAll(usage => usage.powerUp == powerUpToDeactivate);
+            for (int i = _activeUsages.Count - 1; i >= 0; i--)
+            {
+                if (_activeUsages[i].powerUp == powerUpToDeactivate)
+                    _activeUsages.RemoveAt(i);
+            }
         }
     }
 
@@ -321,14 +332,19 @@ public class PowerUpManager : MonoBehaviourSingleton<PowerUpManager>
 
         powerUp.Activate(context);
 
-        int usageIndex = _activeUsages.FindIndex(usage => usage.powerUp == powerUp);
+        int usageIndex = -1;
+        for (int i = 0; i < _activeUsages.Count; i++)
+        {
+            if (_activeUsages[i].powerUp == powerUp)
+            {
+                usageIndex = i;
+                break;
+            }
+        }
 
         if (usageIndex != -1)
         {
-            var (pu, currentUses) = _activeUsages[usageIndex];
-            int totalUses = currentUses + usesToSet;
-            _activeUsages[usageIndex] = (pu, totalUses);
-            usesToSet = totalUses;
+            _activeUsages[usageIndex] = (powerUp, usesToSet);
         }
         else
         {
@@ -385,8 +401,12 @@ public class PowerUpManager : MonoBehaviourSingleton<PowerUpManager>
         PowerUpBase powerUpRef = GetPowerUpReference(type);
         if (powerUpRef == null) return 0;
 
-        var usage = _activeUsages.Find(u => u.powerUp == powerUpRef);
-        return usage.powerUp != null ? usage.usesRemaining : 0;
+        for (int i = 0; i < _activeUsages.Count; i++)
+        {
+            if (_activeUsages[i].powerUp == powerUpRef)
+                return _activeUsages[i].usesRemaining;
+        }
+        return 0;
     }
 
     public bool TryGetAnyActivePowerUp(out PowerUpBase powerUp, out int remainingUses)

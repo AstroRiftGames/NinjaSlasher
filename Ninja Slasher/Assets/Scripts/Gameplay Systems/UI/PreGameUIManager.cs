@@ -53,6 +53,9 @@ public class PreGameUIManager : MonoBehaviour
     private PowerUpHorizontalScrollButtons _powerUpScrollButtons;
     private bool _isLevelSelected;
     private bool _isInPreGameSelection;
+    private bool _isPurchasing;
+    private bool _isPlaying;
+    private readonly PregamePowerUpSelection _pregameSelection = new PregamePowerUpSelection();
 
     private void Awake()
     {
@@ -79,6 +82,7 @@ public class PreGameUIManager : MonoBehaviour
         GameEvents.OnLivesChanged -= OnLivesChangedRefresh;
         StopAllAnimations();
         HidePowerUpConfirmationImmediate();
+        _isPlaying = false;
     }
 
     private void SetupButtonListeners()
@@ -209,6 +213,9 @@ public class PreGameUIManager : MonoBehaviour
         StopAllAnimations();
         HidePowerUpConfirmationImmediate();
 
+        _pregameSelection.Clear();
+        _isPlaying = false;
+
         ResolveGoalTextReferencesIfNeeded();
 
         _pendingSceneName = sceneName;
@@ -337,12 +344,23 @@ public class PreGameUIManager : MonoBehaviour
 
     private void OnConfirmLevelSelection()
     {
+        if (_isPlaying)
+            return;
+
         bool canStartLevel = LevelSessionManager.Instance != null
             ? LevelSessionManager.Instance.TryAuthorizeLevelAttempt()
             : LifeManager.Instance != null && LifeManager.Instance.CanPlay();
 
         if (!canStartLevel)
             return;
+
+        _isPlaying = true;
+
+        if (!TryConsumeSelectedPowerUps())
+        {
+            _isPlaying = false;
+            return;
+        }
 
         StopAllAnimations();
         _isInPreGameSelection = false;
@@ -462,12 +480,25 @@ public class PreGameUIManager : MonoBehaviour
             if (slot == null)
                 break;
 
-            PowerUpInventoryItem item = inventory?.Find(i => i.type == powerUpBase.powerUpType)
-                ?? new PowerUpInventoryItem(powerUpBase.powerUpType, 0);
+            PowerUpInventoryItem item = null;
+            if (inventory != null)
+            {
+                for (int j = 0; j < inventory.Count; j++)
+                {
+                    if (inventory[j].type == powerUpBase.powerUpType)
+                    {
+                        item = inventory[j];
+                        break;
+                    }
+                }
+            }
+            if (item == null)
+                item = new PowerUpInventoryItem(powerUpBase.powerUpType, 0);
 
             slot.gameObject.SetActive(true);
             slot.transform.SetSiblingIndex(visibleSlotCount);
             slot.Setup(item, powerUpBase, OnPowerUpInteractClicked);
+            slot.SetPregameSelected(_pregameSelection.IsSelected(powerUpBase.powerUpType));
             visibleSlotCount++;
         }
 
@@ -565,6 +596,9 @@ public class PreGameUIManager : MonoBehaviour
 
     private void OnPowerUpPurchaseClicked(PowerUpInventoryItem item)
     {
+        if (_isPurchasing) return;
+        _isPurchasing = true;
+
         int cost = GetCostForType(item.type);
         PurchaseResult result = PowerUpPurchaseService.Purchase(item.type, cost);
 
@@ -573,12 +607,18 @@ public class PreGameUIManager : MonoBehaviour
             GameEvents.RaisePowerUpPurchased(item.type);
             ShowPreGamePowerUps();
         }
+
+        _isPurchasing = false;
     }
 
     private int GetCostForType(PowerUpType type)
     {
-        PowerUpBase powerUpBase = System.Array.Find(allPowerUpBases, powerUp => powerUp.powerUpType == type);
-        return powerUpBase != null ? powerUpBase.cost : 0;
+        for (int i = 0; i < allPowerUpBases.Length; i++)
+        {
+            if (allPowerUpBases[i].powerUpType == type)
+                return allPowerUpBases[i].cost;
+        }
+        return 0;
     }
 
     private void SetGoals()
@@ -685,18 +725,24 @@ public class PreGameUIManager : MonoBehaviour
         _powerUpConfirmationPopUp?.HideImmediate();
     }
 
+    public void ClearPregameSelection()
+    {
+        _pregameSelection.Clear();
+    }
+
     private PowerUpConfirmationRequest BuildPowerUpConfirmationRequest(PowerUpInventoryItem item, PowerUpBase powerUpBase)
     {
         bool hasStock = item.quantity > 0;
 
         if (hasStock)
         {
+            PowerUpType capturedType = item.type;
             return new PowerUpConfirmationRequest(
                 powerUpBase,
                 _powerUpConfirmationPopUp.GetActivateButtonLabel(),
                 true,
                 null,
-                () => ConfirmPowerUpActivation(item.type));
+                () => TogglePowerUpSelection(capturedType));
         }
 
         return new PowerUpConfirmationRequest(
@@ -710,15 +756,61 @@ public class PreGameUIManager : MonoBehaviour
     private void HandlePowerUpPrimaryAction(PowerUpInventoryItem item)
     {
         if (item.quantity > 0)
-            ConfirmPowerUpActivation(item.type);
+            TogglePowerUpSelection(item.type);
         else
             OnPowerUpPurchaseClicked(item);
     }
 
-    private void ConfirmPowerUpActivation(PowerUpType powerUpType)
+    private void TogglePowerUpSelection(PowerUpType powerUpType)
     {
-        if (PowerUpManager.Instance != null && PowerUpManager.Instance.ActivatePowerUpFromInventory(powerUpType))
-            ShowPreGamePowerUps();
+        _pregameSelection.Toggle(powerUpType);
+        ShowPreGamePowerUps();
+    }
+
+    private bool TryConsumeSelectedPowerUps()
+    {
+        if (_pregameSelection.Count == 0)
+            return true;
+
+        GameData gameData = SaveManager.Instance?.GetGameData();
+        if (gameData == null)
+            return false;
+
+        for (int i = 0; i < _pregameSelection.Count; i++)
+        {
+            PowerUpType type = _pregameSelection.GetSelection(i);
+            bool found = false;
+            for (int j = 0; j < gameData.powerUpInventory.Count; j++)
+            {
+                if (gameData.powerUpInventory[j].type == type && gameData.powerUpInventory[j].quantity > 0)
+                {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found)
+            {
+                Debug.LogWarning($"[PreGameUIManager] Cannot consume {type}: insufficient inventory.");
+                _pregameSelection.Clear();
+                ShowPreGamePowerUps();
+                return false;
+            }
+        }
+
+        for (int i = 0; i < _pregameSelection.Count; i++)
+        {
+            if (PowerUpManager.Instance == null)
+            {
+                Debug.LogError("[PreGameUIManager] PowerUpManager unavailable during consumption. Aborting.");
+                _pregameSelection.Clear();
+                ShowPreGamePowerUps();
+                return false;
+            }
+            PowerUpManager.Instance.ActivatePowerUpFromInventory(_pregameSelection.GetSelection(i));
+        }
+
+        _pregameSelection.Clear();
+        return true;
     }
 
     private Image GetObjectiveSlashImage(TextMeshProUGUI objectiveText)

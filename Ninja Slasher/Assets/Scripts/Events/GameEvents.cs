@@ -352,6 +352,10 @@ public static class GameEvents
     {
         OnPowerUpActivated = null;
         OnPowerUpExpired = null;
+        OnPowerUpUsesUpdated = null;
+        OnPowerUpUseConsumed = null;
+        OnPowerUpUsesTextChanged = null;
+        OnLevelEndedConsumePowerUps = null;
         OnPowerUpPurchased = null;
     }
 
