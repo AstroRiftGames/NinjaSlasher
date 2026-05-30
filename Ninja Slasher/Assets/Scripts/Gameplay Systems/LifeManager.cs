@@ -826,6 +826,40 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
         }
     }
 
+    public bool TryGetFullLivesUtc(out DateTime fullLivesUtc)
+    {
+        fullLivesUtc = DateTime.MinValue;
+
+        if (!_isInitialized)
+            return false;
+
+        if (GameConfigManager.IsReady() && GameConfigManager.Config.infiniteLives)
+            return false;
+
+        if (CurrentLives >= MaxLives)
+            return false;
+
+        if (HasTimedUnlimitedLives)
+            return false;
+
+        if (_lastLifeUsedUtc <= DateTime.MinValue || LifeRechargeSeconds <= 0)
+            return false;
+
+        if (!TryGetCurrentUtcNow(out DateTime currentUtc))
+            return false;
+
+        int missingLives = MaxLives - CurrentLives;
+        TimeSpan timeToNextLife = GetTimeToNextLife();
+
+        double totalSeconds = timeToNextLife.TotalSeconds + (missingLives - 1) * LifeRechargeSeconds;
+
+        if (totalSeconds < 0d || totalSeconds > MaxSupportedElapsedSeconds)
+            return false;
+
+        fullLivesUtc = currentUtc.AddSeconds(totalSeconds);
+        return true;
+    }
+
     public TimeSpan GetTimeToNextLife()
     {
         if (CurrentLives >= MaxLives) return TimeSpan.Zero;

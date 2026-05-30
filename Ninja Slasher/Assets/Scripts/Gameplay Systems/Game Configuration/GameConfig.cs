@@ -162,6 +162,32 @@ public class GameConfig : ScriptableObject
     [Tooltip("Tamaño inicial del pool de efectos de particulas")]
     public int vfxPoolInitialSize = 15;
 
+    [Header("NOTIFICATIONS")]
+    [Tooltip("Habilitar notificacion local de vidas completas")]
+    public bool enableLifeFullNotification = true;
+    [Tooltip("ID del canal de notificaciones Android")]
+    public string notificationAndroidChannelId = "retention_channel";
+    [Tooltip("Nombre visible del canal de notificaciones (visible en ajustes Android)")]
+    public string notificationAndroidChannelName = "Recordatorios";
+    [Tooltip("Descripcion del canal de notificaciones")]
+    public string notificationAndroidChannelDescription = "Recordatorios del juego";
+    [Tooltip("Titulo de la notificacion de vidas completas")]
+    public string lifeFullNotificationTitle = "Vidas Completas";
+    [Tooltip("Cuerpo de la notificacion de vidas completas")]
+    public string lifeFullNotificationBody = "Tus vidas estan al maximo. Vuelve a jugar!";
+    [Tooltip("Habilitar notificacion local de recompensa diaria disponible")]
+    public bool enableDailyRewardNotification = true;
+    [Tooltip("Titulo de la notificacion de recompensa diaria")]
+    public string dailyRewardNotificationTitle = "Recompensa Diaria";
+    [Tooltip("Cuerpo de la notificacion de recompensa diaria")]
+    public string dailyRewardNotificationBody = "Tu recompensa diaria esta lista. Vuelve para reclamarla!";
+    [Tooltip("Usar demora corta de QA para la notificacion diaria. Mantener apagado en produccion.")]
+    public bool useDebugDailyRewardNotificationDelay = false;
+    [Tooltip("Demora de QA en segundos para la notificacion diaria")]
+    public int debugDailyRewardNotificationDelaySeconds = 120;
+    [Tooltip("Logs de depuracion del sistema de notificaciones")]
+    public bool notificationDebugLogs = false;
+
     [Header("TUTORIAL")]
     [Tooltip("Mostrar tutorial en el primer nivel")]
     public bool enableTutorial = true;
