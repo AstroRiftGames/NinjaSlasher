@@ -48,7 +48,8 @@ public class PlayerController : MonoBehaviour
     {
         _lastMoveDirection = dir;
     }
-    private float _lastDash;
+    private float _dashCooldownStartTime;
+    private bool _hasStartedDashCooldown;
     private Vector2 _lastNormal = Vector2.up;
     public Vector2 LastNormal => _lastNormal;
     private PlatformBase _currentPlatform;
@@ -312,7 +313,6 @@ public class PlayerController : MonoBehaviour
         _view.RB.AddForce(dashDir * _model.DashForce);
         AudioService.Instance.PlaySFXAtPosition(_audio.movementLoop, transform.position);
         _isDashing = true;
-        _lastDash = Time.time;
         GameEvents.RaiseDashStarted();
         _view.Animator.SetBool("IsGrounded", false);
         _view.TrailRendererComponent.emitting = true;
@@ -323,11 +323,15 @@ public class PlayerController : MonoBehaviour
 
     private bool CheckDashCD()
     {
+        if (!_hasStartedDashCooldown)
+            return true;
+
+        float effectiveCD = _model.DashCD;
         var context = PowerUpManager.Instance?.context;
         if (context != null && context.DashTurboActive)
-            _model.SetDashCD(_model.DashCD * context.DashCooldownMultiplier);
+            effectiveCD *= context.DashCooldownMultiplier;
 
-        return Time.time >= _lastDash + _model.DashCD;
+        return Time.time >= _dashCooldownStartTime + effectiveCD;
     }
 
     private void RotateSprites(Vector2 direction)
@@ -470,6 +474,8 @@ public class PlayerController : MonoBehaviour
 
         if (wasDashing)
         {
+            _dashCooldownStartTime = Time.time;
+            _hasStartedDashCooldown = true;
             GameEvents.RaiseDashEnded();
         }
     }

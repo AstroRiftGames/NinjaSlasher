@@ -507,6 +507,7 @@ public class PowerUpManager : MonoBehaviourSingleton<PowerUpManager>
         for (int i = activePowerUps.Count - 1; i >= 0; i--)
         {
             PowerUpType type = GetPowerUpType(activePowerUps[i]);
+            if (type == PowerUpType.SecondChance) continue;
             ConsumePowerUpUse(type);
         }
 

@@ -8,13 +8,13 @@ public class PowerUpDashTurbo : PowerUpBase
     public override void Activate(PowerUpContext context)
     {
         context.DashTurboActive = true;
-        context.DashCooldownMultiplier *= dashCooldownMultiplier;
+        context.DashCooldownMultiplier = dashCooldownMultiplier;
     }
 
     public override void Deactivate(PowerUpContext context)
     {
         context.DashTurboActive = false;
-        context.DashCooldownMultiplier /= dashCooldownMultiplier;
+        context.DashCooldownMultiplier = 1f;
     }
 
     public override void OnUseConsumed(PowerUpContext context)
