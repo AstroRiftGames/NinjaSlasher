@@ -3,12 +3,10 @@ using UnityEngine;
 [CreateAssetMenu(menuName = "PowerUps/DashTurbo")]
 public class PowerUpDashTurbo : PowerUpBase
 {
-    [Range(0.1f, 1f)] public float dashCooldownMultiplier = 0.7f;
-
     public override void Activate(PowerUpContext context)
     {
         context.DashTurboActive = true;
-        context.DashCooldownMultiplier = dashCooldownMultiplier;
+        context.DashCooldownMultiplier = gameConfig != null ? gameConfig.GetDashTurboCooldownMultiplier() : 0.25f;
     }
 
     public override void Deactivate(PowerUpContext context)
@@ -17,7 +15,4 @@ public class PowerUpDashTurbo : PowerUpBase
         context.DashCooldownMultiplier = 1f;
     }
 
-    public override void OnUseConsumed(PowerUpContext context)
-    {
-    }
 }

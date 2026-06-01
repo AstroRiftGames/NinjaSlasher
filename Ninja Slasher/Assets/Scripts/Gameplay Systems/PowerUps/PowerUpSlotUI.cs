@@ -172,7 +172,7 @@ public class PowerUpSlotUI : MonoBehaviour
             {
                 int usesRemaining = powerUpManager != null ? powerUpManager.GetRemainingUses(_powerUpType) : 0;
                 usesText.gameObject.SetActive(true);
-                usesText.text = $"{usesRemaining} usos";
+                usesText.text = $"x{usesRemaining}";
             }
             else
             {

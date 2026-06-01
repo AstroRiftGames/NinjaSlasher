@@ -3,25 +3,18 @@ using UnityEngine;
 [CreateAssetMenu(fileName = "PowerUpEnhancedParry", menuName = "PowerUps/EnhancedParry")]
 public class PowerUpEnhancedParry : PowerUpBase
 {
-    [SerializeField] private int bouncesAmount = 3;
-    [SerializeField][Range(0.5f, 1f)] private float velocityRetentionPerBounce = 0.9f;
-
     public override void Activate(PowerUpContext context)
     {
         context.EnhancedParryActive = true;
-        context.EnhancedParryBounces = bouncesAmount;
-        context.EnhancedParryVelocityRetention = velocityRetentionPerBounce;
+        context.EnhancedParryBounces = gameConfig != null ? gameConfig.GetEnhancedParryBounces() : 2;
+        context.EnhancedParryVelocityRetention = gameConfig != null ? gameConfig.GetEnhancedParryVelocityRetention() : 0.9f;
     }
 
     public override void Deactivate(PowerUpContext context)
     {
         context.EnhancedParryActive = false;
-        context.EnhancedParryBounces = bouncesAmount;
-        context.EnhancedParryVelocityRetention = velocityRetentionPerBounce;
-        context.EnhancedParryUsesRemaining = 0;
+        context.EnhancedParryBounces = 0;
+        context.EnhancedParryVelocityRetention = 1f;
     }
 
-    public override void OnUseConsumed(PowerUpContext context)
-    {
-    }
 }

@@ -3,12 +3,10 @@ using UnityEngine;
 [CreateAssetMenu(menuName = "PowerUps/ComboMaster")]
 public class PowerUpComboMaster : PowerUpBase
 {
-    [Range(0f, 2f)] public float comboBonusPercent;
-
     public override void Activate(PowerUpContext context)
     {
         context.ComboMasterActive = true;
-        context.ComboBonusPercent = comboBonusPercent;
+        context.ComboBonusPercent = gameConfig != null ? gameConfig.GetComboMasterBonusPercent() : 0.5f;
     }
 
     public override void Deactivate(PowerUpContext context)
@@ -17,7 +15,4 @@ public class PowerUpComboMaster : PowerUpBase
         context.ComboBonusPercent = 0f;
     }
 
-    public override void OnUseConsumed(PowerUpContext context)
-    {
-    }
 }

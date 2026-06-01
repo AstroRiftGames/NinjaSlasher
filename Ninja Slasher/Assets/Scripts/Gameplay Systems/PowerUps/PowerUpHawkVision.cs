@@ -15,7 +15,4 @@ public class PowerUpHawkVision : PowerUpBase
         context.HawkVisionActive = false;
     }
 
-    public override void OnUseConsumed(PowerUpContext context)
-    {
-    }
 }

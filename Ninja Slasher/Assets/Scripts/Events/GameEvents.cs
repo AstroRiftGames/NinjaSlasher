@@ -119,10 +119,6 @@ public static class GameEvents
 
     public static event Action<PowerUpType, int> OnPowerUpUsesUpdated;
 
-    public static event Action<PowerUpType, int> OnPowerUpUseConsumed;
-
-    public static event Action<string> OnPowerUpUsesTextChanged;
-
     public static event Action OnLevelEndedConsumePowerUps;
 
     public static event Action<PowerUpType> OnPowerUpPurchased;
@@ -140,14 +136,6 @@ public static class GameEvents
     public static void RaisePowerUpUsesUpdated(PowerUpType type, int usesRemaining)
     {
         OnPowerUpUsesUpdated?.Invoke(type, usesRemaining);
-
-        string usesText = $"{usesRemaining} uses";
-        OnPowerUpUsesTextChanged?.Invoke(usesText);
-    }
-
-    public static void RaisePowerUpUseConsumed(PowerUpType type, int usesRemaining)
-    {
-        OnPowerUpUseConsumed?.Invoke(type, usesRemaining);
     }
 
     public static void RaiseLevelEndedConsumePowerUps()
@@ -353,8 +341,6 @@ public static class GameEvents
         OnPowerUpActivated = null;
         OnPowerUpExpired = null;
         OnPowerUpUsesUpdated = null;
-        OnPowerUpUseConsumed = null;
-        OnPowerUpUsesTextChanged = null;
         OnLevelEndedConsumePowerUps = null;
         OnPowerUpPurchased = null;
     }
