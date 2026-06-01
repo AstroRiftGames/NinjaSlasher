@@ -772,6 +772,14 @@ public class PreGameUIManager : MonoBehaviour
         if (_pregameSelection.Count == 0)
             return true;
 
+        if (PowerUpManager.Instance == null)
+        {
+            Debug.LogError("[PreGameUIManager] PowerUpManager unavailable during consumption. Aborting.");
+            _pregameSelection.Clear();
+            ShowPreGamePowerUps();
+            return false;
+        }
+
         GameData gameData = SaveManager.Instance?.GetGameData();
         if (gameData == null)
             return false;
@@ -797,16 +805,16 @@ public class PreGameUIManager : MonoBehaviour
             }
         }
 
+        PowerUpType[] selectedPowerUps = new PowerUpType[_pregameSelection.Count];
         for (int i = 0; i < _pregameSelection.Count; i++)
+            selectedPowerUps[i] = _pregameSelection.GetSelection(i);
+
+        if (!PowerUpManager.Instance.ActivatePowerUpsFromInventory(selectedPowerUps, selectedPowerUps.Length))
         {
-            if (PowerUpManager.Instance == null)
-            {
-                Debug.LogError("[PreGameUIManager] PowerUpManager unavailable during consumption. Aborting.");
-                _pregameSelection.Clear();
-                ShowPreGamePowerUps();
-                return false;
-            }
-            PowerUpManager.Instance.ActivatePowerUpFromInventory(_pregameSelection.GetSelection(i));
+            Debug.LogWarning("[PreGameUIManager] Power-up activation failed. Level start aborted.");
+            _pregameSelection.Clear();
+            ShowPreGamePowerUps();
+            return false;
         }
 
         _pregameSelection.Clear();
