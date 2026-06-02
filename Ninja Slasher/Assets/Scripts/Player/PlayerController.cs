@@ -755,7 +755,7 @@ public class PlayerController : MonoBehaviour
 
     private static bool IsSurfaceTag(string tag)
     {
-        return tag == "Obstacle" || tag == "Scenario" || tag == "Floor";
+        return tag == "Obstacle" || tag == "Scenario" || tag == "Floor" || tag.Contains("Platform");
     }
 
     private static bool IsDeadlyTag(string tag)
