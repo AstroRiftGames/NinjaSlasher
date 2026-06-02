@@ -599,7 +599,8 @@ public override void HideImmediate()
         {
             _overlayFadeTween = _overlayCanvasGroup.DOFade(_overlayTargetGroupAlpha, _fadeAnimationDuration * 0.6f)
                 .SetEase(_showFadeEase)
-                .SetUpdate(true);
+                .SetUpdate(true)
+                .OnKill(() => { if (_overlayCanvasGroup != null) _overlayCanvasGroup.alpha = _overlayTargetGroupAlpha; });
         }
         else if (_overlayCanvasGroup != null)
         {
