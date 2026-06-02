@@ -58,19 +58,19 @@ public class StoreProductDefinition : ScriptableObject
             {
                 case RewardType.Coins:
                     if (coinAmount > 0)
-                        lines.Add($"Includes {coinAmount} ninja coins.");
+                        lines.Add($"Incluye {coinAmount} monedas.");
                     break;
 
                 case RewardType.Bundle:
                     if (bundleReward != null)
                     {
                         if (bundleReward.coins > 0)
-                            lines.Add($"Includes {bundleReward.coins} coins.");
+                            lines.Add($"Incluye {bundleReward.coins} monedas.");
 
                         if (bundleReward.unlimitedLives && bundleReward.unlimitedLivesDurationMinutes > 0f)
-                            lines.Add($"Includes unlimited lives for {FormatDurationMinutes(bundleReward.unlimitedLivesDurationMinutes)}.");
+                            lines.Add($"Incluye vidas ilimitadas por {FormatDurationMinutes(bundleReward.unlimitedLivesDurationMinutes)}.");
                         else if (bundleReward.regularLivesCount > 0)
-                            lines.Add($"Includes {bundleReward.regularLivesCount} {(bundleReward.regularLivesCount == 1 ? "life" : "lives")}.");
+                            lines.Add($"Incluye {bundleReward.regularLivesCount} {(bundleReward.regularLivesCount == 1 ? "vida" : "vidas")}.");
 
                         if (bundleReward.powerUps != null)
                         {
@@ -79,20 +79,20 @@ public class StoreProductDefinition : ScriptableObject
                                 if (entry.quantity <= 0)
                                     continue;
 
-                                lines.Add($"Includes {entry.quantity} {Humanize(entry.type.ToString())}.");
+                                lines.Add($"Incluye {entry.quantity} {GetPowerUpDisplayName(entry.type)}.");
                             }
                         }
                     }
                     break;
 
                 case RewardType.RemoveAds:
-                    lines.Add("Removes interstitial ads permanently.");
-                    lines.Add("Rewarded ads remain available.");
+                    lines.Add("Elimina los anuncios intersticiales de forma permanente.");
+                    lines.Add("Los anuncios recompensados siguen disponibles.");
                     break;
             }
 
             if (lines.Count == 0)
-                return "Confirms the purchase of this store item.";
+                return "Confirma la compra de este producto de la tienda.";
 
             StringBuilder builder = new StringBuilder();
             for (int i = 0; i < lines.Count; i++)
@@ -114,7 +114,30 @@ public class StoreProductDefinition : ScriptableObject
     private static string FormatDurationMinutes(float minutes)
     {
         int roundedMinutes = Mathf.RoundToInt(minutes);
-        return roundedMinutes == 1 ? "1 minute" : $"{roundedMinutes} minutes";
+        return roundedMinutes == 1 ? "1 minuto" : $"{roundedMinutes} minutos";
+    }
+
+    private static string GetPowerUpDisplayName(PowerUpType type)
+    {
+        switch (type)
+        {
+            case PowerUpType.ExtraTime:
+                return "Tiempo Extra";
+            case PowerUpType.DashTurbo:
+                return "Turbo de Dash";
+            case PowerUpType.ParryPerfect:
+                return "Parry Perfecto";
+            case PowerUpType.ComboMaster:
+                return "Maestro del Combo";
+            case PowerUpType.SecondChance:
+                return "Segunda Oportunidad";
+            case PowerUpType.HawkVision:
+                return "Ojo de Halcon";
+            case PowerUpType.EnhancedParry:
+                return "Parry Potenciado";
+            default:
+                return Humanize(type.ToString());
+        }
     }
 
     private static string Humanize(string raw)
