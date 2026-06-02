@@ -64,6 +64,7 @@ public class NoLivesModal : UIModalBase
 
     protected override void OnShown()
     {
+        PauseController.Instance?.RequestPause(PauseSource.NoLives);
         ResetRecoveredLifeFlowFlags();
         UpdateMessage();
         UpdateTimer();
@@ -72,6 +73,8 @@ public class NoLivesModal : UIModalBase
 
     protected override void OnHidden()
     {
+        PauseController.Instance?.ReleasePause(PauseSource.NoLives);
+
         if (_suppressAbandonOnHide)
         {
             _suppressAbandonOnHide = false;
@@ -271,16 +274,18 @@ public class NoLivesModal : UIModalBase
 
     private void ResolveRecoveredLifeFlow()
     {
+        PrepareForFlowTransitionClose();
+
         if (LifeManager.Instance == null || !LifeManager.Instance.CanContinueCurrentAttempt())
             return;
 
         BeginRecoveredLifeFlowClose();
         _isClaimLifeFlowInProgress = false;
-        PrepareForFlowTransitionClose();
 
         if (ShouldReturnToDefeatFlow())
         {
             UIEvents.RequestShowDefeatModal(LifeManager.Instance.GetEffectiveLivesForCurrentAttempt());
+            RequestClose();
             return;
         }
 
@@ -297,7 +302,7 @@ public class NoLivesModal : UIModalBase
 
     private void OnCloseRequested()
     {
-        if (LifeManager.Instance != null && LifeManager.Instance.RequiresLifeRecoveryForCurrentAttempt())
+        if (_isClaimLifeFlowInProgress && LifeManager.Instance != null && LifeManager.Instance.RequiresLifeRecoveryForCurrentAttempt())
         {
             DismissBlockedFlow();
             return;

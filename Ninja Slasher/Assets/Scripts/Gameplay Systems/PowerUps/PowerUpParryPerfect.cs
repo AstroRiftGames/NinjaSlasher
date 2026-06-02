@@ -3,21 +3,18 @@ using UnityEngine;
 [CreateAssetMenu(menuName = "PowerUps/ParryPerfect")]
 public class PowerUpParryPerfect : PowerUpBase
 {
-    public float extraParryWindow = 0.3f;
-
     public override void Activate(PowerUpContext context)
     {
         context.ParryPerfectActive = true;
-        context.ParryBonusWindow += extraParryWindow;
+        float bonus = gameConfig != null ? gameConfig.GetParryPerfectBonusWindow() : 0.3f;
+        context.ParryBonusWindow += bonus;
     }
 
     public override void Deactivate(PowerUpContext context)
     {
         context.ParryPerfectActive = false;
-        context.ParryBonusWindow -= extraParryWindow;
+        float bonus = gameConfig != null ? gameConfig.GetParryPerfectBonusWindow() : 0.3f;
+        context.ParryBonusWindow -= bonus;
     }
 
-    public override void OnUseConsumed(PowerUpContext context)
-    {
-    }
 }

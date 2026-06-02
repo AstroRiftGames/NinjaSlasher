@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using DG.Tweening;
 using UnityEngine;
@@ -30,6 +31,16 @@ public abstract class UIModalBase : UIPanel, IPointerClickHandler
     [SerializeField] protected string _closeTrigger = "Close";
 
     protected override bool BlocksUnderlyingUI => true;
+
+    public event Action<UIModalBase> HiddenCompleted;
+
+    protected bool _isOpening;
+    protected bool _isClosing;
+
+    public bool IsOpening => _isOpening;
+    public bool IsClosing => _isClosing;
+    public bool IsTransitioning => _isOpening || _isClosing;
+    public bool IsActiveOrTransitioning => _isVisible || _isOpening || _isClosing || gameObject.activeInHierarchy;
 
     private Sequence _contentAnimationSequence;
     private Tween _overlayFadeTween;
@@ -117,11 +128,14 @@ public abstract class UIModalBase : UIPanel, IPointerClickHandler
 
 public override void Show()
     {
-        if (_isVisible) return;
+        if (_isVisible || _isOpening) return;
 
         CancelPendingDeactivate();
         CancelShowCompletion();
         KillActiveAnimation();
+
+        _isOpening = true;
+        _isClosing = false;
 
         gameObject.SetActive(true);
         _isVisible = true;
@@ -136,9 +150,12 @@ public override void Show()
 
     public override void Hide()
     {
-        if (!_isVisible) return;
+        if (!_isVisible || _isClosing) return;
 
         CancelShowCompletion();
+
+        _isClosing = true;
+        _isOpening = false;
         _isVisible = false;
         SetPanelInputEnabled(false);
 
@@ -155,9 +172,13 @@ public override void HideImmediate()
         KillActiveAnimation();
         _isWaitingForHideAnimationEvent = false;
 
-        if (!_isVisible && !gameObject.activeSelf)
+        if (!_isVisible && !_isOpening && !_isClosing && !gameObject.activeSelf)
             return;
 
+        bool wasTransitioning = _isOpening || _isClosing || _isVisible;
+
+        _isOpening = false;
+        _isClosing = false;
         _isVisible = false;
         SetPanelInputEnabled(false);
         EnsureBackgroundClickable();
@@ -167,6 +188,9 @@ public override void HideImmediate()
         ResetOverlayState();
         gameObject.SetActive(false);
         OnHideAnimationCompleted();
+
+        if (wasTransitioning)
+            HiddenCompleted?.Invoke(this);
     }
 
     public override IEnumerator ShowRoutine()
@@ -194,7 +218,15 @@ public override void HideImmediate()
         CancelShowCompletion();
         KillActiveAnimation();
         _isWaitingForHideAnimationEvent = false;
+
+        bool wasTransitioning = _isOpening || _isClosing || _isVisible;
+        _isOpening = false;
+        _isClosing = false;
+
         NotifyUIManagerModalHidden();
+
+        if (wasTransitioning)
+            HiddenCompleted?.Invoke(this);
     }
 
     protected void SetBackgroundRaycastTarget(bool enabled)
@@ -261,7 +293,8 @@ public override void HideImmediate()
         _contentAnimationSequence.OnComplete(() =>
         {
             _contentAnimationSequence = null;
-OnShowAnimationCompleted();
+            CompleteShow();
+            OnShowAnimationCompleted();
         });
     }
 
@@ -285,6 +318,7 @@ OnShowAnimationCompleted();
             ResetContentVisualState();
             ResetOverlayState();
             gameObject.SetActive(false);
+            CompleteHide();
             OnHideAnimationCompleted();
             return;
         }
@@ -313,6 +347,7 @@ OnShowAnimationCompleted();
             ResetContentVisualState();
             ResetOverlayState();
             gameObject.SetActive(false);
+            CompleteHide();
             OnHideAnimationCompleted();
         });
     }
@@ -338,6 +373,7 @@ OnShowAnimationCompleted();
     {
         yield return WaitForAnimatorPlayback(_modalAnimator, ShowAnimationDuration);
         _showCompletionCoroutine = null;
+        CompleteShow();
         OnShowAnimationCompleted();
     }
 
@@ -404,6 +440,17 @@ OnShowAnimationCompleted();
             _overlayFadeTween.Kill();
             _overlayFadeTween = null;
         }
+    }
+
+    protected void CompleteShow()
+    {
+        _isOpening = false;
+    }
+
+    protected void CompleteHide()
+    {
+        _isClosing = false;
+        HiddenCompleted?.Invoke(this);
     }
 
     private IEnumerator WaitForShowAnimationToFinish()
@@ -486,6 +533,7 @@ OnShowAnimationCompleted();
         ResetContentVisualState();
         ResetOverlayState();
         gameObject.SetActive(false);
+        CompleteHide();
         OnHideAnimationCompleted();
     }
 
@@ -551,7 +599,8 @@ OnShowAnimationCompleted();
         {
             _overlayFadeTween = _overlayCanvasGroup.DOFade(_overlayTargetGroupAlpha, _fadeAnimationDuration * 0.6f)
                 .SetEase(_showFadeEase)
-                .SetUpdate(true);
+                .SetUpdate(true)
+                .OnKill(() => { if (_overlayCanvasGroup != null) _overlayCanvasGroup.alpha = _overlayTargetGroupAlpha; });
         }
         else if (_overlayCanvasGroup != null)
         {

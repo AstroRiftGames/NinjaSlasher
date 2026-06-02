@@ -6,7 +6,10 @@ public static class PowerUpPurchaseService
     {
         if (SaveManager.Instance == null) return PurchaseResult.InvalidData;
         if (!SaveManager.Instance.SpendCoins(cost)) return PurchaseResult.InsufficientFunds;
-        SaveManager.Instance.AddPowerUpToInventory(type, 1);
+
+        GameConfig config = GameConfigManager.GetConfig();
+        int quantity = config != null ? config.GetPowerUpGrantQuantity(type) : 1;
+        SaveManager.Instance.AddPowerUpToInventory(type, quantity);
         return PurchaseResult.Success;
     }
 

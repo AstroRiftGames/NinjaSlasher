@@ -583,28 +583,6 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
         SaveData();
     }
 
-    public void ActivatePowerUp(PowerUpType powerUpType, int uses)
-    {
-        var data = GetGameData();
-
-        var inventoryItem = data.powerUpInventory.Find(item => item.type == powerUpType);
-        if (inventoryItem != null)
-        {
-            inventoryItem.quantity = Mathf.Max(0, inventoryItem.quantity - 1);
-            inventoryItem.lastUpdated = DateTime.Now;
-            if (inventoryItem.quantity == 0)
-                data.powerUpInventory.Remove(inventoryItem);
-        }
-
-        var existingActivePowerUp = data.activePowerUps.Find(p => p.type == powerUpType);
-        if (existingActivePowerUp != null)
-            existingActivePowerUp.usesRemaining += uses;
-        else
-            data.activePowerUps.Add(new PowerUpData(powerUpType, uses));
-
-        SaveData();
-    }
-
     public void DeactivatePowerUp(PowerUpType powerUpType)
     {
         var data = GetGameData();
@@ -612,24 +590,6 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
         if (powerUpToRemove != null)
         {
             data.activePowerUps.Remove(powerUpToRemove);
-            SaveData();
-        }
-    }
-
-    public void UpdatePowerUpUses(PowerUpType powerUpType, int usesRemaining)
-    {
-        var data = GetGameData();
-        var powerUpData = data.activePowerUps.Find(p => p.type == powerUpType);
-
-        if (powerUpData != null)
-        {
-            powerUpData.usesRemaining = usesRemaining;
-
-            if (usesRemaining <= 0)
-            {
-                data.activePowerUps.Remove(powerUpData);
-            }
-
             SaveData();
         }
     }

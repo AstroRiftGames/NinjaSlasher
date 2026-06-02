@@ -36,10 +36,7 @@ public class PowerUpManager : MonoBehaviourSingleton<PowerUpManager>
     public PowerUpHawkVision powerUpTrajectoryGuide;
     public PowerUpEnhancedParry powerUpEnhancedParry;
 
-    private List<(PowerUpBase powerUp, int usesRemaining)> _activeUsages = new List<(PowerUpBase, int)>();
-
-    private Dictionary<PowerUpType, int> _activationLevelIds = new Dictionary<PowerUpType, int>();
-    private bool _levelEndConsumptionHandled;
+    private bool _isInLevel;
 
     [Header("DEBUG")]
     [SerializeField] private List<PowerUpInfo> availablePowerUps = new List<PowerUpInfo>();
@@ -49,26 +46,32 @@ public class PowerUpManager : MonoBehaviourSingleton<PowerUpManager>
         base.Awake();
     }
 
-    void Start()
-    {
-        LoadActivePowerUpsFromGameData();
-    }
-
     void OnEnable()
     {
         GameEvents.OnLevelEndedConsumePowerUps += OnLevelEndedConsumePowerUps;
         GameEvents.OnLevelStarted += OnLevelStarted;
+        GameEvents.OnLevelSessionClosed += OnLevelSessionClosed;
     }
 
     void OnDisable()
     {
         GameEvents.OnLevelEndedConsumePowerUps -= OnLevelEndedConsumePowerUps;
         GameEvents.OnLevelStarted -= OnLevelStarted;
+        GameEvents.OnLevelSessionClosed -= OnLevelSessionClosed;
     }
 
     private void OnLevelStarted()
     {
-        _levelEndConsumptionHandled = false;
+        _isInLevel = true;
+    }
+
+    private void OnLevelSessionClosed()
+    {
+        if (!_isInLevel)
+            return;
+
+        ClearRuntimePowerUpsForAttempt();
+        _isInLevel = false;
     }
 
     private void Update()
@@ -77,46 +80,6 @@ public class PowerUpManager : MonoBehaviourSingleton<PowerUpManager>
         if (Application.isPlaying)
             UpdateDebugInfo();
 #endif
-    }
-
-    public void ConsumePowerUpUse(PowerUpType powerUpType)
-    {
-        PowerUpBase powerUpRef = GetPowerUpReference(powerUpType);
-        if (powerUpRef == null || !activePowerUps.Contains(powerUpRef))
-        {
-            return;
-        }
-
-        int index = -1;
-        for (int i = 0; i < _activeUsages.Count; i++)
-        {
-            if (_activeUsages[i].powerUp == powerUpRef)
-            {
-                index = i;
-                break;
-            }
-        }
-        if (index == -1) return;
-
-        var (pu, usesRemaining) = _activeUsages[index];
-        usesRemaining--;
-
-        UpdateContextRemainingUses(powerUpType, usesRemaining);
-
-        pu.OnUseConsumed(context);
-
-        GameEvents.RaisePowerUpUsesUpdated(powerUpType, usesRemaining);
-
-        if (usesRemaining <= 0)
-        {
-            DeactivatePowerUpInternal(pu);
-            _activeUsages.RemoveAt(index);
-        }
-        else
-        {
-            _activeUsages[index] = (pu, usesRemaining);
-            SaveActivePowerUpUsage(powerUpType, usesRemaining);
-        }
     }
 
     private void UpdateContextActiveState(PowerUpType type, bool isActive)
@@ -147,101 +110,108 @@ public class PowerUpManager : MonoBehaviourSingleton<PowerUpManager>
         }
     }
 
-    private void UpdateContextRemainingUses(PowerUpType type, int usesRemaining)
-    {
-        switch (type)
-        {
-            case PowerUpType.ExtraTime:
-                context.ExtraTimeUsesRemaining = usesRemaining;
-                break;
-            case PowerUpType.DashTurbo:
-                context.DashTurboUsesRemaining = usesRemaining;
-                break;
-            case PowerUpType.ParryPerfect:
-                context.ParryPerfectUsesRemaining = usesRemaining;
-                break;
-            case PowerUpType.ComboMaster:
-                context.ComboMasterUsesRemaining = usesRemaining;
-                break;
-            case PowerUpType.SecondChance:
-                context.SecondChanceUsesRemaining = usesRemaining;
-                break;
-            case PowerUpType.HawkVision:
-                context.HawkVisionUsesRemaining = usesRemaining;
-                break;
-            case PowerUpType.EnhancedParry:
-                context.EnhancedParryUsesRemaining = usesRemaining;
-                break;
-        }
-    }
-
     public void ActivatePowerUp(PowerUpBase powerUp)
     {
-        if (!activePowerUps.Contains(powerUp))
-            activePowerUps.Add(powerUp);
-
-        powerUp.Activate(context);
-        _activeUsages.Add((powerUp, powerUp.maxUses));
-
-        PowerUpType type = GetPowerUpType(powerUp);
-        UpdateContextRemainingUses(type, powerUp.maxUses);
-        UpdateContextActiveState(type, true);
-
-        GameEvents.RaisePowerUpActivated(type, powerUp.maxUses);
-        GameEvents.RaisePowerUpUsesUpdated(type, powerUp.maxUses);
+        TryActivatePowerUpInternal(powerUp);
     }
 
     public bool ActivatePowerUpFromInventory(PowerUpType powerUpType)
     {
-        var gameData = SaveManager.Instance.GetGameData();
-        var inventoryItem = gameData.powerUpInventory.Find(item => item.type == powerUpType);
-
-        if (inventoryItem == null || inventoryItem.quantity <= 0)
-        {
+        if (!CanActivatePowerUpFromInventory(powerUpType))
             return false;
-        }
 
         PowerUpBase powerUpToActivate = GetPowerUpReference(powerUpType);
-        if (powerUpToActivate != null)
-        {
-            if (activePowerUps.Contains(powerUpToActivate))
-            {
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-                Debug.LogWarning($"[PowerUpManager] {powerUpToActivate.name} ya está activo.");
-#endif
-                return false;
-            }
+        if (!TryActivatePowerUpInternal(powerUpToActivate))
+            return false;
 
-            ActivatePowerUpInternal(powerUpToActivate, isFromInventory: true);
-        }
-
-        if (AutoSaveManager.Instance != null)
-        {
-            AutoSaveManager.Instance.OnPowerUpActivated(powerUpType, powerUpToActivate.maxUses);
-        }
-        else
-        {
-            ActivatePowerUpDirect(powerUpType, powerUpToActivate.maxUses);
-        }
+        SaveManager.Instance.RemovePowerUpFromInventory(powerUpType, 1);
 
         return true;
     }
 
-    void LoadActivePowerUpsFromGameData()
+    public bool ActivatePowerUpsFromInventory(PowerUpType[] powerUpTypes, int count)
     {
-        var gameData = SaveManager.Instance.GetGameData();
+        if (powerUpTypes == null || count <= 0)
+            return true;
 
-        foreach (var powerUpData in gameData.activePowerUps)
+        if (count > powerUpTypes.Length)
+            count = powerUpTypes.Length;
+
+        for (int i = 0; i < count; i++)
         {
-            if (powerUpData.usesRemaining > 0)
+            if (!CanActivatePowerUpFromInventory(powerUpTypes[i]))
+                return false;
+        }
+
+        List<PowerUpBase> activatedPowerUps = new List<PowerUpBase>(count);
+
+        for (int i = 0; i < count; i++)
+        {
+            PowerUpBase powerUpToActivate = GetPowerUpReference(powerUpTypes[i]);
+            if (!TryActivatePowerUpInternal(powerUpToActivate))
             {
-                PowerUpBase powerUpRef = GetPowerUpReference(powerUpData.type);
-                if (powerUpRef != null)
-                {
-                    ActivatePowerUpInternal(powerUpRef, powerUpData.usesRemaining);
-                }
+                RollbackActivatedPowerUps(activatedPowerUps);
+                return false;
+            }
+
+            activatedPowerUps.Add(powerUpToActivate);
+        }
+
+        for (int i = 0; i < count; i++)
+            SaveManager.Instance.RemovePowerUpFromInventory(powerUpTypes[i], 1);
+
+        return true;
+    }
+
+    public bool CanActivatePowerUpFromInventory(PowerUpType powerUpType)
+    {
+        if (SaveManager.Instance == null)
+            return false;
+
+        GameData gameData = SaveManager.Instance.GetGameData();
+        if (gameData == null || gameData.powerUpInventory == null)
+            return false;
+
+        bool hasStock = false;
+        for (int i = 0; i < gameData.powerUpInventory.Count; i++)
+        {
+            PowerUpInventoryItem item = gameData.powerUpInventory[i];
+            if (item != null && item.type == powerUpType && item.quantity > 0)
+            {
+                hasStock = true;
+                break;
             }
         }
+
+        if (!hasStock)
+            return false;
+
+        PowerUpBase powerUpToActivate = GetPowerUpReference(powerUpType);
+        if (powerUpToActivate == null)
+        {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            Debug.LogWarning($"[PowerUpManager] No hay referencia asignada para {powerUpType}.");
+#endif
+            return false;
+        }
+
+        if (powerUpToActivate.powerUpType != powerUpType)
+        {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            Debug.LogWarning($"[PowerUpManager] Referencia inválida para {powerUpType}: {powerUpToActivate.name} está configurado como {powerUpToActivate.powerUpType}.");
+#endif
+            return false;
+        }
+
+        if (activePowerUps.Contains(powerUpToActivate))
+        {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            Debug.LogWarning($"[PowerUpManager] {powerUpToActivate.name} ya está activo.");
+#endif
+            return false;
+        }
+
+        return true;
     }
 
     PowerUpBase GetPowerUpReference(PowerUpType type)
@@ -278,14 +248,7 @@ public class PowerUpManager : MonoBehaviourSingleton<PowerUpManager>
     {
         PowerUpBase powerUpToDeactivate = GetPowerUpReference(powerUpType);
         if (powerUpToDeactivate != null && activePowerUps.Contains(powerUpToDeactivate))
-        {
             DeactivatePowerUpInternal(powerUpToDeactivate);
-            for (int i = _activeUsages.Count - 1; i >= 0; i--)
-            {
-                if (_activeUsages[i].powerUp == powerUpToDeactivate)
-                    _activeUsages.RemoveAt(i);
-            }
-        }
     }
 
     void DeactivatePowerUpInternal(PowerUpBase powerUp)
@@ -295,98 +258,62 @@ public class PowerUpManager : MonoBehaviourSingleton<PowerUpManager>
 
         PowerUpType type = GetPowerUpType(powerUp);
         UpdateContextActiveState(type, false);
-        UpdateContextRemainingUses(type, 0);
-
-        if (AutoSaveManager.Instance != null)
-        {
-            AutoSaveManager.Instance.OnPowerUpDeactivated(type);
-        }
-        else
-        {
-            SaveManager.Instance.DeactivatePowerUp(type);
-        }
 
         GameEvents.RaisePowerUpExpired(type);
-
-        {
-            int levelId           = LevelSessionManager.Instance?.CurrentSession?.LevelId ?? -1;
-            int activatedAtLevelId = _activationLevelIds.TryGetValue(type, out int al) ? al : -1;
-            int attemptNumber     = GetCurrentAttemptNumber(levelId);
-            _activationLevelIds.Remove(type);
-            AnalyticsManager.Instance?.RecordPowerUpExpired(type.ToString(), levelId, activatedAtLevelId, attemptNumber);
-        }
     }
 
-    private int GetCurrentAttemptNumber(int levelId)
+    void ActivatePowerUpInternal(PowerUpBase powerUp)
     {
-        if (SaveManager.Instance == null || levelId <= 0) return 1;
-        return SaveManager.Instance.GetGameData().GetLevelProgress(levelId).totalAttempts + 1;
+        TryActivatePowerUpInternal(powerUp);
     }
 
-    void ActivatePowerUpInternal(PowerUpBase powerUp, int uses = -1, bool isFromInventory = false)
+    bool TryActivatePowerUpInternal(PowerUpBase powerUp)
     {
-        int usesToSet = uses > 0 ? uses : powerUp.maxUses;
+        if (powerUp == null)
+            return false;
 
-        if (!activePowerUps.Contains(powerUp))
-            activePowerUps.Add(powerUp);
-
-        powerUp.Activate(context);
-
-        int usageIndex = -1;
-        for (int i = 0; i < _activeUsages.Count; i++)
+        if (activePowerUps.Contains(powerUp))
         {
-            if (_activeUsages[i].powerUp == powerUp)
-            {
-                usageIndex = i;
-                break;
-            }
-        }
-
-        if (usageIndex != -1)
-        {
-            _activeUsages[usageIndex] = (powerUp, usesToSet);
-        }
-        else
-        {
-            _activeUsages.Add((powerUp, usesToSet));
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            Debug.LogWarning($"[PowerUpManager] {powerUp.name} ya está activo.");
+#endif
+            return false;
         }
 
         PowerUpType type = GetPowerUpType(powerUp);
 
+        try
+        {
+            powerUp.Activate(context);
+        }
+        catch (System.Exception exception)
+        {
+            UpdateContextActiveState(type, false);
+            Debug.LogError($"[PowerUpManager] No se pudo activar {powerUp.name}: {exception.Message}");
+            return false;
+        }
+
+        activePowerUps.Add(powerUp);
         UpdateContextActiveState(type, true);
-        UpdateContextRemainingUses(type, usesToSet);
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-        Debug.Log($"[PowerUpManager] Power-up {type} activado - Usos: {usesToSet}");
+        Debug.Log($"[PowerUpManager] Power-up {type} activado");
 #endif
 
-        GameEvents.RaisePowerUpActivated(type, usesToSet);
-
-        if (isFromInventory)
-        {
-            int levelId       = LevelSessionManager.Instance?.CurrentSession?.LevelId ?? -1;
-            int attemptNumber = GetCurrentAttemptNumber(levelId);
-            _activationLevelIds[type] = levelId;
-            AnalyticsManager.Instance?.RecordPowerUpActivated(type.ToString(), usesToSet, levelId, attemptNumber);
-        }
-
-        GameEvents.RaisePowerUpUsesUpdated(type, usesToSet);
+        GameEvents.RaisePowerUpActivated(type, 1);
+        return true;
     }
 
-    void ActivatePowerUpDirect(PowerUpType powerUpType, int uses)
+    void RollbackActivatedPowerUps(List<PowerUpBase> activatedPowerUps)
     {
-        SaveManager.Instance.ActivatePowerUp(powerUpType, uses);
-    }
+        if (activatedPowerUps == null)
+            return;
 
-    void SaveActivePowerUpUsage(PowerUpType powerUpType, int usesRemaining)
-    {
-        if (AutoSaveManager.Instance != null)
+        for (int i = activatedPowerUps.Count - 1; i >= 0; i--)
         {
-            AutoSaveManager.Instance.OnPowerUpUsesUpdated(powerUpType, usesRemaining);
-        }
-        else
-        {
-            SaveManager.Instance.UpdatePowerUpUses(powerUpType, usesRemaining);
+            PowerUpBase powerUp = activatedPowerUps[i];
+            if (powerUp != null && activePowerUps.Contains(powerUp))
+                DeactivatePowerUpInternal(powerUp);
         }
     }
 
@@ -400,25 +327,16 @@ public class PowerUpManager : MonoBehaviourSingleton<PowerUpManager>
     {
         PowerUpBase powerUpRef = GetPowerUpReference(type);
         if (powerUpRef == null) return 0;
-
-        for (int i = 0; i < _activeUsages.Count; i++)
-        {
-            if (_activeUsages[i].powerUp == powerUpRef)
-                return _activeUsages[i].usesRemaining;
-        }
-        return 0;
+        return activePowerUps.Contains(powerUpRef) ? 1 : 0;
     }
 
     public bool TryGetAnyActivePowerUp(out PowerUpBase powerUp, out int remainingUses)
     {
-        foreach (var usage in _activeUsages)
+        if (activePowerUps.Count > 0)
         {
-            if (usage.powerUp != null && activePowerUps.Contains(usage.powerUp) && usage.usesRemaining > 0)
-            {
-                powerUp = usage.powerUp;
-                remainingUses = usage.usesRemaining;
-                return true;
-            }
+            powerUp = activePowerUps[0];
+            remainingUses = 1;
+            return true;
         }
 
         powerUp = null;
@@ -436,19 +354,15 @@ public class PowerUpManager : MonoBehaviourSingleton<PowerUpManager>
     void UpdateDebugInfo()
     {
         availablePowerUps.Clear();
-        var gameData = SaveManager.Instance.GetGameData();
-
-        foreach (var powerUp in gameData.activePowerUps)
+        foreach (var powerUp in activePowerUps)
         {
-            if (powerUp.usesRemaining > 0)
+            PowerUpType type = GetPowerUpType(powerUp);
+            availablePowerUps.Add(new PowerUpInfo
             {
-                availablePowerUps.Add(new PowerUpInfo
-                {
-                    type = powerUp.type,
-                    quantity = 1,
-                    usesRemaining = powerUp.usesRemaining
-                });
-            }
+                type = type,
+                quantity = 1,
+                usesRemaining = 1
+            });
         }
     }
 
@@ -464,57 +378,42 @@ public class PowerUpManager : MonoBehaviourSingleton<PowerUpManager>
     public void ReloadFromSave()
     {
         activePowerUps.Clear();
-        _activeUsages.Clear();
-        _activationLevelIds.Clear();
-
-        LoadActivePowerUpsFromGameData();
+        context = new PowerUpContext();
         RefreshActivePowerUpState();
     }
 
     public void RefreshActivePowerUpState()
     {
-        foreach (var (powerUp, usesRemaining) in _activeUsages)
+        foreach (var powerUp in activePowerUps)
         {
             PowerUpType type = GetPowerUpType(powerUp);
-            GameEvents.RaisePowerUpUsesUpdated(type, usesRemaining);
+            GameEvents.RaisePowerUpUsesUpdated(type, 1);
+        }
+    }
+
+    private void ClearRuntimePowerUpsForAttempt()
+    {
+        for (int i = activePowerUps.Count - 1; i >= 0; i--)
+        {
+            PowerUpBase powerUp = activePowerUps[i];
+            powerUp.Deactivate(context);
+            activePowerUps.RemoveAt(i);
+
+            PowerUpType type = GetPowerUpType(powerUp);
+            UpdateContextActiveState(type, false);
+            GameEvents.RaisePowerUpExpired(type);
         }
     }
 
     private void OnLevelEndedConsumePowerUps()
     {
-        if (_levelEndConsumptionHandled)
-        {
-            return;
-        }
-
-        if (activePowerUps.Count == 0)
-        {
-            _levelEndConsumptionHandled = true;
-            return;
-        }
-
-        _levelEndConsumptionHandled = true;
-        ConsumeOneUseFromAllActivePowerUps();
-    }
-
-    public void ConsumeOneUseFromAllActivePowerUps()
-    {
-        if (activePowerUps.Count == 0)
-        {
-            return;
-        }
-
-        for (int i = activePowerUps.Count - 1; i >= 0; i--)
-        {
-            PowerUpType type = GetPowerUpType(activePowerUps[i]);
-            ConsumePowerUpUse(type);
-        }
-
+        ClearRuntimePowerUpsForAttempt();
+        _isInLevel = false;
     }
 
     #region DEBUG
 
-    [ContextMenu("Add 5 Units of All Power-Ups")]
+    [ContextMenu("Add All Power-Ups (grant qty)")]
     private void AddAllPowerUps()
     {
         AddExtraTime();
@@ -526,55 +425,52 @@ public class PowerUpManager : MonoBehaviourSingleton<PowerUpManager>
         AddRicochetParry();
     }
 
-    [ContextMenu("Add 5x Enhanced Parry")]
+    [ContextMenu("Add Enhanced Parry (grant qty)")]
     private void AddRicochetParry()
     {
-        AddPowerUpToInventory(PowerUpType.EnhancedParry, 5);
+        AddPowerUpToInventory(PowerUpType.EnhancedParry, GameConfigManager.Config.GetPowerUpGrantQuantity(PowerUpType.EnhancedParry));
     }
 
-    [ContextMenu("Add 5x Extra Time")]
+    [ContextMenu("Add Extra Time (grant qty)")]
     private void AddExtraTime()
     {
-        AddPowerUpToInventory(PowerUpType.ExtraTime, 5);
+        AddPowerUpToInventory(PowerUpType.ExtraTime, GameConfigManager.Config.GetPowerUpGrantQuantity(PowerUpType.ExtraTime));
     }
 
-    [ContextMenu("Add 5x Dash Turbo")]
+    [ContextMenu("Add Dash Turbo (grant qty)")]
     private void AddDashTurbo()
     {
-        AddPowerUpToInventory(PowerUpType.DashTurbo, 5);
+        AddPowerUpToInventory(PowerUpType.DashTurbo, GameConfigManager.Config.GetPowerUpGrantQuantity(PowerUpType.DashTurbo));
     }
 
-    [ContextMenu("Add 5x Parry Perfect")]
+    [ContextMenu("Add Parry Perfect (grant qty)")]
     private void AddParryPerfect()
     {
-        AddPowerUpToInventory(PowerUpType.ParryPerfect, 5);
+        AddPowerUpToInventory(PowerUpType.ParryPerfect, GameConfigManager.Config.GetPowerUpGrantQuantity(PowerUpType.ParryPerfect));
     }
 
-    [ContextMenu("Add 5x Combo Master")]
+    [ContextMenu("Add Combo Master (grant qty)")]
     private void AddComboMaster()
     {
-        AddPowerUpToInventory(PowerUpType.ComboMaster, 5);
+        AddPowerUpToInventory(PowerUpType.ComboMaster, GameConfigManager.Config.GetPowerUpGrantQuantity(PowerUpType.ComboMaster));
     }
 
-    [ContextMenu("Add 5x Second Chance")]
+    [ContextMenu("Add Second Chance (grant qty)")]
     private void AddSecondChance()
     {
-        AddPowerUpToInventory(PowerUpType.SecondChance, 5);
+        AddPowerUpToInventory(PowerUpType.SecondChance, GameConfigManager.Config.GetPowerUpGrantQuantity(PowerUpType.SecondChance));
     }
 
-    [ContextMenu("Add 5x Hawk Vision")]
+    [ContextMenu("Add Hawk Vision (grant qty)")]
     private void AddHawkVision()
     {
-        AddPowerUpToInventory(PowerUpType.HawkVision, 5);
+        AddPowerUpToInventory(PowerUpType.HawkVision, GameConfigManager.Config.GetPowerUpGrantQuantity(PowerUpType.HawkVision));
     }
 
     [ContextMenu("Clear All Power-Ups")]
     private void ClearAllPowerUps()
     {
-        if (SaveManager.Instance == null)
-        {
-            return;
-        }
+        if (SaveManager.Instance == null) return;
 
         var gameData = SaveManager.Instance.GetGameData();
         gameData.powerUpInventory.Clear();
@@ -584,13 +480,9 @@ public class PowerUpManager : MonoBehaviourSingleton<PowerUpManager>
     private void AddPowerUpToInventory(PowerUpType powerUpType, int quantity)
     {
         if (AutoSaveManager.Instance != null)
-        {
             AutoSaveManager.Instance.OnPowerUpObtained(powerUpType, quantity);
-        }
         else if (SaveManager.Instance != null)
-        {
             SaveManager.Instance.AddPowerUpToInventory(powerUpType, quantity);
-        }
     }
 
     #endregion

@@ -206,6 +206,14 @@ public class IAPManager : MonoBehaviourSingleton<IAPManager>, IDetailedStoreList
 
     public void PurchaseProduct(string productId)
     {
+        if (_purchaseState == PurchaseState.Processing)
+        {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            Debug.LogWarning($"[IAPManager] Purchase already in progress. Ignoring request for '{productId}'.");
+#endif
+            return;
+        }
+
         if (!_isInitialized)
         {
             Debug.LogWarning($"[IAPManager] Purchase requested before initialization for '{productId}'.");

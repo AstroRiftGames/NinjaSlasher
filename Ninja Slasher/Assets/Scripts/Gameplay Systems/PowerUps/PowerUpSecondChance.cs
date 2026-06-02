@@ -13,7 +13,4 @@ public class PowerUpSecondChance : PowerUpBase
         context.SecondChanceActive = false;
     }
 
-    public override void OnUseConsumed(PowerUpContext context)
-    {
-    }
 }

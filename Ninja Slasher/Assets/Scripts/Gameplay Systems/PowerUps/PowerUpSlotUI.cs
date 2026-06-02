@@ -145,7 +145,7 @@ public class PowerUpSlotUI : MonoBehaviour
             _quantityContainer.SetActive(!isActive);
 
         if (_quantityText != null && !isActive)
-            _quantityText.text = $"{_item.quantity}";
+            _quantityText.text = _item.quantity > 0 ? $"{_item.quantity}" : "+";
 
         if (activeIndicator != null)
             activeIndicator.SetActive(isActive);
@@ -172,7 +172,7 @@ public class PowerUpSlotUI : MonoBehaviour
             {
                 int usesRemaining = powerUpManager != null ? powerUpManager.GetRemainingUses(_powerUpType) : 0;
                 usesText.gameObject.SetActive(true);
-                usesText.text = $"{usesRemaining} usos";
+                usesText.text = $"x{usesRemaining}";
             }
             else
             {
@@ -207,7 +207,6 @@ public class PowerUpSlotUI : MonoBehaviour
         {
             CacheActiveFrameImage();
             NormalizeActiveFrameOverlayRect();
-            _activeFrameOverlay.transform.SetAsLastSibling();
 
             if (_activeFrameImage != null)
                 _activeFrameImage.raycastTarget = false;
