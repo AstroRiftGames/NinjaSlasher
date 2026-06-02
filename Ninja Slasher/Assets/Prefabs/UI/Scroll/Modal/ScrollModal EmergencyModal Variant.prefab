@@ -1694,7 +1694,8 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
-    m_RemovedGameObjects: []
+    m_RemovedGameObjects:
+    - {fileID: 360000705807180425, guid: 380d74a0e92590640a3e7fbd94a0231a, type: 3}
     m_AddedGameObjects:
     - targetCorrespondingSourceObject: {fileID: 2235510720588789527, guid: 380d74a0e92590640a3e7fbd94a0231a, type: 3}
       insertIndex: -1
@@ -1718,17 +1719,6 @@ CanvasGroup:
   m_CorrespondingSourceObject: {fileID: 5697461602344713865, guid: 380d74a0e92590640a3e7fbd94a0231a, type: 3}
   m_PrefabInstance: {fileID: 6854971548013808132}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &2270818413181120548 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 4657374149714803232, guid: 380d74a0e92590640a3e7fbd94a0231a, type: 3}
-  m_PrefabInstance: {fileID: 6854971548013808132}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!224 &2805451333286169922 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 8777295025906042694, guid: 380d74a0e92590640a3e7fbd94a0231a, type: 3}
@@ -1778,7 +1768,7 @@ MonoBehaviour:
   _rewardText: {fileID: 0}
   _countdownText: {fileID: 2548748526247443044}
   _buyBtn: {fileID: 746814802213580694}
-  _dismissBtn: {fileID: 2270818413181120548}
+  _dismissBtn: {fileID: 0}
 --- !u!224 &4622911388849831187 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 2235510720588789527, guid: 380d74a0e92590640a3e7fbd94a0231a, type: 3}
