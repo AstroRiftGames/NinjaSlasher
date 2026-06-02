@@ -281,17 +281,26 @@ public class Projectile : MonoBehaviour, IPoolable
         if (TryHandleGameplayClosed())
             return;
 
+        PowerUpManager powerUpManager = PowerUpManager.Instance;
+        if (powerUpManager != null && powerUpManager.IsEnhancedParryActive)
+        {
+            EnableEnhancedParry(
+                powerUpManager.context.EnhancedParryBounces,
+                powerUpManager.context.EnhancedParryVelocityRetention
+            );
+        }
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        else if (powerUpManager == null)
+        {
+            Debug.LogWarning("[Projectile] PowerUpManager.Instance es null en ReflectBackwards. EnhancedParry no se aplicará.");
+        }
+#endif
+
         WasReflected = true;
         _animator.SetTrigger("OnParried");
         SetOwner(newShooter);
         _rb.linearVelocity = Vector2.zero;
         SetDirection(newDir);
-
-        var context = PowerUpManager.Instance?.context;
-        if (context != null && context.EnhancedParryActive)
-        {
-            EnableEnhancedParry(context.EnhancedParryBounces, context.EnhancedParryVelocityRetention);
-        }
     }
 
     public void EnableEnhancedParry(int bounces, float velocityRetention)

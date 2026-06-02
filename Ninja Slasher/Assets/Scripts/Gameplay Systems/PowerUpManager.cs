@@ -27,6 +27,18 @@ public class PowerUpManager : MonoBehaviourSingleton<PowerUpManager>
     public List<PowerUpBase> activePowerUps = new List<PowerUpBase>();
     public PowerUpContext context = new PowerUpContext();
 
+    public bool IsEnhancedParryActive
+    {
+        get
+        {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            if (!context.EnhancedParryActive && activePowerUps.Contains(powerUpEnhancedParry))
+                Debug.LogWarning("[PowerUpManager] EnhancedParry activo en activePowerUps pero context.EnhancedParryActive es false. Inconsistencia detectada.");
+#endif
+            return context.EnhancedParryActive;
+        }
+    }
+
     [Header("REFERENCES")]
     public PowerUpExtraTime powerUpExtraTime;
     public PowerUpDashTurbo powerUpDashTurbo;

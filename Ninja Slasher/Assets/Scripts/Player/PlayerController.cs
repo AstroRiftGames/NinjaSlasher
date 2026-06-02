@@ -603,7 +603,7 @@ public class PlayerController : MonoBehaviour
             Collider2D col = _parryHitsBuffer[i];
             if (col.TryGetComponent(out Projectile projectile)
                 && projectile.Shooter != transform
-                && projectile.IsParryable)
+                && CanParryProjectile(projectile))
             {
                 Vector2 directionToProjectile = projectile.transform.position - transform.position;
                 float distanceToProjectile = directionToProjectile.magnitude;
@@ -623,6 +623,17 @@ public class PlayerController : MonoBehaviour
 
         ClearParryHitsBuffer(hitCount);
         _isParrying = false;
+    }
+
+    private bool CanParryProjectile(Projectile projectile)
+    {
+        if (projectile == null)
+            return false;
+
+        if (projectile.IsParryable)
+            return true;
+
+        return PowerUpManager.Instance != null && PowerUpManager.Instance.IsEnhancedParryActive;
     }
 
     private float SetParryRange()
