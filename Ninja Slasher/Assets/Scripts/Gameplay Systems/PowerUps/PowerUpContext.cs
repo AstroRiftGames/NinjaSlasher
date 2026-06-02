@@ -6,7 +6,7 @@ public class PowerUpContext
     public float ExtraTimePercent;
 
     public bool DashTurboActive;
-    public float DashCooldownMultiplier = 1f;
+    public float DashSpeedMultiplier = 1f;
 
     public bool ParryPerfectActive;
     public float ParryBonusWindow = 0f;
