@@ -413,7 +413,7 @@ public class PowerUpManager : MonoBehaviourSingleton<PowerUpManager>
 
     #region DEBUG
 
-    [ContextMenu("Add 5 Units of All Power-Ups")]
+    [ContextMenu("Add All Power-Ups (grant qty)")]
     private void AddAllPowerUps()
     {
         AddExtraTime();
@@ -425,46 +425,46 @@ public class PowerUpManager : MonoBehaviourSingleton<PowerUpManager>
         AddRicochetParry();
     }
 
-    [ContextMenu("Add 5x Enhanced Parry")]
+    [ContextMenu("Add Enhanced Parry (grant qty)")]
     private void AddRicochetParry()
     {
-        AddPowerUpToInventory(PowerUpType.EnhancedParry, 5);
+        AddPowerUpToInventory(PowerUpType.EnhancedParry, GameConfigManager.Config.GetPowerUpGrantQuantity(PowerUpType.EnhancedParry));
     }
 
-    [ContextMenu("Add 5x Extra Time")]
+    [ContextMenu("Add Extra Time (grant qty)")]
     private void AddExtraTime()
     {
-        AddPowerUpToInventory(PowerUpType.ExtraTime, 5);
+        AddPowerUpToInventory(PowerUpType.ExtraTime, GameConfigManager.Config.GetPowerUpGrantQuantity(PowerUpType.ExtraTime));
     }
 
-    [ContextMenu("Add 5x Dash Turbo")]
+    [ContextMenu("Add Dash Turbo (grant qty)")]
     private void AddDashTurbo()
     {
-        AddPowerUpToInventory(PowerUpType.DashTurbo, 5);
+        AddPowerUpToInventory(PowerUpType.DashTurbo, GameConfigManager.Config.GetPowerUpGrantQuantity(PowerUpType.DashTurbo));
     }
 
-    [ContextMenu("Add 5x Parry Perfect")]
+    [ContextMenu("Add Parry Perfect (grant qty)")]
     private void AddParryPerfect()
     {
-        AddPowerUpToInventory(PowerUpType.ParryPerfect, 5);
+        AddPowerUpToInventory(PowerUpType.ParryPerfect, GameConfigManager.Config.GetPowerUpGrantQuantity(PowerUpType.ParryPerfect));
     }
 
-    [ContextMenu("Add 5x Combo Master")]
+    [ContextMenu("Add Combo Master (grant qty)")]
     private void AddComboMaster()
     {
-        AddPowerUpToInventory(PowerUpType.ComboMaster, 5);
+        AddPowerUpToInventory(PowerUpType.ComboMaster, GameConfigManager.Config.GetPowerUpGrantQuantity(PowerUpType.ComboMaster));
     }
 
-    [ContextMenu("Add 5x Second Chance")]
+    [ContextMenu("Add Second Chance (grant qty)")]
     private void AddSecondChance()
     {
-        AddPowerUpToInventory(PowerUpType.SecondChance, 5);
+        AddPowerUpToInventory(PowerUpType.SecondChance, GameConfigManager.Config.GetPowerUpGrantQuantity(PowerUpType.SecondChance));
     }
 
-    [ContextMenu("Add 5x Hawk Vision")]
+    [ContextMenu("Add Hawk Vision (grant qty)")]
     private void AddHawkVision()
     {
-        AddPowerUpToInventory(PowerUpType.HawkVision, 5);
+        AddPowerUpToInventory(PowerUpType.HawkVision, GameConfigManager.Config.GetPowerUpGrantQuantity(PowerUpType.HawkVision));
     }
 
     [ContextMenu("Clear All Power-Ups")]
