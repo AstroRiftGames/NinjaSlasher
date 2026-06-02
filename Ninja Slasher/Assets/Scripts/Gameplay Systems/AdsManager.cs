@@ -279,6 +279,14 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
 
     private void ShowRewardedAd(System.Action onRewarded, string context)
     {
+        if (IsRewardedAdFlowInProgress())
+        {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            Debug.LogWarning($"[AdsManager] Rewarded ad flow already in progress. Ignoring request for context={context}");
+#endif
+            return;
+        }
+
         AnalyticsManager.Instance?.RecordRewardedAdRequested(context);
 
         if (_rewardedAd != null && _rewardedAd.IsAdReady())

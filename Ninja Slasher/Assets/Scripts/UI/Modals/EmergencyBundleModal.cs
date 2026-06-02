@@ -193,6 +193,9 @@ public class EmergencyBundleModal : UIModalBase
         string productId = _currentOffer.Product.PrimaryProductId;
         if (string.IsNullOrEmpty(productId)) return;
 
+        if (_buyBtn != null)
+            _buyBtn.interactable = false;
+
         AnalyticsManager.Instance?.RecordPurchaseStarted(
             productId,
             AnalyticsManager.ProductCategoryStr(_currentOffer.Product.category),

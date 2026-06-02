@@ -37,6 +37,7 @@ public class DailyRewardUIManager : MonoBehaviourSingleton<DailyRewardUIManager>
     private string _lastClaimButtonText;
     private bool? _lastClaimButtonInteractable;
     private bool _awaitingBootstrap;
+    private bool _isDoubleRewardFlowInProgress;
 
     private UIAudioContext _audioContext;
 
@@ -109,6 +110,10 @@ public class DailyRewardUIManager : MonoBehaviourSingleton<DailyRewardUIManager>
         GameEvents.OnRewardClaimed += OnRewardClaimed;
         GameEvents.OnRewardAvailabilityChanged += OnRewardAvailabilityChanged;
         GameEvents.OnRewardDoubled += OnRewardDoubled;
+
+        if (AdsManager.Instance != null)
+            AdsManager.Instance.OnRewardedAdFlowCompleted += OnRewardedAdFlowCompleted;
+
         _eventsSubscribed = true;
     }
 
@@ -120,6 +125,10 @@ public class DailyRewardUIManager : MonoBehaviourSingleton<DailyRewardUIManager>
         GameEvents.OnRewardClaimed -= OnRewardClaimed;
         GameEvents.OnRewardAvailabilityChanged -= OnRewardAvailabilityChanged;
         GameEvents.OnRewardDoubled -= OnRewardDoubled;
+
+        if (AdsManager.Instance != null)
+            AdsManager.Instance.OnRewardedAdFlowCompleted -= OnRewardedAdFlowCompleted;
+
         _eventsSubscribed = false;
     }
 
@@ -343,6 +352,7 @@ public class DailyRewardUIManager : MonoBehaviourSingleton<DailyRewardUIManager>
 
     private void OnDoubleRewardPressed()
     {
+        if (_isDoubleRewardFlowInProgress) return;
         if (dailyRewardSystem == null || AdsManager.Instance == null) return;
 
         if (!dailyRewardSystem.CanDoubleToday())
@@ -361,7 +371,20 @@ public class DailyRewardUIManager : MonoBehaviourSingleton<DailyRewardUIManager>
             return;
         }
 
+        _isDoubleRewardFlowInProgress = true;
+        if (_doubleDailyRewardButton != null)
+            _doubleDailyRewardButton.interactable = false;
+
         AdsManager.Instance.ShowRewardedAdForDoubleDailyReward();
+    }
+
+    private void OnRewardedAdFlowCompleted(string context, bool rewarded)
+    {
+        if (string.Equals(context, "double_daily_reward", StringComparison.Ordinal))
+        {
+            _isDoubleRewardFlowInProgress = false;
+            UpdateDoubleRewardButton("OnRewardedAdFlowCompleted", force: true);
+        }
     }
 
     private void OnRewardSystemBootstrapped()

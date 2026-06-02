@@ -38,7 +38,8 @@ public class InputDetection : MonoBehaviour
     private bool isCanceled;
     private bool IsInputBlocked => (LevelSessionManager.Instance != null && !LevelSessionManager.Instance.CanProcessGameplay)
         || Time.timeScale == 0f
-        || (TutorialManager.Instance != null && TutorialManager.Instance.IsTutorialActive());
+        || (TutorialManager.Instance != null && TutorialManager.Instance.IsTutorialActive())
+        || UIPanel.HasVisibleBlockingPanel;
 
     private void Awake()
     {
@@ -105,6 +106,12 @@ public class InputDetection : MonoBehaviour
     {
         if (IsInputBlocked)
         {
+            if (_isPressing)
+            {
+                _isPressing = false;
+                Direction = Vector2.zero;
+                isCanceled = true;
+            }
             return;
         }
 

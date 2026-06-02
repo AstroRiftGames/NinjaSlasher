@@ -152,6 +152,46 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
         }
     }
 
+    private void Update()
+    {
+#if UNITY_ANDROID || UNITY_IOS || UNITY_EDITOR
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            HandleAndroidBack();
+        }
+#endif
+    }
+
+    private void HandleAndroidBack()
+    {
+        if (_emergencyBundleModal != null && _emergencyBundleModal.IsVisible)
+        {
+            UIEvents.RequestHideEmergencyBundleModal();
+            return;
+        }
+
+        if (_activeModals.Count > 0)
+        {
+            UIModalBase top = _activeModals[_activeModals.Count - 1];
+            if (top != _victoryModal && top != _defeatModal && top != _noLivesModal)
+            {
+                CloseModal(top);
+                return;
+            }
+        }
+
+        if (_pauseOverlay != null && _pauseOverlay.IsVisible)
+        {
+            HidePauseOverlay();
+            return;
+        }
+
+        if (LevelSessionManager.Instance != null && LevelSessionManager.Instance.IsSessionRunning)
+        {
+            ShowPauseOverlay();
+        }
+    }
+
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
         if (_gameplayUIManager != null)
