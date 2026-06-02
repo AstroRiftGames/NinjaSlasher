@@ -37,6 +37,11 @@ public class PlayerController : MonoBehaviour
     public bool IsDeadOrDying => _isKO;
     private bool _isKO = false;
     private bool _hasHandledGameplayClosed = false;
+    private Coroutine _hawkVisionInitialSlowCoroutine;
+    private bool _hawkVisionInitialSlowStarted;
+    private bool _hawkVisionOwnsTimeScale;
+    private bool _hawkVisionIntroSlowActive;
+    private bool _hawkVisionIgnorePressUntilReleased;
 
     private float _lastParry;
     public Vector2 LastMoveDirection => _lastMoveDirection;
@@ -144,6 +149,10 @@ public class PlayerController : MonoBehaviour
 
     private void OnEnable()
     {
+        GameEvents.OnLevelStarted += OnLevelStartedForHawkVision;
+        GameEvents.OnLevelEndedConsumePowerUps += OnLevelClosedForHawkVision;
+        GameEvents.OnLevelSessionClosed += OnLevelClosedForHawkVision;
+
         if (_swipeDetection == null) return;
 
         _swipeDetection.OnSwipe += TryDash;
@@ -155,6 +164,12 @@ public class PlayerController : MonoBehaviour
 
     private void OnDisable()
     {
+        CleanupHawkVisionRuntime();
+
+        GameEvents.OnLevelStarted -= OnLevelStartedForHawkVision;
+        GameEvents.OnLevelEndedConsumePowerUps -= OnLevelClosedForHawkVision;
+        GameEvents.OnLevelSessionClosed -= OnLevelClosedForHawkVision;
+
         if (_swipeDetection == null) return;
 
         _swipeDetection.OnSwipe -= TryDash;
@@ -162,6 +177,163 @@ public class PlayerController : MonoBehaviour
         _swipeDetection.OnTap -= TryParry;
 
         UIEvents.OnTransitionFinished -= PlaySmokeBomb;
+    }
+
+    private void Start()
+    {
+        if (LevelSessionManager.Instance != null && LevelSessionManager.Instance.CanProcessGameplay)
+            TryStartHawkVisionInitialSlowMotion();
+    }
+
+    private void OnDestroy()
+    {
+        CleanupHawkVisionRuntime();
+    }
+
+    private void OnLevelStartedForHawkVision()
+    {
+        _hawkVisionInitialSlowStarted = false;
+        TryStartHawkVisionInitialSlowMotion();
+    }
+
+    private void OnLevelClosedForHawkVision()
+    {
+        CleanupHawkVisionRuntime();
+    }
+
+    private void TryStartHawkVisionInitialSlowMotion()
+    {
+        if (_hawkVisionInitialSlowStarted)
+            return;
+
+        PowerUpContext context = PowerUpManager.Instance != null ? PowerUpManager.Instance.context : null;
+        if (context == null || !context.HawkVisionActive)
+            return;
+
+        if (LevelSessionManager.Instance != null && !LevelSessionManager.Instance.CanProcessGameplay)
+            return;
+
+        _hawkVisionInitialSlowStarted = true;
+
+        float targetTimeScale = Mathf.Clamp(context.HawkVisionInitialTimeScale, 0.01f, 1f);
+        float duration = Mathf.Max(0f, context.HawkVisionInitialSlowDuration);
+        if (duration <= 0f || targetTimeScale >= 1f)
+            return;
+
+        if (_hawkVisionInitialSlowCoroutine != null)
+            StopCoroutine(_hawkVisionInitialSlowCoroutine);
+
+        BeginHawkVisionInputBlock();
+        _hawkVisionInitialSlowCoroutine = StartCoroutine(HawkVisionInitialSlowRoutine(targetTimeScale, duration));
+    }
+
+    private IEnumerator HawkVisionInitialSlowRoutine(float targetTimeScale, float duration)
+    {
+        _hawkVisionOwnsTimeScale = true;
+        float elapsed = 0f;
+
+        while (elapsed < duration && IsHawkVisionAttemptOpen())
+        {
+            bool isPaused = PauseController.Instance != null && PauseController.Instance.IsPaused;
+            if (!isPaused)
+            {
+                if (!Mathf.Approximately(Time.timeScale, targetTimeScale))
+                    Time.timeScale = targetTimeScale;
+
+                elapsed += Time.unscaledDeltaTime;
+            }
+
+            yield return null;
+        }
+
+        _hawkVisionInitialSlowCoroutine = null;
+        EndHawkVisionInputBlock(true);
+        RestoreHawkVisionTimeScale();
+    }
+
+    private bool IsHawkVisionAttemptOpen()
+    {
+        PowerUpContext context = PowerUpManager.Instance != null ? PowerUpManager.Instance.context : null;
+        if (context == null || !context.HawkVisionActive)
+            return false;
+
+        return LevelSessionManager.Instance == null || LevelSessionManager.Instance.HasActiveSession;
+    }
+
+    private void CleanupHawkVisionRuntime()
+    {
+        if (_hawkVisionInitialSlowCoroutine != null)
+        {
+            StopCoroutine(_hawkVisionInitialSlowCoroutine);
+            _hawkVisionInitialSlowCoroutine = null;
+        }
+
+        RestoreHawkVisionTimeScale();
+        _hawkVisionInitialSlowStarted = false;
+        ClearHawkVisionInputBlock();
+
+        if (_trajectoryRenderer != null)
+            _trajectoryRenderer.HideTrajectory();
+    }
+
+    private void RestoreHawkVisionTimeScale()
+    {
+        if (!_hawkVisionOwnsTimeScale)
+            return;
+
+        _hawkVisionOwnsTimeScale = false;
+
+        bool isPaused = PauseController.Instance != null && PauseController.Instance.IsPaused;
+        Time.timeScale = isPaused ? 0f : 1f;
+    }
+
+    private void BeginHawkVisionInputBlock()
+    {
+        _hawkVisionIntroSlowActive = true;
+        _hawkVisionIgnorePressUntilReleased = _swipeDetection != null && _swipeDetection.IsPressing;
+
+        if (_trajectoryRenderer != null)
+            _trajectoryRenderer.HideTrajectory();
+    }
+
+    private void EndHawkVisionInputBlock(bool keepCurrentPressBlocked)
+    {
+        _hawkVisionIntroSlowActive = false;
+        _hawkVisionIgnorePressUntilReleased = keepCurrentPressBlocked
+            && _swipeDetection != null
+            && _swipeDetection.IsPressing;
+
+        if (_trajectoryRenderer != null)
+            _trajectoryRenderer.HideTrajectory();
+    }
+
+    private void ClearHawkVisionInputBlock()
+    {
+        _hawkVisionIntroSlowActive = false;
+        _hawkVisionIgnorePressUntilReleased = false;
+    }
+
+    private void RefreshHawkVisionInputBlock()
+    {
+        if (_swipeDetection == null)
+        {
+            _hawkVisionIgnorePressUntilReleased = false;
+            return;
+        }
+
+        if (_hawkVisionIntroSlowActive && _swipeDetection.IsPressing)
+        {
+            _hawkVisionIgnorePressUntilReleased = true;
+            return;
+        }
+
+        if (!_hawkVisionIntroSlowActive && _hawkVisionIgnorePressUntilReleased && !_swipeDetection.IsPressing)
+            _hawkVisionIgnorePressUntilReleased = false;
+    }
+
+    private bool IsHawkVisionInputBlocked()
+    {
+        return _hawkVisionIntroSlowActive || _hawkVisionIgnorePressUntilReleased;
     }
 
     private Vector2 GetFinalDirection(Vector2 startDir)
@@ -206,6 +378,8 @@ public class PlayerController : MonoBehaviour
 
     private void Update()
     {
+        RefreshHawkVisionInputBlock();
+
         if (LevelSessionManager.Instance != null && !LevelSessionManager.Instance.CanProcessGameplay)
         {
             HandleGameplayClosed();
@@ -215,9 +389,17 @@ public class PlayerController : MonoBehaviour
 
         _hasHandledGameplayClosed = false;
 
-        if (_swipeDetection.IsPressing && _swipeDetection.Direction.magnitude >= .5f)
+        if (IsHawkVisionInputBlocked())
         {
-            _trajectoryRenderer.ShowTrajectory(transform.position, GetFinalDirection(_swipeDetection.Direction));
+            _trajectoryRenderer.HideTrajectory();
+            return;
+        }
+
+        if (_swipeDetection.IsPressing && _swipeDetection.Direction.magnitude >= .5f && CanStartDash())
+        {
+            Vector2 finalDirection = GetFinalDirection(_swipeDetection.Direction);
+            Vector2 predictedDashDirection = ResolveDashDirection(finalDirection);
+            _trajectoryRenderer.ShowTrajectory(transform.position, predictedDashDirection);
         }
         else
         {
@@ -233,6 +415,9 @@ public class PlayerController : MonoBehaviour
         if (LevelSessionManager.Instance != null && !LevelSessionManager.Instance.CanProcessGameplay)
             return;
 
+        if (_hawkVisionIntroSlowActive)
+            return;
+
         if (!_isKO)
         {
             Dash(direction);
@@ -243,23 +428,23 @@ public class PlayerController : MonoBehaviour
         if (LevelSessionManager.Instance != null && !LevelSessionManager.Instance.CanProcessGameplay)
             return;
 
-        if (!_isKO && !_isDashing && !_isParrying && CheckDashCD())
+        if (CanStartDash())
         {
+            _trajectoryRenderer.HideTrajectory();
             Dash(GetFinalDirection(_swipeDetection.Direction));
         }
     }
-    private void Dash(Vector2 direction)
+
+    private bool CanStartDash()
+    {
+        return !IsHawkVisionInputBlocked() && !_isKO && !_isDashing && !_isParrying && CheckDashCD();
+    }
+
+    private Vector2 ResolveDashDirection(Vector2 direction)
     {
         Vector2 dashDir = direction;
-
-        float angle = Mathf.Atan2(dashDir.y, dashDir.x) * Mathf.Rad2Deg - Mathf.Atan2(_lastNormal.y, _lastNormal.x) * Mathf.Rad2Deg;
-
-        if(_currentPlatform != null)
-        {
-            _currentPlatform.OnPlayerExit(gameObject, true);
-            _view.RB.gravityScale = 0;
-            _currentPlatform = null;
-        }
+        float angle = Mathf.Atan2(dashDir.y, dashDir.x) * Mathf.Rad2Deg
+                      - Mathf.Atan2(_lastNormal.y, _lastNormal.x) * Mathf.Rad2Deg;
 
         switch (_lastNormal)
         {
@@ -304,6 +489,20 @@ public class PlayerController : MonoBehaviour
                     dashDir = transform.up;
                 }
                 break;
+        }
+
+        return dashDir;
+    }
+
+    private void Dash(Vector2 direction)
+    {
+        Vector2 dashDir = ResolveDashDirection(direction);
+
+        if(_currentPlatform != null)
+        {
+            _currentPlatform.OnPlayerExit(gameObject, true);
+            _view.RB.gravityScale = 0;
+            _currentPlatform = null;
         }
 
         _lastMoveDirection = dashDir;

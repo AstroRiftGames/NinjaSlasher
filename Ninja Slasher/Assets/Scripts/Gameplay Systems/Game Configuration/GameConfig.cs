@@ -78,6 +78,18 @@ public class GameConfig : ScriptableObject
     [Tooltip("Enhanced Parry: Retencion de velocidad por rebote")]
     public float enhancedParryVelocityRetention = 0.9f;
 
+    [Range(0.1f, 1f)]
+    [Tooltip("Hawk Vision: Escala de tiempo inicial al comenzar el intento")]
+    public float hawkVisionInitialTimeScale = 0.35f;
+
+    [Range(0f, 5f)]
+    [Tooltip("Hawk Vision: Duracion en segundos reales de la camara lenta inicial")]
+    public float hawkVisionInitialSlowDuration = 2f;
+
+    [Range(1f, 500f)]
+    [Tooltip("Hawk Vision: Distancia maxima para buscar el punto de aterrizaje del dash")]
+    public float hawkVisionTrajectoryMaxDistance = 100f;
+
     [Header("MONETIZATION - ADS")]
     [Tooltip("Perdidas consecutivas necesarias para mostrar ad de vida extra")]
     public int lossesRequiredForAd = 2;
@@ -251,6 +263,21 @@ public class GameConfig : ScriptableObject
     public float GetEnhancedParryVelocityRetention()
     {
         return enhancedParryVelocityRetention;
+    }
+
+    public float GetHawkVisionInitialTimeScale()
+    {
+        return hawkVisionInitialTimeScale;
+    }
+
+    public float GetHawkVisionInitialSlowDuration()
+    {
+        return hawkVisionInitialSlowDuration;
+    }
+
+    public float GetHawkVisionTrajectoryMaxDistance()
+    {
+        return hawkVisionTrajectoryMaxDistance;
     }
 
     public bool ValidateConfiguration()

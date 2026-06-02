@@ -17,6 +17,9 @@ public class PowerUpContext
     public bool SecondChanceActive;
 
     public bool HawkVisionActive;
+    public float HawkVisionInitialTimeScale = 1f;
+    public float HawkVisionInitialSlowDuration = 0f;
+    public float HawkVisionTrajectoryMaxDistance = 100f;
 
     public bool EnhancedParryActive;
     public int EnhancedParryBounces = 0;

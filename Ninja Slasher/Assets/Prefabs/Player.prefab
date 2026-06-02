@@ -11725,7 +11725,7 @@ Transform:
   m_GameObject: {fileID: 5231366999289179786}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 3.6963205, y: 1.9917386, z: -0.04862042}
+  m_LocalPosition: {x: 3.6963205, y: 1.9917386, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -11749,8 +11749,18 @@ MonoBehaviour:
   _collisionLayers:
     serializedVersion: 2
     m_Bits: 192
+  _defaultMaxDistance: 100
   _playerRadius: 0.5
-  _hawkVisionSettings: {fileID: 0}
+  _dotSprite: {fileID: 21300000, guid: 8a52f66c7af24f6f927d54d1be39c1e8, type: 3}
+  _dotMaterial: {fileID: 0}
+  _dotColor: {r: 0.65, g: 0.95, b: 1, a: 0.88235295}
+  _dotSize: 0.4
+  _dotSpacing: 0.4
+  _maxDots: 100
+  _dotSortingLayerName: VFX
+  _dotSortingOrder: 20
+  _startOffset: 0.25
+  _endOffset: 0.15
 --- !u!1 &5232309382188245400
 GameObject:
   m_ObjectHideFlags: 0
