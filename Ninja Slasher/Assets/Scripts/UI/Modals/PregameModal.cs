@@ -54,9 +54,12 @@ public class PregameModal : UIModalBase
 
 public override void Show()
     {
-        if (_isVisible) return;
+        if (_isVisible || _isOpening) return;
 
         KillActiveTweens();
+
+        _isOpening = true;
+        _isClosing = false;
 
         gameObject.SetActive(true);
         _isVisible = true;
@@ -82,8 +85,10 @@ public override void Show()
 
     public override void Hide()
     {
-        if (!_isVisible) return;
+        if (!_isVisible || _isClosing) return;
 
+        _isClosing = true;
+        _isOpening = false;
         _isVisible = false;
 
         SetPanelInputEnabled(false);
@@ -120,6 +125,7 @@ public override void Show()
     {
         ResetOverlayState();
         gameObject.SetActive(false);
+        CompleteHide();
     }
 
     public override IEnumerator ShowRoutine()
@@ -156,6 +162,7 @@ public override void Show()
             NotifyPanelShown();
             NotifyUIManagerModalShown();
             OnShown();
+            CompleteShow();
             return;
         }
 
@@ -180,6 +187,7 @@ public override void Show()
         NotifyPanelShown();
         NotifyUIManagerModalShown();
         OnShown();
+        CompleteShow();
     }
 
     private void AnimateToHiddenState()

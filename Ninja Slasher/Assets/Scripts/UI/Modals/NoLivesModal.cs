@@ -285,6 +285,7 @@ public class NoLivesModal : UIModalBase
         if (ShouldReturnToDefeatFlow())
         {
             UIEvents.RequestShowDefeatModal(LifeManager.Instance.GetEffectiveLivesForCurrentAttempt());
+            RequestClose();
             return;
         }
 

@@ -83,6 +83,7 @@ public class ProfileModal : UIModalBase
 
     private void OnCreditsClicked()
     {
+        UIEvents.RequestHideProfileModal();
         UIEvents.RequestShowCreditsModal();
     }
 

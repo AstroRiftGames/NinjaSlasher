@@ -43,7 +43,10 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
     private bool _uiRequestLock;
     private Coroutine _uiFlowRoutine;
 
-    public bool IsUIBusy => _uiRequestLock || _uiFlowRoutine != null;
+    private readonly Queue<UIModalBase> _pendingModals = new Queue<UIModalBase>();
+    private Coroutine _modalQueueRoutine;
+
+    public bool IsUIBusy => _uiRequestLock || _uiFlowRoutine != null || _modalQueueRoutine != null;
 
 
     #region INITIALIZATION
@@ -96,6 +99,14 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
             StopCoroutine(_uiFlowRoutine);
             _uiFlowRoutine = null;
         }
+
+        if (_modalQueueRoutine != null)
+        {
+            StopCoroutine(_modalQueueRoutine);
+            _modalQueueRoutine = null;
+        }
+
+        _pendingModals.Clear();
 
         _uiRequestLock = false;
     }
@@ -402,20 +413,21 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
 
     #region MODALS
 
-    private void ShowPregameModal() => ShowModal(_pregameModal);
+    private void ShowPregameModal() => RequestOpenModal(_pregameModal);
     private void HidePregameModal() => CloseModal(_pregameModal);
     private void TogglePregameModal() => ToggleModal(_pregameModal);
 
     private void ShowNoLivesModal()
     {
-        StartManagedUIFlow(ShowNoLivesModalRoutine());
+        RequestOpenModal(_noLivesModal);
     }
 
     private void HideNoLivesModal() => CloseModal(_noLivesModal);
 
     private void ShowDefeatModal(int livesRemaining)
     {
-        StartManagedUIFlow(ShowDefeatModalRoutine(livesRemaining));
+        _defeatModal.ShowLifeLost(livesRemaining);
+        RequestOpenModal(_defeatModal);
     }
 
     private void HideDefeatModal() => CloseModal(_defeatModal);
@@ -425,22 +437,23 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         Debug.Log($"[UIManager] ShowEmergencyBundleModal | modal assigned={_emergencyBundleModal != null}");
 #endif
-        StartManagedUIFlow(ShowEmergencyBundleModalRoutine(offer));
+        _emergencyBundleModal.ShowWithOffer(offer);
+        RequestOpenModal(_emergencyBundleModal);
     }
 
     private void HideEmergencyBundleModal() => CloseModal(_emergencyBundleModal);
 
-    private void ShowCreditsModal() => ShowModal(_creditsModal);
+    private void ShowCreditsModal() => RequestOpenModal(_creditsModal);
     private void HideCreditsModal() => CloseModal(_creditsModal);
     private void ToggleCreditsModal() => ToggleModal(_creditsModal);
 
-    private void ShowProfileModal() => ShowModal(_profileModal);
+    private void ShowProfileModal() => RequestOpenModal(_profileModal);
     private void HideProfileModal() => CloseModal(_profileModal);
     private void ToggleProfileModal() => ToggleModal(_profileModal);
 
     private void ShowDailyRewardModal()
     {
-        ShowModal(_dailyRewardModal);
+        RequestOpenModal(_dailyRewardModal);
         DailyRewardUIManager.Instance?.ShowDailyReward();
     }
     private void HideDailyRewardModal() => CloseModal(_dailyRewardModal);
@@ -452,7 +465,7 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
         HideDailyRewardModal();
     }
 
-    private void ShowDailyWheelModal() => ShowModal(_dailyWheelModal);
+    private void ShowDailyWheelModal() => RequestOpenModal(_dailyWheelModal);
     private void HideDailyWheelModal() => CloseModal(_dailyWheelModal);
     private void ToggleDailyWheelModal() => ToggleModal(_dailyWheelModal);
     public bool IsDailyWheelModalVisible() => IsModalVisible(_dailyWheelModal);
@@ -461,11 +474,11 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
         HideDailyWheelModal();
     }
 
-    private void ShowStoreModal() => ShowModal(_storeModal);
+    private void ShowStoreModal() => RequestOpenModal(_storeModal);
     private void HideStoreModal() => CloseModal(_storeModal);
     private void ToggleStoreModal() => ToggleModal(_storeModal);
 
-    private void ShowVictoryModal() => ShowModal(_victoryModal);
+    private void ShowVictoryModal() => RequestOpenModal(_victoryModal);
     private void HideVictoryModal() => CloseModal(_victoryModal);
     private void ToggleVictoryModal() => ToggleModal(_victoryModal);
 
@@ -660,6 +673,8 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
 
     public IEnumerator HideActivePanelsForSceneTransition(bool hideSplashScreen = false, bool hideLevelsScreen = false)
     {
+        _pendingModals.Clear();
+
         List<UIModalBase> activeModalsSnapshot = new List<UIModalBase>(_activeModals);
         for (int i = activeModalsSnapshot.Count - 1; i >= 0; i--)
         {
@@ -685,6 +700,77 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
     public IEnumerator SetLevelsScreenVisibilityForTransition(bool visible)
     {
         yield return SetPanelVisibilityRoutineInternal(_levelsScreen, visible);
+    }
+
+    public void RequestOpenModal(UIModalBase modal)
+    {
+        if (modal == null) return;
+        if (_uiRequestLock) return;
+        if (modal.IsVisible || modal.IsOpening || IsModalAlreadyQueued(modal)) return;
+
+        if (HasActiveOrTransitioningMainModal())
+        {
+            _pendingModals.Enqueue(modal);
+            return;
+        }
+
+        OpenModalNow(modal);
+    }
+
+    private bool HasActiveOrTransitioningMainModal()
+    {
+        if (_pregameModal != null && _pregameModal.IsActiveOrTransitioning) return true;
+        if (_noLivesModal != null && _noLivesModal.IsActiveOrTransitioning) return true;
+        if (_defeatModal != null && _defeatModal.IsActiveOrTransitioning) return true;
+        if (_emergencyBundleModal != null && _emergencyBundleModal.IsActiveOrTransitioning) return true;
+        if (_creditsModal != null && _creditsModal.IsActiveOrTransitioning) return true;
+        if (_profileModal != null && _profileModal.IsActiveOrTransitioning) return true;
+        if (_dailyRewardModal != null && _dailyRewardModal.IsActiveOrTransitioning) return true;
+        if (_dailyWheelModal != null && _dailyWheelModal.IsActiveOrTransitioning) return true;
+        if (_storeModal != null && _storeModal.IsActiveOrTransitioning) return true;
+        if (_victoryModal != null && _victoryModal.IsActiveOrTransitioning) return true;
+        return false;
+    }
+
+    private bool IsModalAlreadyQueued(UIModalBase modal)
+    {
+        foreach (UIModalBase queued in _pendingModals)
+        {
+            if (queued == modal) return true;
+        }
+        return false;
+    }
+
+    private void OpenModalNow(UIModalBase modal)
+    {
+        modal.HiddenCompleted += OnModalHiddenCompleted;
+        ShowModalInternal(modal);
+    }
+
+    private void OnModalHiddenCompleted(UIModalBase modal)
+    {
+        modal.HiddenCompleted -= OnModalHiddenCompleted;
+
+        if (_pendingModals.Count > 0 && _modalQueueRoutine == null && !_uiRequestLock)
+        {
+            _modalQueueRoutine = StartCoroutine(ProcessNextModalRoutine());
+        }
+    }
+
+    private IEnumerator ProcessNextModalRoutine()
+    {
+        yield return new WaitForSecondsRealtime(0.12f);
+
+        _modalQueueRoutine = null;
+
+        if (_pendingModals.Count == 0)
+            yield break;
+
+        if (HasActiveOrTransitioningMainModal())
+            yield break;
+
+        UIModalBase next = _pendingModals.Dequeue();
+        OpenModalNow(next);
     }
 
     private bool ShouldIgnoreUIRequest()
@@ -739,37 +825,6 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
     {
         yield return routine;
         _uiFlowRoutine = null;
-    }
-
-    private IEnumerator ShowNoLivesModalRoutine()
-    {
-        yield return HidePanelRoutineInternal(_emergencyBundleModal);
-        yield return ShowPanelRoutineInternal(_noLivesModal);
-    }
-
-    private IEnumerator ShowDefeatModalRoutine(int livesRemaining)
-    {
-        if (_defeatModal == null)
-            yield break;
-
-        PreparePanelForManagedTransition(_noLivesModal);
-        yield return HidePanelRoutineInternal(_noLivesModal);
-        yield return HidePanelRoutineInternal(_emergencyBundleModal);
-
-        _defeatModal.ShowLifeLost(livesRemaining);
-        yield return ShowPanelRoutineInternal(_defeatModal);
-    }
-
-    private IEnumerator ShowEmergencyBundleModalRoutine(EmergencyBundleOffer offer)
-    {
-        if (_emergencyBundleModal == null)
-            yield break;
-
-        PreparePanelForManagedTransition(_noLivesModal);
-        yield return HidePanelRoutineInternal(_noLivesModal);
-
-        _emergencyBundleModal.ShowWithOffer(offer);
-        yield return ShowPanelRoutineInternal(_emergencyBundleModal);
     }
 
     private IEnumerator ShowPanelRoutineInternal(UIPanel panel)
