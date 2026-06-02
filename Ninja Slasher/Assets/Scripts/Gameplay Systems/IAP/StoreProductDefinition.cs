@@ -132,7 +132,7 @@ public class StoreProductDefinition : ScriptableObject
             case PowerUpType.SecondChance:
                 return "Segunda Oportunidad";
             case PowerUpType.HawkVision:
-                return "Ojo de Halcon";
+                return "Ojo de Halcón";
             case PowerUpType.EnhancedParry:
                 return "Parry Potenciado";
             default:

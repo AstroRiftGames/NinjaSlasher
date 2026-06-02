@@ -47,7 +47,7 @@ public class PowerUpContext
         if (ParryPerfectActive) names.Add("Parry perfecto");
         if (ComboMasterActive) names.Add("Maestro del combo");
         if (SecondChanceActive) names.Add("Segunda oportunidad");
-        if (HawkVisionActive) names.Add("Vision de halcon");
+        if (HawkVisionActive) names.Add("Ojo de Halcón");
         if (EnhancedParryActive) names.Add("Parry potenciado");
 
         return string.Join(", ", names);
