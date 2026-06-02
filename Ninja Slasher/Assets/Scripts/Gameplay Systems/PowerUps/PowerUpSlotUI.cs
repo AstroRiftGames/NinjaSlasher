@@ -207,7 +207,6 @@ public class PowerUpSlotUI : MonoBehaviour
         {
             CacheActiveFrameImage();
             NormalizeActiveFrameOverlayRect();
-            _activeFrameOverlay.transform.SetAsLastSibling();
 
             if (_activeFrameImage != null)
                 _activeFrameImage.raycastTarget = false;
