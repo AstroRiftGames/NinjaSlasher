@@ -62,6 +62,10 @@ public class GameConfig : ScriptableObject
     [Tooltip("Dash Turbo: Multiplicador de cooldown (0.25 = cooldown reducido a 25%)")]
     public float dashTurboCooldownMultiplier = 0.25f;
 
+    [Range(1f, 3f)]
+    [Tooltip("Dash Turbo: Multiplicador de velocidad de dash (1.5 = 50% mas rapido)")]
+    public float dashTurboSpeedMultiplier = 1.5f;
+
     [Range(0f, 0.5f)]
     [Tooltip("Parry Perfect: Distancia extra de parry (0.3 = 30% mas rango)")]
     public float parryPerfectBonusWindow = 0.3f;
@@ -243,6 +247,11 @@ public class GameConfig : ScriptableObject
     public float GetDashTurboCooldownMultiplier()
     {
         return dashTurboCooldownMultiplier;
+    }
+
+    public float GetDashTurboSpeedMultiplier()
+    {
+        return dashTurboSpeedMultiplier;
     }
 
     public float GetParryPerfectBonusWindow()

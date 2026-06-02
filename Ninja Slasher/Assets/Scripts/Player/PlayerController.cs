@@ -53,8 +53,6 @@ public class PlayerController : MonoBehaviour
     {
         _lastMoveDirection = dir;
     }
-    private float _dashCooldownStartTime;
-    private bool _hasStartedDashCooldown;
     private Vector2 _lastNormal = Vector2.up;
     public Vector2 LastNormal => _lastNormal;
     private PlatformBase _currentPlatform;
@@ -437,7 +435,7 @@ public class PlayerController : MonoBehaviour
 
     private bool CanStartDash()
     {
-        return !IsHawkVisionInputBlocked() && !_isKO && !_isDashing && !_isParrying && CheckDashCD();
+        return !IsHawkVisionInputBlocked() && !_isKO && !_isDashing && !_isParrying;
     }
 
     private Vector2 ResolveDashDirection(Vector2 direction)
@@ -509,7 +507,8 @@ public class PlayerController : MonoBehaviour
 
 
         _view.RB.linearVelocity = Vector2.zero;
-        _view.RB.AddForce(dashDir * _model.DashForce);
+        float dashSpeedMultiplier = PowerUpManager.Instance?.context?.DashSpeedMultiplier ?? 1f;
+        _view.RB.AddForce(dashDir * _model.DashForce * dashSpeedMultiplier);
         AudioService.Instance.PlaySFXAtPosition(_audio.movementLoop, transform.position);
         _isDashing = true;
         GameEvents.RaiseDashStarted();
@@ -522,15 +521,7 @@ public class PlayerController : MonoBehaviour
 
     private bool CheckDashCD()
     {
-        if (!_hasStartedDashCooldown)
-            return true;
-
-        float effectiveCD = _model.DashCD;
-        var context = PowerUpManager.Instance?.context;
-        if (context != null && context.DashTurboActive)
-            effectiveCD *= context.DashCooldownMultiplier;
-
-        return Time.time >= _dashCooldownStartTime + effectiveCD;
+        return true;
     }
 
     private void RotateSprites(Vector2 direction)
@@ -684,8 +675,6 @@ public class PlayerController : MonoBehaviour
 
         if (wasDashing)
         {
-            _dashCooldownStartTime = Time.time;
-            _hasStartedDashCooldown = true;
             GameEvents.RaiseDashEnded();
         }
     }
