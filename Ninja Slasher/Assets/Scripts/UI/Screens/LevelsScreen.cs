@@ -85,30 +85,38 @@ public class LevelsScreen : UIScreenBase
 
     public override void Show()
     {
-        if (_isVisible) return;
+        bool wasNotVisible = !_isVisible;
 
         gameObject.SetActive(true);
         _isVisible = true;
 
         if (_canvasGroup != null)
-        {
             _canvasGroup.alpha = 1f;
+
+        ResolveDependencies();
+        ResolveForegroundCanvasGroups();
+        SyncExternalForegroundSignals("Show");
+
+        if (wasNotVisible)
+        {
+            if (ShouldPlayStartupReveal())
+            {
+                EnterStartupSuppressedState("Show/SessionBootstrapPending");
+                HideLevelButtons();
+            }
+            else
+            {
+                ExitStartupSuppressedState("Show/SessionBootstrapCompleted");
+                ShowLevelButtonsInstantly();
+                SchedulePendingStarReveal("Show/SessionBootstrapCompleted");
+            }
         }
 
-        if (ShouldPlayStartupReveal())
-        {
-            EnterStartupSuppressedState("Show/SessionBootstrapPending");
-            HideLevelButtons();
-        }
-        else
-        {
-            ExitStartupSuppressedState("Show/SessionBootstrapCompleted");
-            ShowLevelButtonsInstantly();
-            SchedulePendingStarReveal("Show/SessionBootstrapCompleted");
-        }
-
+        ApplyForegroundStateImmediate(ShouldForegroundBeVisible());
         NotifyPanelShown();
-        OnShown();
+
+        if (wasNotVisible)
+            OnShown();
     }
 
     protected override void OnShown()
@@ -384,6 +392,12 @@ public class LevelsScreen : UIScreenBase
 
     private void KillForegroundTweens()
     {
+        if (_infoRootCanvasGroup != null)
+            _infoRootCanvasGroup.DOKill();
+
+        if (_buttonsRootCanvasGroup != null)
+            _buttonsRootCanvasGroup.DOKill();
+
         if (_infoRootTween != null)
         {
             _infoRootTween.Kill();
@@ -401,6 +415,7 @@ public class LevelsScreen : UIScreenBase
     {
         ResolveForegroundCanvasGroups();
         KillForegroundTweens();
+        _isForegroundVisible = visible;
         ApplyForegroundRootStateImmediate(_infoRoot, _infoRootCanvasGroup, visible);
         ApplyForegroundRootStateImmediate(_buttonsRoot, _buttonsRootCanvasGroup, visible);
     }
