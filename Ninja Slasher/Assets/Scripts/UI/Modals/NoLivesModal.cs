@@ -2,20 +2,31 @@ using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using UnityEngine.SceneManagement;
 
 public class NoLivesModal : UIModalBase
 {
+    public enum FlowContext
+    {
+        LevelLifeWall,
+        PreGameRecovery
+    }
+
     [Header("No Lives UI")]
     [SerializeField] private TextMeshProUGUI _messageText;
     [SerializeField] private TextMeshProUGUI _timerText;
     [SerializeField] private Button _closeButton;
     [SerializeField] private Button _claimLifeButton;
 
+    private FlowContext _flowContext = FlowContext.LevelLifeWall;
     private bool _suppressAbandonOnHide;
     private bool _isClaimLifeFlowInProgress;
     private bool _isResolvingRecoveredLifeFlow;
     private bool _suppressLifeDisplayRefresh;
+
+    public void SetFlowContext(FlowContext context)
+    {
+        _flowContext = context;
+    }
 
     protected override void Awake()
     {
@@ -23,8 +34,9 @@ public class NoLivesModal : UIModalBase
         SetupButtons();
     }
 
-    private void OnEnable()
+    protected override void OnEnable()
     {
+        base.OnEnable();
         GameEvents.OnLivesChanged += OnLivesChanged;
 
         if (AdsManager.Instance != null)
@@ -85,7 +97,7 @@ public class NoLivesModal : UIModalBase
         if (_isClaimLifeFlowInProgress || (AdsManager.Instance != null && AdsManager.Instance.IsRewardedAdFlowInProgress("extra_life")))
             return;
 
-        if (LifeManager.Instance.RequiresLifeRecoveryForCurrentAttempt())
+        if (_flowContext == FlowContext.LevelLifeWall && LifeManager.Instance.RequiresLifeRecoveryForCurrentAttempt())
         {
             LifeManager.Instance?.NotifyLifeWallAbandoned();
             UIEvents.RaiseQuitToMenuPressed();
@@ -294,10 +306,7 @@ public class NoLivesModal : UIModalBase
 
     private bool ShouldReturnToDefeatFlow()
     {
-        if (IsLevelSceneContext())
-            return true;
-
-        return false;
+        return _flowContext == FlowContext.LevelLifeWall;
     }
 
     private void OnCloseRequested()
@@ -316,19 +325,14 @@ public class NoLivesModal : UIModalBase
         _isClaimLifeFlowInProgress = false;
         PrepareForFlowTransitionClose();
 
-        LifeManager.Instance?.NotifyLifeWallAbandoned();
-
-        if (IsLevelSceneContext())
+        if (_flowContext == FlowContext.LevelLifeWall)
+        {
+            LifeManager.Instance?.NotifyLifeWallAbandoned();
             UIEvents.RaiseQuitToMenuPressed();
-    }
+            return;
+        }
 
-    private bool IsLevelSceneContext()
-    {
-        if (LevelSessionManager.Instance != null && LevelSessionManager.Instance.IsLevelActive)
-            return true;
-
-        string activeSceneName = SceneManager.GetActiveScene().name;
-        return activeSceneName.StartsWith("Level_") || activeSceneName.Contains("Level");
+        RequestClose();
     }
 
     private void RequestClose()

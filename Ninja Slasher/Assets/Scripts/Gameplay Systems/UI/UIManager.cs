@@ -419,6 +419,7 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
 
     private void ShowNoLivesModal()
     {
+        _noLivesModal.SetFlowContext(NoLivesModal.FlowContext.LevelLifeWall);
         RequestOpenModal(_noLivesModal);
     }
 
@@ -862,6 +863,9 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
     {
         if (panel is NoLivesModal noLivesModal)
             noLivesModal.PrepareForFlowTransitionClose();
+
+        if (panel is EmergencyBundleModal emergencyBundleModal)
+            emergencyBundleModal.PrepareForFlowTransitionClose();
     }
 
     private static void RaiseBlockingPanelShownIfNeeded(UIPanel panel)

@@ -11,8 +11,6 @@ public class EmergencyBundleService : MonoBehaviourSingleton<EmergencyBundleServ
 
     public bool HasActiveOffer => _offerActive;
 
-    private int _normalLossStreak = 0;
-
     private void OnEnable()
     {
         GameEvents.OnLevelFailed    += OnLevelFailed;
@@ -39,6 +37,12 @@ public class EmergencyBundleService : MonoBehaviourSingleton<EmergencyBundleServ
         CloseOffer(PaywallOutcome.Expired);
     }
 
+    public void OnOfferClosedForTransition()
+    {
+        if (!_offerActive) return;
+        ClearActiveOffer();
+    }
+
     private void OnLevelFailed(LevelFailedContext ctx)
     {
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
@@ -49,23 +53,22 @@ public class EmergencyBundleService : MonoBehaviourSingleton<EmergencyBundleServ
 
         var data = SaveManager.Instance.GetGameData();
 
+        data.consecutiveLosses = Mathf.Max(0, data.consecutiveLosses) + 1;
+
         if (ctx.IsBossLevel)
         {
             data.consecutiveBossLosses++;
-            AutoSaveManager.Instance?.ForceSave();
-        }
-        else
-        {
-            _normalLossStreak++;
         }
 
+        SaveManager.Instance.SaveData();
+
         var evalCtx = ctx;
-        evalCtx.ConsecutiveLosses = _normalLossStreak;
+        evalCtx.ConsecutiveLosses = data.consecutiveLosses;
 
         bool shouldOffer = FrustrationEvaluator.ShouldOffer(evalCtx, _config, data);
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-        Debug.Log($"[EBS] streak={_normalLossStreak} | threshold={_config.consecutiveLossThreshold} | ShouldOffer={shouldOffer}");
+        Debug.Log($"[EBS] streak={data.consecutiveLosses} | threshold={_config.consecutiveLossThreshold} | ShouldOffer={shouldOffer}");
 #endif
 
         if (shouldOffer) ShowOffer(evalCtx, data);
@@ -80,12 +83,16 @@ public class EmergencyBundleService : MonoBehaviourSingleton<EmergencyBundleServ
 
         if (isBoss)
         {
-            SaveManager.Instance.Modify(d => d.consecutiveBossLosses = 0);
+            SaveManager.Instance.Modify(d =>
+            {
+                d.consecutiveLosses = 0;
+                d.consecutiveBossLosses = 0;
+            });
             AutoSaveManager.Instance?.ForceSave();
         }
         else
         {
-            _normalLossStreak = 0;
+            SaveManager.Instance.Modify(d => d.consecutiveLosses = 0);
         }
     }
 
@@ -153,11 +160,17 @@ public class EmergencyBundleService : MonoBehaviourSingleton<EmergencyBundleServ
             BundleTierToString(_activeTier)
         );
 
-        _offerActive   = false;
-        _activeProduct = null;
+        ClearActiveOffer();
 
         UIEvents.RequestHideEmergencyBundleModal();
         ShowDefeatUI();
+    }
+
+    private void ClearActiveOffer()
+    {
+        _offerActive   = false;
+        _activeProduct = null;
+        _activeTier    = BundleTier.Small;
     }
 
     private static string BundleTierToString(BundleTier tier) => tier switch

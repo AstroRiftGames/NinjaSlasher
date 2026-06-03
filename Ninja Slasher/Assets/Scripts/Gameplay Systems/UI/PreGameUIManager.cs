@@ -55,7 +55,11 @@ public class PreGameUIManager : MonoBehaviour
     private bool _isInPreGameSelection;
     private bool _isPurchasing;
     private bool _isPlaying;
+    private bool _isLifeRecoveryPending;
+    private NoLivesModal _noLivesModal;
     private readonly PregamePowerUpSelection _pregameSelection = new PregamePowerUpSelection();
+
+    public bool ShouldPreserveSelectionOnHide => _isLifeRecoveryPending;
 
     private void Awake()
     {
@@ -83,6 +87,13 @@ public class PreGameUIManager : MonoBehaviour
         StopAllAnimations();
         HidePowerUpConfirmationImmediate();
         _isPlaying = false;
+        _isLifeRecoveryPending = false;
+
+        if (_noLivesModal != null)
+        {
+            _noLivesModal.HiddenCompleted -= OnNoLivesClosedFromPreGame;
+            _noLivesModal = null;
+        }
     }
 
     private void SetupButtonListeners()
@@ -352,7 +363,11 @@ public class PreGameUIManager : MonoBehaviour
             : LifeManager.Instance != null && LifeManager.Instance.CanPlay();
 
         if (!canStartLevel)
+        {
+            if (LifeManager.Instance != null && !LifeManager.Instance.CanPlay())
+                EnterLifeRecoveryFlow();
             return;
+        }
 
         _isPlaying = true;
 
@@ -367,10 +382,65 @@ public class PreGameUIManager : MonoBehaviour
         UIEvents.RequestSceneTransition(_pendingSceneName);
     }
 
-    private void AbortPendingLevelSelectionForLifeWall()
+    private void EnterLifeRecoveryFlow()
     {
+        if (_isLifeRecoveryPending)
+            return;
+
+        _isLifeRecoveryPending = true;
+
+        if (_noLivesModal == null)
+            _noLivesModal = FindFirstObjectByType<NoLivesModal>(FindObjectsInactive.Include);
+
+        if (_noLivesModal != null)
+        {
+            _noLivesModal.SetFlowContext(NoLivesModal.FlowContext.PreGameRecovery);
+            _noLivesModal.HiddenCompleted += OnNoLivesClosedFromPreGame;
+            _noLivesModal.PrepareForFlowTransitionClose();
+        }
+
+        if (LevelSessionManager.Instance == null)
+        {
+            if (_noLivesModal != null && UIManager.Instance != null)
+                UIManager.Instance.RequestOpenModal(_noLivesModal);
+            else
+                UIEvents.RequestShowNoLivesModal();
+        }
+
+        UIEvents.RequestHidePregameModal();
+    }
+
+    private void ExitLifeRecoveryFlow()
+    {
+        if (!_isLifeRecoveryPending)
+            return;
+
+        _isLifeRecoveryPending = false;
+
+        if (_noLivesModal != null)
+        {
+            _noLivesModal.HiddenCompleted -= OnNoLivesClosedFromPreGame;
+            _noLivesModal = null;
+        }
+
         StopAllAnimations();
-        HidePowerUpConfirmationImmediate();
+
+        if (!_isLevelSelected)
+            return;
+
+        _isInPreGameSelection = true;
+        EnsurePlayButtonBound();
+        ShowPreGamePowerUps();
+        ApplyObjectiveCompletionVisuals();
+        UIEvents.RequestShowPregameModal();
+    }
+
+    private void OnNoLivesClosedFromPreGame(UIModalBase modal)
+    {
+        if (!_isLifeRecoveryPending)
+            return;
+
+        ExitLifeRecoveryFlow();
     }
 
     private void OnDailyRewardClaimedRefresh(DailyReward _)
@@ -378,21 +448,16 @@ public class PreGameUIManager : MonoBehaviour
         ShowPreGamePowerUps();
     }
 
-    public void RefreshPreGameAfterAdClaim()
-    {
-        if (!_isLevelSelected)
-            return;
-
-        _isInPreGameSelection = true;
-        ShowPreGamePowerUps();
-        ApplyObjectiveCompletionVisuals();
-        EnsurePlayButtonBound();
-    }
-
     private void OnLivesChangedRefresh(int lives)
     {
         if (!_isLevelSelected)
             return;
+
+        if (_isLifeRecoveryPending && lives > 0)
+        {
+            ExitLifeRecoveryFlow();
+            return;
+        }
 
         ShowPreGamePowerUps();
         EnsurePlayButtonBound();

@@ -20,11 +20,13 @@ public class EmergencyBundleModal : UIModalBase
 
     private EmergencyBundleOffer _currentOffer;
     private Coroutine _countdownCoroutine;
+    private bool _suppressDismissOnHide;
 
     #region ENABLE / DISABLE
 
-    private void OnEnable()
+    protected override void OnEnable()
     {
+        base.OnEnable();
         _buyBtn?.onClick.AddListener(OnBuyClicked);
         _dismissBtn?.onClick.AddListener(OnDismissClicked);
     }
@@ -42,6 +44,7 @@ public class EmergencyBundleModal : UIModalBase
 
     public void ShowWithOffer(EmergencyBundleOffer offer)
     {
+        _suppressDismissOnHide = false;
         _currentOffer = offer;
         PopulateUI(offer);
     }
@@ -59,7 +62,19 @@ public class EmergencyBundleModal : UIModalBase
         StopCountdown();
         _currentOffer = null;
 
+        if (_suppressDismissOnHide)
+        {
+            _suppressDismissOnHide = false;
+            EmergencyBundleService.Instance?.OnOfferClosedForTransition();
+            return;
+        }
+
         EmergencyBundleService.Instance?.OnOfferDismissed();
+    }
+
+    public void PrepareForFlowTransitionClose()
+    {
+        _suppressDismissOnHide = true;
     }
 
     #endregion
