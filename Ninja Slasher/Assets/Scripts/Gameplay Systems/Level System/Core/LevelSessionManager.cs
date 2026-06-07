@@ -276,7 +276,8 @@ public class LevelSessionManager : MonoBehaviourSingleton<LevelSessionManager>
         stats.starsEarned = result.starsEarned;
 
         SaveManager.Instance?.SaveLevelProgress(currentSession.LevelId, result, stats);
-        LevelProgressionManager.Instance?.HandleLevelCompletion(currentSession.LevelId, result.starsEarned);
+        ProgressionUnlockResult progressionResult = LevelProgressionManager.Instance?.HandleLevelCompletion(currentSession.LevelId, result.starsEarned);
+        UIEvents.SetVictoryContext(BuildVictoryContext(currentSession, result.starsEarned, progressionResult));
 
         if (AnalyticsManager.Instance != null)
         {
@@ -302,6 +303,30 @@ public class LevelSessionManager : MonoBehaviourSingleton<LevelSessionManager>
 
         GameEvents.RaiseLevelCompleted(stats);
         GameEvents.RaiseLevelEnded(LevelResult.Victory);
+    }
+
+    private VictoryContext BuildVictoryContext(LevelSession session, int starsEarned, ProgressionUnlockResult progressionResult)
+    {
+        bool isBossLevel = session != null &&
+                           session.Configuration != null &&
+                           session.Configuration.unlockRequirements != null &&
+                           session.Configuration.unlockRequirements.isBossLevel;
+
+        var context = new VictoryContext
+        {
+            Variant = isBossLevel ? VictoryModalVariant.BossClear : VictoryModalVariant.Normal,
+            IsBossLevel = isBossLevel,
+            StarsEarned = starsEarned
+        };
+
+        if (progressionResult != null && progressionResult.UnlockedNewArea)
+        {
+            context.UnlockedNewArea = true;
+            context.UnlockedAreaId = progressionResult.UnlockedAreaId;
+            context.UnlockedAreaName = progressionResult.UnlockedAreaName;
+        }
+
+        return context;
     }
 
     private void OnComboTimeBonus(float bonusSeconds)

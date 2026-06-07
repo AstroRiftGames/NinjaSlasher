@@ -158,6 +158,7 @@ public static class UIEvents
     public static event Action OnShowVictoryModalRequested;
     public static event Action OnHideVictoryModalRequested;
     public static event Action OnToggleVictoryModalRequested;
+    public static VictoryContext CurrentVictoryContext { get; private set; }
 
     public static void RequestShowPregameModal()
     {
@@ -312,6 +313,17 @@ public static class UIEvents
     public static void RequestShowVictoryModal()
     {
         OnShowVictoryModalRequested?.Invoke();
+    }
+
+    public static void RequestShowVictoryModal(VictoryContext context)
+    {
+        SetVictoryContext(context);
+        OnShowVictoryModalRequested?.Invoke();
+    }
+
+    public static void SetVictoryContext(VictoryContext context)
+    {
+        CurrentVictoryContext = context;
     }
 
     public static void RequestHideVictoryModal()
@@ -586,6 +598,7 @@ public static class UIEvents
         OnShowVictoryModalRequested = null;
         OnHideVictoryModalRequested = null;
         OnToggleVictoryModalRequested = null;
+        CurrentVictoryContext = null;
     }
 
     public static void ClearHUDEvents()

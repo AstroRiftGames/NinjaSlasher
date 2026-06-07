@@ -22,7 +22,6 @@ public class ResultsUIManager : MonoBehaviourSingleton<ResultsUIManager>
     [SerializeField] private float _starAnimationDelay = 0.2f;
     [SerializeField] private float _starOffscreenDistance = 1200f;
     [SerializeField] private Ease _starAnimationEase = Ease.Linear;
-
     [Header("STROKE ANIMATION SETTINGS")]
     [SerializeField] private bool useStrokeAnimations = true;
     [SerializeField] private float strokeAnimationDelay = 0.3f;
@@ -61,17 +60,44 @@ public class ResultsUIManager : MonoBehaviourSingleton<ResultsUIManager>
         if (_originalStarPositions == null || _originalStarPositions.Length == 0)
             CacheOriginalStarPositions();
 
-        SetStarsToOffscreenPosition();
-        ResetStarSprites();
-        ResetAllStrokesVisuals();
-
         if (TryGetCurrentResultsConfiguration(out LevelConfiguration config, out int levelId))
         {
-            SetupGoalTextsAndStrokes(config, levelId);
+            bool isBossClear = IsBossClearResults(config);
+            SetStarsToOffscreenPosition(isBossClear);
+            ResetStarSprites();
+            ResetAllStrokesVisuals();
+            SetObjectiveVisualsVisible(!isBossClear);
+
+            if (isBossClear)
+                ClearGoalTexts();
+            else
+                SetupGoalTextsAndStrokes(config, levelId);
+
             return;
         }
 
+        SetStarsToOffscreenPosition(IsBossClearResults(null));
+        ResetStarSprites();
+        ResetAllStrokesVisuals();
+        SetObjectiveVisualsVisible(true);
         ClearGoalTexts();
+    }
+
+    public void PreparePreviewResultsIntro(bool bossClear)
+    {
+        CancelResultsPresentation();
+        Canvas.ForceUpdateCanvases();
+
+        if (_originalStarPositions == null || _originalStarPositions.Length == 0)
+            CacheOriginalStarPositions();
+
+        SetStarsToOffscreenPosition(bossClear);
+        ResetStarSprites();
+        ResetAllStrokesVisuals();
+        SetObjectiveVisualsVisible(!bossClear);
+
+        if (bossClear)
+            ClearGoalTexts();
     }
 
     public void ShowResultsPanel()
@@ -94,12 +120,23 @@ public class ResultsUIManager : MonoBehaviourSingleton<ResultsUIManager>
             return;
         }
 
-        SetupGoalTextsAndStrokes(config, levelId);
+        bool isBossClear = IsBossClearResults(config);
+        if (isBossClear)
+        {
+            SetObjectiveVisualsVisible(false);
+            ClearGoalTexts();
+        }
+        else
+        {
+            SetObjectiveVisualsVisible(true);
+            SetupGoalTextsAndStrokes(config, levelId);
+        }
 
+        ApplyStarVariantVisuals(isBossClear, false);
         _pendingStarAnimations = AnimateStars(config, levelId, _sequenceVersion);
         _pendingStrokeAnimations = 0;
 
-        if (useStrokeAnimations)
+        if (!isBossClear && useStrokeAnimations)
         {
             List<Image> completedStrokeImages = BuildCompletedStrokeImages(config, levelId);
             _pendingStrokeAnimations = completedStrokeImages.Count;
@@ -107,6 +144,17 @@ public class ResultsUIManager : MonoBehaviourSingleton<ResultsUIManager>
             if (_pendingStrokeAnimations > 0)
                 _objectiveStrokeCoroutine = StartCoroutine(AnimateObjectiveStrokes(completedStrokeImages, _sequenceVersion));
         }
+
+        TryCompleteResultsPresentation(_sequenceVersion);
+    }
+
+    public void ShowPreviewResultsPanel(bool bossClear, Action onSequenceCompleted)
+    {
+        BeginResultsPresentation(onSequenceCompleted);
+        ApplyStarVariantVisuals(bossClear, false);
+
+        _pendingStarAnimations = AnimatePreviewStars(bossClear, _sequenceVersion);
+        _pendingStrokeAnimations = 0;
 
         TryCompleteResultsPresentation(_sequenceVersion);
     }
@@ -249,6 +297,22 @@ public class ResultsUIManager : MonoBehaviourSingleton<ResultsUIManager>
         }
     }
 
+    private void SetObjectiveVisualsVisible(bool visible)
+    {
+        SetObjectiveVisualVisible(_primaryGoalText, visible);
+
+        for (int i = 0; i < _secondaryGoalTexts.Length; i++)
+            SetObjectiveVisualVisible(_secondaryGoalTexts[i], visible);
+    }
+
+    private void SetObjectiveVisualVisible(TextMeshProUGUI objectiveText, bool visible)
+    {
+        if (objectiveText == null)
+            return;
+
+        objectiveText.gameObject.SetActive(visible);
+    }
+
     private Image GetSlashImage(TextMeshProUGUI text)
     {
         return text ? text.GetComponentInChildren<Image>(true) : null;
@@ -287,16 +351,35 @@ public class ResultsUIManager : MonoBehaviourSingleton<ResultsUIManager>
         }
     }
 
-    private void SetStarsToOffscreenPosition()
+    private void SetStarsToOffscreenPosition(bool isBossClear)
     {
         if (_starsContainer == null || _originalStarPositions == null) return;
 
         for (int i = 0; i < _starsContainer.childCount && i < _originalStarPositions.Length; i++)
         {
             if (!(_starsContainer.GetChild(i) is RectTransform rt)) continue;
+
             rt.anchoredPosition = _originalStarPositions[i] + new Vector2(_starOffscreenDistance, 0f);
             rt.rotation = Quaternion.identity;
+        }
+
+        ApplyStarVariantVisuals(isBossClear, true);
+    }
+
+    private void ApplyStarVariantVisuals(bool isBossClear, bool resetRotation)
+    {
+        if (_starsContainer == null) return;
+
+        for (int i = 0; i < _starsContainer.childCount; i++)
+        {
+            if (!(_starsContainer.GetChild(i) is RectTransform rt)) continue;
+
+            bool isBossStar = isBossClear && i == GetBossStarIndex();
+            rt.gameObject.SetActive(!isBossClear || isBossStar);
             rt.localScale = Vector3.one;
+
+            if (resetRotation)
+                rt.rotation = Quaternion.identity;
         }
     }
 
@@ -312,31 +395,52 @@ public class ResultsUIManager : MonoBehaviourSingleton<ResultsUIManager>
 
     private int AnimateStars(LevelConfiguration config, int levelId, int sequenceVersion)
     {
+        bool isBossClear = IsBossClearResults(config);
+        if (isBossClear)
+            return AnimateStar(GetBossStarIndex(), true, 0f, sequenceVersion, true) ? 1 : 0;
+
         int animatedStars = 0;
         var primary = config.GetPrimaryObjective();
         bool primaryCompleted = SaveManager.Instance?.IsObjectiveCompleted(levelId, primary) ?? false;
-        if (AnimateStar(0, primaryCompleted, 0f, sequenceVersion))
+        if (AnimateStar(0, primaryCompleted, 0f, sequenceVersion, false))
             animatedStars++;
 
         var secondaries = config.GetSecondaryObjectives();
         for (int i = 0; i < secondaries.Length && i < _starsContainer.childCount - 1; i++)
         {
             bool secondaryCompleted = SaveManager.Instance?.IsObjectiveCompleted(levelId, secondaries[i]) ?? false;
-            if (AnimateStar(i + 1, secondaryCompleted, (i + 1) * _starAnimationDelay, sequenceVersion))
+            if (AnimateStar(i + 1, secondaryCompleted, (i + 1) * _starAnimationDelay, sequenceVersion, false))
                 animatedStars++;
         }
 
         return animatedStars;
     }
 
-    private bool AnimateStar(int starIndex, bool isCompleted, float delay, int sequenceVersion)
+    private int AnimatePreviewStars(bool bossClear, int sequenceVersion)
+    {
+        if (bossClear)
+            return AnimateStar(GetBossStarIndex(), true, 0f, sequenceVersion, true) ? 1 : 0;
+
+        int animatedStars = 0;
+        for (int i = 0; i < _starsContainer.childCount; i++)
+        {
+            if (AnimateStar(i, true, i * _starAnimationDelay, sequenceVersion, false))
+                animatedStars++;
+        }
+
+        return animatedStars;
+    }
+
+    private bool AnimateStar(int starIndex, bool isCompleted, float delay, int sequenceVersion, bool useBossScale)
     {
         if (starIndex >= _starsContainer.childCount) return false;
         if (!(_starsContainer.GetChild(starIndex) is RectTransform rt)) return false;
 
         var targetPos = _originalStarPositions[starIndex];
+        Vector3 targetScale = Vector3.one;
 
         rt.rotation = Quaternion.Euler(0, 0, Random.Range(0, 360));
+        rt.localScale = targetScale;
         DOTween.Kill(rt, false);
 
         var seq = DOTween.Sequence().SetUpdate(true);
@@ -351,6 +455,7 @@ public class ResultsUIManager : MonoBehaviourSingleton<ResultsUIManager>
 
             SetStarSprite(starIndex, isCompleted);
             rt.rotation = Quaternion.identity;
+            rt.localScale = targetScale;
             Tween punchTween = rt
                 .DOPunchScale(Vector3.one * 0.3f, 0.3f, 10, 0.5f)
                 .SetUpdate(true);
@@ -359,6 +464,25 @@ public class ResultsUIManager : MonoBehaviourSingleton<ResultsUIManager>
         });
 
         return true;
+    }
+
+    private bool IsBossClearResults(LevelConfiguration config)
+    {
+        VictoryContext context = UIEvents.CurrentVictoryContext;
+        if (context != null && (context.Variant == VictoryModalVariant.BossClear || context.IsBossLevel))
+            return true;
+
+        return config != null &&
+               config.unlockRequirements != null &&
+               config.unlockRequirements.isBossLevel;
+    }
+
+    private int GetBossStarIndex()
+    {
+        if (_starsContainer == null || _starsContainer.childCount == 0)
+            return 0;
+
+        return _starsContainer.childCount / 2;
     }
 
     private void SetStarSprite(int idx, bool acquired)

@@ -492,7 +492,13 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
     private void HideStoreModal() => CloseModal(_storeModal);
     private void ToggleStoreModal() => ToggleModal(_storeModal);
 
-    private void ShowVictoryModal() => RequestOpenModal(_victoryModal);
+    private void ShowVictoryModal()
+    {
+        if (_victoryModal != null)
+            _victoryModal.ApplyContext(UIEvents.CurrentVictoryContext);
+
+        RequestOpenModal(_victoryModal);
+    }
     private void HideVictoryModal() => CloseModal(_victoryModal);
     private void ToggleVictoryModal() => ToggleModal(_victoryModal);
 
