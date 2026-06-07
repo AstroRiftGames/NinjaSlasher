@@ -87,6 +87,13 @@ public sealed class FirstTimeWelcomeController : MonoBehaviour
             yield return null;
 
         CacheTargets();
+        ResolveView();
+        if (_view != null)
+        {
+            _view.Warmup();
+            yield return null;
+        }
+
         StartFlow();
         _startupRoutine = null;
     }

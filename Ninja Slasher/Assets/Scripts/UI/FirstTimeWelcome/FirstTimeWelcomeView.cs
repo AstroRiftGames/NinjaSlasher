@@ -63,6 +63,15 @@ public sealed class FirstTimeWelcomeView : UIOverlayBase
         base.OnDisable();
     }
 
+    public void Warmup()
+    {
+        ResolveCanvas();
+        ResolveMessagePanelAnimator();
+
+        if (_messageText != null)
+            _messageText.ForceMeshUpdate();
+    }
+
     public void ShowStep(string message, RectTransform target)
     {
         if (_messageTransitionRoutine != null)
@@ -77,7 +86,6 @@ public sealed class FirstTimeWelcomeView : UIOverlayBase
         if (_messageText != null)
             _messageText.text = message ?? string.Empty;
 
-        ConfigureInteractionLayers();
         UpdateHighlight(target);
         _messageTransitionRoutine = StartCoroutine(PlayMessageOpenAfterLayoutRoutine());
     }
@@ -306,17 +314,20 @@ public sealed class FirstTimeWelcomeView : UIOverlayBase
     private IEnumerator PlayMessageOpenAfterLayoutRoutine()
     {
         ResolveMessagePanelAnimator();
-        ForceMessagePanelLayout();
 
         yield return null;
 
-        if (_messagePanelAnimator == null || string.IsNullOrWhiteSpace(_messageOpenStateName))
+        if (_messagePanelAnimator == null)
         {
             _isSubmitting = false;
             SetGuideButtonsInteractable(true);
             _messageTransitionRoutine = null;
             yield break;
         }
+
+        _messagePanelAnimator.ResetTrigger(_messageOpenStateName);
+        _messagePanelAnimator.ResetTrigger(_messageCloseStateName);
+        _messagePanelAnimator.SetTrigger(_messageOpenStateName);
 
         yield return PlayMessageStateRoutine(
             _messageOpenStateName,
@@ -356,6 +367,10 @@ public sealed class FirstTimeWelcomeView : UIOverlayBase
             return;
         }
 
+        _messagePanelAnimator.ResetTrigger(_messageOpenStateName);
+        _messagePanelAnimator.ResetTrigger(_messageCloseStateName);
+        _messagePanelAnimator.SetTrigger(_messageCloseStateName);
+
         _messageTransitionRoutine = StartCoroutine(PlayMessageStateRoutine(
             _messageCloseStateName,
             _messageCloseFallbackDuration,
@@ -391,8 +406,6 @@ public sealed class FirstTimeWelcomeView : UIOverlayBase
 
         _messagePanelAnimator.updateMode = AnimatorUpdateMode.UnscaledTime;
         int initialStateHash = _messagePanelAnimator.GetCurrentAnimatorStateInfo(layer).fullPathHash;
-        _messagePanelAnimator.ResetTrigger(_messageOpenStateName);
-        _messagePanelAnimator.ResetTrigger(_messageCloseStateName);
         _messagePanelAnimator.SetTrigger(triggerName);
 
         float timeout = Mathf.Max(0.1f, fallbackDuration + 0.5f);
@@ -436,18 +449,5 @@ public sealed class FirstTimeWelcomeView : UIOverlayBase
             elapsed += Time.unscaledDeltaTime;
             yield return null;
         }
-    }
-
-    private void ForceMessagePanelLayout()
-    {
-        if (_messageText != null)
-            _messageText.ForceMeshUpdate();
-
-        Transform controlsRoot = ResolveControlsRoot();
-        RectTransform controlsRect = controlsRoot as RectTransform;
-        if (controlsRect != null)
-            LayoutRebuilder.ForceRebuildLayoutImmediate(controlsRect);
-
-        Canvas.ForceUpdateCanvases();
     }
 }
