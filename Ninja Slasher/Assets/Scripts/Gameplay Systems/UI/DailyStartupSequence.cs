@@ -79,7 +79,26 @@ public sealed class DailyStartupSequence : IDisposable
             return;
         }
 
+        GameData data = SaveManager.Instance != null ? SaveManager.Instance.GetGameData() : null;
+        if (FirstTimeWelcomeSaveState.IsWelcomePendingForCurrentEntry(data))
+        {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            Debug.Log("[DailyStartupSequence] Signal -> LevelSelectorReady deferred because first-time welcome is pending.");
+#endif
+            UIEvents.RaiseStartupSequenceCompleted();
+            return;
+        }
+
         _shouldRunOnNextLevelSelectorReady = false;
+
+        if (FirstTimeWelcomeSaveState.WasWelcomeCompletedToday(data))
+        {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            Debug.Log("[DailyStartupSequence] Signal -> LevelSelectorReady suppressed because first-time welcome was completed today.");
+#endif
+            UIEvents.RaiseStartupSequenceCompleted();
+            return;
+        }
 
         SyncSystemReadiness("OnLevelSelectorReady");
         _isLevelSelectorReady = true;

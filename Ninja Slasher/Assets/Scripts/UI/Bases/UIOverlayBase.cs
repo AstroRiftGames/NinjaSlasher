@@ -36,6 +36,7 @@ public abstract class UIOverlayBase : UIPanel
     private string _backgroundTargetAlphaSource = "BackgroundColor";
 
     protected override bool BlocksUnderlyingUI => true;
+    public override bool SuppressesUnderlyingScreenForeground => false;
 
     protected override void Awake()
     {

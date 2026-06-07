@@ -22,6 +22,7 @@ public class LevelSelectionScreenController : MonoBehaviour
     [SerializeField] private Button _dailyRewardButton;
     [SerializeField] private Button _storeButton;
     [SerializeField] private Button _dailyWheelButton;
+    [SerializeField] private FirstTimeWelcomeController _firstTimeWelcomeController;
     
     private const string DailyAvailabilityParameterName = "IsAvailable";
     private static readonly WaitForSecondsRealtime PresenterTickDelay = new(1f);
@@ -40,6 +41,7 @@ public class LevelSelectionScreenController : MonoBehaviour
         ResolveButtonManager();
         ResolveLivesFeedbackReferences();
         CacheDailyButtons();
+        ResolveFirstTimeWelcomeController();
         StoreRewardFeedbackController.EnsureFor(this);
     }
 
@@ -49,6 +51,7 @@ public class LevelSelectionScreenController : MonoBehaviour
         ResolveButtonManager();
         ResolveLivesFeedbackReferences();
         CacheDailyButtons();
+        ResolveFirstTimeWelcomeController();
         StoreRewardFeedbackController.EnsureFor(this);
         RefreshAll();
         UpdateTotalStarsDisplay();
@@ -277,6 +280,7 @@ public class LevelSelectionScreenController : MonoBehaviour
         RebindDailyButtonAnimators();
         RefreshLivesWidget($"OnForegroundShown:{reason ?? "Unspecified"}", force: true);
         RefreshDailyButtonVisuals($"OnForegroundShown:{reason ?? "Unspecified"}", force: true);
+        NotifyFirstTimeWelcomeScreenReady();
     }
 
     public void OnForegroundHidden(string reason = null)
@@ -432,6 +436,22 @@ public class LevelSelectionScreenController : MonoBehaviour
 
         if (_buttonManager == null)
             Debug.LogWarning("[LevelSelectionScreenController] ButtonManager was not found.");
+    }
+
+    private void ResolveFirstTimeWelcomeController()
+    {
+        if (_firstTimeWelcomeController != null)
+            return;
+
+        _firstTimeWelcomeController = GetComponent<FirstTimeWelcomeController>();
+        if (_firstTimeWelcomeController == null)
+            Debug.LogWarning("[LevelSelectionScreenController] FirstTimeWelcomeController is not assigned.");
+    }
+
+    public void NotifyFirstTimeWelcomeScreenReady()
+    {
+        ResolveFirstTimeWelcomeController();
+        _firstTimeWelcomeController?.NotifyScreenReady();
     }
 
     private void StartPresenterTick()

@@ -18,6 +18,7 @@ public abstract class UIPanel : MonoBehaviour
     private bool _isBlockedByHigherPanel = false;
 
     protected virtual bool BlocksUnderlyingUI => false;
+    public virtual bool SuppressesUnderlyingScreenForeground => BlocksUnderlyingUI;
 
     protected virtual void Awake()
     {
@@ -304,6 +305,38 @@ public abstract class UIPanel : MonoBehaviour
     public static bool HasVisibleBlockingPanel => BlockingPanels.Count > 0;
     public bool IsBlockedByHigherPanel => _isBlockedByHigherPanel;
     public bool BlocksUnderlyingUIForFlow => BlocksUnderlyingUI;
+
+    public static bool IsPanelBlockedByForegroundSuppressingPanel(UIPanel panel)
+    {
+        if (panel == null)
+            return false;
+
+        int panelIndex = -1;
+        for (int i = 0; i < BlockingPanels.Count; i++)
+        {
+            if (BlockingPanels[i] == panel)
+            {
+                panelIndex = i;
+                break;
+            }
+        }
+
+        if (panelIndex < 0)
+            return false;
+
+        for (int i = panelIndex + 1; i < BlockingPanels.Count; i++)
+        {
+            UIPanel blockingPanel = BlockingPanels[i];
+            if (blockingPanel != null
+                && blockingPanel.gameObject.activeInHierarchy
+                && blockingPanel.SuppressesUnderlyingScreenForeground)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
 
     public static string GetBlockingPanelDebugSummary()
     {

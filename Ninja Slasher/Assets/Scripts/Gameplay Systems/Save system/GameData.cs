@@ -106,6 +106,17 @@ public class GameData
     /// </summary>
     public bool hasFirstOpenFired = false;
 
+    /// <summary>
+    /// Marca que la guia inicial de interfaz ya fue completada o saltada.
+    /// </summary>
+    public bool hasSeenFirstTimeWelcome = false;
+
+    /// <summary>
+    /// Fecha UTC yyyy-MM-dd en la que se suprimio el auto-show diario por la guia inicial.
+    /// Evita que daily reward/wheel aparezcan el mismo dia despues de completar el welcome.
+    /// </summary>
+    public string firstTimeWelcomeDailyStartupSuppressedDateUtc = "";
+
     public GameData()
     {
         unlockedAreas.Add(1); // area 1 desbloqueada

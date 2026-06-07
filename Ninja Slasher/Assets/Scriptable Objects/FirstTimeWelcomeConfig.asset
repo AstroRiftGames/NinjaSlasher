@@ -1,0 +1,32 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aa5c0f4526db4c648a7745ce6ef3ef01, type: 3}
+  m_Name: FirstTimeWelcomeConfig
+  m_EditorClassIdentifier: 
+  _steps:
+  - _targetId: 
+    _message: Bienvenido a Slash 'em Out!
+  - _targetId: Lives
+    _message: Estas son tus vidas. Cada vez que fallas se consume una. Se regeneran
+      cada 5 minutos para que vuelvas a intentarlo.
+  - _targetId: Coins
+    _message: Estas son tus monedas. Usalas en la tienda!
+  - _targetId: LevelSelection
+    _message: Aca elegis el nivel que queres jugar. Cada nivel se desbloquea al completar
+      con exito el anterior.
+  - _targetId: Shop
+    _message: La tienda te permite conseguir recursos.
+  - _targetId: DailyReward
+    _message: Las recompensas diarias aparecen aca cuando estan disponibles. Vuelve
+      al menos una vez cada dia para poder reclamarla.
+  - _targetId: DailyWheel
+    _message: Pon a prueba tu suerte en la tombola gratis una vez al dia.

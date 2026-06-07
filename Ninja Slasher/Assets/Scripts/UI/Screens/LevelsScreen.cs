@@ -115,6 +115,9 @@ public class LevelsScreen : UIScreenBase
         ApplyForegroundStateImmediate(ShouldForegroundBeVisible());
         NotifyPanelShown();
 
+        if (ShouldForegroundBeVisible())
+            _presenter?.NotifyFirstTimeWelcomeScreenReady();
+
         if (wasNotVisible)
             OnShown();
     }
@@ -163,7 +166,9 @@ public class LevelsScreen : UIScreenBase
         if (!isActiveAndEnabled)
             return;
 
-        ApplyBlockingPanelSignal(IsBlockedByHigherPanel, "UIPanel.OnBlockingPanelVisibilityChanged");
+        ApplyBlockingPanelSignal(
+            UIPanel.IsPanelBlockedByForegroundSuppressingPanel(this),
+            "UIPanel.OnBlockingPanelVisibilityChanged");
     }
 
     private IEnumerator AnimateLevelButtonsSequence()
@@ -274,6 +279,7 @@ public class LevelsScreen : UIScreenBase
         if (visible)
         {
             SchedulePendingStarReveal($"ForegroundVisible:{reason ?? "Unspecified"}");
+            _presenter?.NotifyFirstTimeWelcomeScreenReady();
         }
         else
         {
@@ -496,7 +502,9 @@ public class LevelsScreen : UIScreenBase
 
     private void SyncExternalForegroundSignals(string reason)
     {
-        ApplyBlockingPanelSignal(IsBlockedByHigherPanel, $"{reason}/SyncBlockingPanel");
+        ApplyBlockingPanelSignal(
+            UIPanel.IsPanelBlockedByForegroundSuppressingPanel(this),
+            $"{reason}/SyncBlockingPanel");
     }
 
     private void ApplyStartupSequenceSignal(bool active, string reason)

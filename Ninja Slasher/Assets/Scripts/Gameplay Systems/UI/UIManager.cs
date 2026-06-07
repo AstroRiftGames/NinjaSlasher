@@ -402,11 +402,24 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
 
     public bool ShouldRunLevelSelectionStartupFlowOnNextEntry()
     {
+        GameData data = SaveManager.Instance != null ? SaveManager.Instance.GetGameData() : null;
+        if (data != null && !data.hasSeenFirstTimeWelcome)
+            return false;
+
         if (_sceneTransitionManager == null)
             _sceneTransitionManager = GetComponentInChildren<SceneTransitionManager>(true);
 
         return _sceneTransitionManager != null
             && _sceneTransitionManager.ShouldRunLevelSelectionStartupFlowOnNextEntry;
+    }
+
+    public bool CanOpenFirstTimeWelcomeFlow()
+    {
+        return !_uiRequestLock
+            && _uiFlowRoutine == null
+            && _modalQueueRoutine == null
+            && _pendingModals.Count == 0
+            && !HasActiveOrTransitioningMainModal();
     }
 
     #endregion
