@@ -149,7 +149,11 @@ public class LevelsScreen : UIScreenBase
         if (!_isWaitingForStartupSequence || !isActiveAndEnabled)
             return;
 
-        ExitStartupSuppressedState("StartupSequenceCompleted");
+        _isWaitingForStartupSequence = false;
+        _isForegroundVisible = true;
+        ResolveForegroundCanvasGroups();
+        ApplyForegroundRootStateImmediate(_infoRoot, _infoRootCanvasGroup, true);
+        ApplyForegroundRootStateImmediate(_buttonsRoot, _buttonsRootCanvasGroup, true);
         StartCoroutine(AnimateLevelButtonsSequence());
     }
 
@@ -189,6 +193,10 @@ public class LevelsScreen : UIScreenBase
         Debug.Log($"[LevelsScreen] Reveal -> IntroSequence | Buttons={visibleButtons.Count}");
 #endif
         _buttonManager.AnimateLevelButtonsReveal(visibleButtons, "IntroSequence");
+
+        _presenter?.OnForegroundShown("StartupSequenceCompleted");
+        _presenter?.NotifyFirstTimeWelcomeScreenReady();
+        SchedulePendingStarReveal("StartupSequenceCompleted");
     }
 
     private List<Button> CollectUnlockedAreaButtons()
