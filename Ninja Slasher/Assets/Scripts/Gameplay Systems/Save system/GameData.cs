@@ -117,6 +117,12 @@ public class GameData
     /// </summary>
     public string firstTimeWelcomeDailyStartupSuppressedDateUtc = "";
 
+    /// <summary>
+    /// Indica si el jugador ya vio el mensaje introductorio de la Daily Wheel
+    /// y accionó la palanca al menos una vez. Evita que el hint vuelva a mostrarse.
+    /// </summary>
+    public bool hasSeenDailyWheelIntroMessage = false;
+
     public GameData()
     {
         unlockedAreas.Add(1); // area 1 desbloqueada
