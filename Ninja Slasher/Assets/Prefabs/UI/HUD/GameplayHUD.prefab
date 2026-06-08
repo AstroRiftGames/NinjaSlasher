@@ -78,6 +78,8 @@ GameObject:
   - component: {fileID: 7174653632461449072}
   - component: {fileID: 1619607273202626407}
   - component: {fileID: 120433566711678046}
+  - component: {fileID: 6806986208705369341}
+  - component: {fileID: 6806986208705369342}
   m_Layer: 5
   m_Name: PauseButton
   m_TagString: Untagged
@@ -199,6 +201,39 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6e1109dce497fb4469d625a38c86546c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!225 &6806986208705369341
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2181265879878594697}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
+--- !u!114 &6806986208705369342
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2181265879878594697}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9b6f031e87244d4bbf2f4f8c0d1a7219, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _playerTransform: {fileID: 0}
+  _gameplayCamera: {fileID: 0}
+  _rootCanvas: {fileID: 0}
+  _normalOpacity: 1
+  _occludedOpacity: 0.35
+  _fadeDuration: 0.15
+  _padding: {x: 24, y: 24}
+  _autoResolveReferences: 1
+  _resolveRetryInterval: 0.25
 --- !u!1 &2429470973034723368
 GameObject:
   m_ObjectHideFlags: 0
@@ -706,6 +741,8 @@ GameObject:
   m_Component:
   - component: {fileID: 6310716884840322435}
   - component: {fileID: 2770069047949234441}
+  - component: {fileID: 6806986208705369343}
+  - component: {fileID: 6806986208705369344}
   m_Layer: 5
   m_Name: Timer
   m_TagString: Untagged
@@ -761,6 +798,39 @@ MonoBehaviour:
   m_ChildScaleWidth: 0
   m_ChildScaleHeight: 0
   m_ReverseArrangement: 0
+--- !u!225 &6806986208705369343
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4507604046507894041}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
+--- !u!114 &6806986208705369344
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4507604046507894041}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9b6f031e87244d4bbf2f4f8c0d1a7219, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _playerTransform: {fileID: 0}
+  _gameplayCamera: {fileID: 0}
+  _rootCanvas: {fileID: 0}
+  _normalOpacity: 1
+  _occludedOpacity: 0.35
+  _fadeDuration: 0.15
+  _padding: {x: 24, y: 24}
+  _autoResolveReferences: 1
+  _resolveRetryInterval: 0.25
 --- !u!1 &6205504152957573100
 GameObject:
   m_ObjectHideFlags: 0
