@@ -154,8 +154,11 @@ public sealed class FirstTimeWelcomeController : MonoBehaviour
         bool isFirstStep = _currentStepIndex == 0;
         bool isLastStep = _currentStepIndex == _config.StepCount - 1;
         string nextLabel = isLastStep ? "Finalizar" : "Siguiente";
+        bool isLivesStep = string.Equals(step.TargetId, "Lives", StringComparison.OrdinalIgnoreCase);
+        bool forceCenteredPosition = isFirstStep && !isLivesStep;
+        bool forceBelowPosition = isLivesStep;
 
-        _view.ShowStep(step.Message, targetRect, isFirstStep, !isLastStep, nextLabel);
+        _view.ShowStep(step.Message, targetRect, forceCenteredPosition, forceBelowPosition, !isLastStep, nextLabel);
     }
 
     private void HandleNextRequested()

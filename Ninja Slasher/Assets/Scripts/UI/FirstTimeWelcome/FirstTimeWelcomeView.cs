@@ -79,7 +79,7 @@ public sealed class FirstTimeWelcomeView : UIOverlayBase
             _messageText.ForceMeshUpdate();
     }
 
-    public void ShowStep(string message, RectTransform target, bool forceCenteredPosition, bool showSkipButton, string nextButtonLabel)
+    public void ShowStep(string message, RectTransform target, bool forceCenteredPosition, bool forceBelowPosition, bool showSkipButton, string nextButtonLabel)
     {
         KillMessageCardTweens();
         _isSubmitting = true;
@@ -90,7 +90,7 @@ public sealed class FirstTimeWelcomeView : UIOverlayBase
             _messageText.text = message ?? string.Empty;
 
         UpdateHighlight(target);
-        PositionMessageCard(target, forceCenteredPosition);
+        PositionMessageCard(target, forceCenteredPosition, forceBelowPosition);
         PlayMessageOpen();
     }
 
@@ -433,7 +433,7 @@ public sealed class FirstTimeWelcomeView : UIOverlayBase
         });
     }
 
-    private void PositionMessageCard(RectTransform target, bool forceCenteredPosition)
+    private void PositionMessageCard(RectTransform target, bool forceCenteredPosition, bool forceBelowPosition)
     {
         if (_messageCardTransform == null || _canvasRect == null)
             return;
@@ -442,6 +442,10 @@ public sealed class FirstTimeWelcomeView : UIOverlayBase
         if (forceCenteredPosition)
         {
             position = Vector2.zero;
+        }
+        else if (forceBelowPosition && target != null)
+        {
+            position = CalculatePositionForSide(MessageSide.Below, GetTargetBounds(target).min, GetTargetBounds(target).max);
         }
         else if (target != null)
         {
@@ -457,24 +461,12 @@ public sealed class FirstTimeWelcomeView : UIOverlayBase
 
     private Vector2 CalculateContextualMessagePosition(RectTransform target)
     {
-        target.GetWorldCorners(_targetCorners);
-        for (int i = 0; i < _targetCorners.Length; i++)
-        {
-            RectTransformUtility.ScreenPointToLocalPointInRectangle(
-                _canvasRect,
-                RectTransformUtility.WorldToScreenPoint(_canvasCamera, _targetCorners[i]),
-                _canvasCamera,
-                out _canvasPoints[i]);
-        }
+        Bounds2D targetBounds = GetTargetBounds(target);
+        return CalculateContextualMessagePosition(targetBounds.min, targetBounds.max);
+    }
 
-        Vector2 targetMin = _canvasPoints[0];
-        Vector2 targetMax = _canvasPoints[0];
-        for (int i = 1; i < _canvasPoints.Length; i++)
-        {
-            targetMin = Vector2.Min(targetMin, _canvasPoints[i]);
-            targetMax = Vector2.Max(targetMax, _canvasPoints[i]);
-        }
-
+    private Vector2 CalculateContextualMessagePosition(Vector2 targetMin, Vector2 targetMax)
+    {
         Vector2 targetCenter = (targetMin + targetMax) * 0.5f;
         Rect canvasBounds = _canvasRect.rect;
         Vector2 canvasCenter = canvasBounds.center;
@@ -505,6 +497,29 @@ public sealed class FirstTimeWelcomeView : UIOverlayBase
             return secondaryPosition;
 
         return primaryPosition;
+    }
+
+    private Bounds2D GetTargetBounds(RectTransform target)
+    {
+        target.GetWorldCorners(_targetCorners);
+        for (int i = 0; i < _targetCorners.Length; i++)
+        {
+            RectTransformUtility.ScreenPointToLocalPointInRectangle(
+                _canvasRect,
+                RectTransformUtility.WorldToScreenPoint(_canvasCamera, _targetCorners[i]),
+                _canvasCamera,
+                out _canvasPoints[i]);
+        }
+
+        Vector2 targetMin = _canvasPoints[0];
+        Vector2 targetMax = _canvasPoints[0];
+        for (int i = 1; i < _canvasPoints.Length; i++)
+        {
+            targetMin = Vector2.Min(targetMin, _canvasPoints[i]);
+            targetMax = Vector2.Max(targetMax, _canvasPoints[i]);
+        }
+
+        return new Bounds2D(targetMin, targetMax);
     }
 
     private Vector2 CalculatePositionForSide(MessageSide side, Vector2 targetMin, Vector2 targetMax)
@@ -598,5 +613,17 @@ public sealed class FirstTimeWelcomeView : UIOverlayBase
         Below,
         Left,
         Right
+    }
+
+    private readonly struct Bounds2D
+    {
+        public readonly Vector2 min;
+        public readonly Vector2 max;
+
+        public Bounds2D(Vector2 min, Vector2 max)
+        {
+            this.min = min;
+            this.max = max;
+        }
     }
 }
