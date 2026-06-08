@@ -319,6 +319,9 @@ public class LevelSessionManager : MonoBehaviourSingleton<LevelSessionManager>
             StarsEarned = starsEarned
         };
 
+        if (isBossLevel && session.Configuration.bossPreGameData != null)
+            context.BossVictoryMessage = session.Configuration.bossPreGameData.victoryMessage;
+
         if (progressionResult != null && progressionResult.UnlockedNewArea)
         {
             context.UnlockedNewArea = true;

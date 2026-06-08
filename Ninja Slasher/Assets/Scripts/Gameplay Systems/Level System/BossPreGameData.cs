@@ -9,5 +9,9 @@ public class BossPreGameData : ScriptableObject
     [TextArea(4, 8)]
     public string loreDescription;
 
+    [Header("BOSS VICTORY")]
+    [TextArea(2, 4)]
+    public string victoryMessage;
+
     public Sprite bossPortrait;
 }

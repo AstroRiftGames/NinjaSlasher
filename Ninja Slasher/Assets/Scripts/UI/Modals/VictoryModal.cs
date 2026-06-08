@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 public class VictoryModal : UIModalBase
 {
@@ -10,6 +11,7 @@ public class VictoryModal : UIModalBase
     [SerializeField] private GameObject _normalTitleRoot;
     [SerializeField] private GameObject _bossTitleRoot;
     [SerializeField] private GameObject _bossMessageRoot;
+    [SerializeField] private TMP_Text _bossMessageLabel;
 
     private Button[] _navigationButtons;
     private bool _isObjectiveSequenceRunning;
@@ -39,6 +41,9 @@ public class VictoryModal : UIModalBase
         SetActive(_normalTitleRoot, !isBossClear);
         SetActive(_bossTitleRoot, isBossClear);
         SetActive(_bossMessageRoot, isBossClear);
+
+        if (isBossClear && _bossMessageLabel != null && !string.IsNullOrEmpty(_context.BossVictoryMessage))
+            _bossMessageLabel.text = _context.BossVictoryMessage;
     }
 
     public void PreviewCompleteAnimation(bool bossClear = true)
@@ -160,6 +165,9 @@ public class VictoryModal : UIModalBase
 
         if (_bossMessageRoot == null)
             _bossMessageRoot = FindChildObject("Boss Message");
+
+        if (_bossMessageLabel == null && _bossMessageRoot != null)
+            _bossMessageLabel = _bossMessageRoot.GetComponentInChildren<TMP_Text>(true);
     }
 
     private GameObject FindChildObject(string childName)

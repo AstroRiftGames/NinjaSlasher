@@ -22,6 +22,7 @@ public class VictoryContext
     public bool UnlockedNewArea;
     public int UnlockedAreaId;
     public string UnlockedAreaName;
+    public string BossVictoryMessage;
     public int StarsEarned;
     public List<VictoryReward> Rewards = new List<VictoryReward>();
 }
