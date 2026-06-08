@@ -18,6 +18,7 @@ public abstract class UIPanel : MonoBehaviour
     private bool _isBlockedByHigherPanel = false;
 
     protected virtual bool BlocksUnderlyingUI => false;
+    public virtual bool SuppressesUnderlyingScreenForeground => BlocksUnderlyingUI;
 
     protected virtual void Awake()
     {
@@ -31,6 +32,53 @@ public abstract class UIPanel : MonoBehaviour
             _panelTransform = GetComponent<RectTransform>();
 
         _audioContext = GetComponentInParent<UIAudioContext>();
+    }
+
+    protected RectTransform ResolvePreferredPanelTransform(Transform excludedTransform = null)
+    {
+        RectTransform selfTransform = GetComponent<RectTransform>();
+        if (selfTransform == null)
+            return _panelTransform;
+
+        if (_panelTransform != null && _panelTransform != selfTransform)
+            return _panelTransform;
+
+        RectTransform resolvedTransform = FindPreferredAnimatedChildTransform(selfTransform, excludedTransform);
+        return resolvedTransform != null ? resolvedTransform : selfTransform;
+    }
+
+    private static RectTransform FindPreferredAnimatedChildTransform(RectTransform root, Transform excludedTransform)
+    {
+        RectTransform fallback = null;
+        RectTransform[] candidates = root.GetComponentsInChildren<RectTransform>(true);
+        for (int i = 0; i < candidates.Length; i++)
+        {
+            RectTransform candidate = candidates[i];
+            if (candidate == null || candidate == root)
+                continue;
+
+            if (excludedTransform != null &&
+                (candidate == excludedTransform ||
+                 candidate.IsChildOf(excludedTransform) ||
+                 excludedTransform.IsChildOf(candidate)))
+            {
+                continue;
+            }
+
+            fallback ??= candidate;
+
+            string candidateName = candidate.name.ToLowerInvariant();
+            if (candidateName.Contains("panel") ||
+                candidateName.Contains("content") ||
+                candidateName.Contains("container") ||
+                candidateName.Contains("popup") ||
+                candidateName.Contains("modal"))
+            {
+                return candidate;
+            }
+        }
+
+        return fallback;
     }
 
     public virtual void Show()
@@ -257,6 +305,38 @@ public abstract class UIPanel : MonoBehaviour
     public static bool HasVisibleBlockingPanel => BlockingPanels.Count > 0;
     public bool IsBlockedByHigherPanel => _isBlockedByHigherPanel;
     public bool BlocksUnderlyingUIForFlow => BlocksUnderlyingUI;
+
+    public static bool IsPanelBlockedByForegroundSuppressingPanel(UIPanel panel)
+    {
+        if (panel == null)
+            return false;
+
+        int panelIndex = -1;
+        for (int i = 0; i < BlockingPanels.Count; i++)
+        {
+            if (BlockingPanels[i] == panel)
+            {
+                panelIndex = i;
+                break;
+            }
+        }
+
+        if (panelIndex < 0)
+            return false;
+
+        for (int i = panelIndex + 1; i < BlockingPanels.Count; i++)
+        {
+            UIPanel blockingPanel = BlockingPanels[i];
+            if (blockingPanel != null
+                && blockingPanel.gameObject.activeInHierarchy
+                && blockingPanel.SuppressesUnderlyingScreenForeground)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
 
     public static string GetBlockingPanelDebugSummary()
     {

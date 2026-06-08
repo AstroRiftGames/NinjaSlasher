@@ -232,7 +232,27 @@ public class PowerUpHorizontalScrollButtons : MonoBehaviour
         if (scrollableWidth <= 0f)
             return 1f;
 
-        return Mathf.Clamp01(viewport.rect.width / scrollableWidth);
+        float slotWidth = GetSlotWidth();
+        if (slotWidth <= 0f)
+            return Mathf.Clamp01(viewport.rect.width / scrollableWidth);
+
+        return Mathf.Clamp01(slotWidth / scrollableWidth);
+    }
+
+    private float GetSlotWidth()
+    {
+        if (_scrollRect == null || _scrollRect.content == null)
+            return 0f;
+
+        int childCount = _scrollRect.content.childCount;
+        if (childCount == 0)
+            return 0f;
+
+        RectTransform firstSlot = _scrollRect.content.GetChild(0) as RectTransform;
+        if (firstSlot == null)
+            return 0f;
+
+        return firstSlot.rect.width;
     }
 
     private void SetButtonAvailability(Button button, bool available)

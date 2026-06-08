@@ -2,20 +2,31 @@ using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using UnityEngine.SceneManagement;
 
 public class NoLivesModal : UIModalBase
 {
+    public enum FlowContext
+    {
+        LevelLifeWall,
+        PreGameRecovery
+    }
+
     [Header("No Lives UI")]
     [SerializeField] private TextMeshProUGUI _messageText;
     [SerializeField] private TextMeshProUGUI _timerText;
     [SerializeField] private Button _closeButton;
     [SerializeField] private Button _claimLifeButton;
 
-    private bool? _lastClaimLifeButtonVisible;
-    private string _lastRecoveryState;
+    private FlowContext _flowContext = FlowContext.LevelLifeWall;
     private bool _suppressAbandonOnHide;
     private bool _isClaimLifeFlowInProgress;
+    private bool _isResolvingRecoveredLifeFlow;
+    private bool _suppressLifeDisplayRefresh;
+
+    public void SetFlowContext(FlowContext context)
+    {
+        _flowContext = context;
+    }
 
     protected override void Awake()
     {
@@ -23,8 +34,9 @@ public class NoLivesModal : UIModalBase
         SetupButtons();
     }
 
-    private void OnEnable()
+    protected override void OnEnable()
     {
+        base.OnEnable();
         GameEvents.OnLivesChanged += OnLivesChanged;
 
         if (AdsManager.Instance != null)
@@ -64,10 +76,8 @@ public class NoLivesModal : UIModalBase
 
     protected override void OnShown()
     {
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-        Debug.Log($"[NoLivesModal] No lives available | realLives={LifeManager.Instance?.GetRealLives() ?? -1} | displayLives={LifeManager.Instance?.GetDisplayLives() ?? -1} | rewarded={AdsManager.Instance?.GetRewardedAvailabilityReason() ?? "ads_manager_missing"}");
-#endif
-
+        PauseController.Instance?.RequestPause(PauseSource.NoLives);
+        ResetRecoveredLifeFlowFlags();
         UpdateMessage();
         UpdateTimer();
         UpdateButtons();
@@ -75,30 +85,54 @@ public class NoLivesModal : UIModalBase
 
     protected override void OnHidden()
     {
+        PauseController.Instance?.ReleasePause(PauseSource.NoLives);
+
         if (_suppressAbandonOnHide)
         {
             _suppressAbandonOnHide = false;
+            ResetRecoveredLifeFlowFlags();
             return;
         }
 
         if (_isClaimLifeFlowInProgress || (AdsManager.Instance != null && AdsManager.Instance.IsRewardedAdFlowInProgress("extra_life")))
             return;
 
-        if (!LifeManager.Instance.CanPlay())
+        if (_flowContext == FlowContext.LevelLifeWall && LifeManager.Instance.RequiresLifeRecoveryForCurrentAttempt())
         {
             LifeManager.Instance?.NotifyLifeWallAbandoned();
             UIEvents.RaiseQuitToMenuPressed();
         }
+
+        ResetRecoveredLifeFlowFlags();
+    }
+
+    private bool ShouldSuppressLifeDisplayRefresh()
+    {
+        return _suppressLifeDisplayRefresh || _isResolvingRecoveredLifeFlow || _suppressAbandonOnHide;
+    }
+
+    private void BeginRecoveredLifeFlowClose()
+    {
+        _isResolvingRecoveredLifeFlow = true;
+        _suppressLifeDisplayRefresh = true;
+    }
+
+    private void ResetRecoveredLifeFlowFlags()
+    {
+        _isResolvingRecoveredLifeFlow = false;
+        _suppressLifeDisplayRefresh = false;
     }
 
     private void UpdateMessage()
     {
         if (_messageText == null) return;
 
-        int currentLives = LifeManager.Instance?.CurrentLives ?? 0;
-        int maxLives = GameConfigManager.Config?.maxLives ?? 5;
+        int effectiveLives = LifeManager.Instance?.GetEffectiveLivesForCurrentAttempt() ?? 0;
+        int maxLives = LifeManager.Instance?.GetMaxLives() ?? GameConfigManager.Config?.maxLives ?? 5;
 
-        _messageText.text = $"Sin vidas disponibles\n{currentLives}/{maxLives}";
+        bool suppressRefresh = ShouldSuppressLifeDisplayRefresh();
+        if (!suppressRefresh)
+            _messageText.text = $"Sin vidas disponibles\n{effectiveLives}/{maxLives}";
     }
 
     private void UpdateTimer()
@@ -128,10 +162,9 @@ public class NoLivesModal : UIModalBase
 
     private void UpdateButtons()
     {
-        bool hasLives = LifeManager.Instance?.CanPlay() ?? false;
+        bool canContinueAttempt = LifeManager.Instance?.CanContinueCurrentAttempt() ?? false;
         bool canWatchAd = CanWatchAdForRecovery();
-        bool claimVisible = hasLives || (canWatchAd);
-        string recoveryState = $"canPlay={hasLives} | realLives={LifeManager.Instance?.GetRealLives() ?? -1} | rewarded={AdsManager.Instance?.GetRewardedAvailabilityReason() ?? "ads_manager_missing"}";
+        bool claimVisible = canContinueAttempt || canWatchAd;
 
         if (_claimLifeButton != null)
         {
@@ -145,34 +178,25 @@ public class NoLivesModal : UIModalBase
             _closeButton.interactable = !_isClaimLifeFlowInProgress;
         }
 
-        _lastClaimLifeButtonVisible = claimVisible;
-        _lastRecoveryState = recoveryState;
     }
 
     private void OnClaimLifeClicked()
     {
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-        Debug.Log($"[NoLivesModal] Claim life clicked | canPlay={LifeManager.Instance?.CanPlay() ?? false} | realLives={LifeManager.Instance?.GetRealLives() ?? -1} | rewarded={AdsManager.Instance?.GetRewardedAvailabilityReason() ?? "ads_manager_missing"}");
-#endif
+        bool canPlayAfterPendingDeduction = LifeManager.Instance?.CanContinueCurrentAttempt() ?? false;
+        bool canWatchAd = CanWatchAdForRecovery();
 
-        if (LifeManager.Instance != null && LifeManager.Instance.CanPlay())
+        if (LifeManager.Instance != null && canPlayAfterPendingDeduction)
         {
             ResolveRecoveredLifeFlow();
             return;
         }
 
-        if (!CanWatchAdForRecovery())
+        if (!canWatchAd)
         {
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-            Debug.LogWarning($"[NoLivesModal] Extra life rewarded ad request rejected | reason={AdsManager.Instance?.GetRewardedAvailabilityReason() ?? "ads_manager_missing"}");
-#endif
             UpdateButtons();
             return;
         }
 
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-        Debug.Log("[NoLivesModal] Claim button requested extra life rewarded ad.");
-#endif
         _isClaimLifeFlowInProgress = true;
         UpdateButtons();
         AdsManager.Instance?.ShowRewardedAdForExtraLife();
@@ -192,10 +216,22 @@ public class NoLivesModal : UIModalBase
         if (!_isVisible)
             return;
 
+        bool canContinueCurrentAttempt = LifeManager.Instance != null && LifeManager.Instance.CanContinueCurrentAttempt();
+        if ((_isClaimLifeFlowInProgress && canContinueCurrentAttempt) || ShouldSuppressLifeDisplayRefresh())
+        {
+            if (canContinueCurrentAttempt)
+                BeginRecoveredLifeFlowClose();
+
+            if (canContinueCurrentAttempt)
+                ResolveRecoveredLifeFlow();
+
+            return;
+        }
+
         UpdateMessage();
         UpdateButtons();
 
-        if (LifeManager.Instance != null && LifeManager.Instance.CanPlay())
+        if (canContinueCurrentAttempt)
         {
             ResolveRecoveredLifeFlow();
         }
@@ -211,8 +247,9 @@ public class NoLivesModal : UIModalBase
         if (!_isVisible)
             return;
 
-        if (rewarded && LifeManager.Instance != null && LifeManager.Instance.CanPlay())
+        if (rewarded && LifeManager.Instance != null && LifeManager.Instance.CanContinueCurrentAttempt())
         {
+            BeginRecoveredLifeFlowClose();
             ResolveRecoveredLifeFlow();
             return;
         }
@@ -222,7 +259,7 @@ public class NoLivesModal : UIModalBase
 
     private bool CanWatchAdForRecovery()
     {
-        if (LifeManager.Instance != null && LifeManager.Instance.CanPlay())
+        if (LifeManager.Instance != null && !LifeManager.Instance.RequiresLifeRecoveryForCurrentAttempt())
             return false;
 
         return AdsManager.Instance != null && AdsManager.Instance.CanRequestRewardedAd();
@@ -249,15 +286,18 @@ public class NoLivesModal : UIModalBase
 
     private void ResolveRecoveredLifeFlow()
     {
-        if (LifeManager.Instance == null || !LifeManager.Instance.CanPlay())
+        PrepareForFlowTransitionClose();
+
+        if (LifeManager.Instance == null || !LifeManager.Instance.CanContinueCurrentAttempt())
             return;
 
+        BeginRecoveredLifeFlowClose();
         _isClaimLifeFlowInProgress = false;
-        PrepareForFlowTransitionClose();
 
         if (ShouldReturnToDefeatFlow())
         {
-            UIEvents.RequestShowDefeatModal(LifeManager.Instance.GetRealLives());
+            UIEvents.RequestShowDefeatModal(LifeManager.Instance.GetEffectiveLivesForCurrentAttempt());
+            RequestClose();
             return;
         }
 
@@ -266,15 +306,12 @@ public class NoLivesModal : UIModalBase
 
     private bool ShouldReturnToDefeatFlow()
     {
-        if (IsLevelSceneContext())
-            return true;
-
-        return false;
+        return _flowContext == FlowContext.LevelLifeWall;
     }
 
     private void OnCloseRequested()
     {
-        if (LifeManager.Instance != null && !LifeManager.Instance.CanPlay())
+        if (_isClaimLifeFlowInProgress && LifeManager.Instance != null && LifeManager.Instance.RequiresLifeRecoveryForCurrentAttempt())
         {
             DismissBlockedFlow();
             return;
@@ -288,19 +325,14 @@ public class NoLivesModal : UIModalBase
         _isClaimLifeFlowInProgress = false;
         PrepareForFlowTransitionClose();
 
-        LifeManager.Instance?.NotifyLifeWallAbandoned();
-
-        if (IsLevelSceneContext())
+        if (_flowContext == FlowContext.LevelLifeWall)
+        {
+            LifeManager.Instance?.NotifyLifeWallAbandoned();
             UIEvents.RaiseQuitToMenuPressed();
-    }
+            return;
+        }
 
-    private bool IsLevelSceneContext()
-    {
-        if (LevelSessionManager.Instance != null && LevelSessionManager.Instance.IsLevelActive)
-            return true;
-
-        string activeSceneName = SceneManager.GetActiveScene().name;
-        return activeSceneName.StartsWith("Level_") || activeSceneName.Contains("Level");
+        RequestClose();
     }
 
     private void RequestClose()

@@ -137,8 +137,9 @@ public class LevelProgressionManager : MonoBehaviourSingleton<LevelProgressionMa
         return areaId <= highestArea;
     }
 
-    private void CheckAreaUnlock(int completedAreaId)
+    private ProgressionUnlockResult CheckAreaUnlock(int completedAreaId)
     {
+        var result = new ProgressionUnlockResult();
         int newAreaId = completedAreaId + 1;
         var (_, currentHighestArea, _) = SaveManager.Instance?.GetProgressionData() ?? (1, 1, 0);
 
@@ -146,9 +147,14 @@ public class LevelProgressionManager : MonoBehaviourSingleton<LevelProgressionMa
         {
             SaveManager.Instance?.UnlockNewArea(newAreaId);
             _pendingAreaUnlockAnimationId = newAreaId;
+            result.UnlockedNewArea = true;
+            result.UnlockedAreaId = newAreaId;
+            result.UnlockedAreaName = GetAreaDisplayName(newAreaId);
             OnNewAreaUnlocked?.Invoke(newAreaId);
 
         }
+
+        return result;
     }
 
     public int GetRequiredStarsForBoss(int levelId)
@@ -232,8 +238,9 @@ public class LevelProgressionManager : MonoBehaviourSingleton<LevelProgressionMa
         };
     }
 
-    public void HandleLevelCompletion(int levelId, int starsEarned)
+    public ProgressionUnlockResult HandleLevelCompletion(int levelId, int starsEarned)
     {
+        var progressionResult = new ProgressionUnlockResult();
         int previousStars = GetPersistedStarsForLevel(levelId);
         bool isBossLevel = false;
         LevelConfiguration levelConfig = null;
@@ -243,6 +250,8 @@ public class LevelProgressionManager : MonoBehaviourSingleton<LevelProgressionMa
             levelConfig = LevelConfigurationManager.Instance.GetConfigurationForLevel(levelId);
             isBossLevel = levelConfig?.unlockRequirements != null && levelConfig.unlockRequirements.isBossLevel;
         }
+
+        progressionResult.CompletedBossLevel = isBossLevel;
 
         SaveManager.Instance?.UpdateLevelProgression(levelId, starsEarned);
 
@@ -271,9 +280,17 @@ public class LevelProgressionManager : MonoBehaviourSingleton<LevelProgressionMa
         }
 
         if (isBossLevel && levelConfig?.unlockRequirements != null)
-            CheckAreaUnlock(levelConfig.unlockRequirements.areaId);
+            progressionResult = CheckAreaUnlock(levelConfig.unlockRequirements.areaId);
+
+        progressionResult.CompletedBossLevel = isBossLevel;
 
         OnProgressionUpdated?.Invoke();
+        return progressionResult;
+    }
+
+    public string GetAreaDisplayName(int areaId)
+    {
+        return "Area " + areaId;
     }
 
     public bool ConsumePendingStarReveal(int levelId, out int previousStars, out int newStars)

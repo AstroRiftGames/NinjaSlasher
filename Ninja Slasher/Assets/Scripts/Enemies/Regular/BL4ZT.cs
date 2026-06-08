@@ -32,6 +32,7 @@ public class BL4ZT : Enemy
     [SerializeField][Range(1, 2)] float _speedMultiplier;
     [SerializeField] Transform[] _nodes;
     [SerializeField] float _rayCD;
+    [SerializeField] private string[] _forbiddenSurfaces;
     private float _currentSpeed;
     private float _lastRay;
     private Vector2 _destination;
@@ -39,6 +40,7 @@ public class BL4ZT : Enemy
     private bool _isWaiting = false;
     private int _currentNodeIndex = 0;
     private bool _isRoaming = false;
+    private bool _isReversed = false;
 
     [Header("Explostion")]
     [SerializeField] float _timeToExplode;
@@ -49,7 +51,7 @@ public class BL4ZT : Enemy
     #endregion
 
     #region SURFACE DETECTION
-    private bool DetectGround(float offset, out RaycastHit2D hit)
+    private bool DetectGround(float offset, out RaycastHit2D hit, Color debugColor = default)
     {
         Vector3 origin =
             transform.position +
@@ -60,7 +62,27 @@ public class BL4ZT : Enemy
 
         hit = Physics2D.Raycast(origin, direction, groundCheckDistance, _obstaclesLayer);
 
+        Debug.DrawRay(origin, direction * groundCheckDistance, debugColor == default ? Color.red : debugColor);
+
         return hit.collider != null;
+    }
+
+    private RaycastHit2D PeekBelowCorner()
+    {
+        // Cast from just past the front-ground check position, downward,
+        // to see what surface is around the upcoming open corner before committing to the turn.
+        float peekOffset = groundHorizontalOffset + 0.25f;
+        Vector3 origin = transform.position
+            + GetMovementDir() * peekOffset
+            + (Vector3)(-transform.up * groundVerticalOffset);
+
+        Vector2 direction = -transform.up;
+
+        RaycastHit2D hit = Physics2D.Raycast(origin, direction, 1f, _obstaclesLayer);
+
+        Debug.DrawRay(origin, direction * 1f, Color.magenta);
+
+        return hit;
     }
 
     private bool DetectWall(out RaycastHit2D hit)
@@ -156,13 +178,13 @@ public class BL4ZT : Enemy
 
         float delta = hit.distance;
 
-        transform.position -= transform.up * (delta + groundCheckDistance/2);
+        transform.position -= transform.up * (delta + groundCheckDistance / 2);
     }
 
     private void ApplyFailsafeAlignment()
     {
         RaycastHit2D hit = Physics2D.Raycast(transform.position, Vector2.down, Mathf.Infinity, _obstaclesLayer);
-        
+
         if (hit.collider != null)
         {
             AlignToSurface(hit.normal);
@@ -192,7 +214,7 @@ public class BL4ZT : Enemy
         }
         else
         {
-            pivotPoint = transform.position + 
+            pivotPoint = transform.position +
                 transform.up * (groundVerticalOffset + groundCheckDistance) +
                 GetMovementDir() * (wallHorizontalOffset + wallCheckDistance);
         }
@@ -222,7 +244,7 @@ public class BL4ZT : Enemy
         }
     }
     #endregion
-    
+
     #region AI
     private bool HasLOS()
     {
@@ -233,7 +255,7 @@ public class BL4ZT : Enemy
 
     private bool CheckTarget(Vector3 target)
     {
-        bool hasReachedTarget =  Mathf.Approximately(Vector3.Distance(target, transform.position), _isActive ? _explosionRadius / 2 : 0);
+        bool hasReachedTarget = Mathf.Approximately(Vector3.Distance(target, transform.position), _isActive ? _explosionRadius / 2 : 0);
         _animator.SetBool("IsMoving", !hasReachedTarget);
         return hasReachedTarget;
     }
@@ -241,9 +263,9 @@ public class BL4ZT : Enemy
     private void SetDirToTarget()
     {
         Vector3 localTargetPos = transform.InverseTransformPoint(_destination);
-        
+
         float threshold = 0.05f;
-        
+
         if (Mathf.Abs(localTargetPos.x) > threshold)
         {
             _goingRight = localTargetPos.x > 0;
@@ -261,7 +283,7 @@ public class BL4ZT : Enemy
 
         yield return new WaitForSeconds(0.5f);
         Transform _nextNode = _nodes[_currentNodeIndex];
-        
+
         _destination = GetClosestPoint(_nextNode.position);
         SetDirToTarget();
 
@@ -280,7 +302,7 @@ public class BL4ZT : Enemy
         {
             Vector2 dirToCast = GetDirectionByIndex(n);
             RaycastHit2D hit = Physics2D.Raycast(origin, dirToCast, 15, base._obstaclesLayer);
-            
+
             if (hit.collider != null)
             {
                 float disToCurrent = Vector2.Distance(origin, hit.point);
@@ -293,6 +315,39 @@ public class BL4ZT : Enemy
             }
         }
         return closestPoint;
+    }
+
+    private bool IsForbiddenSurface(RaycastHit2D hit)
+    {
+        if (hit.collider == null || _forbiddenSurfaces == null) return false;
+        string hitTag = hit.collider.tag;
+        Debug.Log($"[BLAZT] Surface detected in front — tag: '{hitTag}'");
+        foreach (string forbidden in _forbiddenSurfaces)
+        {
+            if (hitTag == forbidden)
+            {
+                Debug.Log($"[BLAZT] Tag '{hitTag}' MATCHES forbidden surface list. Triggering route change.");
+                return true;
+            }
+        }
+        Debug.Log($"[BLAZT] Tag '{hitTag}' does NOT match any forbidden surface. Continuing patrol.");
+        return false;
+    }
+
+    private IEnumerator TurnAroundOnForbiddenSurface()
+    {
+        Debug.Log("[BLAZT] TurnAroundOnForbiddenSurface started — stopping and waiting before reversing route.");
+        _isWaiting = true;
+        _rb.linearVelocityX = 0;
+        _animator.SetBool("IsMoving", false);
+
+        yield return new WaitForSeconds(2f);
+
+        _goingRight = !_goingRight;
+        _isReversed = !_isReversed;
+        Debug.Log($"[BLAZT] Route reversed — goingRight: {_goingRight}, isReversed: {_isReversed}. Resuming patrol.");
+
+        StartCoroutine(SetPatrolTarget());
     }
 
     #endregion
@@ -374,7 +429,7 @@ public class BL4ZT : Enemy
     public void SetRoaming(bool newValue)
     {
         _isRoaming = newValue;
-        if(newValue)
+        if (newValue)
         {
             SetRandomDirection();
         }
@@ -399,10 +454,21 @@ public class BL4ZT : Enemy
     private bool CheckCooldown(float cd, float last) => Time.time >= cd + last;
     private void IncreaseNodeIndex()
     {
-        _currentNodeIndex++;
-        if (_currentNodeIndex >= _nodes.Length)
+        if (_isReversed)
         {
-            _currentNodeIndex = 0;
+            _currentNodeIndex--;
+            if (_currentNodeIndex < 0)
+            {
+                _currentNodeIndex = _nodes.Length - 1;
+            }
+        }
+        else
+        {
+            _currentNodeIndex++;
+            if (_currentNodeIndex >= _nodes.Length)
+            {
+                _currentNodeIndex = 0;
+            }
         }
     }
     #endregion
@@ -433,8 +499,8 @@ public class BL4ZT : Enemy
             return;
         }
 
-        bool groundFront = DetectGround(groundHorizontalOffset, out RaycastHit2D frontHit);
-        bool groundBack = DetectGround(-groundHorizontalOffset, out RaycastHit2D backHit);
+        bool groundFront = DetectGround(groundHorizontalOffset, out RaycastHit2D frontHit, Color.red);
+        bool groundBack = DetectGround(-groundHorizontalOffset, out RaycastHit2D backHit, Color.yellow);
         bool wallAhead = DetectWall(out RaycastHit2D wallHit);
 
         if (!groundFront && !groundBack)
@@ -443,7 +509,7 @@ public class BL4ZT : Enemy
             return;
         }
 
-        if(!_isActive)
+        if (!_isActive)
         {
             if (HasLOS())
             {
@@ -453,6 +519,25 @@ public class BL4ZT : Enemy
             {
                 if (!_isWaiting && (!CheckTarget(_destination) || _isRoaming))
                 {
+                    // Closed corner: wall directly ahead with a forbidden tag
+                    if (wallAhead && IsForbiddenSurface(wallHit))
+                    {
+                        StartCoroutine(TurnAroundOnForbiddenSurface());
+                        return;
+                    }
+
+                    // Open corner: peek at the surface below the upcoming edge BEFORE committing to the turn.
+                    // This fires before HandleMovement rotates BL4ZT, so it never steps onto the forbidden surface.
+                    if (!groundFront && groundBack && !wallAhead)
+                    {
+                        RaycastHit2D peekHit = PeekBelowCorner();
+                        if (IsForbiddenSurface(peekHit))
+                        {
+                            StartCoroutine(TurnAroundOnForbiddenSurface());
+                            return;
+                        }
+                    }
+
                     AudioService.Instance.StopSFX(_audioContext.Audio.idle);
                     AudioService.Instance.PlaySFXAtPosition(_audioContext.Audio.move, transform.position);
                     if (HandleMovement(groundFront, frontHit, groundBack, backHit, wallAhead))
@@ -460,7 +545,7 @@ public class BL4ZT : Enemy
                         return;
                     }
                 }
-                else if(!_isWaiting)
+                else if (!_isWaiting)
                 {
                     AudioService.Instance.StopSFX(_audioContext.Audio.move);
                     AudioService.Instance.PlaySFXAtPosition(_audioContext.Audio.idle, transform.position);
@@ -468,7 +553,7 @@ public class BL4ZT : Enemy
                     {
                         IncreaseNodeIndex();
                         StartCoroutine(SetPatrolTarget());
-                    }   
+                    }
                 }
             }
         }
@@ -500,7 +585,7 @@ public class BL4ZT : Enemy
                     _animator.SetBool("IsMoving", false);
                 }
             }
-            else if(!_hasExploded)
+            else if (!_hasExploded)
             {
                 Explode();
             }

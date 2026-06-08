@@ -36,10 +36,10 @@ public class InputDetection : MonoBehaviour
     private float pressTime;
 
     private bool isCanceled;
-
     private bool IsInputBlocked => (LevelSessionManager.Instance != null && !LevelSessionManager.Instance.CanProcessGameplay)
         || Time.timeScale == 0f
-        || (TutorialManager.Instance != null && TutorialManager.Instance.IsTutorialActive());
+        || (TutorialManager.Instance != null && TutorialManager.Instance.IsTutorialActive())
+        || UIPanel.HasVisibleBlockingPanel;
 
     private void Awake()
     {
@@ -75,7 +75,10 @@ public class InputDetection : MonoBehaviour
 
     private void OnPressStarted(InputAction.CallbackContext _)
     {
-        if (IsInputBlocked || _player.IsDashing || GameManager.Instance.IsVictory || GameManager.Instance.PlayerHasDied) return;
+        if (IsInputBlocked || _player.IsDashing || GameManager.Instance.IsVictory || GameManager.Instance.PlayerHasDied)
+        {
+            return;
+        }
         initialPos = currentPos;
         pressTime = Time.time;
 
@@ -91,14 +94,26 @@ public class InputDetection : MonoBehaviour
         
         _isPressing = false;
 
-        if (IsInputBlocked || _player.IsDashing || GameManager.Instance.IsVictory || GameManager.Instance.PlayerHasDied) return;
+        if (IsInputBlocked || _player.IsDashing || GameManager.Instance.IsVictory || GameManager.Instance.PlayerHasDied)
+        {
+            return;
+        }
         
         DetectInput();
     }
 
     private void Update()
     {
-        if (IsInputBlocked) return;
+        if (IsInputBlocked)
+        {
+            if (_isPressing)
+            {
+                _isPressing = false;
+                Direction = Vector2.zero;
+                isCanceled = true;
+            }
+            return;
+        }
 
         if (_isPressing)
         {

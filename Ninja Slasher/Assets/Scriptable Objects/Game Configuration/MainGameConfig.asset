@@ -13,18 +13,18 @@ MonoBehaviour:
   m_Name: MainGameConfig
   m_EditorClassIdentifier: 
   maxLives: 5
-  startingLives: 5
+  startingLives: 1
   lifeRechargeSeconds: 300
   levelsPerArea: 10
   totalAreas: 5
   starsRequiredPerBoss: 050000000f0000001e000000320000004b000000
-  extraTimeUses: 3
-  dashTurboUses: 5
-  parryPerfectUses: 3
-  comboMasterUses: 4
-  secondChanceUses: 1
-  hawkVisionUses: 3
-  enhancedParryUses: 3
+  extraTimeGrantQuantity: 3
+  dashTurboGrantQuantity: 5
+  parryPerfectGrantQuantity: 3
+  comboMasterGrantQuantity: 4
+  secondChanceGrantQuantity: 1
+  enhancedParryGrantQuantity: 3
+  hawkVisionGrantQuantity: 1
   extraTimeCost: 100
   dashTurboCost: 100
   parryPerfectCost: 100
@@ -33,11 +33,14 @@ MonoBehaviour:
   hawkVisionCost: 100
   enhancedParryCost: 100
   extraTimeBonus: 0.5
-  dashTurboCooldownMultiplier: 0.5
-  parryPerfectBonusWindow: 0.2
+  dashTurboCooldownMultiplier: 0.25
+  parryPerfectBonusWindow: 0.3
   comboMasterBonusPercent: 0.5
-  enhancedParryBounces: 3
+  enhancedParryBounces: 2
   enhancedParryVelocityRetention: 0.9
+  hawkVisionInitialTimeScale: 0.2
+  hawkVisionInitialSlowDuration: 5
+  hawkVisionTrajectoryMaxDistance: 100
   lossesRequiredForAd: 2
   levelsRequiredForAd: 3
   gamesRequiredForInterstitialAd: 3
@@ -63,5 +66,19 @@ MonoBehaviour:
   projectilePoolInitialSize: 20
   floatingTextPoolSize: 10
   vfxPoolInitialSize: 15
+  enableLifeFullNotification: 1
+  notificationAndroidChannelId: retention_channel
+  notificationAndroidChannelName: Recordatorios
+  notificationAndroidChannelDescription: Recordatorios del juego
+  lifeFullNotificationTitle: Vidas completas
+  lifeFullNotificationBody: "Tus vidas est\xE1n completas. Volv\xE9 a la misi\xF3n
+    antes de que avance la demolici\xF3n. "
+  enableDailyRewardNotification: 1
+  dailyRewardNotificationTitle: 'Recompensa diaria lista '
+  dailyRewardNotificationBody: "Tu recompensa diaria ya est\xE1 disponible. Entr\xE1
+    y reclamala."
+  useDebugDailyRewardNotificationDelay: 1
+  debugDailyRewardNotificationDelaySeconds: 120
+  notificationDebugLogs: 1
   enableTutorial: 1
   tutorialTextDisplayTime: 5

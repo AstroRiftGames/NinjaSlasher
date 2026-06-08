@@ -20,11 +20,13 @@ public class EmergencyBundleModal : UIModalBase
 
     private EmergencyBundleOffer _currentOffer;
     private Coroutine _countdownCoroutine;
+    private bool _suppressDismissOnHide;
 
     #region ENABLE / DISABLE
 
-    private void OnEnable()
+    protected override void OnEnable()
     {
+        base.OnEnable();
         _buyBtn?.onClick.AddListener(OnBuyClicked);
         _dismissBtn?.onClick.AddListener(OnDismissClicked);
     }
@@ -42,6 +44,7 @@ public class EmergencyBundleModal : UIModalBase
 
     public void ShowWithOffer(EmergencyBundleOffer offer)
     {
+        _suppressDismissOnHide = false;
         _currentOffer = offer;
         PopulateUI(offer);
     }
@@ -58,6 +61,20 @@ public class EmergencyBundleModal : UIModalBase
         base.OnHidden();
         StopCountdown();
         _currentOffer = null;
+
+        if (_suppressDismissOnHide)
+        {
+            _suppressDismissOnHide = false;
+            EmergencyBundleService.Instance?.OnOfferClosedForTransition();
+            return;
+        }
+
+        EmergencyBundleService.Instance?.OnOfferDismissed();
+    }
+
+    public void PrepareForFlowTransitionClose()
+    {
+        _suppressDismissOnHide = true;
     }
 
     #endregion
@@ -90,7 +107,7 @@ public class EmergencyBundleModal : UIModalBase
 
         // Lives
         if (reward.unlimitedLives && reward.unlimitedLivesDurationMinutes > 0f)
-            sb.Append($"Vida ilimitada {reward.unlimitedLivesDurationMinutes:0} min");
+            sb.Append($"Vidas ilimitadas {reward.unlimitedLivesDurationMinutes:0} min");
         else if (reward.regularLivesCount > 0)
             sb.Append($"+{reward.regularLivesCount} {(reward.regularLivesCount == 1 ? "vida" : "vidas")}");
 
@@ -100,19 +117,42 @@ public class EmergencyBundleModal : UIModalBase
             foreach (var entry in reward.powerUps)
             {
                 if (entry.quantity <= 0) continue;
-                if (sb.Length > 0) sb.Append(" · ");
-                sb.Append($"{entry.type} x{entry.quantity}");
+                if (sb.Length > 0) sb.Append(" - ");
+                sb.Append($"{GetPowerUpDisplayName(entry.type)} x{entry.quantity}");
             }
         }
 
         // Coins
         if (reward.coins > 0)
         {
-            if (sb.Length > 0) sb.Append(" · ");
+            if (sb.Length > 0) sb.Append(" - ");
             sb.Append($"{reward.coins} monedas");
         }
 
         return sb.ToString();
+    }
+
+    private static string GetPowerUpDisplayName(PowerUpType type)
+    {
+        switch (type)
+        {
+            case PowerUpType.ExtraTime:
+                return "Tiempo Extra";
+            case PowerUpType.DashTurbo:
+                return "Turbo de Dash";
+            case PowerUpType.ParryPerfect:
+                return "Parry Perfecto";
+            case PowerUpType.ComboMaster:
+                return "Maestro del Combo";
+            case PowerUpType.SecondChance:
+                return "Segunda Oportunidad";
+            case PowerUpType.HawkVision:
+                return "Ojo de Halcón";
+            case PowerUpType.EnhancedParry:
+                return "Parry Potenciado";
+            default:
+                return type.ToString();
+        }
     }
 
     #endregion
@@ -167,6 +207,9 @@ public class EmergencyBundleModal : UIModalBase
 
         string productId = _currentOffer.Product.PrimaryProductId;
         if (string.IsNullOrEmpty(productId)) return;
+
+        if (_buyBtn != null)
+            _buyBtn.interactable = false;
 
         AnalyticsManager.Instance?.RecordPurchaseStarted(
             productId,

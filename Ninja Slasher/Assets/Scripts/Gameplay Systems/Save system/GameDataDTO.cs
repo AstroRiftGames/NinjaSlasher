@@ -76,6 +76,12 @@ public class GameDataDTO
     /// <summary>Marca que el evento firstOpen ya fue enviado una vez.</summary>
     public bool hasFirstOpenFired;
 
+    /// <summary>Marca que la guia inicial de interfaz ya fue completada o saltada.</summary>
+    public bool hasSeenFirstTimeWelcome;
+
+    /// <summary>Fecha UTC yyyy-MM-dd en que el auto-show diario fue suprimido por el welcome.</summary>
+    public string firstTimeWelcomeDailyStartupSuppressedDateUtc;
+
     /// <summary>Datos de daily wheel.</summary>
     public DailyWheelSaveData dailyWheelData = new DailyWheelSaveData();
 }
@@ -150,6 +156,8 @@ public static class GameDataMapper
             unlimitedLivesEndUtc = d.unlimitedLivesEndUtc,
             coins = d.coins,
             hasFirstOpenFired = d.hasFirstOpenFired,
+            hasSeenFirstTimeWelcome = d.hasSeenFirstTimeWelcome,
+            firstTimeWelcomeDailyStartupSuppressedDateUtc = d.firstTimeWelcomeDailyStartupSuppressedDateUtc ?? "",
             dailyWheelData = new DailyWheelSaveData
             {
                 lastSpinDateIso  = d.dailyWheelData?.lastSpinDateIso ?? "",
@@ -241,6 +249,8 @@ public static class GameDataMapper
             unlimitedLivesEndUtc = dto.unlimitedLivesEndUtc,
             coins = dto.coins,
             hasFirstOpenFired = dto.hasFirstOpenFired,
+            hasSeenFirstTimeWelcome = dto.hasSeenFirstTimeWelcome,
+            firstTimeWelcomeDailyStartupSuppressedDateUtc = dto.firstTimeWelcomeDailyStartupSuppressedDateUtc ?? "",
             dailyWheelData = dto.dailyWheelData ?? new DailyWheelSaveData(),
         };
 

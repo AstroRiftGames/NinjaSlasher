@@ -1,13 +1,22 @@
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 public class VictoryModal : UIModalBase
 {
     [SerializeField] private float _closeAnimationDuration = 0.4f;
     [SerializeField] private Button _continueButton;
 
+    [Header("Variant UI")]
+    [SerializeField] private GameObject _normalTitleRoot;
+    [SerializeField] private GameObject _bossTitleRoot;
+    [SerializeField] private GameObject _bossMessageRoot;
+    [SerializeField] private TMP_Text _bossMessageLabel;
+
     private Button[] _navigationButtons;
     private bool _isObjectiveSequenceRunning;
+    private bool _isPreviewAnimation;
+    private VictoryContext _context;
 
     protected override float HideAnimationDuration => _closeAnimationDuration;
 
@@ -20,22 +29,86 @@ public class VictoryModal : UIModalBase
 
         CacheNavigationButtons();
         SetupButtons();
+        ResolveVariantRoots();
+        ApplyContext(null);
     }
+
+    public void ApplyContext(VictoryContext context)
+    {
+        _context = context ?? new VictoryContext();
+        bool isBossClear = IsBossClear();
+
+        SetActive(_normalTitleRoot, !isBossClear);
+        SetActive(_bossTitleRoot, isBossClear);
+        SetActive(_bossMessageRoot, isBossClear);
+
+        if (isBossClear && _bossMessageLabel != null && !string.IsNullOrEmpty(_context.BossVictoryMessage))
+            _bossMessageLabel.text = _context.BossVictoryMessage;
+    }
+
+    public void PreviewCompleteAnimation(bool bossClear = true)
+    {
+        if (!Application.isPlaying)
+        {
+            Debug.LogWarning("[VictoryModal] PreviewCompleteAnimation requiere Play Mode para reproducir animaciones y tweens.");
+            return;
+        }
+
+        if (_isVisible || _isOpening || _isClosing || gameObject.activeSelf)
+            HideImmediate();
+
+        VictoryModalVariant variant = bossClear ? VictoryModalVariant.BossClear : VictoryModalVariant.Normal;
+        var previewContext = new VictoryContext
+        {
+            Variant = variant,
+            IsBossLevel = bossClear,
+            StarsEarned = bossClear ? 1 : 3
+        };
+
+        _isPreviewAnimation = true;
+        UIEvents.SetVictoryContext(previewContext);
+        ApplyContext(previewContext);
+        Show();
+    }
+
+#if UNITY_EDITOR
+    [ContextMenu("Debug/Preview Boss Victory Animation")]
+    private void PreviewBossVictoryAnimationFromInspector()
+    {
+        PreviewCompleteAnimation(true);
+    }
+
+    [ContextMenu("Debug/Preview Normal Victory Animation")]
+    private void PreviewNormalVictoryAnimationFromInspector()
+    {
+        PreviewCompleteAnimation(false);
+    }
+#endif
 
     protected override void OnShown()
     {
+        ApplyContext(_context);
         PlayVictoryAudio();
         BeginObjectiveSequence();
 
         if (ResultsUIManager.Instance != null)
-            ResultsUIManager.Instance.PrepareResultsIntro();
+        {
+            if (_isPreviewAnimation)
+                ResultsUIManager.Instance.PreparePreviewResultsIntro(IsBossClear());
+            else
+                ResultsUIManager.Instance.PrepareResultsIntro();
+        }
     }
 
     protected override void OnShowAnimationCompleted()
     {
         if (ResultsUIManager.Instance != null)
         {
-            ResultsUIManager.Instance.ShowResultsPanel(HandleObjectiveSequenceCompleted);
+            if (_isPreviewAnimation)
+                ResultsUIManager.Instance.ShowPreviewResultsPanel(IsBossClear(), HandleObjectiveSequenceCompleted);
+            else
+                ResultsUIManager.Instance.ShowResultsPanel(HandleObjectiveSequenceCompleted);
+
             return;
         }
 
@@ -45,6 +118,7 @@ public class VictoryModal : UIModalBase
     protected override void OnHidden()
     {
         CancelObjectiveSequence();
+        _isPreviewAnimation = false;
     }
 
     protected override void OnDisable()
@@ -76,6 +150,42 @@ public class VictoryModal : UIModalBase
 
         _continueButton.onClick.RemoveListener(OnContinueClicked);
         _continueButton.onClick.AddListener(OnContinueClicked);
+    }
+
+    private void SetActive(GameObject target, bool active)
+    {
+        if (target != null)
+            target.SetActive(active);
+    }
+
+    private void ResolveVariantRoots()
+    {
+        if (_bossMessageRoot == null)
+            _bossMessageRoot = FindChildObject("Boss Level Message");
+
+        if (_bossMessageRoot == null)
+            _bossMessageRoot = FindChildObject("Boss Message");
+
+        if (_bossMessageLabel == null && _bossMessageRoot != null)
+            _bossMessageLabel = _bossMessageRoot.GetComponentInChildren<TMP_Text>(true);
+    }
+
+    private GameObject FindChildObject(string childName)
+    {
+        Transform[] children = GetComponentsInChildren<Transform>(true);
+        for (int i = 0; i < children.Length; i++)
+        {
+            Transform child = children[i];
+            if (child != null && child.gameObject.name == childName)
+                return child.gameObject;
+        }
+
+        return null;
+    }
+
+    private bool IsBossClear()
+    {
+        return _context != null && (_context.Variant == VictoryModalVariant.BossClear || _context.IsBossLevel);
     }
 
     private void BeginObjectiveSequence()
@@ -122,6 +232,13 @@ public class VictoryModal : UIModalBase
             return;
 
         ResultsUIManager.Instance?.CancelResultsPresentation();
+
+        if (_isPreviewAnimation)
+        {
+            Hide();
+            return;
+        }
+
         SetPanelInputEnabled(false);
         UIEvents.RaiseQuitToMenuPressed();
     }

@@ -28,6 +28,7 @@ public class PowerUpSlotUI : MonoBehaviour
     private PowerUpType _powerUpType;
     private Image _activeFrameImage;
     private bool _activeFrameOverlayWasGenerated;
+    private bool _isPregameSelected;
 
     private void Awake()
     {
@@ -68,12 +69,19 @@ public class PowerUpSlotUI : MonoBehaviour
         RefreshState();
     }
 
+    public void SetPregameSelected(bool selected)
+    {
+        _isPregameSelected = selected;
+        RefreshState();
+    }
+
     public void Clear()
     {
         _item = null;
         _onInteractCallback = null;
         _powerUpBase = null;
         _powerUpType = default;
+        _isPregameSelected = false;
 
         if (activateButton != null)
         {
@@ -117,6 +125,13 @@ public class PowerUpSlotUI : MonoBehaviour
 
     private void RefreshState()
     {
+        if (PowerUpManager.Instance == null || SaveManager.Instance == null)
+        {
+            if (activateButton != null)
+                activateButton.interactable = false;
+            return;
+        }
+
         if (_item == null || _powerUpBase == null)
         {
             Clear();
@@ -130,13 +145,26 @@ public class PowerUpSlotUI : MonoBehaviour
             _quantityContainer.SetActive(!isActive);
 
         if (_quantityText != null && !isActive)
-            _quantityText.text = $"{_item.quantity}";
+            _quantityText.text = _item.quantity > 0 ? $"{_item.quantity}" : "+";
 
         if (activeIndicator != null)
             activeIndicator.SetActive(isActive);
 
         if (_activeFrameOverlay != null)
-            _activeFrameOverlay.SetActive(isActive);
+        {
+            if (isActive)
+            {
+                _activeFrameOverlay.SetActive(true);
+            }
+            else if (_isPregameSelected)
+            {
+                _activeFrameOverlay.SetActive(true);
+            }
+            else
+            {
+                _activeFrameOverlay.SetActive(false);
+            }
+        }
 
         if (usesText != null)
         {
@@ -144,7 +172,7 @@ public class PowerUpSlotUI : MonoBehaviour
             {
                 int usesRemaining = powerUpManager != null ? powerUpManager.GetRemainingUses(_powerUpType) : 0;
                 usesText.gameObject.SetActive(true);
-                usesText.text = $"{usesRemaining} usos";
+                usesText.text = $"x{usesRemaining}";
             }
             else
             {
@@ -179,7 +207,6 @@ public class PowerUpSlotUI : MonoBehaviour
         {
             CacheActiveFrameImage();
             NormalizeActiveFrameOverlayRect();
-            _activeFrameOverlay.transform.SetAsLastSibling();
 
             if (_activeFrameImage != null)
                 _activeFrameImage.raycastTarget = false;

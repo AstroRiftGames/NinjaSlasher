@@ -55,6 +55,10 @@ public class DailyWheelUI : MonoBehaviour
     [SerializeField] private string _ballRevealState = "BallReveal";
     [SerializeField] private string _ballOpenState = "OpenBall";
 
+    [Header("Intro Hint")]
+    [SerializeField] private GameObject _dailyWheelIntroHintRoot;
+    [SerializeField] private TextMeshProUGUI _dailyWheelIntroHintText;
+
     private bool _isSpinning;
     private Coroutine _timerCoroutine;
     private Coroutine _sequenceCoroutine;
@@ -122,6 +126,7 @@ public class DailyWheelUI : MonoBehaviour
     public void HandleModalShown()
     {
         TryRefreshWheelState("HandleModalShown");
+        RefreshDailyWheelIntroHint();
 
         if (_delayedNoSpinsPopupCoroutine != null)
         {
@@ -137,6 +142,8 @@ public class DailyWheelUI : MonoBehaviour
 
     private void OnLeverPulled()
     {
+        HideDailyWheelIntroHintFromLeverInteraction();
+
         if (_isSpinning) return;
         if (!IsWheelSystemReady()) return;
 
@@ -542,6 +549,20 @@ public class DailyWheelUI : MonoBehaviour
                 : null, _lotteryCloseButton != null ? _lotteryCloseButton.gameObject : null);
         }
 
+        ResolveIntroHintReferences();
+    }
+
+    private void ResolveIntroHintReferences()
+    {
+        if (_dailyWheelIntroHintRoot == null)
+        {
+            Transform hintTransform = transform.Find("DailyWheelIntroHint");
+            if (hintTransform != null)
+                _dailyWheelIntroHintRoot = hintTransform.gameObject;
+        }
+
+        if (_dailyWheelIntroHintRoot != null && _dailyWheelIntroHintText == null)
+            _dailyWheelIntroHintText = _dailyWheelIntroHintRoot.GetComponentInChildren<TextMeshProUGUI>(true);
     }
 
     private Button ResolveLotteryCloseButton()
@@ -858,5 +879,45 @@ public class DailyWheelUI : MonoBehaviour
             && SaveManager.Instance != null
             && SaveManager.Instance.IsDataLoaded
             && DailyWheelSystem.Instance.IsBootstrapped;
+    }
+
+    private void RefreshDailyWheelIntroHint()
+    {
+        GameData data = SaveManager.Instance != null ? SaveManager.Instance.GetGameData() : null;
+        bool shouldShow = data != null && !data.hasSeenDailyWheelIntroMessage;
+
+        if (_dailyWheelIntroHintRoot != null)
+            _dailyWheelIntroHintRoot.SetActive(shouldShow);
+
+        if (shouldShow && _dailyWheelIntroHintText != null)
+            _dailyWheelIntroHintText.text = "Tirá de la palanca para reclamar tu recompensa diaria.";
+    }
+
+    private void HideDailyWheelIntroHintFromLeverInteraction()
+    {
+        GameData data = SaveManager.Instance != null ? SaveManager.Instance.GetGameData() : null;
+
+        if (data == null || data.hasSeenDailyWheelIntroMessage)
+        {
+            if (_dailyWheelIntroHintRoot != null)
+                _dailyWheelIntroHintRoot.SetActive(false);
+
+            return;
+        }
+
+        if (_dailyWheelIntroHintRoot != null)
+            _dailyWheelIntroHintRoot.SetActive(false);
+
+        MarkDailyWheelIntroHintAsSeen();
+    }
+
+    private void MarkDailyWheelIntroHintAsSeen()
+    {
+        if (SaveManager.Instance == null) return;
+
+        SaveManager.Instance.Modify(saveData =>
+        {
+            saveData.hasSeenDailyWheelIntroMessage = true;
+        });
     }
 }

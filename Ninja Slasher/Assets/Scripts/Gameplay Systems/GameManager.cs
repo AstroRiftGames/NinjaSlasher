@@ -56,6 +56,7 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
         {
             ResetLevelState();
         }
+
     }
 
     private void OnLevelStarted()
@@ -256,6 +257,7 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
             PauseController.Instance?.RequestPause(PauseSource.ApplicationBackground);
             _pausedByFocusLoss = true;
         }
+
     }
 
     private void HandleFocusRegained()

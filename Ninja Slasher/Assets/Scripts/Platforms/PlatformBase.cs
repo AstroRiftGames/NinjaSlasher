@@ -24,11 +24,11 @@ public abstract class PlatformBase : MonoBehaviour, IPlatform
 
     private void OnEnable()
     {
-        CustomUpdateManager.Instance.SubscribeToUpdate(CustomUpdate);
+        CustomUpdateManager.Instance.SubscribeToFixedUpdate(CustomUpdate);
     }
     private void OnDisable()
     {
-        CustomUpdateManager.Instance.UnsubscribeFromUpdate(CustomUpdate);
+        CustomUpdateManager.Instance.UnsubscribeFromFixedUpdate(CustomUpdate);
 
     }
 

@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using DG.Tweening;
 using UnityEngine;
@@ -31,10 +32,24 @@ public abstract class UIModalBase : UIPanel, IPointerClickHandler
 
     protected override bool BlocksUnderlyingUI => true;
 
-private Sequence _contentAnimationSequence;
+    public event Action<UIModalBase> HiddenCompleted;
+
+    protected bool _isOpening;
+    protected bool _isClosing;
+
+    public bool IsOpening => _isOpening;
+    public bool IsClosing => _isClosing;
+    public bool IsTransitioning => _isOpening || _isClosing;
+    public bool IsActiveOrTransitioning => _isVisible || _isOpening || _isClosing || gameObject.activeInHierarchy;
+
+    private Sequence _contentAnimationSequence;
     private Tween _overlayFadeTween;
     private Coroutine _delayedDeactivateCoroutine;
     private Coroutine _showCompletionCoroutine;
+    private bool _isWaitingForHideAnimationEvent;
+    private float _overlayTargetGroupAlpha = 1f;
+    private float _overlayTargetImageAlpha = 1f;
+    private string _overlayTargetAlphaSource = "Fallback";
     protected virtual float ShowAnimationDuration => Mathf.Max(_fadeAnimationDuration, _showScaleDuration);
     protected virtual float HideAnimationDuration => 0.4f;
 
@@ -45,19 +60,23 @@ private Sequence _contentAnimationSequence;
         if (_panelTransform == null)
             _panelTransform = GetComponent<RectTransform>();
 
+        _panelTransform = ResolvePreferredPanelTransform(_backgroundImage != null ? _backgroundImage.transform : null);
+
         if (_canvasGroup == null)
             _canvasGroup = GetComponent<CanvasGroup>();
 
         if (_modalAnimator == null)
             _modalAnimator = GetComponent<Animator>();
 
-        if (_animatedContentTransform == null)
-            _animatedContentTransform = _panelTransform;
+        if (_animatedContentTransform == null || _animatedContentTransform == GetComponent<RectTransform>())
+            _animatedContentTransform = ResolvePreferredPanelTransform(_backgroundImage != null ? _backgroundImage.transform : null);
 
         if (_animatedContentCanvasGroup == null)
             _animatedContentCanvasGroup = ResolveAnimatedContentCanvasGroup();
 
         ResolveOverlayCanvasGroup();
+        NormalizeOverlayRectTransform();
+        CacheOverlayTargetAlpha();
         EnsureBackgroundClickable();
         _isVisible = gameObject.activeSelf;
     }
@@ -74,7 +93,21 @@ private Sequence _contentAnimationSequence;
                 _overlayCanvasGroup = _backgroundImage.gameObject.AddComponent<CanvasGroup>();
 
             _overlayCanvasGroup.blocksRaycasts = true;
+            _overlayCanvasGroup.interactable = false;
         }
+    }
+
+    private void NormalizeOverlayRectTransform()
+    {
+        if (_backgroundImage == null)
+            return;
+
+        RectTransform overlayRect = _backgroundImage.rectTransform;
+        if (overlayRect == null)
+            return;
+
+        overlayRect.localScale = Vector3.one;
+        overlayRect.anchoredPosition = Vector2.zero;
     }
 
     protected void EnsureOverlayStartsInvisible()
@@ -83,6 +116,7 @@ private Sequence _contentAnimationSequence;
         {
             _overlayCanvasGroup.alpha = 0f;
             _overlayCanvasGroup.blocksRaycasts = false;
+            _overlayCanvasGroup.interactable = false;
         }
     }
 
@@ -94,11 +128,14 @@ private Sequence _contentAnimationSequence;
 
 public override void Show()
     {
-        if (_isVisible) return;
+        if (_isVisible || _isOpening) return;
 
         CancelPendingDeactivate();
         CancelShowCompletion();
         KillActiveAnimation();
+
+        _isOpening = true;
+        _isClosing = false;
 
         gameObject.SetActive(true);
         _isVisible = true;
@@ -113,9 +150,12 @@ public override void Show()
 
     public override void Hide()
     {
-        if (!_isVisible) return;
+        if (!_isVisible || _isClosing) return;
 
         CancelShowCompletion();
+
+        _isClosing = true;
+        _isOpening = false;
         _isVisible = false;
         SetPanelInputEnabled(false);
 
@@ -130,10 +170,15 @@ public override void HideImmediate()
         CancelPendingDeactivate();
         CancelShowCompletion();
         KillActiveAnimation();
+        _isWaitingForHideAnimationEvent = false;
 
-        if (!_isVisible && !gameObject.activeSelf)
+        if (!_isVisible && !_isOpening && !_isClosing && !gameObject.activeSelf)
             return;
 
+        bool wasTransitioning = _isOpening || _isClosing || _isVisible;
+
+        _isOpening = false;
+        _isClosing = false;
         _isVisible = false;
         SetPanelInputEnabled(false);
         EnsureBackgroundClickable();
@@ -143,6 +188,9 @@ public override void HideImmediate()
         ResetOverlayState();
         gameObject.SetActive(false);
         OnHideAnimationCompleted();
+
+        if (wasTransitioning)
+            HiddenCompleted?.Invoke(this);
     }
 
     public override IEnumerator ShowRoutine()
@@ -169,7 +217,16 @@ public override void HideImmediate()
         CancelPendingDeactivate();
         CancelShowCompletion();
         KillActiveAnimation();
+        _isWaitingForHideAnimationEvent = false;
+
+        bool wasTransitioning = _isOpening || _isClosing || _isVisible;
+        _isOpening = false;
+        _isClosing = false;
+
         NotifyUIManagerModalHidden();
+
+        if (wasTransitioning)
+            HiddenCompleted?.Invoke(this);
     }
 
     protected void SetBackgroundRaycastTarget(bool enabled)
@@ -192,9 +249,10 @@ public override void HideImmediate()
             RequestCloseFromOutsideClick();
     }
 
-private void PlayShowAnimation()
+    private void PlayShowAnimation()
     {
         ResetContentVisualState();
+        PlayOverlayShowVisual();
 
         if (_modalAnimator != null)
         {
@@ -213,15 +271,6 @@ private void PlayShowAnimation()
         }
 
         KillOverlayFade();
-
-        if (_overlayCanvasGroup != null && _hasBackground)
-        {
-            _overlayCanvasGroup.alpha = 0f;
-            _overlayCanvasGroup.blocksRaycasts = true;
-            _overlayFadeTween = _overlayCanvasGroup.DOFade(1f, _fadeAnimationDuration * 0.6f)
-                .SetEase(_showFadeEase)
-                .SetUpdate(true);
-        }
 
         _contentAnimationSequence = DOTween.Sequence().SetUpdate(true);
 
@@ -244,14 +293,18 @@ private void PlayShowAnimation()
         _contentAnimationSequence.OnComplete(() =>
         {
             _contentAnimationSequence = null;
-OnShowAnimationCompleted();
+            CompleteShow();
+            OnShowAnimationCompleted();
         });
     }
 
     private void PlayHideAnimation()
     {
+        PlayOverlayHideVisual();
+
         if (_modalAnimator != null)
         {
+            _isWaitingForHideAnimationEvent = true;
             if (!string.IsNullOrEmpty(_openTrigger))
                 _modalAnimator.ResetTrigger(_openTrigger);
             if (!string.IsNullOrEmpty(_closeTrigger))
@@ -265,18 +318,12 @@ OnShowAnimationCompleted();
             ResetContentVisualState();
             ResetOverlayState();
             gameObject.SetActive(false);
+            CompleteHide();
             OnHideAnimationCompleted();
             return;
         }
 
         KillOverlayFade();
-
-        if (_overlayCanvasGroup != null && _hasBackground)
-        {
-            _overlayFadeTween = _overlayCanvasGroup.DOFade(0f, _fadeAnimationDuration * 0.5f)
-                .SetEase(_hideFadeEase)
-                .SetUpdate(true);
-        }
 
         _contentAnimationSequence = DOTween.Sequence().SetUpdate(true);
 
@@ -300,23 +347,33 @@ OnShowAnimationCompleted();
             ResetContentVisualState();
             ResetOverlayState();
             gameObject.SetActive(false);
+            CompleteHide();
             OnHideAnimationCompleted();
         });
     }
 
     private IEnumerator DeactivateAfterHideAnimation()
     {
-        yield return WaitForAnimatorPlayback(_modalAnimator, HideAnimationDuration);
+        float timeout = Mathf.Max(0.1f, HideAnimationDuration + 0.75f);
+        float elapsed = 0f;
+
+        while (_isWaitingForHideAnimationEvent && elapsed < timeout)
+        {
+            elapsed += Time.unscaledDeltaTime;
+            yield return null;
+        }
+
         _delayedDeactivateCoroutine = null;
-        ResetContentVisualState();
-        gameObject.SetActive(false);
-        OnHideAnimationCompleted();
+
+        if (_isWaitingForHideAnimationEvent)
+            CompleteHideAfterVisuals();
     }
 
     private IEnumerator CompleteShowAfterAnimator()
     {
         yield return WaitForAnimatorPlayback(_modalAnimator, ShowAnimationDuration);
         _showCompletionCoroutine = null;
+        CompleteShow();
         OnShowAnimationCompleted();
     }
 
@@ -346,8 +403,10 @@ OnShowAnimationCompleted();
         return contentCanvasGroup != null ? contentCanvasGroup : _animatedContentTransform.gameObject.AddComponent<CanvasGroup>();
     }
 
-private void ResetContentVisualState()
+    private void ResetContentVisualState()
     {
+        if (_canvasGroup != null)
+            _canvasGroup.alpha = 1f;
         if (_animatedContentCanvasGroup != null)
             _animatedContentCanvasGroup.alpha = 1f;
         if (_animatedContentTransform != null)
@@ -360,6 +419,7 @@ private void ResetContentVisualState()
         {
             _overlayCanvasGroup.alpha = 0f;
             _overlayCanvasGroup.blocksRaycasts = false;
+            _overlayCanvasGroup.interactable = false;
         }
     }
 
@@ -380,6 +440,17 @@ private void ResetContentVisualState()
             _overlayFadeTween.Kill();
             _overlayFadeTween = null;
         }
+    }
+
+    protected void CompleteShow()
+    {
+        _isOpening = false;
+    }
+
+    protected void CompleteHide()
+    {
+        _isClosing = false;
+        HiddenCompleted?.Invoke(this);
     }
 
     private IEnumerator WaitForShowAnimationToFinish()
@@ -442,5 +513,133 @@ private void ResetContentVisualState()
     {
         if (_backgroundImage == null) return;
         _backgroundImage.raycastTarget = _closeOnOutsideClick && _isVisible;
+    }
+
+    public void AnimationEvent_NotifyHideVisualCompleted()
+    {
+        if (!_isWaitingForHideAnimationEvent)
+            return;
+
+        CompleteHideAfterVisuals();
+    }
+
+    private void CompleteHideAfterVisuals()
+    {
+        if (!_isWaitingForHideAnimationEvent)
+            return;
+
+        _isWaitingForHideAnimationEvent = false;
+        _delayedDeactivateCoroutine = null;
+        ResetContentVisualState();
+        ResetOverlayState();
+        gameObject.SetActive(false);
+        CompleteHide();
+        OnHideAnimationCompleted();
+    }
+
+    private void CacheOverlayTargetAlpha()
+    {
+        if (_backgroundImage == null)
+            return;
+
+        if (_backgroundImage.color.a > 0.001f)
+        {
+            _overlayTargetImageAlpha = _backgroundImage.color.a;
+            _overlayTargetAlphaSource = "ImageColor";
+        }
+        else
+        {
+            _overlayTargetImageAlpha = 1f;
+        }
+
+        if (_overlayCanvasGroup != null && _overlayCanvasGroup.alpha > 0.001f)
+        {
+            _overlayTargetGroupAlpha = _overlayCanvasGroup.alpha;
+            if (_overlayTargetAlphaSource == "Fallback")
+                _overlayTargetAlphaSource = "CanvasGroupInitial";
+        }
+        else
+        {
+            _overlayTargetGroupAlpha = 1f;
+        }
+
+        Debug.Log($"[OverlayVisual] Initialize panel={name} overlay={_backgroundImage.name} targetImageAlpha={_overlayTargetImageAlpha:F3} targetGroupAlpha={_overlayTargetGroupAlpha:F3} source={_overlayTargetAlphaSource} root={GetComponent<RectTransform>()?.name ?? "None"} animatedTransform={_animatedContentTransform?.name ?? "None"}");
+    }
+
+    private void PlayOverlayShowVisual()
+    {
+        if (!_hasBackground || _backgroundImage == null)
+            return;
+
+        KillOverlayFade();
+        _backgroundImage.gameObject.SetActive(true);
+        NormalizeOverlayRectTransform();
+
+        bool fadeEnabled = _fadeAnimationDuration > 0f;
+        float alphaBefore = _overlayCanvasGroup != null ? _overlayCanvasGroup.alpha : _backgroundImage.color.a;
+        Color overlayColor = _backgroundImage.color;
+        overlayColor.a = _overlayTargetImageAlpha;
+        _backgroundImage.color = overlayColor;
+
+        if (_overlayCanvasGroup != null)
+        {
+            _overlayCanvasGroup.alpha = fadeEnabled ? 0f : _overlayTargetGroupAlpha;
+            _overlayCanvasGroup.blocksRaycasts = true;
+            _overlayCanvasGroup.interactable = false;
+        }
+
+        if (_animatedContentTransform != null && _backgroundImage.transform.IsChildOf(_animatedContentTransform))
+        {
+            Debug.LogWarning($"[OverlayVisual] OverlayInsideAnimatedTransform panel={name} overlay={_backgroundImage.name} animatedTransform={_animatedContentTransform.name}");
+        }
+
+        Debug.Log($"[OverlayVisual] Show panel={name} overlay={_backgroundImage.name} activeSelf={_backgroundImage.gameObject.activeSelf} alphaBefore={alphaBefore:F3} imageAlpha={_backgroundImage.color.a:F3} targetGroupAlpha={_overlayTargetGroupAlpha:F3} blocksRaycasts={_overlayCanvasGroup?.blocksRaycasts ?? false} interactable={_overlayCanvasGroup?.interactable ?? false} fadeEnabled={fadeEnabled} animatedTransform={_animatedContentTransform?.name ?? "None"} panelVisualTransform={_panelTransform?.name ?? "None"} root={GetComponent<RectTransform>()?.name ?? "None"}");
+
+        if (_overlayCanvasGroup != null && fadeEnabled)
+        {
+            _overlayFadeTween = _overlayCanvasGroup.DOFade(_overlayTargetGroupAlpha, _fadeAnimationDuration * 0.6f)
+                .SetEase(_showFadeEase)
+                .SetUpdate(true)
+                .OnKill(() => { if (_overlayCanvasGroup != null) _overlayCanvasGroup.alpha = _overlayTargetGroupAlpha; });
+        }
+        else if (_overlayCanvasGroup != null)
+        {
+            _overlayCanvasGroup.alpha = _overlayTargetGroupAlpha;
+        }
+    }
+
+    private void PlayOverlayHideVisual()
+    {
+        if (!_hasBackground || _backgroundImage == null)
+            return;
+
+        KillOverlayFade();
+
+        float alphaBefore = _overlayCanvasGroup != null ? _overlayCanvasGroup.alpha : _backgroundImage.color.a;
+        bool fadeEnabled = _fadeAnimationDuration > 0f;
+
+        if (_overlayCanvasGroup != null)
+        {
+            Debug.Log($"[OverlayVisual] Hide panel={name} overlay={_backgroundImage.name} alphaBefore={alphaBefore:F3} targetHideAlpha=0.000 blocksRaycastsBefore={_overlayCanvasGroup.blocksRaycasts} activeBefore={_backgroundImage.gameObject.activeSelf}");
+
+            _overlayCanvasGroup.blocksRaycasts = false;
+            _overlayCanvasGroup.interactable = false;
+
+            if (fadeEnabled)
+            {
+                _overlayFadeTween = _overlayCanvasGroup.DOFade(0f, _fadeAnimationDuration * 0.5f)
+                    .SetEase(_hideFadeEase)
+                    .SetUpdate(true)
+                    .OnComplete(() =>
+                    {
+                        Debug.Log($"[OverlayVisual] HideComplete panel={name} overlay={_backgroundImage.name} alphaAfter={_overlayCanvasGroup.alpha:F3} blocksRaycastsAfter={_overlayCanvasGroup.blocksRaycasts} activeAfter={_backgroundImage.gameObject.activeSelf}");
+                    });
+            }
+            else
+            {
+                _overlayCanvasGroup.alpha = 0f;
+                Debug.Log($"[OverlayVisual] HideComplete panel={name} overlay={_backgroundImage.name} alphaAfter={_overlayCanvasGroup.alpha:F3} blocksRaycastsAfter={_overlayCanvasGroup.blocksRaycasts} activeAfter={_backgroundImage.gameObject.activeSelf}");
+            }
+        }
     }
 }

@@ -11,7 +11,7 @@ public class Geyser : MonoBehaviour
     [SerializeField] private ParticleSystem _particles;
     [SerializeField] private LayerMask _playerLayer;
     private float _maxHeight;
-    
+
     private float _lastActivation;
     private bool _isActive;
     private PlayerController _player;

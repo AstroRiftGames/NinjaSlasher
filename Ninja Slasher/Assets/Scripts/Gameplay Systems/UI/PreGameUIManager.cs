@@ -53,6 +53,13 @@ public class PreGameUIManager : MonoBehaviour
     private PowerUpHorizontalScrollButtons _powerUpScrollButtons;
     private bool _isLevelSelected;
     private bool _isInPreGameSelection;
+    private bool _isPurchasing;
+    private bool _isPlaying;
+    private bool _isLifeRecoveryPending;
+    private NoLivesModal _noLivesModal;
+    private readonly PregamePowerUpSelection _pregameSelection = new PregamePowerUpSelection();
+
+    public bool ShouldPreserveSelectionOnHide => _isLifeRecoveryPending;
 
     private void Awake()
     {
@@ -79,6 +86,14 @@ public class PreGameUIManager : MonoBehaviour
         GameEvents.OnLivesChanged -= OnLivesChangedRefresh;
         StopAllAnimations();
         HidePowerUpConfirmationImmediate();
+        _isPlaying = false;
+        _isLifeRecoveryPending = false;
+
+        if (_noLivesModal != null)
+        {
+            _noLivesModal.HiddenCompleted -= OnNoLivesClosedFromPreGame;
+            _noLivesModal = null;
+        }
     }
 
     private void SetupButtonListeners()
@@ -209,6 +224,9 @@ public class PreGameUIManager : MonoBehaviour
         StopAllAnimations();
         HidePowerUpConfirmationImmediate();
 
+        _pregameSelection.Clear();
+        _isPlaying = false;
+
         ResolveGoalTextReferencesIfNeeded();
 
         _pendingSceneName = sceneName;
@@ -337,22 +355,92 @@ public class PreGameUIManager : MonoBehaviour
 
     private void OnConfirmLevelSelection()
     {
+        if (_isPlaying)
+            return;
+
         bool canStartLevel = LevelSessionManager.Instance != null
             ? LevelSessionManager.Instance.TryAuthorizeLevelAttempt()
             : LifeManager.Instance != null && LifeManager.Instance.CanPlay();
 
         if (!canStartLevel)
+        {
+            if (LifeManager.Instance != null && !LifeManager.Instance.CanPlay())
+                EnterLifeRecoveryFlow();
             return;
+        }
+
+        _isPlaying = true;
+
+        if (!TryConsumeSelectedPowerUps())
+        {
+            _isPlaying = false;
+            return;
+        }
 
         StopAllAnimations();
         _isInPreGameSelection = false;
         UIEvents.RequestSceneTransition(_pendingSceneName);
     }
 
-    private void AbortPendingLevelSelectionForLifeWall()
+    private void EnterLifeRecoveryFlow()
     {
+        if (_isLifeRecoveryPending)
+            return;
+
+        _isLifeRecoveryPending = true;
+
+        if (_noLivesModal == null)
+            _noLivesModal = FindFirstObjectByType<NoLivesModal>(FindObjectsInactive.Include);
+
+        if (_noLivesModal != null)
+        {
+            _noLivesModal.SetFlowContext(NoLivesModal.FlowContext.PreGameRecovery);
+            _noLivesModal.HiddenCompleted += OnNoLivesClosedFromPreGame;
+            _noLivesModal.PrepareForFlowTransitionClose();
+        }
+
+        if (LevelSessionManager.Instance == null)
+        {
+            if (_noLivesModal != null && UIManager.Instance != null)
+                UIManager.Instance.RequestOpenModal(_noLivesModal);
+            else
+                UIEvents.RequestShowNoLivesModal();
+        }
+
+        UIEvents.RequestHidePregameModal();
+    }
+
+    private void ExitLifeRecoveryFlow()
+    {
+        if (!_isLifeRecoveryPending)
+            return;
+
+        _isLifeRecoveryPending = false;
+
+        if (_noLivesModal != null)
+        {
+            _noLivesModal.HiddenCompleted -= OnNoLivesClosedFromPreGame;
+            _noLivesModal = null;
+        }
+
         StopAllAnimations();
-        HidePowerUpConfirmationImmediate();
+
+        if (!_isLevelSelected)
+            return;
+
+        _isInPreGameSelection = true;
+        EnsurePlayButtonBound();
+        ShowPreGamePowerUps();
+        ApplyObjectiveCompletionVisuals();
+        UIEvents.RequestShowPregameModal();
+    }
+
+    private void OnNoLivesClosedFromPreGame(UIModalBase modal)
+    {
+        if (!_isLifeRecoveryPending)
+            return;
+
+        ExitLifeRecoveryFlow();
     }
 
     private void OnDailyRewardClaimedRefresh(DailyReward _)
@@ -360,21 +448,16 @@ public class PreGameUIManager : MonoBehaviour
         ShowPreGamePowerUps();
     }
 
-    public void RefreshPreGameAfterAdClaim()
-    {
-        if (!_isLevelSelected)
-            return;
-
-        _isInPreGameSelection = true;
-        ShowPreGamePowerUps();
-        ApplyObjectiveCompletionVisuals();
-        EnsurePlayButtonBound();
-    }
-
     private void OnLivesChangedRefresh(int lives)
     {
         if (!_isLevelSelected)
             return;
+
+        if (_isLifeRecoveryPending && lives > 0)
+        {
+            ExitLifeRecoveryFlow();
+            return;
+        }
 
         ShowPreGamePowerUps();
         EnsurePlayButtonBound();
@@ -462,12 +545,25 @@ public class PreGameUIManager : MonoBehaviour
             if (slot == null)
                 break;
 
-            PowerUpInventoryItem item = inventory?.Find(i => i.type == powerUpBase.powerUpType)
-                ?? new PowerUpInventoryItem(powerUpBase.powerUpType, 0);
+            PowerUpInventoryItem item = null;
+            if (inventory != null)
+            {
+                for (int j = 0; j < inventory.Count; j++)
+                {
+                    if (inventory[j].type == powerUpBase.powerUpType)
+                    {
+                        item = inventory[j];
+                        break;
+                    }
+                }
+            }
+            if (item == null)
+                item = new PowerUpInventoryItem(powerUpBase.powerUpType, 0);
 
             slot.gameObject.SetActive(true);
             slot.transform.SetSiblingIndex(visibleSlotCount);
             slot.Setup(item, powerUpBase, OnPowerUpInteractClicked);
+            slot.SetPregameSelected(_pregameSelection.IsSelected(powerUpBase.powerUpType));
             visibleSlotCount++;
         }
 
@@ -565,6 +661,9 @@ public class PreGameUIManager : MonoBehaviour
 
     private void OnPowerUpPurchaseClicked(PowerUpInventoryItem item)
     {
+        if (_isPurchasing) return;
+        _isPurchasing = true;
+
         int cost = GetCostForType(item.type);
         PurchaseResult result = PowerUpPurchaseService.Purchase(item.type, cost);
 
@@ -573,12 +672,18 @@ public class PreGameUIManager : MonoBehaviour
             GameEvents.RaisePowerUpPurchased(item.type);
             ShowPreGamePowerUps();
         }
+
+        _isPurchasing = false;
     }
 
     private int GetCostForType(PowerUpType type)
     {
-        PowerUpBase powerUpBase = System.Array.Find(allPowerUpBases, powerUp => powerUp.powerUpType == type);
-        return powerUpBase != null ? powerUpBase.cost : 0;
+        for (int i = 0; i < allPowerUpBases.Length; i++)
+        {
+            if (allPowerUpBases[i].powerUpType == type)
+                return allPowerUpBases[i].cost;
+        }
+        return 0;
     }
 
     private void SetGoals()
@@ -685,18 +790,24 @@ public class PreGameUIManager : MonoBehaviour
         _powerUpConfirmationPopUp?.HideImmediate();
     }
 
+    public void ClearPregameSelection()
+    {
+        _pregameSelection.Clear();
+    }
+
     private PowerUpConfirmationRequest BuildPowerUpConfirmationRequest(PowerUpInventoryItem item, PowerUpBase powerUpBase)
     {
         bool hasStock = item.quantity > 0;
 
         if (hasStock)
         {
+            PowerUpType capturedType = item.type;
             return new PowerUpConfirmationRequest(
                 powerUpBase,
                 _powerUpConfirmationPopUp.GetActivateButtonLabel(),
                 true,
                 null,
-                () => ConfirmPowerUpActivation(item.type));
+                () => TogglePowerUpSelection(capturedType));
         }
 
         return new PowerUpConfirmationRequest(
@@ -710,15 +821,69 @@ public class PreGameUIManager : MonoBehaviour
     private void HandlePowerUpPrimaryAction(PowerUpInventoryItem item)
     {
         if (item.quantity > 0)
-            ConfirmPowerUpActivation(item.type);
+            TogglePowerUpSelection(item.type);
         else
             OnPowerUpPurchaseClicked(item);
     }
 
-    private void ConfirmPowerUpActivation(PowerUpType powerUpType)
+    private void TogglePowerUpSelection(PowerUpType powerUpType)
     {
-        if (PowerUpManager.Instance != null && PowerUpManager.Instance.ActivatePowerUpFromInventory(powerUpType))
+        _pregameSelection.Toggle(powerUpType);
+        ShowPreGamePowerUps();
+    }
+
+    private bool TryConsumeSelectedPowerUps()
+    {
+        if (_pregameSelection.Count == 0)
+            return true;
+
+        if (PowerUpManager.Instance == null)
+        {
+            Debug.LogError("[PreGameUIManager] PowerUpManager unavailable during consumption. Aborting.");
+            _pregameSelection.Clear();
             ShowPreGamePowerUps();
+            return false;
+        }
+
+        GameData gameData = SaveManager.Instance?.GetGameData();
+        if (gameData == null)
+            return false;
+
+        for (int i = 0; i < _pregameSelection.Count; i++)
+        {
+            PowerUpType type = _pregameSelection.GetSelection(i);
+            bool found = false;
+            for (int j = 0; j < gameData.powerUpInventory.Count; j++)
+            {
+                if (gameData.powerUpInventory[j].type == type && gameData.powerUpInventory[j].quantity > 0)
+                {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found)
+            {
+                Debug.LogWarning($"[PreGameUIManager] Cannot consume {type}: insufficient inventory.");
+                _pregameSelection.Clear();
+                ShowPreGamePowerUps();
+                return false;
+            }
+        }
+
+        PowerUpType[] selectedPowerUps = new PowerUpType[_pregameSelection.Count];
+        for (int i = 0; i < _pregameSelection.Count; i++)
+            selectedPowerUps[i] = _pregameSelection.GetSelection(i);
+
+        if (!PowerUpManager.Instance.ActivatePowerUpsFromInventory(selectedPowerUps, selectedPowerUps.Length))
+        {
+            Debug.LogWarning("[PreGameUIManager] Power-up activation failed. Level start aborted.");
+            _pregameSelection.Clear();
+            ShowPreGamePowerUps();
+            return false;
+        }
+
+        _pregameSelection.Clear();
+        return true;
     }
 
     private Image GetObjectiveSlashImage(TextMeshProUGUI objectiveText)

@@ -577,6 +577,34 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
         return _virtualLives > 0;
     }
 
+    public bool CanContinueCurrentAttempt()
+    {
+        return CanPlayAfterConfirmingPendingDeduction();
+    }
+
+    public bool RequiresLifeRecoveryForCurrentAttempt()
+    {
+        return !CanContinueCurrentAttempt();
+    }
+
+    public int GetEffectiveLivesForCurrentAttempt()
+    {
+        return Mathf.Clamp(GetDisplayLives(), 0, MaxLives);
+    }
+
+    public int GetPendingDeductionCost()
+    {
+        if (!_hasVirtualDeduction)
+            return 0;
+
+        return Mathf.Clamp(CurrentLives - _virtualLives, 0, MaxLives);
+    }
+
+    public int GetMaxLives()
+    {
+        return MaxLives;
+    }
+
     public void OnLevelStart()
     {
         _hasVirtualDeduction = false;
@@ -596,6 +624,11 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
         var context = PowerUpManager.Instance?.context;
         if (context != null && context.SecondChanceActive)
         {
+            if (_hasVirtualDeduction)
+            {
+                _hasVirtualDeduction = false;
+                _levelInProgress = false;
+            }
             EmitDisplayLivesChanged();
             return;
         }
@@ -724,6 +757,7 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
 
     public void GrantExternalLife(LifeRestoreSource source = LifeRestoreSource.Unknown)
     {
+        int livesBefore = CurrentLives;
         if (CurrentLives >= MaxLives) return;
 
         // Manual grants must not reset recharge progress. The recharge anchor only
@@ -790,6 +824,40 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
         {
             return 0f;
         }
+    }
+
+    public bool TryGetFullLivesUtc(out DateTime fullLivesUtc)
+    {
+        fullLivesUtc = DateTime.MinValue;
+
+        if (!_isInitialized)
+            return false;
+
+        if (GameConfigManager.IsReady() && GameConfigManager.Config.infiniteLives)
+            return false;
+
+        if (CurrentLives >= MaxLives)
+            return false;
+
+        if (HasTimedUnlimitedLives)
+            return false;
+
+        if (_lastLifeUsedUtc <= DateTime.MinValue || LifeRechargeSeconds <= 0)
+            return false;
+
+        if (!TryGetCurrentUtcNow(out DateTime currentUtc))
+            return false;
+
+        int missingLives = MaxLives - CurrentLives;
+        TimeSpan timeToNextLife = GetTimeToNextLife();
+
+        double totalSeconds = timeToNextLife.TotalSeconds + (missingLives - 1) * LifeRechargeSeconds;
+
+        if (totalSeconds < 0d || totalSeconds > MaxSupportedElapsedSeconds)
+            return false;
+
+        fullLivesUtc = currentUtc.AddSeconds(totalSeconds);
+        return true;
     }
 
     public TimeSpan GetTimeToNextLife()

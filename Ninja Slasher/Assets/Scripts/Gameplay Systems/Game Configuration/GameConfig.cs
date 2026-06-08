@@ -20,35 +20,15 @@ public class GameConfig : ScriptableObject
     [Tooltip("Estrellas requeridas para desbloquear cada boss (indice 0 = boss area 1)")]
     public int[] starsRequiredPerBoss = { 5, 15, 30, 50, 75 };
 
-    [Header("POWER-UPS - USOS")]
-    [Tooltip("Usos = Cantidad de niveles que dura el power-up activo")]
-
-    [Range(1, 10)]
-    public int extraTimeUses = 3;
-
-    [Range(1, 10)]
-    [Tooltip("Usos que dura Dash Turbo")]
-    public int dashTurboUses = 5;
-
-    [Range(1, 10)]
-    [Tooltip("Usos que dura Parry Perfect")]
-    public int parryPerfectUses = 3;
-
-    [Range(1, 10)]
-    [Tooltip("Usos que dura Combo Master")]
-    public int comboMasterUses = 4;
-
-    [Range(1, 5)]
-    [Tooltip("Usos que dura Second Chance (normalmente 1)")]
-    public int secondChanceUses = 1;
-
-    [Range(1, 10)]
-    [Tooltip("Usos que dura Hawk Vision")]
-    public int hawkVisionUses = 3;
-
-    [Range(1, 10)]
-    [Tooltip("Niveles que dura Enhanced Parry")]
-    public int enhancedParryUses = 3;
+    [Header("POWER-UPS - CANTIDADES OTORGADAS POR COMPRA")]
+    [Tooltip("Cuantas unidades otorga cada compra en tienda de monedas")]
+    [Range(1, 10)] public int extraTimeGrantQuantity = 3;
+    [Range(1, 10)] public int dashTurboGrantQuantity = 5;
+    [Range(1, 10)] public int parryPerfectGrantQuantity = 3;
+    [Range(1, 10)] public int comboMasterGrantQuantity = 4;
+    [Range(1, 5)]  public int secondChanceGrantQuantity = 1;
+    [Range(1, 10)] public int enhancedParryGrantQuantity = 3;
+    [Range(1, 10)] public int hawkVisionGrantQuantity = 1;
 
     [Header("POWER-UPS - COSTOS")]
     [Tooltip("Costo en monedas para comprar Extra Time")]
@@ -79,24 +59,40 @@ public class GameConfig : ScriptableObject
     public float extraTimeBonus = 0.5f;
 
     [Range(0.1f, 1f)]
-    [Tooltip("Dash Turbo: Multiplicador de cooldown (0.5 = mitad del cooldown)")]
-    public float dashTurboCooldownMultiplier = 0.5f;
+    [Tooltip("Dash Turbo: Multiplicador de cooldown (0.25 = cooldown reducido a 25%)")]
+    public float dashTurboCooldownMultiplier = 0.25f;
+
+    [Range(1f, 3f)]
+    [Tooltip("Dash Turbo: Multiplicador de velocidad de dash (1.5 = 50% mas rapido)")]
+    public float dashTurboSpeedMultiplier = 1.5f;
 
     [Range(0f, 0.5f)]
-    [Tooltip("Parry Perfect: Tiempo extra para ventana de parry (segundos)")]
-    public float parryPerfectBonusWindow = 0.2f;
+    [Tooltip("Parry Perfect: Distancia extra de parry (0.3 = 30% mas rango)")]
+    public float parryPerfectBonusWindow = 0.3f;
 
     [Range(0.1f, 2f)]
-    [Tooltip("Combo Master: Porcentaje bonus de puntos (0.5 = 50% mas puntos)")]
+    [Tooltip("Combo Master: Porcentaje de tiempo extra por nivel de combo (0.5 = 50% mas tiempo)")]
     public float comboMasterBonusPercent = 0.5f;
 
     [Range(2, 10)]
     [Tooltip("Enhanced Parry: Cantidad de rebotes")]
-    public int enhancedParryBounces = 3;
+    public int enhancedParryBounces = 2;
 
     [Range(0.5f, 1f)]
     [Tooltip("Enhanced Parry: Retencion de velocidad por rebote")]
     public float enhancedParryVelocityRetention = 0.9f;
+
+    [Range(0.1f, 1f)]
+    [Tooltip("Hawk Vision: Escala de tiempo inicial al comenzar el intento")]
+    public float hawkVisionInitialTimeScale = 0.35f;
+
+    [Range(0f, 5f)]
+    [Tooltip("Hawk Vision: Duracion en segundos reales de la camara lenta inicial")]
+    public float hawkVisionInitialSlowDuration = 2f;
+
+    [Range(1f, 500f)]
+    [Tooltip("Hawk Vision: Distancia maxima para buscar el punto de aterrizaje del dash")]
+    public float hawkVisionTrajectoryMaxDistance = 100f;
 
     [Header("MONETIZATION - ADS")]
     [Tooltip("Perdidas consecutivas necesarias para mostrar ad de vida extra")]
@@ -162,6 +158,32 @@ public class GameConfig : ScriptableObject
     [Tooltip("Tamaño inicial del pool de efectos de particulas")]
     public int vfxPoolInitialSize = 15;
 
+    [Header("NOTIFICATIONS")]
+    [Tooltip("Habilitar notificacion local de vidas completas")]
+    public bool enableLifeFullNotification = true;
+    [Tooltip("ID del canal de notificaciones Android")]
+    public string notificationAndroidChannelId = "retention_channel";
+    [Tooltip("Nombre visible del canal de notificaciones (visible en ajustes Android)")]
+    public string notificationAndroidChannelName = "Recordatorios";
+    [Tooltip("Descripcion del canal de notificaciones")]
+    public string notificationAndroidChannelDescription = "Recordatorios del juego";
+    [Tooltip("Titulo de la notificacion de vidas completas")]
+    public string lifeFullNotificationTitle = "Vidas Completas";
+    [Tooltip("Cuerpo de la notificacion de vidas completas")]
+    public string lifeFullNotificationBody = "Tus vidas estan al maximo. Vuelve a jugar!";
+    [Tooltip("Habilitar notificacion local de recompensa diaria disponible")]
+    public bool enableDailyRewardNotification = true;
+    [Tooltip("Titulo de la notificacion de recompensa diaria")]
+    public string dailyRewardNotificationTitle = "Recompensa Diaria";
+    [Tooltip("Cuerpo de la notificacion de recompensa diaria")]
+    public string dailyRewardNotificationBody = "Tu recompensa diaria esta lista. Vuelve para reclamarla!";
+    [Tooltip("Usar demora corta de QA para la notificacion diaria. Mantener apagado en produccion.")]
+    public bool useDebugDailyRewardNotificationDelay = false;
+    [Tooltip("Demora de QA en segundos para la notificacion diaria")]
+    public int debugDailyRewardNotificationDelaySeconds = 120;
+    [Tooltip("Logs de depuracion del sistema de notificaciones")]
+    public bool notificationDebugLogs = false;
+
     [Header("TUTORIAL")]
     [Tooltip("Mostrar tutorial en el primer nivel")]
     public bool enableTutorial = true;
@@ -187,18 +209,18 @@ public class GameConfig : ScriptableObject
         return 1;
     }
 
-    public int GetPowerUpUses(PowerUpType type)
+    public int GetPowerUpGrantQuantity(PowerUpType type)
     {
         switch (type)
         {
-            case PowerUpType.ExtraTime: return extraTimeUses;
-            case PowerUpType.DashTurbo: return dashTurboUses;
-            case PowerUpType.ParryPerfect: return parryPerfectUses;
-            case PowerUpType.ComboMaster: return comboMasterUses;
-            case PowerUpType.SecondChance: return secondChanceUses;
-            case PowerUpType.HawkVision: return hawkVisionUses;
-            case PowerUpType.EnhancedParry: return enhancedParryUses;
-            default: return 3;
+            case PowerUpType.ExtraTime: return extraTimeGrantQuantity;
+            case PowerUpType.DashTurbo: return dashTurboGrantQuantity;
+            case PowerUpType.ParryPerfect: return parryPerfectGrantQuantity;
+            case PowerUpType.ComboMaster: return comboMasterGrantQuantity;
+            case PowerUpType.SecondChance: return secondChanceGrantQuantity;
+            case PowerUpType.HawkVision: return hawkVisionGrantQuantity;
+            case PowerUpType.EnhancedParry: return enhancedParryGrantQuantity;
+            default: return 1;
         }
     }
 
@@ -227,6 +249,11 @@ public class GameConfig : ScriptableObject
         return dashTurboCooldownMultiplier;
     }
 
+    public float GetDashTurboSpeedMultiplier()
+    {
+        return dashTurboSpeedMultiplier;
+    }
+
     public float GetParryPerfectBonusWindow()
     {
         return parryPerfectBonusWindow;
@@ -245,6 +272,21 @@ public class GameConfig : ScriptableObject
     public float GetEnhancedParryVelocityRetention()
     {
         return enhancedParryVelocityRetention;
+    }
+
+    public float GetHawkVisionInitialTimeScale()
+    {
+        return hawkVisionInitialTimeScale;
+    }
+
+    public float GetHawkVisionInitialSlowDuration()
+    {
+        return hawkVisionInitialSlowDuration;
+    }
+
+    public float GetHawkVisionTrajectoryMaxDistance()
+    {
+        return hawkVisionTrajectoryMaxDistance;
     }
 
     public bool ValidateConfiguration()
