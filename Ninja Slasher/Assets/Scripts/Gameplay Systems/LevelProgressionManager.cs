@@ -89,6 +89,9 @@ public class LevelProgressionManager : MonoBehaviourSingleton<LevelProgressionMa
             return true;
 #endif
 
+        if (GameConfigManager.IsTrailerCaptureModeEnabled())
+            return true;
+
         if (levelId == 1) return true;
 
         var (highestLevel, _, _) = SaveManager.Instance?.GetProgressionData() ?? (1, 1, 0);

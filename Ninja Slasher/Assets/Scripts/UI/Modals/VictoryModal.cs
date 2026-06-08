@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using UnityEngine.SceneManagement;
 
 public class VictoryModal : UIModalBase
 {
@@ -185,7 +186,31 @@ public class VictoryModal : UIModalBase
 
     private bool IsBossClear()
     {
-        return _context != null && (_context.Variant == VictoryModalVariant.BossClear || _context.IsBossLevel);
+        if (_context != null && (_context.Variant == VictoryModalVariant.BossClear || _context.IsBossLevel))
+            return true;
+
+        return IsCurrentSceneBossLevel();
+    }
+
+    private bool IsCurrentSceneBossLevel()
+    {
+        if (LevelConfigurationManager.Instance == null)
+            return false;
+
+        int levelId = GetLevelIdFromSceneName(SceneManager.GetActiveScene().name);
+        LevelConfiguration config = LevelConfigurationManager.Instance.GetConfigurationForLevel(levelId);
+        return config != null &&
+               config.unlockRequirements != null &&
+               config.unlockRequirements.isBossLevel;
+    }
+
+    private int GetLevelIdFromSceneName(string sceneName)
+    {
+        if (string.IsNullOrEmpty(sceneName) || !sceneName.Contains("Level"))
+            return 1;
+
+        string numericPart = sceneName.Replace("Level_", "").Replace("Level", "");
+        return int.TryParse(numericPart, out int levelId) ? levelId : 1;
     }
 
     private void BeginObjectiveSequence()

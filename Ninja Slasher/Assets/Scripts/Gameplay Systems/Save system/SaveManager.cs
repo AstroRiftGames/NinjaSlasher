@@ -194,7 +194,10 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
     {
         if (gameData == null) return;
 
-        if (gameData.highestUnlockedLevel <= 1 && gameData.levelStars != null && gameData.levelStars.Count > 0)
+        if (!GameConfigManager.IsTrailerCaptureModeEnabled()
+            && gameData.highestUnlockedLevel <= 1
+            && gameData.levelStars != null
+            && gameData.levelStars.Count > 0)
         {
             RecalculateProgressionFromStars();
         }
@@ -332,24 +335,29 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
 
         if (stars >= 1 && previousStars == 0)
         {
-            if (level >= data.highestUnlockedLevel)
+            bool shouldUpdatePersistentUnlocks = !GameConfigManager.IsTrailerCaptureModeEnabled();
+
+            if (shouldUpdatePersistentUnlocks && level >= data.highestUnlockedLevel)
             {
                 data.highestUnlockedLevel = level + 1;
             }
 
-            int highestCompletedLevel = 0;
-            foreach (var levelStar in data.levelStars)
+            if (shouldUpdatePersistentUnlocks)
             {
-                if (levelStar.Value >= 1)
+                int highestCompletedLevel = 0;
+                foreach (var levelStar in data.levelStars)
                 {
-                    highestCompletedLevel = Mathf.Max(highestCompletedLevel, levelStar.Key);
+                    if (levelStar.Value >= 1)
+                    {
+                        highestCompletedLevel = Mathf.Max(highestCompletedLevel, levelStar.Key);
+                    }
                 }
-            }
 
-            int calculatedArea = Mathf.Min(((highestCompletedLevel - 1) / 10) + 1, 5);
-            if (calculatedArea > data.highestUnlockedArea)
-            {
-                data.highestUnlockedArea = calculatedArea;
+                int calculatedArea = Mathf.Min(((highestCompletedLevel - 1) / 10) + 1, 5);
+                if (calculatedArea > data.highestUnlockedArea)
+                {
+                    data.highestUnlockedArea = calculatedArea;
+                }
             }
         }
 
@@ -360,7 +368,7 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
     {
         var data = GetGameData();
 
-        if (newHighestLevel > data.highestUnlockedLevel)
+        if (!GameConfigManager.IsTrailerCaptureModeEnabled() && newHighestLevel > data.highestUnlockedLevel)
         {
             data.highestUnlockedLevel = newHighestLevel;
             SaveData();
@@ -431,7 +439,7 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
     public void UpdateLevelProgress(int level)
     {
         var data = GetGameData();
-        if (level > data.highestUnlockedLevel)
+        if (!GameConfigManager.IsTrailerCaptureModeEnabled() && level > data.highestUnlockedLevel)
         {
             data.highestUnlockedLevel = level;
         }
@@ -625,8 +633,10 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
     {
         var data = GetGameData();
 
+        bool shouldUpdatePersistentUnlocks = !GameConfigManager.IsTrailerCaptureModeEnabled();
+
         int nextLevel = levelId + 1;
-        if (nextLevel > data.highestUnlockedLevel)
+        if (shouldUpdatePersistentUnlocks && nextLevel > data.highestUnlockedLevel)
             data.highestUnlockedLevel = nextLevel;
 
         int previousStars = 0;
@@ -645,17 +655,20 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
 
         if (stars >= 1 && previousStars == 0)
         {
-            if (levelId >= data.highestUnlockedLevel)
+            if (shouldUpdatePersistentUnlocks && levelId >= data.highestUnlockedLevel)
                 data.highestUnlockedLevel = levelId + 1;
 
-            int highestCompletedLevel = 0;
-            foreach (var kv in data.levelStars)
-                if (kv.Value >= 1)
-                    highestCompletedLevel = Mathf.Max(highestCompletedLevel, kv.Key);
+            if (shouldUpdatePersistentUnlocks)
+            {
+                int highestCompletedLevel = 0;
+                foreach (var kv in data.levelStars)
+                    if (kv.Value >= 1)
+                        highestCompletedLevel = Mathf.Max(highestCompletedLevel, kv.Key);
 
-            int calculatedArea = Mathf.Min(((highestCompletedLevel - 1) / 10) + 1, 5);
-            if (calculatedArea > data.highestUnlockedArea)
-                data.highestUnlockedArea = calculatedArea;
+                int calculatedArea = Mathf.Min(((highestCompletedLevel - 1) / 10) + 1, 5);
+                if (calculatedArea > data.highestUnlockedArea)
+                    data.highestUnlockedArea = calculatedArea;
+            }
         }
 
         data.totalGamesPlayed++;
