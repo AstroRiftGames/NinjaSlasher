@@ -52,6 +52,7 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
 
     private UIAudioContext _audioContext;
     private Coroutine _pendingStarRevealPlaybackRoutine;
+    private bool _levelButtonInputSuppressed;
 
     private readonly struct PendingStarRevealPresentation
     {
@@ -140,7 +141,7 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
             int levelId = i + 1;
             bool isUnlocked = IsLevelUnlocked(levelId);
 
-            levelButtons[i].interactable = isUnlocked;
+            levelButtons[i].interactable = isUnlocked && !_levelButtonInputSuppressed;
 
             if (levelButtonImages != null && i < levelButtonImages.Length && levelButtonImages[i] != null)
             {
@@ -335,12 +336,6 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
 
     public void RefreshLevelProgression()
     {
-        var progressionInfo = LevelProgressionManager.Instance?.GetProgressionInfo();
-        if (progressionInfo == null)
-        {
-            return;
-        }
-
         int unlockedCount = 0;
         int lockedCount = 0;
 
@@ -349,7 +344,7 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
             int levelId = i + 1;
             bool isUnlocked = IsLevelUnlocked(levelId);
 
-            levelButtons[i].interactable = isUnlocked;
+            levelButtons[i].interactable = isUnlocked && !_levelButtonInputSuppressed;
 
             if (levelButtonImages != null && i < levelButtonImages.Length && levelButtonImages[i] != null)
             {
@@ -370,6 +365,15 @@ public class ButtonManager : MonoBehaviourSingleton<ButtonManager>
             return levelId == 1;
         }
         return LevelProgressionManager.Instance.IsLevelUnlocked(levelId);
+    }
+
+    public void SetLevelButtonInputSuppressed(bool suppressed)
+    {
+        if (_levelButtonInputSuppressed == suppressed)
+            return;
+
+        _levelButtonInputSuppressed = suppressed;
+        RefreshLevelProgression();
     }
 
     public void AnimateButtons(IEnumerable<Button> buttons)

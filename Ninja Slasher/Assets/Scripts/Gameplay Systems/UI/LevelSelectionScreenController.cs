@@ -57,6 +57,8 @@ public class LevelSelectionScreenController : MonoBehaviour
         UpdateTotalStarsDisplay();
         RefreshLivesWidget("OnEnable", force: true);
         RefreshDailyButtonVisuals("OnEnable", force: true);
+        RegisterFirstTimeWelcomeListeners();
+        ApplyFirstTimeWelcomeLevelButtonSuppression("OnEnable");
         RegisterButtonListeners();
         StartPresenterTick();
 
@@ -87,6 +89,8 @@ public class LevelSelectionScreenController : MonoBehaviour
         GameEvents.OnLivesChanged -= OnLivesChanged;
         GameEvents.OnRewardAvailabilityChanged -= OnRewardAvailabilityChanged;
         GameEvents.OnWheelAvailabilityChanged -= OnWheelAvailabilityChanged;
+        SaveManager.OnDataLoaded -= OnSaveDataLoaded;
+        UnregisterFirstTimeWelcomeListeners();
 
         if (LevelProgressionManager.Instance != null)
         {
@@ -265,6 +269,11 @@ public class LevelSelectionScreenController : MonoBehaviour
     private void OnWheelAvailabilityChanged(bool isAvailable)
     {
         ApplyDailyWheelAvailability(isAvailable, "GameEvents.OnWheelAvailabilityChanged", force: true);
+    }
+
+    private void OnSaveDataLoaded(GameData _)
+    {
+        ApplyFirstTimeWelcomeLevelButtonSuppression("SaveManager.OnDataLoaded");
     }
 
     private void OnLivesChanged(int lives)
@@ -446,6 +455,52 @@ public class LevelSelectionScreenController : MonoBehaviour
         _firstTimeWelcomeController = GetComponent<FirstTimeWelcomeController>();
         if (_firstTimeWelcomeController == null)
             Debug.LogWarning("[LevelSelectionScreenController] FirstTimeWelcomeController is not assigned.");
+    }
+
+    private void RegisterFirstTimeWelcomeListeners()
+    {
+        SaveManager.OnDataLoaded -= OnSaveDataLoaded;
+        SaveManager.OnDataLoaded += OnSaveDataLoaded;
+
+        ResolveFirstTimeWelcomeController();
+        if (_firstTimeWelcomeController == null)
+            return;
+
+        _firstTimeWelcomeController.LevelSelectionInputBlockChanged -= OnFirstTimeWelcomeInputBlockChanged;
+        _firstTimeWelcomeController.LevelSelectionInputBlockChanged += OnFirstTimeWelcomeInputBlockChanged;
+    }
+
+    private void UnregisterFirstTimeWelcomeListeners()
+    {
+        if (_firstTimeWelcomeController == null)
+            return;
+
+        _firstTimeWelcomeController.LevelSelectionInputBlockChanged -= OnFirstTimeWelcomeInputBlockChanged;
+    }
+
+    private void OnFirstTimeWelcomeInputBlockChanged(bool shouldBlock)
+    {
+        SetLevelButtonInputSuppressed(shouldBlock, "FirstTimeWelcomeController");
+    }
+
+    private void ApplyFirstTimeWelcomeLevelButtonSuppression(string reason)
+    {
+        GameData data = SaveManager.Instance != null && SaveManager.Instance.IsDataLoaded
+            ? SaveManager.Instance.GetGameData()
+            : null;
+
+        bool shouldBlock = FirstTimeWelcomeSaveState.IsWelcomePendingForCurrentEntry(data);
+        SetLevelButtonInputSuppressed(shouldBlock, reason);
+    }
+
+    private void SetLevelButtonInputSuppressed(bool suppressed, string reason)
+    {
+        ResolveButtonManager();
+        _buttonManager?.SetLevelButtonInputSuppressed(suppressed);
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        Debug.Log($"[LevelSelectionScreenController] LevelButtonsInputSuppressed -> {suppressed} | Reason={reason}");
+#endif
     }
 
     public void NotifyFirstTimeWelcomeScreenReady()

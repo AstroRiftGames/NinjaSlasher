@@ -11,6 +11,8 @@ public sealed class FirstTimeWelcomeController : MonoBehaviour
     [SerializeField] private FirstTimeWelcomeView _view;
     [SerializeField] private int _startupSettleFrames = 4;
 
+    public event Action<bool> LevelSelectionInputBlockChanged;
+
     private readonly Dictionary<string, FirstTimeWelcomeTarget> _targetsById = new Dictionary<string, FirstTimeWelcomeTarget>(16);
     private readonly HashSet<string> _missingTargetWarnings = new HashSet<string>();
     private Coroutine _startupRoutine;
@@ -64,10 +66,12 @@ public sealed class FirstTimeWelcomeController : MonoBehaviour
         GameData data = SaveManager.Instance.GetGameData();
         if (data == null || data.hasSeenFirstTimeWelcome)
         {
+            LevelSelectionInputBlockChanged?.Invoke(false);
             _startupRoutine = null;
             yield break;
         }
 
+        LevelSelectionInputBlockChanged?.Invoke(true);
         FirstTimeWelcomeSaveState.BeginWelcomeAttemptForCurrentEntry();
         ResolveConfig();
         if (_config == null || _config.StepCount == 0)
@@ -182,6 +186,7 @@ public sealed class FirstTimeWelcomeController : MonoBehaviour
             _view.Hide();
 
         bool saved = FirstTimeWelcomeSaveState.MarkWelcomeAsSeen();
+        LevelSelectionInputBlockChanged?.Invoke(false);
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         Debug.Log($"[FirstTimeWelcomeController] Flow completed. Welcome marked as seen. Saved={saved}");
 #endif
@@ -198,6 +203,7 @@ public sealed class FirstTimeWelcomeController : MonoBehaviour
             _view.Hide();
 
         FirstTimeWelcomeSaveState.MarkWelcomeAbortedForCurrentEntry();
+        LevelSelectionInputBlockChanged?.Invoke(false);
         UIEvents.RaiseLevelSelectorReady();
         Debug.LogWarning($"[FirstTimeWelcomeController] Flow aborted. Reason={reason}. Welcome was not marked as seen.");
     }
