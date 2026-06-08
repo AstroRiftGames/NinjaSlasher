@@ -177,6 +177,9 @@ public static class UIEvents
 
     public static void RequestShowNoLivesModal()
     {
+        if (GameConfigManager.IsTrailerCaptureModeEnabled())
+            return;
+
         OnShowNoLivesModalRequested?.Invoke();
     }
 
@@ -197,6 +200,9 @@ public static class UIEvents
 
     public static void RequestShowEmergencyBundleModal(EmergencyBundleOffer offer)
     {
+        if (GameConfigManager.IsTrailerCaptureModeEnabled())
+            return;
+
         OnShowEmergencyBundleModalRequested?.Invoke(offer);
     }
 

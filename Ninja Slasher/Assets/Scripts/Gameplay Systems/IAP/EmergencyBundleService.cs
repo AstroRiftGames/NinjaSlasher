@@ -49,6 +49,9 @@ public class EmergencyBundleService : MonoBehaviourSingleton<EmergencyBundleServ
         Debug.Log($"[EBS] OnLevelFailed | IsBoss={ctx.IsBossLevel} | config={(_config != null ? "OK" : "NULL")}");
 #endif
 
+        if (GameConfigManager.IsTrailerCaptureModeEnabled())
+            return;
+
         if (_config == null || SaveManager.Instance == null) return;
 
         var data = SaveManager.Instance.GetGameData();

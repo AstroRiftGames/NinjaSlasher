@@ -52,7 +52,9 @@ public class LevelProgressionManager : MonoBehaviourSingleton<LevelProgressionMa
     {
         isInitialized = true;
 
-        if (GameConfigManager.IsReady() && GameConfigManager.Config.unlockAllLevelsOnStart)
+        if (GameConfigManager.IsReady() &&
+            GameConfigManager.Config.unlockAllLevelsOnStart &&
+            !GameConfigManager.Config.trailerCaptureMode)
         {
 #if UNITY_EDITOR
             UnlockAllLevelsForDebug();

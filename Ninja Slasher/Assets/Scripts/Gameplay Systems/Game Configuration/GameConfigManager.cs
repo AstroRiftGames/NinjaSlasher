@@ -55,6 +55,11 @@ public class GameConfigManager : MonoBehaviourSingleton<GameConfigManager>
         return Instance != null && Instance._isInitialized && Instance._config != null;
     }
 
+    public static bool IsTrailerCaptureModeEnabled()
+    {
+        return IsReady() && Instance._config.trailerCaptureMode;
+    }
+
     public static GameConfig GetConfig()
     {
         if (!IsReady())

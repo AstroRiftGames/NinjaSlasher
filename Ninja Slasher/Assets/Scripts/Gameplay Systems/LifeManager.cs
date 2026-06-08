@@ -552,6 +552,8 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
 
     public bool CanPlay()
     {
+        if (GameConfigManager.IsTrailerCaptureModeEnabled()) return true;
+
         if (HasTimedUnlimitedLives) return true;
 
         if (GameConfigManager.IsReady() && GameConfigManager.Config.infiniteLives)
@@ -564,6 +566,8 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
 
     public bool CanPlayAfterConfirmingPendingDeduction()
     {
+        if (GameConfigManager.IsTrailerCaptureModeEnabled()) return true;
+
         if (HasTimedUnlimitedLives) return true;
 
         if (GameConfigManager.IsReady() && GameConfigManager.Config.infiniteLives)
@@ -589,11 +593,17 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
 
     public int GetEffectiveLivesForCurrentAttempt()
     {
+        if (GameConfigManager.IsTrailerCaptureModeEnabled())
+            return MaxLives;
+
         return Mathf.Clamp(GetDisplayLives(), 0, MaxLives);
     }
 
     public int GetPendingDeductionCost()
     {
+        if (GameConfigManager.IsTrailerCaptureModeEnabled())
+            return 0;
+
         if (!_hasVirtualDeduction)
             return 0;
 
@@ -609,6 +619,14 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
     {
         _hasVirtualDeduction = false;
 
+        if (GameConfigManager.IsTrailerCaptureModeEnabled())
+        {
+            _virtualLives = CurrentLives;
+            _levelInProgress = true;
+            EmitDisplayLivesChanged();
+            return;
+        }
+
         if (!HasTimedUnlimitedLives && CurrentLives > 0)
         {
             _virtualLives = Mathf.Max(0, CurrentLives - 1);
@@ -621,6 +639,14 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
 
     public void UseLife()
     {
+        if (GameConfigManager.IsTrailerCaptureModeEnabled())
+        {
+            _hasVirtualDeduction = false;
+            _levelInProgress = false;
+            EmitDisplayLivesChanged();
+            return;
+        }
+
         var context = PowerUpManager.Instance?.context;
         if (context != null && context.SecondChanceActive)
         {
@@ -722,6 +748,15 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
 
     public void OnLevelExit()
     {
+        if (GameConfigManager.IsTrailerCaptureModeEnabled())
+        {
+            _virtualLives = CurrentLives;
+            _hasVirtualDeduction = false;
+            _levelInProgress = false;
+            EmitDisplayLivesChanged();
+            return;
+        }
+
         if (_hasVirtualDeduction)
         {
             if (HasTimedUnlimitedLives)
@@ -747,7 +782,9 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
         }
     }
 
-    public int GetDisplayLives() => _hasVirtualDeduction ? _virtualLives : CurrentLives;
+    public int GetDisplayLives() => GameConfigManager.IsTrailerCaptureModeEnabled()
+        ? MaxLives
+        : _hasVirtualDeduction ? _virtualLives : CurrentLives;
     public int GetRealLives() => CurrentLives;
 
     public void AddLife(LifeRestoreSource source = LifeRestoreSource.Unknown)
@@ -831,6 +868,9 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
         fullLivesUtc = DateTime.MinValue;
 
         if (!_isInitialized)
+            return false;
+
+        if (GameConfigManager.IsTrailerCaptureModeEnabled())
             return false;
 
         if (GameConfigManager.IsReady() && GameConfigManager.Config.infiniteLives)

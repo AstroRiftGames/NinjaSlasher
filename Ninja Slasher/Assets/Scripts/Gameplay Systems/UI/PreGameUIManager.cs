@@ -530,6 +530,7 @@ public class PreGameUIManager : MonoBehaviour
             return;
         }
 
+        bool isTrailerCaptureMode = GameConfigManager.IsTrailerCaptureModeEnabled();
         List<PowerUpInventoryItem> inventory = SaveManager.Instance?.GetGameData()?.powerUpInventory;
         int visibleSlotCount = 0;
 
@@ -559,6 +560,9 @@ public class PreGameUIManager : MonoBehaviour
             }
             if (item == null)
                 item = new PowerUpInventoryItem(powerUpBase.powerUpType, 0);
+
+            if (isTrailerCaptureMode && item.quantity <= 0)
+                item = new PowerUpInventoryItem(powerUpBase.powerUpType, 1);
 
             slot.gameObject.SetActive(true);
             slot.transform.SetSiblingIndex(visibleSlotCount);
@@ -797,7 +801,7 @@ public class PreGameUIManager : MonoBehaviour
 
     private PowerUpConfirmationRequest BuildPowerUpConfirmationRequest(PowerUpInventoryItem item, PowerUpBase powerUpBase)
     {
-        bool hasStock = item.quantity > 0;
+        bool hasStock = item.quantity > 0 || GameConfigManager.IsTrailerCaptureModeEnabled();
 
         if (hasStock)
         {
@@ -820,7 +824,7 @@ public class PreGameUIManager : MonoBehaviour
 
     private void HandlePowerUpPrimaryAction(PowerUpInventoryItem item)
     {
-        if (item.quantity > 0)
+        if (item.quantity > 0 || GameConfigManager.IsTrailerCaptureModeEnabled())
             TogglePowerUpSelection(item.type);
         else
             OnPowerUpPurchaseClicked(item);
@@ -845,28 +849,31 @@ public class PreGameUIManager : MonoBehaviour
             return false;
         }
 
-        GameData gameData = SaveManager.Instance?.GetGameData();
-        if (gameData == null)
-            return false;
-
-        for (int i = 0; i < _pregameSelection.Count; i++)
+        if (!GameConfigManager.IsTrailerCaptureModeEnabled())
         {
-            PowerUpType type = _pregameSelection.GetSelection(i);
-            bool found = false;
-            for (int j = 0; j < gameData.powerUpInventory.Count; j++)
-            {
-                if (gameData.powerUpInventory[j].type == type && gameData.powerUpInventory[j].quantity > 0)
-                {
-                    found = true;
-                    break;
-                }
-            }
-            if (!found)
-            {
-                Debug.LogWarning($"[PreGameUIManager] Cannot consume {type}: insufficient inventory.");
-                _pregameSelection.Clear();
-                ShowPreGamePowerUps();
+            GameData gameData = SaveManager.Instance?.GetGameData();
+            if (gameData == null)
                 return false;
+
+            for (int i = 0; i < _pregameSelection.Count; i++)
+            {
+                PowerUpType type = _pregameSelection.GetSelection(i);
+                bool found = false;
+                for (int j = 0; j < gameData.powerUpInventory.Count; j++)
+                {
+                    if (gameData.powerUpInventory[j].type == type && gameData.powerUpInventory[j].quantity > 0)
+                    {
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found)
+                {
+                    Debug.LogWarning($"[PreGameUIManager] Cannot consume {type}: insufficient inventory.");
+                    _pregameSelection.Clear();
+                    ShowPreGamePowerUps();
+                    return false;
+                }
             }
         }
 

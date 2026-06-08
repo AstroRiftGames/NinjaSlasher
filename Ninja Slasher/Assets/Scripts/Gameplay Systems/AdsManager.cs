@@ -34,6 +34,8 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
     public event Action OnRewardedAdReadinessChanged;
     public event Action<string, bool> OnRewardedAdFlowCompleted;
 
+    private bool IsTrailerCaptureMode => GameConfigManager.IsTrailerCaptureModeEnabled();
+
     private int GamesRequiredForInterstitialAd =>
         GameConfigManager.IsReady()
             ? Mathf.Max(1, GameConfigManager.Config.gamesRequiredForInterstitialAd)
@@ -52,7 +54,8 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
         LevelPlay.OnImpressionDataReady -= OnImpressionDataReady;
         LevelPlay.OnImpressionDataReady += OnImpressionDataReady;
 
-        InitializeLevelPlay();
+        if (!IsTrailerCaptureMode)
+            InitializeLevelPlay();
     }
 
     private void Update()
@@ -62,11 +65,14 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
 
     private bool AreAdsRemoved()
     {
-        return SaveManager.Instance != null && SaveManager.Instance.GetAdsRemoved();
+        return IsTrailerCaptureMode || (SaveManager.Instance != null && SaveManager.Instance.GetAdsRemoved());
     }
 
     void InitializeLevelPlay()
     {
+        if (IsTrailerCaptureMode)
+            return;
+
         if (_isLevelPlayInitialized || _isInitializingLevelPlay)
             return;
 
@@ -139,6 +145,9 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
 
     private void LoadAds()
     {
+        if (IsTrailerCaptureMode)
+            return;
+
         _rewardedAd?.LoadAd();
 
         if (!AreAdsRemoved())
@@ -269,6 +278,9 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
 
     public bool IsRewardedAdReady()
     {
+        if (IsTrailerCaptureMode)
+            return false;
+
         return _rewardedAd != null && _rewardedAd.IsAdReady();
     }
 
@@ -279,6 +291,15 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
 
     private void ShowRewardedAd(System.Action onRewarded, string context)
     {
+        if (IsTrailerCaptureMode)
+        {
+            AnalyticsManager.Instance?.RecordRewardedAdRequested(context);
+            onRewarded?.Invoke();
+            OnRewardedAdFlowCompleted?.Invoke(context, true);
+            OnRewardedAdReadinessChanged?.Invoke();
+            return;
+        }
+
         if (IsRewardedAdFlowInProgress())
         {
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
@@ -489,11 +510,17 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
 
     private void LoadRewardedAd()
     {
+        if (IsTrailerCaptureMode)
+            return;
+
         _rewardedAd?.LoadAd();
     }
 
     private void LoadInterstitialAd()
     {
+        if (IsTrailerCaptureMode)
+            return;
+
         if (!AreAdsRemoved())
             _interstitialAd?.LoadAd();
     }
@@ -532,6 +559,9 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
 
     public bool CanRequestRewardedAd()
     {
+        if (IsTrailerCaptureMode)
+            return false;
+
         return _rewardedAd != null && _rewardedAd.IsAdReady();
     }
 
@@ -551,6 +581,9 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
 
     public string GetRewardedAvailabilityReason()
     {
+        if (IsTrailerCaptureMode)
+            return "trailer capture mode";
+
         if (_rewardedAd != null && _rewardedAd.IsAdReady())
             return "ready";
 
@@ -594,6 +627,9 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
 
     private void RetryInitializeLevelPlay()
     {
+        if (IsTrailerCaptureMode)
+            return;
+
         if (_isLevelPlayInitialized || _isInitializingLevelPlay)
             return;
 

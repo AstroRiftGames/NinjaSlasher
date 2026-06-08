@@ -72,7 +72,8 @@ public class GameplayUIManager : MonoBehaviour
         var lm = LifeManager.Instance;
         if (lm == null || !lm.IsInitialized) return;
 
-        bool hasDebugInfiniteLives = GameConfigManager.IsReady() && GameConfigManager.Config.infiniteLives;
+        bool hasDebugInfiniteLives = GameConfigManager.IsTrailerCaptureModeEnabled()
+            || (GameConfigManager.IsReady() && GameConfigManager.Config.infiniteLives);
         if (hasDebugInfiniteLives)
         {
             if (_livesTimerObj != null)
@@ -113,7 +114,9 @@ public class GameplayUIManager : MonoBehaviour
     public void UpdateLivesUI(int lives)
     {
         if (_livesAmount != null)
-            _livesAmount.text = GameConfigManager.IsReady() && GameConfigManager.Config.infiniteLives
+            _livesAmount.text = !GameConfigManager.IsTrailerCaptureModeEnabled()
+                                && GameConfigManager.IsReady()
+                                && GameConfigManager.Config.infiniteLives
                 ? InfiniteLivesText
                 : lives.ToString();
     }

@@ -112,6 +112,10 @@ public class GameConfig : ScriptableObject
     [Tooltip("Habilitar ads al desbloquear nueva area")]
     public bool enableAreaUnlockAds = true;
 
+    [Header("BUILD MODES")]
+    [Tooltip("Build limpia para captura de trailer: vidas infinitas, sin ads/IAP friction y power-ups sin consumo de inventario.")]
+    public bool trailerCaptureMode = false;
+
     [Header("DAILY SYSTEMS")]
     [Tooltip("Dias que dura la semana de recompensas diarias")]
     public int dailyRewardWeekLength = 7;

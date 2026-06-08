@@ -318,7 +318,11 @@ public class LevelSelectionScreenController : MonoBehaviour
         string newTimerValue = string.Empty;
         bool hasUnlimitedLives = lifeManager.HasTimedUnlimitedLives;
 
-        if (hasUnlimitedLives)
+        if (GameConfigManager.IsTrailerCaptureModeEnabled())
+        {
+            newTimerValue = string.Empty;
+        }
+        else if (hasUnlimitedLives)
         {
             newTimerValue = FormatUnlimitedLivesTime(lifeManager.GetUnlimitedLivesRemainingTime());
         }

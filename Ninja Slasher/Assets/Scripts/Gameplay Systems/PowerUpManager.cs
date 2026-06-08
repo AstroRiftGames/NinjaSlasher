@@ -136,7 +136,8 @@ public class PowerUpManager : MonoBehaviourSingleton<PowerUpManager>
         if (!TryActivatePowerUpInternal(powerUpToActivate))
             return false;
 
-        SaveManager.Instance.RemovePowerUpFromInventory(powerUpType, 1);
+        if (!GameConfigManager.IsTrailerCaptureModeEnabled())
+            SaveManager.Instance.RemovePowerUpFromInventory(powerUpType, 1);
 
         return true;
     }
@@ -169,34 +170,42 @@ public class PowerUpManager : MonoBehaviourSingleton<PowerUpManager>
             activatedPowerUps.Add(powerUpToActivate);
         }
 
-        for (int i = 0; i < count; i++)
-            SaveManager.Instance.RemovePowerUpFromInventory(powerUpTypes[i], 1);
+        if (!GameConfigManager.IsTrailerCaptureModeEnabled())
+        {
+            for (int i = 0; i < count; i++)
+                SaveManager.Instance.RemovePowerUpFromInventory(powerUpTypes[i], 1);
+        }
 
         return true;
     }
 
     public bool CanActivatePowerUpFromInventory(PowerUpType powerUpType)
     {
-        if (SaveManager.Instance == null)
+        bool isTrailerCaptureMode = GameConfigManager.IsTrailerCaptureModeEnabled();
+
+        if (SaveManager.Instance == null && !isTrailerCaptureMode)
             return false;
 
-        GameData gameData = SaveManager.Instance.GetGameData();
-        if (gameData == null || gameData.powerUpInventory == null)
-            return false;
-
-        bool hasStock = false;
-        for (int i = 0; i < gameData.powerUpInventory.Count; i++)
+        if (!isTrailerCaptureMode)
         {
-            PowerUpInventoryItem item = gameData.powerUpInventory[i];
-            if (item != null && item.type == powerUpType && item.quantity > 0)
-            {
-                hasStock = true;
-                break;
-            }
-        }
+            GameData gameData = SaveManager.Instance.GetGameData();
+            if (gameData == null || gameData.powerUpInventory == null)
+                return false;
 
-        if (!hasStock)
-            return false;
+            bool hasStock = false;
+            for (int i = 0; i < gameData.powerUpInventory.Count; i++)
+            {
+                PowerUpInventoryItem item = gameData.powerUpInventory[i];
+                if (item != null && item.type == powerUpType && item.quantity > 0)
+                {
+                    hasStock = true;
+                    break;
+                }
+            }
+
+            if (!hasStock)
+                return false;
+        }
 
         PowerUpBase powerUpToActivate = GetPowerUpReference(powerUpType);
         if (powerUpToActivate == null)
@@ -358,6 +367,9 @@ public class PowerUpManager : MonoBehaviourSingleton<PowerUpManager>
 
     public int GetInventoryCount(PowerUpType type)
     {
+        if (GameConfigManager.IsTrailerCaptureModeEnabled())
+            return 1;
+
         var gameData = SaveManager.Instance.GetGameData();
         var inventoryItem = gameData.powerUpInventory.Find(item => item.type == type);
         return inventoryItem?.quantity ?? 0;

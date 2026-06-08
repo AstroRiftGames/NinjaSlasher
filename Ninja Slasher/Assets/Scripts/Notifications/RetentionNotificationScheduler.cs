@@ -62,7 +62,7 @@ public class RetentionNotificationScheduler : MonoBehaviourSingleton<RetentionNo
     {
         RefreshConfig();
 
-        if (_config == null || !_config.enableLifeFullNotification || _config.infiniteLives)
+        if (_config == null || !_config.enableLifeFullNotification || _config.infiniteLives || _config.trailerCaptureMode)
         {
             LocalNotificationService.CancelLifeFullNotification();
             return;
@@ -161,7 +161,7 @@ public class RetentionNotificationScheduler : MonoBehaviourSingleton<RetentionNo
     {
         RefreshConfig();
 
-        if (_config == null || !_config.enableLifeFullNotification || _config.infiniteLives)
+        if (_config == null || !_config.enableLifeFullNotification || _config.infiniteLives || _config.trailerCaptureMode)
         {
             LocalNotificationService.CancelLifeFullNotification();
             return false;
