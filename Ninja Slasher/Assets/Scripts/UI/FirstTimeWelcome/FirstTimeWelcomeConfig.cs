@@ -21,6 +21,7 @@ public class FirstTimeWelcomeConfig : ScriptableObject
 public sealed class FirstTimeWelcomeStep
 {
     [SerializeField] private string _targetId;
+    [TextArea(2, 4)]
     [SerializeField] private string _message;
 
     public string TargetId => _targetId;

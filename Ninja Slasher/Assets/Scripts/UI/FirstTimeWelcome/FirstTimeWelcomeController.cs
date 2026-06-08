@@ -151,7 +151,11 @@ public sealed class FirstTimeWelcomeController : MonoBehaviour
             }
         }
 
-        _view.ShowStep(step.Message, targetRect);
+        bool isFirstStep = _currentStepIndex == 0;
+        bool isLastStep = _currentStepIndex == _config.StepCount - 1;
+        string nextLabel = isLastStep ? "Finalizar" : "Siguiente";
+
+        _view.ShowStep(step.Message, targetRect, isFirstStep, !isLastStep, nextLabel);
     }
 
     private void HandleNextRequested()
