@@ -288,7 +288,7 @@ public class MultiattackDrone : BossEnemy
             if (_conePool != null)
                 _conePool.Release(projectile);
         }
-        else if (projectile.name.Contains("Riccochet"))
+        else if (projectile.name.Contains("Rebound"))
         {
             if (_ricochetPool != null)
                 _ricochetPool.Release(projectile);
