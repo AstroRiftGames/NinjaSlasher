@@ -19,6 +19,7 @@ public sealed class FirstTimeWelcomeController : MonoBehaviour
     private int _currentStepIndex;
     private bool _isRunning;
     private bool _screenReady;
+    private bool _isShowingWelcomeIntro;
 
     private void Awake()
     {
@@ -119,6 +120,7 @@ public sealed class FirstTimeWelcomeController : MonoBehaviour
 
         _isRunning = true;
         _currentStepIndex = 0;
+        _isShowingWelcomeIntro = true;
         BindView();
 
         _view.Show();
@@ -151,14 +153,29 @@ public sealed class FirstTimeWelcomeController : MonoBehaviour
             }
         }
 
-        bool isFirstStep = _currentStepIndex == 0;
+        bool isFirstStep = _currentStepIndex == 0 && _isShowingWelcomeIntro;
         bool isLastStep = _currentStepIndex == _config.StepCount - 1;
         string nextLabel = isLastStep ? "Finalizar" : "Siguiente";
-        bool isLivesStep = string.Equals(step.TargetId, "Lives", StringComparison.OrdinalIgnoreCase);
-        bool forceCenteredPosition = isFirstStep && !isLivesStep;
-        bool forceBelowPosition = isLivesStep;
+        bool useWelcomePanel = isFirstStep;
 
-        _view.ShowStep(step.Message, targetRect, forceCenteredPosition, forceBelowPosition, !isLastStep, nextLabel);
+        _view.ShowStep(step.Message, targetRect, useWelcomePanel, !isLastStep, nextLabel);
+    }
+
+    private void HandleWelcomeNextRequested()
+    {
+        if (!_isRunning)
+            return;
+
+        _isShowingWelcomeIntro = false;
+        ShowCurrentStep();
+    }
+
+    private void HandleWelcomeSkipRequested()
+    {
+        if (!_isRunning)
+            return;
+
+        CompleteFlow();
     }
 
     private void HandleNextRequested()
@@ -187,6 +204,7 @@ public sealed class FirstTimeWelcomeController : MonoBehaviour
     private void CompleteFlow()
     {
         _isRunning = false;
+        _isShowingWelcomeIntro = false;
         UnbindView();
 
         if (_view != null)
@@ -204,6 +222,7 @@ public sealed class FirstTimeWelcomeController : MonoBehaviour
     private void AbortFlow(string reason)
     {
         _isRunning = false;
+        _isShowingWelcomeIntro = false;
         UnbindView();
 
         if (_view != null && _view.IsVisible)
@@ -269,8 +288,12 @@ public sealed class FirstTimeWelcomeController : MonoBehaviour
 
         _view.NextRequested -= HandleNextRequested;
         _view.SkipRequested -= HandleSkipRequested;
+        _view.WelcomeNextRequested -= HandleWelcomeNextRequested;
+        _view.WelcomeSkipRequested -= HandleWelcomeSkipRequested;
         _view.NextRequested += HandleNextRequested;
         _view.SkipRequested += HandleSkipRequested;
+        _view.WelcomeNextRequested += HandleWelcomeNextRequested;
+        _view.WelcomeSkipRequested += HandleWelcomeSkipRequested;
     }
 
     private void UnbindView()
@@ -280,6 +303,8 @@ public sealed class FirstTimeWelcomeController : MonoBehaviour
 
         _view.NextRequested -= HandleNextRequested;
         _view.SkipRequested -= HandleSkipRequested;
+        _view.WelcomeNextRequested -= HandleWelcomeNextRequested;
+        _view.WelcomeSkipRequested -= HandleWelcomeSkipRequested;
     }
 }
 
