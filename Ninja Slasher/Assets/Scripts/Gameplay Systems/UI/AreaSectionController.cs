@@ -40,6 +40,15 @@ public class AreaSectionController : MonoBehaviour
             return;
         }
 
+        if (GameConfigManager.IsTrailerCaptureModeEnabled())
+        {
+            SetLockOverlay(false);
+            SetButtonsInteractable(true);
+            _lastKnownLockState = false;
+            _lockStateInitialized = true;
+            return;
+        }
+
         bool locked = !IsAreaUnlocked();
 
         if (LevelProgressionManager.Instance != null &&
@@ -74,6 +83,9 @@ public class AreaSectionController : MonoBehaviour
     public bool TryPlayPendingUnlockFeedback()
     {
         if (_areaData == null || LevelProgressionManager.Instance == null)
+            return false;
+
+        if (GameConfigManager.IsTrailerCaptureModeEnabled())
             return false;
 
         if (!LevelProgressionManager.Instance.ConsumePendingAreaUnlock(_areaData.areaId))
@@ -159,6 +171,9 @@ public class AreaSectionController : MonoBehaviour
 
     private bool IsAreaUnlocked()
     {
+        if (GameConfigManager.IsTrailerCaptureModeEnabled())
+            return true;
+
         if (LevelProgressionManager.Instance != null)
             return LevelProgressionManager.Instance.IsAreaUnlocked(_areaData.areaId);
 

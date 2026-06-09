@@ -138,6 +138,9 @@ public class LevelProgressionManager : MonoBehaviourSingleton<LevelProgressionMa
             return true;
 #endif
 
+        if (GameConfigManager.IsTrailerCaptureModeEnabled())
+            return true;
+
         var (_, highestArea, _) = SaveManager.Instance?.GetProgressionData() ?? (1, 1, 0);
         return areaId <= highestArea;
     }
