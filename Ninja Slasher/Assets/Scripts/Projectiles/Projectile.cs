@@ -30,13 +30,13 @@ public class Projectile : MonoBehaviour, IPoolable
         isParryable = newValue;
         if (_particleSystem != null)
         {
-            _particleSystem.startColor = newValue ? new Color(1, 0, 1, 1) : _projColor;
+            _particleSystem.startColor = newValue ? Color.blue : Color.red;
         }        
         if(_renderers.Length > 0)
         {
             foreach (var renderer in _renderers)
             {
-                renderer.color = newValue ? new Color(1, 0, 1, 1) : _projColor;
+                renderer.color = newValue ? Color.blue : Color.red;
             }
         }
     }
