@@ -172,6 +172,7 @@ public class LevelSessionManager : MonoBehaviourSingleton<LevelSessionManager>
 
         currentSession.Pause();
         timerService.Pause();
+        AudioService.Instance.PauseAllSFX();
     }
 
     public void ResumeLevel()
@@ -180,6 +181,7 @@ public class LevelSessionManager : MonoBehaviourSingleton<LevelSessionManager>
 
         currentSession.Resume();
         timerService.Resume();
+        AudioService.Instance.ResumeAllSFX();
     }
 
     public void EnsureGameplayMusicStarted()

@@ -68,6 +68,48 @@ public class SFXPlayer
         }
     }
 
+    public void Pause(AudioEvent audioEvent)
+    {
+        if (audioEvent == null || audioEvent.clip == null)
+        {
+            Debug.LogWarning("SFXPlayer: AudioEvent o clip null.");
+            return;
+        }
+        if (_loopingSources.TryGetValue(audioEvent, out PooledAudioSource loopingSource))
+        {
+            loopingSource.Source.Pause();
+        }
+    }
+
+    public void PauseAll()
+    {
+        foreach (var source in _activeSources)
+        {
+            source.Source.Pause();
+        }
+    }
+
+    public void Resume(AudioEvent audioEvent)
+    {
+        if (audioEvent == null || audioEvent.clip == null)
+        {
+            Debug.LogWarning("SFXPlayer: AudioEvent o clip null.");
+            return;
+        }
+        if (_loopingSources.TryGetValue(audioEvent, out PooledAudioSource loopingSource))
+        {
+            loopingSource.Source.UnPause();
+        }
+    }
+
+    public void ResumeAll()
+    {
+        foreach (var source in _activeSources)
+        {
+            source.Source.UnPause();
+        }
+    }
+
     public void Stop(AudioEvent audioEvent)
     {
         if (audioEvent == null) return;
