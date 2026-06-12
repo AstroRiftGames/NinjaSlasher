@@ -10,6 +10,7 @@ public class ElasticPlatform : PlatformBase
     {
         if (collision.gameObject.CompareTag("Player"))
         {
+
             OnPlayerEnter(collision.gameObject, collision.GetContact(0));
         }
     }
@@ -36,8 +37,9 @@ public class ElasticPlatform : PlatformBase
         {
             _animator.SetTrigger("OnBounce");
         }
-
-        controller.ForceDash(GetReflectedDir(controller.LastMoveDirection, contactPoint));
+        
+        Vector2 newV = Vector2.Reflect(controller.LastMoveDirection.normalized, transform.up).normalized;
+        controller.ForceDash(newV);
     }
 
     private Vector2 GetReflectedDir(Vector2 originalDir, ContactPoint2D contactPoint)

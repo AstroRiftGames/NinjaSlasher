@@ -416,10 +416,42 @@ public class PlayerController : MonoBehaviour
         if (_hawkVisionIntroSlowActive)
             return;
 
-        if (!_isKO)
+        if (_isKO)
+            return;
+
+        ForceDashInternal(direction.normalized);
+    }
+
+    private void ForceDashInternal(Vector2 direction)
+    {
+        if (_currentPlatform != null)
         {
-            Dash(direction);
+            _currentPlatform.OnPlayerExit(gameObject, true);
+            _view.RB.gravityScale = 0;
+            _currentPlatform = null;
         }
+
+        _lastMoveDirection = direction;
+
+        _view.RB.linearVelocity = Vector2.zero;
+
+        float dashSpeedMultiplier = PowerUpManager.Instance?.context?.DashSpeedMultiplier ?? 1f;
+
+        _view.RB.AddForce(direction * _model.DashForce * dashSpeedMultiplier);
+
+        AudioService.Instance.PlaySFXAtPosition(_audio.movementLoop, transform.position);
+
+        _isDashing = true;
+
+        GameEvents.RaiseDashStarted();
+
+        _view.Animator.SetBool("IsGrounded", false);
+
+        _view.TrailRendererComponent.emitting = true;
+
+        RotateSprites(direction);
+
+        MoveTracker.RegisterMove();
     }
     private void TryDash(Vector2 direction)
     {
