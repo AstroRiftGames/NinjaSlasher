@@ -77,7 +77,7 @@ SpriteRenderer:
   m_SortingLayer: 3
   m_SortingOrder: 1
   m_Sprite: {fileID: 4871453742375005404, guid: 4b33f96eb6397724f9e71386502661c5, type: 3}
-  m_Color: {r: 1, g: 0.49803922, b: 0, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
@@ -310,7 +310,7 @@ ParticleSystem:
       serializedVersion: 2
       minMaxState: 0
       minColor: {r: 1, g: 1, b: 1, a: 1}
-      maxColor: {r: 1, g: 0.49803922, b: 0, a: 1}
+      maxColor: {r: 0, g: 1, b: 1, a: 1}
       maxGradient:
         serializedVersion: 2
         key0: {r: 1, g: 1, b: 1, a: 1}
@@ -4888,7 +4888,7 @@ ParticleSystemRenderer:
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: -1307963505
-  m_SortingLayer: 5
+  m_SortingLayer: 4
   m_SortingOrder: 1
   m_RenderMode: 0
   m_MeshDistribution: 0
@@ -4991,6 +4991,8 @@ MonoBehaviour:
   - {fileID: 5265773951807114269}
   _particleSystem: {fileID: 8802473980618393255}
   _projColor: {r: 1, g: 0.49803922, b: 0, a: 1}
+  _parryableColor: {r: 0, g: 1, b: 1, a: 1}
+  _nonParryableColor: {r: 1, g: 0, b: 0, a: 1}
   isParryable: 0
 --- !u!50 &5115772580015727880
 Rigidbody2D:
