@@ -275,6 +275,7 @@ public class MultiattackDrone : BossEnemy
         float parryableChance = shouldBeParryable ? _reboundParryableChance : 0;
         bool isParryable = shouldBeParryable && UnityEngine.Random.Range(0, 100) < parryableChance;
 
+        projectile.SetParryOverrideProvider(PowerUpManager.Instance);
         projectile.Initialize(direction, transform, isParryable);
     }
 

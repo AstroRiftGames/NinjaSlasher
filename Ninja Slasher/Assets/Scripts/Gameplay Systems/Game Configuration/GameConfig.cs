@@ -74,12 +74,11 @@ public class GameConfig : ScriptableObject
     [Tooltip("Combo Master: Porcentaje de tiempo extra por nivel de combo (0.5 = 50% mas tiempo)")]
     public float comboMasterBonusPercent = 0.5f;
 
-    [Range(2, 10)]
-    [Tooltip("Enhanced Parry: Cantidad de rebotes")]
+    // Retained only so existing GameConfig assets keep their serialized data.
+    [HideInInspector]
     public int enhancedParryBounces = 2;
 
-    [Range(0.5f, 1f)]
-    [Tooltip("Enhanced Parry: Retencion de velocidad por rebote")]
+    [HideInInspector]
     public float enhancedParryVelocityRetention = 0.9f;
 
     [Range(0.1f, 1f)]
@@ -266,16 +265,6 @@ public class GameConfig : ScriptableObject
     public float GetComboMasterBonusPercent()
     {
         return comboMasterBonusPercent;
-    }
-
-    public int GetEnhancedParryBounces()
-    {
-        return enhancedParryBounces;
-    }
-
-    public float GetEnhancedParryVelocityRetention()
-    {
-        return enhancedParryVelocityRetention;
     }
 
     public float GetHawkVisionInitialTimeScale()

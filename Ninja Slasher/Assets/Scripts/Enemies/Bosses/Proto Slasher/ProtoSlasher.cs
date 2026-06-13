@@ -164,6 +164,7 @@ public class ProtoSlasher : BossEnemy
     {
         Projectile newProjectile = pool.Get();
         newProjectile.transform.SetPositionAndRotation(_refPoint.position, Quaternion.identity);
+        newProjectile.SetParryOverrideProvider(PowerUpManager.Instance);
         newProjectile.Initialize(_dirToPlayer, transform);
     }
     #endregion

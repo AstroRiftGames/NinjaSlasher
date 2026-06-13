@@ -99,6 +99,7 @@ public class PracticeMachine : MonoBehaviour
     private void Shoot()
     {
         Projectile newProjectile = Instantiate(_currentAmmoType, _shootingPoint.position, Quaternion.identity).GetComponent<Projectile>();
+        newProjectile.SetParryOverrideProvider(PowerUpManager.Instance);
         newProjectile.Initialize(_dirToTarget.normalized, transform);
     }
 

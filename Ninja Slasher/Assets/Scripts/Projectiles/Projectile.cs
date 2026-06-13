@@ -1,6 +1,11 @@
 using System;
-using System.Collections.Generic;
 using UnityEngine;
+
+public interface IParryOverrideProvider
+{
+    bool ForcesAllProjectilesParryable { get; }
+    event Action<bool> ParryOverrideChanged;
+}
 
 public class Projectile : MonoBehaviour, IPoolable
 {
@@ -20,31 +25,78 @@ public class Projectile : MonoBehaviour, IPoolable
     [SerializeField] protected SpriteRenderer[] _renderers;
     [SerializeField] protected ParticleSystem _particleSystem;
     [SerializeField] protected Color _projColor;
+    [SerializeField] private Color _parryableColor = Color.blue;
+    [SerializeField] private Color _nonParryableColor = Color.red;
 
     protected Rigidbody2D _rb;
 
-    public bool IsParryable => isParryable;
+    public bool BaseParryable => isParryable;
+    public bool EffectiveParryable =>
+        isParryable || (_parryOverrideProvider?.ForcesAllProjectilesParryable ?? false);
+    public bool IsParryable => EffectiveParryable;
     [SerializeField] protected bool isParryable = true;
-    public void SetIsParryable(bool newValue)
+    public void SetBaseParryable(bool newValue)
     {
         isParryable = newValue;
+        RefreshParryableVisuals();
+    }
+
+    public void SetIsParryable(bool newValue)
+    {
+        SetBaseParryable(newValue);
+    }
+
+    private IParryOverrideProvider _parryOverrideProvider;
+    protected IParryOverrideProvider ParryOverrideProvider => _parryOverrideProvider;
+
+    public void SetParryOverrideProvider(IParryOverrideProvider provider)
+    {
+        UnsubscribeFromParryOverride();
+        _parryOverrideProvider = provider;
+        SubscribeToParryOverride();
+        RefreshParryableVisuals();
+    }
+
+    private void RefreshParryableVisuals()
+    {
+        bool isEffectivelyParryable = EffectiveParryable;
+
         if (_particleSystem != null)
         {
-            _particleSystem.startColor = newValue ? Color.blue : Color.red;
-        }        
-        if(_renderers.Length > 0)
+            var main = _particleSystem.main;
+            main.startColor = isEffectivelyParryable ? _parryableColor : _nonParryableColor;
+        }
+
+        if (_renderers == null)
+            return;
+
+        foreach (var renderer in _renderers)
         {
-            foreach (var renderer in _renderers)
-            {
-                renderer.color = newValue ? Color.blue : Color.red;
-            }
+            if (renderer != null)
+                renderer.color = isEffectivelyParryable ? _parryableColor : _nonParryableColor;
         }
     }
 
-    protected bool _isEnhancedParry = false;
-    protected int _bouncesRemaining = 0;
-    private float _velocityRetention = 1f;
-    private HashSet<Enemy> _hitEnemies = new HashSet<Enemy>();
+    private void SubscribeToParryOverride()
+    {
+        if (_parryOverrideProvider == null || !isActiveAndEnabled)
+            return;
+
+        _parryOverrideProvider.ParryOverrideChanged -= HandleParryOverrideChanged;
+        _parryOverrideProvider.ParryOverrideChanged += HandleParryOverrideChanged;
+    }
+
+    private void UnsubscribeFromParryOverride()
+    {
+        if (_parryOverrideProvider != null)
+            _parryOverrideProvider.ParryOverrideChanged -= HandleParryOverrideChanged;
+    }
+
+    private void HandleParryOverrideChanged(bool _)
+    {
+        RefreshParryableVisuals();
+    }
+
     private Vector2 _currentDir;
     public Vector2 CurrentDir => _currentDir;
 
@@ -54,7 +106,7 @@ public class Projectile : MonoBehaviour, IPoolable
 
     public virtual void Initialize(Vector2 direction, Transform owner, bool isParryable = false)
     {
-        SetIsParryable(isParryable);
+        SetBaseParryable(isParryable);
         InitializeAudioContext();
         SetOwner(owner);
         SetDirection(direction);
@@ -77,6 +129,12 @@ public class Projectile : MonoBehaviour, IPoolable
             return;
     }
 
+    protected virtual void OnEnable()
+    {
+        SubscribeToParryOverride();
+        RefreshParryableVisuals();
+    }
+
     public void OnSpawn()
     {
         if (_rb == null) TryGetComponent(out _rb);
@@ -87,19 +145,23 @@ public class Projectile : MonoBehaviour, IPoolable
             _renderers = GetComponentsInChildren<SpriteRenderer>();
         }
 
-        _hitEnemies.Clear();
-        _isEnhancedParry = false;
-        _bouncesRemaining = 0;
-        _velocityRetention = 1f;
         WasReflected = false;
 
         _rb.linearVelocity = Vector2.zero;
+        SubscribeToParryOverride();
+        RefreshParryableVisuals();
     }
 
     public void OnDespawn()
     {
+        UnsubscribeFromParryOverride();
         StopAllCoroutines();
         _rb.linearVelocity = Vector2.zero;
+    }
+
+    protected virtual void OnDisable()
+    {
+        UnsubscribeFromParryOverride();
     }
 
     public void RequestDespawn()
@@ -135,25 +197,6 @@ public class Projectile : MonoBehaviour, IPoolable
         if (IsShooter(collision.transform))
             return;
 
-        if (_isEnhancedParry)
-        {
-            if (colTag == "Enemy")
-            {
-                TryDamageEnemy(collision.collider);
-                return;
-            }
-
-            if (colTag is "Scenario" or "Ceiling" or "Floor" or "Obstacle")
-            {
-                if (_bouncesRemaining > 0)
-                    HandleEnhancedParryBounce(collision);
-                else
-                    Collide(collision.collider);
-
-                return;
-            }
-        }
-
         if (Shooter != null && Shooter.tag != colTag)
         {
             Collide(collision.collider);
@@ -165,9 +208,6 @@ public class Projectile : MonoBehaviour, IPoolable
         if (TryHandleGameplayClosed())
             return;
 
-        //if (!_isEnhancedParry)
-        //    return;
-
         if (IsShooter(collision.transform))
             return;
 
@@ -175,27 +215,6 @@ public class Projectile : MonoBehaviour, IPoolable
             return;
 
         Collide(collision);
-    }
-
-    protected void HandleEnhancedParryBounce(Collision2D collision)
-    {
-        _bouncesRemaining--;
-
-        Vector2 incomingVelocity = _rb.linearVelocity;
-        Vector2 normal = collision.contacts[0].normal;
-        Vector2 reflectedDirection = Vector2.Reflect(incomingVelocity.normalized, normal);
-
-        _speed *= _velocityRetention;
-
-        _rb.linearVelocity = Vector2.zero;
-        SetDirection(reflectedDirection);
-
-        CameraShake.Instance?.TriggerShake(0.1f, 0.15f);
-
-        if (_bouncesRemaining <= 0)
-        {
-            EndEnhancedParry();
-        }
     }
 
     public virtual void Collide(Collider2D collision)
@@ -219,26 +238,6 @@ public class Projectile : MonoBehaviour, IPoolable
         AudioService.Instance.PlaySFXAtPosition(_audioContext.Audio.impact, transform.position);
         _rb.linearVelocity = Vector2.zero;
     }
-
-    protected bool TryDamageEnemy(Collider2D collider)
-    {   
-        Enemy enemy = collider.GetComponentInParent<Enemy>()
-                      ?? collider.GetComponent<Enemy>();
-
-        if (enemy == null)
-            return false;
-
-        if (_hitEnemies.Contains(enemy))
-            return false;
-
-        _hitEnemies.Add(enemy);
-
-        Physics2D.IgnoreCollision(_col, collider, true);
-
-        DamageEnemy(enemy.gameObject);
-        return true;
-    }
-
 
     protected void DamagePlayer(GameObject player)
     {
@@ -281,44 +280,11 @@ public class Projectile : MonoBehaviour, IPoolable
         if (TryHandleGameplayClosed())
             return;
 
-        PowerUpManager powerUpManager = PowerUpManager.Instance;
-        if (powerUpManager != null && powerUpManager.IsEnhancedParryActive)
-        {
-            EnableEnhancedParry(
-                powerUpManager.context.EnhancedParryBounces,
-                powerUpManager.context.EnhancedParryVelocityRetention
-            );
-        }
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-        else if (powerUpManager == null)
-        {
-            Debug.LogWarning("[Projectile] PowerUpManager.Instance es null en ReflectBackwards. EnhancedParry no se aplicará.");
-        }
-#endif
-
         WasReflected = true;
         _animator.SetTrigger("OnParried");
         SetOwner(newShooter);
         _rb.linearVelocity = Vector2.zero;
         SetDirection(newDir);
-    }
-
-    public void EnableEnhancedParry(int bounces, float velocityRetention)
-    {
-        _isEnhancedParry = true;
-        _bouncesRemaining = bounces;
-        _velocityRetention = velocityRetention;
-        _hitEnemies.Clear();
-
-        transform.SetParent(null);
-    }
-
-    private void EndEnhancedParry()
-    {
-        _isEnhancedParry = false;
-
-        _animator.SetTrigger("OnImpact");
-        AudioService.Instance.PlaySFXAtPosition(_audioContext.Audio.impact, transform.position);
     }
 
     protected virtual void InitializeAudioContext()

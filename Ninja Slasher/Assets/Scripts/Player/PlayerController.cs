@@ -650,13 +650,7 @@ public class PlayerController : MonoBehaviour
 
     private bool CanParryProjectile(Projectile projectile)
     {
-        if (projectile == null)
-            return false;
-
-        if (projectile.IsParryable)
-            return true;
-
-        return PowerUpManager.Instance != null && PowerUpManager.Instance.IsEnhancedParryActive;
+        return projectile != null && projectile.EffectiveParryable;
     }
 
     private float SetParryRange()

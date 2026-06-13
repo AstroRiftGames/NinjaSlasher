@@ -33,6 +33,7 @@ public class BurstCoreProjectile : Projectile
         for (int n = 1; n <= _miniProjectilesAmount; n++)
         {
             Projectile newProjectile = Instantiate(_miniProjectilePrefab, transform.position, Quaternion.identity).GetComponent<Projectile>();
+            newProjectile.SetParryOverrideProvider(ParryOverrideProvider);
             newProjectile.Initialize(GetRandomDir(), _shooter);
         }
         Destroy(gameObject);

@@ -96,7 +96,7 @@ public class RangeEnemy : Enemy
         projectile.OnRequestDespawn -= HandleProjectileDespawn;
         projectile.OnRequestDespawn += HandleProjectileDespawn;
 
-
+        projectile.SetParryOverrideProvider(PowerUpManager.Instance);
         projectile.Initialize(_dirToTarget.normalized, transform, DecideParryable());
     }
     protected virtual bool DecideParryable() => Random.Range(0, 100) < _parryableChance;

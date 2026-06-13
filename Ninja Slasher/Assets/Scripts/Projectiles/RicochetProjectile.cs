@@ -19,31 +19,6 @@ public class RicochetProjectile : Projectile
 
         string colTag = collision.gameObject.tag;
 
-        if (_isEnhancedParry)
-        {
-            if (colTag == "Enemy")
-            {
-                TryDamageEnemy(collision.collider);
-                return;
-            }
-
-            if (colTag is "Scenario" or "Ceiling" or "Floor" or "Obstacle")
-            {
-                if (_bouncesRemaining > 0)
-                    HandleEnhancedParryBounce(collision);
-                else
-                    Collide(collision.collider);
-
-                return;
-            }
-
-            if (Shooter != null && Shooter.tag != colTag)
-            {
-                Collide(collision.collider);
-            }
-            return;
-        }
-
         if (colTag is "Scenario" or "Ceiling" or "Floor" or "Obstacle")
         {
             TryRicochet(collision);

@@ -368,6 +368,8 @@ GameObject:
   - component: {fileID: 7106121631320768795}
   - component: {fileID: 2391187611072255366}
   - component: {fileID: 8601733204822428768}
+  - component: {fileID: 131024255436532962}
+  - component: {fileID: 9008512233359853190}
   m_Layer: 5
   m_Name: TimerIcon
   m_TagString: Untagged
@@ -455,6 +457,39 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!225 &131024255436532962
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3278126518014575509}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
+--- !u!114 &9008512233359853190
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3278126518014575509}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9b6f031e87244d4bbf2f4f8c0d1a7219, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _playerTransform: {fileID: 0}
+  _gameplayCamera: {fileID: 0}
+  _rootCanvas: {fileID: 0}
+  _normalOpacity: 1
+  _occludedOpacity: 0.35
+  _fadeDuration: 0.15
+  _padding: {x: 24, y: 24}
+  _autoResolveReferences: 1
+  _resolveRetryInterval: 0.25
 --- !u!1 &3920073105124168743
 GameObject:
   m_ObjectHideFlags: 0
@@ -596,7 +631,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 00.00
+  m_text: +10S
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: c3b8f0405a2e4164c92fcc0d49c181cd, type: 2}
   m_sharedMaterial: {fileID: -5187014542769086397, guid: c3b8f0405a2e4164c92fcc0d49c181cd, type: 2}
@@ -623,7 +658,7 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 131.6
+  m_fontSize: 150
   m_fontSizeBase: 64
   m_fontWeight: 400
   m_enableAutoSizing: 1
@@ -742,7 +777,6 @@ GameObject:
   - component: {fileID: 6310716884840322435}
   - component: {fileID: 2770069047949234441}
   - component: {fileID: 6806986208705369343}
-  - component: {fileID: 6806986208705369344}
   m_Layer: 5
   m_Name: Timer
   m_TagString: Untagged
@@ -770,7 +804,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
   m_AnchoredPosition: {x: 50, y: -50}
-  m_SizeDelta: {x: 800, y: 150}
+  m_SizeDelta: {x: 750, y: 150}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &2770069047949234441
 MonoBehaviour:
@@ -810,27 +844,6 @@ CanvasGroup:
   m_Interactable: 1
   m_BlocksRaycasts: 1
   m_IgnoreParentGroups: 0
---- !u!114 &6806986208705369344
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4507604046507894041}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9b6f031e87244d4bbf2f4f8c0d1a7219, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _playerTransform: {fileID: 0}
-  _gameplayCamera: {fileID: 0}
-  _rootCanvas: {fileID: 0}
-  _normalOpacity: 1
-  _occludedOpacity: 0.35
-  _fadeDuration: 0.15
-  _padding: {x: 24, y: 24}
-  _autoResolveReferences: 1
-  _resolveRetryInterval: 0.25
 --- !u!1 &6205504152957573100
 GameObject:
   m_ObjectHideFlags: 0

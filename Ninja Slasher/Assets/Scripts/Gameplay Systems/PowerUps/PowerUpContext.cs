@@ -22,8 +22,6 @@ public class PowerUpContext
     public float HawkVisionTrajectoryMaxDistance = 100f;
 
     public bool EnhancedParryActive;
-    public int EnhancedParryBounces = 0;
-    public float EnhancedParryVelocityRetention = 1f;
 
     public int GetActivePowerUpsCount()
     {

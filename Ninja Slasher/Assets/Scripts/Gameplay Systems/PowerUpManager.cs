@@ -22,7 +22,7 @@ public class PowerUpInfo
 }
 
 [DefaultExecutionOrder(-100)]
-public class PowerUpManager : MonoBehaviourSingleton<PowerUpManager>
+public class PowerUpManager : MonoBehaviourSingleton<PowerUpManager>, IParryOverrideProvider
 {
     public List<PowerUpBase> activePowerUps = new List<PowerUpBase>();
     public PowerUpContext context = new PowerUpContext();
@@ -38,6 +38,9 @@ public class PowerUpManager : MonoBehaviourSingleton<PowerUpManager>
             return context.EnhancedParryActive;
         }
     }
+
+    public bool ForcesAllProjectilesParryable => IsEnhancedParryActive;
+    public event Action<bool> ParryOverrideChanged;
 
     [Header("REFERENCES")]
     public PowerUpExtraTime powerUpExtraTime;
@@ -274,11 +277,13 @@ public class PowerUpManager : MonoBehaviourSingleton<PowerUpManager>
 
     void DeactivatePowerUpInternal(PowerUpBase powerUp)
     {
+        bool wasForcingProjectilesParryable = ForcesAllProjectilesParryable;
         powerUp.Deactivate(context);
         activePowerUps.Remove(powerUp);
 
         PowerUpType type = GetPowerUpType(powerUp);
         UpdateContextActiveState(type, false);
+        NotifyParryOverrideChanged(wasForcingProjectilesParryable);
 
         GameEvents.RaisePowerUpExpired(type);
     }
@@ -303,6 +308,8 @@ public class PowerUpManager : MonoBehaviourSingleton<PowerUpManager>
 
         PowerUpType type = GetPowerUpType(powerUp);
 
+        bool wasForcingProjectilesParryable = ForcesAllProjectilesParryable;
+
         try
         {
             powerUp.Activate(context);
@@ -316,6 +323,7 @@ public class PowerUpManager : MonoBehaviourSingleton<PowerUpManager>
 
         activePowerUps.Add(powerUp);
         UpdateContextActiveState(type, true);
+        NotifyParryOverrideChanged(wasForcingProjectilesParryable);
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         Debug.Log($"[PowerUpManager] Power-up {type} activado");
@@ -401,8 +409,10 @@ public class PowerUpManager : MonoBehaviourSingleton<PowerUpManager>
 
     public void ReloadFromSave()
     {
+        bool wasForcingProjectilesParryable = ForcesAllProjectilesParryable;
         activePowerUps.Clear();
         context = new PowerUpContext();
+        NotifyParryOverrideChanged(wasForcingProjectilesParryable);
         RefreshActivePowerUpState();
     }
 
@@ -420,13 +430,22 @@ public class PowerUpManager : MonoBehaviourSingleton<PowerUpManager>
         for (int i = activePowerUps.Count - 1; i >= 0; i--)
         {
             PowerUpBase powerUp = activePowerUps[i];
+            bool wasForcingProjectilesParryable = ForcesAllProjectilesParryable;
             powerUp.Deactivate(context);
             activePowerUps.RemoveAt(i);
 
             PowerUpType type = GetPowerUpType(powerUp);
             UpdateContextActiveState(type, false);
+            NotifyParryOverrideChanged(wasForcingProjectilesParryable);
             GameEvents.RaisePowerUpExpired(type);
         }
+    }
+
+    private void NotifyParryOverrideChanged(bool previousValue)
+    {
+        bool currentValue = ForcesAllProjectilesParryable;
+        if (previousValue != currentValue)
+            ParryOverrideChanged?.Invoke(currentValue);
     }
 
     private void OnLevelEndedConsumePowerUps()
