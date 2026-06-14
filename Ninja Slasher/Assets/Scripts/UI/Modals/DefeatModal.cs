@@ -58,7 +58,7 @@ public class DefeatModal : UIModalBase
         int maxLives = LifeManager.Instance != null ? LifeManager.Instance.GetMaxLives() : GameConfigManager.Config?.maxLives ?? 5;
 
         if (_titleText != null)
-            _titleText.text = effectiveLives > 0 ? "Vida Perdida!" : "Sin Vidas";
+            _titleText.text = effectiveLives > 0 ? "Has fallado" : "Sin Vidas";
 
         if (_livesRemainingText != null)
             _livesRemainingText.text = $"Vidas: {effectiveLives}/{maxLives}";

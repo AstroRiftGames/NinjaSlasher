@@ -235,7 +235,6 @@ public static class GameEvents
     public static event Action<DailyReward> OnRewardClaimed;
     public static event Action<bool> OnRewardAvailabilityChanged;
     public static event Action<int> OnConsecutiveDaysUpdated;
-    public static event Action OnRewardDoubled;
     public static event Action OnAdsRemoved;
 
     public static void RaiseRewardClaimed(DailyReward reward)
@@ -251,11 +250,6 @@ public static class GameEvents
     public static void RaiseConsecutiveDaysUpdated(int days)
     {
         OnConsecutiveDaysUpdated?.Invoke(days);
-    }
-
-    public static void RaiseRewardDoubled()
-    {
-        OnRewardDoubled?.Invoke();
     }
 
     public static void RaiseAdsRemoved()
@@ -376,7 +370,6 @@ public static class GameEvents
         OnRewardClaimed = null;
         OnRewardAvailabilityChanged = null;
         OnConsecutiveDaysUpdated = null;
-        OnRewardDoubled = null;
         OnAdsRemoved = null;
         OnRewardGranted = null;
     }

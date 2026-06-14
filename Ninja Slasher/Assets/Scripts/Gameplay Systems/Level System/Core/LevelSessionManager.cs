@@ -322,7 +322,15 @@ public class LevelSessionManager : MonoBehaviourSingleton<LevelSessionManager>
         };
 
         if (isBossLevel && session.Configuration.bossPreGameData != null)
+        {
             context.BossVictoryMessage = session.Configuration.bossPreGameData.victoryMessage;
+            context.BossUnlockSubtitle = session.Configuration.bossPreGameData.bossUnlockSubtitle;
+            context.BossUnlockDetail = session.Configuration.bossPreGameData.bossUnlockDetail;
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            Debug.Log($"[LevelSessionManager] Boss victory data | Message='{context.BossVictoryMessage}' | UnlockSubtitle='{context.BossUnlockSubtitle}' | UnlockDetail='{context.BossUnlockDetail}'");
+#endif
+        }
 
         if (progressionResult != null && progressionResult.UnlockedNewArea)
         {

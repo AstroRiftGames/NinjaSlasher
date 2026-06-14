@@ -16,15 +16,9 @@ public class DailyRewardUIManager : MonoBehaviourSingleton<DailyRewardUIManager>
     [SerializeField] private Button claimButton;
     public TextMeshProUGUI claimButtonText;
 
-    [Header("Double Reward Button")]
-    [SerializeField] private Button _doubleDailyRewardButton;
-    [SerializeField] private TextMeshProUGUI _doubleRewardButtonText;
-
     [Header("DAY LABEL COLORS")]
-    public Color availableColor;
-    public Color claimedColor;
-    public Color lockedColor;
-    public Color todayColor;
+    [SerializeField] private Color todayLabelColor = Color.white;
+    [SerializeField] private Color otherDayLabelColor = Color.white;
 
     private DailyRewardSystem dailyRewardSystem;
     private bool isInitialized = false;
@@ -32,12 +26,9 @@ public class DailyRewardUIManager : MonoBehaviourSingleton<DailyRewardUIManager>
     private Coroutine _rewardUiTickRoutine;
     private bool? _lastCanClaimToday;
     private string _lastNextRewardTimerText;
-    private bool? _lastDoubleRewardInteractable;
-    private string _lastDoubleRewardButtonText;
     private string _lastClaimButtonText;
     private bool? _lastClaimButtonInteractable;
     private bool _awaitingBootstrap;
-    private bool _isDoubleRewardFlowInProgress;
 
     private UIAudioContext _audioContext;
 
@@ -94,12 +85,6 @@ public class DailyRewardUIManager : MonoBehaviourSingleton<DailyRewardUIManager>
             closeButton.onClick.RemoveListener(OnClosePressed);
             closeButton.onClick.AddListener(OnClosePressed);
         }
-
-        if (_doubleDailyRewardButton != null)
-        {
-            _doubleDailyRewardButton.onClick.RemoveListener(OnDoubleRewardPressed);
-            _doubleDailyRewardButton.onClick.AddListener(OnDoubleRewardPressed);
-        }
     }
 
     void SubscribeToEvents()
@@ -109,10 +94,6 @@ public class DailyRewardUIManager : MonoBehaviourSingleton<DailyRewardUIManager>
 
         GameEvents.OnRewardClaimed += OnRewardClaimed;
         GameEvents.OnRewardAvailabilityChanged += OnRewardAvailabilityChanged;
-        GameEvents.OnRewardDoubled += OnRewardDoubled;
-
-        if (AdsManager.Instance != null)
-            AdsManager.Instance.OnRewardedAdFlowCompleted += OnRewardedAdFlowCompleted;
 
         _eventsSubscribed = true;
     }
@@ -124,10 +105,6 @@ public class DailyRewardUIManager : MonoBehaviourSingleton<DailyRewardUIManager>
 
         GameEvents.OnRewardClaimed -= OnRewardClaimed;
         GameEvents.OnRewardAvailabilityChanged -= OnRewardAvailabilityChanged;
-        GameEvents.OnRewardDoubled -= OnRewardDoubled;
-
-        if (AdsManager.Instance != null)
-            AdsManager.Instance.OnRewardedAdFlowCompleted -= OnRewardedAdFlowCompleted;
 
         _eventsSubscribed = false;
     }
@@ -172,7 +149,8 @@ public class DailyRewardUIManager : MonoBehaviourSingleton<DailyRewardUIManager>
             if (weeklyRewardDays[i] != null)
             {
                 DayState state = GetDayState(i, currentDay, claimedDays[i], canClaimToday);
-                Color labelColor = GetColorForState(state);
+                bool isToday = i == currentDay;
+                Color labelColor = isToday ? todayLabelColor : otherDayLabelColor;
                 weeklyRewardDays[i].UpdateDayState(state, labelColor);
             }
         }
@@ -189,23 +167,6 @@ public class DailyRewardUIManager : MonoBehaviourSingleton<DailyRewardUIManager>
             return DayState.Missed;
         else
             return DayState.Locked;
-    }
-
-    Color GetColorForState(DayState state)
-    {
-        switch (state)
-        {
-            case DayState.Available:
-                return todayColor;
-            case DayState.Claimed:
-                return claimedColor;
-            case DayState.Locked:
-                return lockedColor;
-            case DayState.Missed:
-                return Color.red;
-            default:
-                return Color.white;
-        }
     }
 
     void UpdateClaimButton(bool canClaim, string reason, bool force = false)
@@ -301,92 +262,6 @@ public class DailyRewardUIManager : MonoBehaviourSingleton<DailyRewardUIManager>
         UIEvents.RequestHideDailyRewardModal();
     }
 
-    private void OnRewardDoubled()
-    {
-        UpdateDoubleRewardButton("GameEvents.OnRewardDoubled", force: true);
-    }
-
-    void UpdateDoubleRewardButton(string reason, bool force = false)
-    {
-        if (_doubleDailyRewardButton == null || dailyRewardSystem == null) return;
-
-        bool canDouble = dailyRewardSystem.CanDoubleToday() &&
-                        AdsManager.Instance != null &&
-                        AdsManager.Instance.IsRewardedAdReady();
-
-        bool hasDoubledToday = dailyRewardSystem.HasDoubledToday();
-        string buttonText;
-
-        if (hasDoubledToday)
-        {
-            buttonText = "DUPLICADA!";
-        }
-        else if (canDouble)
-        {
-            buttonText = "VER ANUNCIO x2";
-        }
-        else if (AdsManager.Instance != null && !AdsManager.Instance.IsRewardedAdReady())
-        {
-            buttonText = "CARGANDO...";
-        }
-        else
-        {
-            buttonText = "NO DISPONIBLE";
-        }
-
-        bool interactableChanged = force || !_lastDoubleRewardInteractable.HasValue || _lastDoubleRewardInteractable.Value != canDouble;
-        bool textChanged = force || !string.Equals(_lastDoubleRewardButtonText, buttonText, StringComparison.Ordinal);
-
-        if (interactableChanged)
-            _doubleDailyRewardButton.interactable = canDouble;
-
-        if (_doubleRewardButtonText != null)
-        {
-            if (textChanged)
-                _doubleRewardButtonText.text = buttonText;
-        }
-
-        _lastDoubleRewardInteractable = canDouble;
-        _lastDoubleRewardButtonText = buttonText;
-    }
-
-    private void OnDoubleRewardPressed()
-    {
-        if (_isDoubleRewardFlowInProgress) return;
-        if (dailyRewardSystem == null || AdsManager.Instance == null) return;
-
-        if (!dailyRewardSystem.CanDoubleToday())
-        {
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-            Debug.LogWarning("[DailyRewardUIManager] No se puede duplicar la recompensa hoy");
-#endif
-            return;
-        }
-
-        if (!AdsManager.Instance.IsRewardedAdReady())
-        {
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-            Debug.LogWarning("[DailyRewardUIManager] Anuncio no esta listo");
-#endif
-            return;
-        }
-
-        _isDoubleRewardFlowInProgress = true;
-        if (_doubleDailyRewardButton != null)
-            _doubleDailyRewardButton.interactable = false;
-
-        AdsManager.Instance.ShowRewardedAdForDoubleDailyReward();
-    }
-
-    private void OnRewardedAdFlowCompleted(string context, bool rewarded)
-    {
-        if (string.Equals(context, "double_daily_reward", StringComparison.Ordinal))
-        {
-            _isDoubleRewardFlowInProgress = false;
-            UpdateDoubleRewardButton("OnRewardedAdFlowCompleted", force: true);
-        }
-    }
-
     private void OnRewardSystemBootstrapped()
     {
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
@@ -402,7 +277,6 @@ public class DailyRewardUIManager : MonoBehaviourSingleton<DailyRewardUIManager>
 
         DailyAvailabilitySnapshot availability = dailyRewardSystem.GetAvailabilitySnapshot();
         RefreshAvailabilityState(availability.IsAvailable, reason, force);
-        UpdateDoubleRewardButton(reason, force);
     }
 
     private void RefreshAvailabilityState(bool canClaimToday, string reason, bool force = false)
@@ -505,15 +379,18 @@ public class DailyRewardDayUI
     public TextMeshProUGUI dayLabel;
     public Image rewardIcon;
     public TextMeshProUGUI quantityText;
-    public Image backgroundImage;
+    public Graphic quantityBackground;
+    public Graphic rewardBackground;
 
     private int dayIndex;
     private DailyReward reward;
+    private Graphic[] _stateGraphics;
 
     public void SetupDay(int index, DailyReward dailyReward)
     {
         dayIndex = index;
         reward = dailyReward;
+        CacheStateGraphics();
 
         if (dayLabel != null)
             dayLabel.text = GetDayName(index);
@@ -554,46 +431,43 @@ public class DailyRewardDayUI
 
     void SetAvailableState()
     {
-        SetElementsActive(true);
+        SetElementsVisuals(Color.white, 1f);
     }
 
     void SetClaimedState()
     {
-        SetElementsActive(true);
+        SetElementsVisuals(Color.white, 1f);
     }
 
     void SetLockedState()
     {
-        SetElementsActive(true);
-        SetElementsAlpha(0.5f);
+        SetElementsVisuals(Color.white, 0.5f);
     }
 
     void SetMissedState()
     {
-        SetElementsActive(true);
-        SetElementsAlpha(0.5f);
+        SetElementsVisuals(Color.white, 0.5f);
     }
 
-    void SetElementsActive(bool active)
+    void SetElementsVisuals(Color baseColor, float alpha)
     {
-        Color textColor = active ? Color.white : Color.gray;
+        ApplyGraphicColor(rewardIcon, baseColor, alpha);
+        ApplyGraphicColor(quantityText, baseColor, alpha);
+        ApplyGraphicColor(quantityBackground, baseColor, alpha);
+        ApplyGraphicColor(rewardBackground, baseColor, alpha);
 
-        if (rewardIcon != null) rewardIcon.color = active ? Color.white : Color.gray;
-        if (quantityText != null) quantityText.color = textColor;
-    }
+        if (_stateGraphics == null)
+            CacheStateGraphics();
 
-    void SetElementsAlpha(float alpha)
-    {
-        if (rewardIcon != null)
+        if (_stateGraphics == null)
+            return;
+
+        foreach (Graphic graphic in _stateGraphics)
         {
-            Color iconColor = rewardIcon.color;
-            rewardIcon.color = new Color(iconColor.r, iconColor.g, iconColor.b, alpha);
-        }
+            if (graphic == null || graphic == dayLabel)
+                continue;
 
-        if (quantityText != null)
-        {
-            Color quantityColor = quantityText.color;
-            quantityText.color = new Color(quantityColor.r, quantityColor.g, quantityColor.b, alpha);
+            ApplyGraphicColor(graphic, baseColor, alpha);
         }
     }
 
@@ -601,6 +475,22 @@ public class DailyRewardDayUI
     {
         string[] dayNames = { "DIA 1", "DIA 2", "DIA 3", "DIA 4", "DIA 5", "DIA 6", "DIA 7" };
         return dayIndex < dayNames.Length ? dayNames[dayIndex] : $"DIA {dayIndex + 1}";
+    }
+
+    private static void ApplyGraphicColor(Graphic graphic, Color baseColor, float alpha)
+    {
+        if (graphic == null)
+            return;
+
+        graphic.color = new Color(baseColor.r, baseColor.g, baseColor.b, alpha);
+    }
+
+    private void CacheStateGraphics()
+    {
+        if (dayContainer == null)
+            return;
+
+        _stateGraphics = dayContainer.GetComponentsInChildren<Graphic>(true);
     }
 }
 

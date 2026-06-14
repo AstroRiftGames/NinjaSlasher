@@ -165,17 +165,6 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
         }, "extra_life");
     }
 
-    public void ShowRewardedAdForDoubleDailyReward()
-    {
-        ShowRewardedAd(() =>
-        {
-            DailyRewardSystem.Instance?.DoubleTodaysReward();
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-            Debug.Log("[AdsManager] Daily reward doubled from rewarded ad.");
-#endif
-        }, "double_daily_reward");
-    }
-
     [ContextMenu("Show Rewarded Ad")]
     public void ShowRewardedAd()
     {
@@ -541,15 +530,6 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
     public void TestShowExtraLifeAd()
     {
         ShowRewardedAdForExtraLife();
-    }
-
-    [ContextMenu("Test Double Daily Reward")]
-    public void TestDoubleDailyReward()
-    {
-        if (DailyRewardSystem.Instance != null)
-        {
-            DailyRewardSystem.Instance.DoubleTodaysReward();
-        }
     }
 
     private void OnAdsRemoved()

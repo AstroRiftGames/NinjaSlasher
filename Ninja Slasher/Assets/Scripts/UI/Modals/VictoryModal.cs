@@ -13,6 +13,8 @@ public class VictoryModal : UIModalBase
     [SerializeField] private GameObject _bossTitleRoot;
     [SerializeField] private GameObject _bossMessageRoot;
     [SerializeField] private TMP_Text _bossMessageLabel;
+    [SerializeField] private TMP_Text _bossUnlockSubtitleLabel;
+    [SerializeField] private TMP_Text _bossUnlockDetailLabel;
 
     private Button[] _navigationButtons;
     private bool _isObjectiveSequenceRunning;
@@ -31,20 +33,13 @@ public class VictoryModal : UIModalBase
         CacheNavigationButtons();
         SetupButtons();
         ResolveVariantRoots();
-        ApplyContext(null);
+        ApplyContextToView(new VictoryContext());
     }
 
     public void ApplyContext(VictoryContext context)
     {
         _context = context ?? new VictoryContext();
-        bool isBossClear = IsBossClear();
-
-        SetActive(_normalTitleRoot, !isBossClear);
-        SetActive(_bossTitleRoot, isBossClear);
-        SetActive(_bossMessageRoot, isBossClear);
-
-        if (isBossClear && _bossMessageLabel != null && !string.IsNullOrEmpty(_context.BossVictoryMessage))
-            _bossMessageLabel.text = _context.BossVictoryMessage;
+        ApplyContextToView(_context);
     }
 
     public void PreviewCompleteAnimation(bool bossClear = true)
@@ -88,7 +83,7 @@ public class VictoryModal : UIModalBase
 
     protected override void OnShown()
     {
-        ApplyContext(_context);
+        ApplyContextToView(_context);
         PlayVictoryAudio();
         BeginObjectiveSequence();
 
@@ -169,6 +164,39 @@ public class VictoryModal : UIModalBase
 
         if (_bossMessageLabel == null && _bossMessageRoot != null)
             _bossMessageLabel = _bossMessageRoot.GetComponentInChildren<TMP_Text>(true);
+
+        if (_bossUnlockSubtitleLabel == null)
+            _bossUnlockSubtitleLabel = FindChildText("BossUnlockSubtitleLabel");
+
+        if (_bossUnlockDetailLabel == null)
+            _bossUnlockDetailLabel = FindChildText("BossUnlockDetailLabel");
+    }
+
+    private void ApplyContextToView(VictoryContext context)
+    {
+        ResolveVariantRoots();
+
+        VictoryContext viewContext = context ?? new VictoryContext();
+        bool isBossClear = viewContext.Variant == VictoryModalVariant.BossClear || viewContext.IsBossLevel;
+
+        SetActive(_normalTitleRoot, !isBossClear);
+        SetActive(_bossTitleRoot, isBossClear);
+        SetActive(_bossMessageRoot, isBossClear);
+
+        if (isBossClear)
+        {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            Debug.Log($"[VictoryModal] Boss context | Message='{viewContext.BossVictoryMessage}' | UnlockSubtitle='{viewContext.BossUnlockSubtitle}' | UnlockDetail='{viewContext.BossUnlockDetail}' | SubtitleRef={_bossUnlockSubtitleLabel != null} | DetailRef={_bossUnlockDetailLabel != null}");
+#endif
+            SetTextVisible(_bossMessageLabel, viewContext.BossVictoryMessage);
+            SetTextVisible(_bossUnlockSubtitleLabel, viewContext.BossUnlockSubtitle);
+            SetTextVisible(_bossUnlockDetailLabel, viewContext.BossUnlockDetail);
+            return;
+        }
+
+        SetTextVisible(_bossMessageLabel, null);
+        SetTextVisible(_bossUnlockSubtitleLabel, null);
+        SetTextVisible(_bossUnlockDetailLabel, null);
     }
 
     private GameObject FindChildObject(string childName)
@@ -182,6 +210,26 @@ public class VictoryModal : UIModalBase
         }
 
         return null;
+    }
+
+    private TMP_Text FindChildText(string childName)
+    {
+        GameObject child = FindChildObject(childName);
+        return child != null ? child.GetComponent<TMP_Text>() : null;
+    }
+
+    private static void SetTextVisible(TMP_Text label, string value)
+    {
+        if (label == null)
+            return;
+
+        bool hasValue = !string.IsNullOrWhiteSpace(value);
+        label.gameObject.SetActive(hasValue);
+
+        if (hasValue)
+            label.text = value;
+        else
+            label.text = string.Empty;
     }
 
     private bool IsBossClear()

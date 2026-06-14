@@ -59,7 +59,6 @@ public class DailyRewardSystem : MonoBehaviourSingleton<DailyRewardSystem>
 
     private DailyRewardSaveData rewardData;
 
-    private bool _hasDoubledToday = false;
     public bool IsBootstrapped { get; private set; }
     private bool _bootstrapSignalEmitted;
     private SaveBootstrapSync _saveBootstrapSync;
@@ -84,7 +83,6 @@ public class DailyRewardSystem : MonoBehaviourSingleton<DailyRewardSystem>
     {
         LoadRewardData();
         SyncRewardState();
-        CheckDoubleRewardStatus();
         IsBootstrapped = true;
 
         if (!_bootstrapSignalEmitted)
@@ -122,7 +120,7 @@ public class DailyRewardSystem : MonoBehaviourSingleton<DailyRewardSystem>
             {
                 rewardData = JsonUtility.FromJson<DailyRewardSaveData>(jsonData);
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 rewardData = new DailyRewardSaveData();
             }
@@ -154,67 +152,6 @@ public class DailyRewardSystem : MonoBehaviourSingleton<DailyRewardSystem>
 
         if (stateChanged || wasAvailable != isAvailableNow)
             GameEvents.RaiseRewardAvailabilityChanged(isAvailableNow);
-    }
-
-    private void CheckDoubleRewardStatus()
-    {
-        if (IsRewardAvailable())
-            _hasDoubledToday = false;
-    }
-
-    public void DoubleTodaysReward()
-    {
-        if (_hasDoubledToday)
-        {
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-            Debug.LogWarning("Ya se duplicó la recompensa de hoy");
-#endif
-            return;
-        }
-
-        if (rewardData.claimedDays[rewardData.currentWeekDay])
-        {
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-            Debug.LogWarning("No se puede duplicar una recompensa ya reclamada");
-#endif
-            return;
-        }
-
-        var todayReward = weeklyRewards[rewardData.currentWeekDay];
-
-        var doubledReward = new DailyReward
-        {
-            powerUpType = todayReward.powerUpType,
-            quantity = todayReward.quantity * 2,
-            icon = todayReward.icon,
-            displayName = todayReward.displayName + " x2",
-            description = "Recompensa duplicada por anuncio"
-        };
-
-        AddPowerUpToInventoryViaAutoSave(doubledReward);
-
-        rewardData.claimedDays[rewardData.currentWeekDay] = true;
-        SetLastClaimTimestamp(DateTime.UtcNow);
-
-        _hasDoubledToday = true;
-
-        SaveRewardData();
-
-        GameEvents.RaiseRewardClaimed(doubledReward);
-        GameEvents.RaiseRewardAvailabilityChanged(false);
-        GameEvents.RaiseRewardDoubled();
-    }
-
-    public bool CanDoubleToday()
-    {
-        return !_hasDoubledToday &&
-               !rewardData.claimedDays[rewardData.currentWeekDay] &&
-               CanClaimToday();
-    }
-
-    public bool HasDoubledToday()
-    {
-        return _hasDoubledToday;
     }
 
     public bool ShouldAutoShowToday()
@@ -254,21 +191,14 @@ public class DailyRewardSystem : MonoBehaviourSingleton<DailyRewardSystem>
             rewardData.claimedDays = new bool[WeekLength];
         }
 
-        //DEPRECATED
-        //OnConsecutiveDaysUpdated?.Invoke(rewardData.consecutiveDays);
-
         GameEvents.RaiseConsecutiveDaysUpdated(rewardData.consecutiveDays);
     }
 
     void ResetWeeklyProgress()
     {
-        int previousDays = rewardData.consecutiveDays;
         rewardData.currentWeekDay = 0;
         rewardData.consecutiveDays = 0;
         rewardData.claimedDays = new bool[WeekLength];
-
-        // DEPRECATED
-        //OnConsecutiveDaysUpdated?.Invoke(rewardData.consecutiveDays);
 
         GameEvents.RaiseConsecutiveDaysUpdated(rewardData.consecutiveDays);
     }
@@ -277,17 +207,16 @@ public class DailyRewardSystem : MonoBehaviourSingleton<DailyRewardSystem>
     {
         SyncRewardState();
 
-        if (!CanClaimToday()) return false;
+        if (!CanClaimToday())
+            return false;
 
         if (rewardData.claimedDays[rewardData.currentWeekDay])
-        {
             return false;
-        }
 
         rewardData.claimedDays[rewardData.currentWeekDay] = true;
         SetLastClaimTimestamp(DateTime.UtcNow);
 
-        var claimed = weeklyRewards[rewardData.currentWeekDay];
+        DailyReward claimed = weeklyRewards[rewardData.currentWeekDay];
 
         AddPowerUpToInventoryViaAutoSave(claimed);
 

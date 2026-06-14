@@ -13,5 +13,8 @@ public class BossPreGameData : ScriptableObject
     [TextArea(2, 4)]
     public string victoryMessage;
 
+    public string bossUnlockSubtitle;
+    public string bossUnlockDetail;
+
     public Sprite bossPortrait;
 }
