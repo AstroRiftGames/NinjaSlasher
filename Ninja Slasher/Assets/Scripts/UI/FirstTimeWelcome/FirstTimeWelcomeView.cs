@@ -23,7 +23,6 @@ public sealed class FirstTimeWelcomeView : UIOverlayBase
     [SerializeField] private RectTransform _messageCardTransform;
     [SerializeField] private CanvasGroup _messageCardCanvasGroup;
     [SerializeField] private RectTransform _welcomeMessageCardTransform;
-    [SerializeField] private CanvasGroup _welcomeMessageCardCanvasGroup;
     [SerializeField] private RectTransform _canvasRect;
     [SerializeField] private Vector2 _defaultMessagePosition = new Vector2(0f, -450f);
     [SerializeField] private Vector2 _targetOffset = new Vector2(40f, 40f);
@@ -33,6 +32,13 @@ public sealed class FirstTimeWelcomeView : UIOverlayBase
     [SerializeField] private Ease _openEase = Ease.OutBack;
     [SerializeField] private Ease _closeEase = Ease.InQuad;
     [SerializeField] private TextMeshProUGUI _welcomeMessageCardText;
+
+    [SerializeField] private Animator _welcomeMessageCardAnimator;
+    [SerializeField] private float _welcomeAnimatorOpenDuration = 0.25f;
+    [SerializeField] private float _welcomeAnimatorCloseDuration = 0.2f;
+
+    private static readonly int WelcomeOpenTrigger = Animator.StringToHash("Open");
+    private static readonly int WelcomeCloseTrigger = Animator.StringToHash("Close");
 
     private readonly Vector3[] _targetCorners = new Vector3[4];
     private readonly Vector2[] _canvasPoints = new Vector2[4];
@@ -102,8 +108,17 @@ public sealed class FirstTimeWelcomeView : UIOverlayBase
         ConfigureStepButtons(useWelcomePanel, showSkipButton, nextButtonLabel);
 
         SetActiveMessagePanel(useWelcomePanel);
-        if (!useWelcomePanel && _messageText != null)
-            _messageText.text = message ?? string.Empty;
+
+        if (useWelcomePanel)
+        {
+            if (_welcomeMessageCardText != null)
+                _welcomeMessageCardText.text = message ?? string.Empty;
+        }
+        else
+        {
+            if (_messageText != null)
+                _messageText.text = message ?? string.Empty;
+        }
 
         UpdateHighlight(useWelcomePanel ? null : target);
         PositionMessageCard(target, useWelcomePanel);
@@ -234,8 +249,7 @@ public sealed class FirstTimeWelcomeView : UIOverlayBase
             _highlightRoot == null || _messageText == null || _nextButton == null || _skipButton == null ||
             _welcomeNextButton == null || _welcomeSkipButton == null ||
             _messageCardTransform == null || _messageCardCanvasGroup == null ||
-            _welcomeMessageCardTransform == null || _welcomeMessageCardCanvasGroup == null ||
-            _nextButtonLabel == null || _skipButtonLabel == null ||
+            _welcomeMessageCardTransform == null || _nextButtonLabel == null || _skipButtonLabel == null ||
             _welcomeNextButtonLabel == null || _welcomeSkipButtonLabel == null ||
             _welcomeMessageCardText == null || _canvasRect == null)
         {
@@ -266,11 +280,11 @@ public sealed class FirstTimeWelcomeView : UIOverlayBase
         if (_welcomeMessageCardTransform == null)
             _welcomeMessageCardTransform = FindChildRectTransformByName("WelcomeMessageCard");
 
-        if (_welcomeMessageCardCanvasGroup == null && _welcomeMessageCardTransform != null)
-            _welcomeMessageCardCanvasGroup = _welcomeMessageCardTransform.GetComponent<CanvasGroup>();
-
         if (_welcomeMessageCardText == null && _welcomeMessageCardTransform != null)
             _welcomeMessageCardText = _welcomeMessageCardTransform.GetComponentInChildren<TextMeshProUGUI>(true);
+
+        if (_welcomeMessageCardAnimator == null && _welcomeMessageCardTransform != null)
+            _welcomeMessageCardAnimator = _welcomeMessageCardTransform.GetComponent<Animator>();
     }
 
     private RectTransform FindChildRectTransformByName(string childName)
@@ -431,9 +445,7 @@ public sealed class FirstTimeWelcomeView : UIOverlayBase
 
     private CanvasGroup GetActiveMessageCardCanvasGroup()
     {
-        return _welcomeMessageCardTransform != null && _welcomeMessageCardTransform.gameObject.activeSelf
-            ? _welcomeMessageCardCanvasGroup
-            : _messageCardCanvasGroup;
+        return _messageCardCanvasGroup;
     }
 
     private void ConfigureStepButtons(bool showSkipButton, string nextButtonLabel)
@@ -463,6 +475,12 @@ public sealed class FirstTimeWelcomeView : UIOverlayBase
 
     private void PlayMessageOpen()
     {
+        if (IsWelcomeMessagePanelActive())
+        {
+            PlayWelcomeMessageOpen();
+            return;
+        }
+
         RectTransform activeCard = GetActiveMessageCardTransform();
         CanvasGroup activeCanvasGroup = GetActiveMessageCardCanvasGroup();
         if (activeCard == null || activeCanvasGroup == null)
@@ -478,16 +496,47 @@ public sealed class FirstTimeWelcomeView : UIOverlayBase
         _messageCardSequence = DOTween.Sequence()
             .SetTarget(activeCard)
             .SetUpdate(true);
+
         _messageCardSequence.Join(
             activeCanvasGroup
                 .DOFade(1f, Mathf.Max(0f, _openDuration))
                 .SetEase(Ease.OutQuad)
                 .SetUpdate(true));
+
         _messageCardSequence.Join(
             activeCard
                 .DOScale(1f, Mathf.Max(0f, _openDuration))
                 .SetEase(_openEase)
                 .SetUpdate(true));
+
+        _messageCardSequence.OnComplete(() =>
+        {
+            _messageCardSequence = null;
+            _isSubmitting = false;
+            SetGuideButtonsInteractable(true);
+        });
+    }
+
+    private void PlayWelcomeMessageOpen()
+    {
+        RectTransform activeCard = GetActiveMessageCardTransform();
+
+        if (_welcomeMessageCardAnimator == null || activeCard == null)
+        {
+            _isSubmitting = false;
+            SetGuideButtonsInteractable(true);
+            return;
+        }
+
+        _welcomeMessageCardAnimator.ResetTrigger(WelcomeCloseTrigger);
+        _welcomeMessageCardAnimator.SetTrigger(WelcomeOpenTrigger);
+
+        _messageCardSequence = DOTween.Sequence()
+            .SetTarget(activeCard)
+            .SetUpdate(true);
+
+        _messageCardSequence.AppendInterval(Mathf.Max(0f, _welcomeAnimatorOpenDuration));
+
         _messageCardSequence.OnComplete(() =>
         {
             _messageCardSequence = null;
@@ -525,6 +574,12 @@ public sealed class FirstTimeWelcomeView : UIOverlayBase
         SetGuideButtonsInteractable(false);
         KillMessageCardTweens();
 
+        if (IsWelcomeMessagePanelActive())
+        {
+            SubmitWelcomeAfterClose(callback);
+            return;
+        }
+
         RectTransform activeCard = GetActiveMessageCardTransform();
         CanvasGroup activeCanvasGroup = GetActiveMessageCardCanvasGroup();
         if (activeCard == null || activeCanvasGroup == null)
@@ -536,16 +591,45 @@ public sealed class FirstTimeWelcomeView : UIOverlayBase
         _messageCardSequence = DOTween.Sequence()
             .SetTarget(activeCard)
             .SetUpdate(true);
+
         _messageCardSequence.Join(
             activeCanvasGroup
                 .DOFade(0f, Mathf.Max(0f, _closeDuration))
                 .SetEase(Ease.InQuad)
                 .SetUpdate(true));
+
         _messageCardSequence.Join(
             activeCard
                 .DOScale(0.92f, Mathf.Max(0f, _closeDuration))
                 .SetEase(_closeEase)
                 .SetUpdate(true));
+
+        _messageCardSequence.OnComplete(() =>
+        {
+            _messageCardSequence = null;
+            callback?.Invoke();
+        });
+    }
+
+    private void SubmitWelcomeAfterClose(Action callback)
+    {
+        RectTransform activeCard = GetActiveMessageCardTransform();
+
+        if (_welcomeMessageCardAnimator == null || activeCard == null)
+        {
+            callback?.Invoke();
+            return;
+        }
+
+        _welcomeMessageCardAnimator.ResetTrigger(WelcomeOpenTrigger);
+        _welcomeMessageCardAnimator.SetTrigger(WelcomeCloseTrigger);
+
+        _messageCardSequence = DOTween.Sequence()
+            .SetTarget(activeCard)
+            .SetUpdate(true);
+
+        _messageCardSequence.AppendInterval(Mathf.Max(0f, _welcomeAnimatorCloseDuration));
+
         _messageCardSequence.OnComplete(() =>
         {
             _messageCardSequence = null;
@@ -712,9 +796,6 @@ public sealed class FirstTimeWelcomeView : UIOverlayBase
         if (_welcomeMessageCardTransform != null)
             DOTween.Kill(_welcomeMessageCardTransform);
 
-        if (_welcomeMessageCardCanvasGroup != null)
-            DOTween.Kill(_welcomeMessageCardCanvasGroup);
-
         if (_messageCardSequence != null)
         {
             _messageCardSequence.Kill();
@@ -741,9 +822,6 @@ public sealed class FirstTimeWelcomeView : UIOverlayBase
             _welcomeMessageCardTransform.anchoredPosition = ClampMessagePosition(position, _welcomeMessageCardTransform);
             _welcomeMessageCardTransform.localScale = Vector3.one * 0.92f;
         }
-
-        if (_welcomeMessageCardCanvasGroup != null)
-            _welcomeMessageCardCanvasGroup.alpha = 0f;
     }
 
     private enum MessageSide
@@ -764,5 +842,11 @@ public sealed class FirstTimeWelcomeView : UIOverlayBase
             this.min = min;
             this.max = max;
         }
+    }
+
+    private bool IsWelcomeMessagePanelActive()
+    {
+        return _welcomeMessageCardTransform != null &&
+               _welcomeMessageCardTransform.gameObject.activeSelf;
     }
 }
