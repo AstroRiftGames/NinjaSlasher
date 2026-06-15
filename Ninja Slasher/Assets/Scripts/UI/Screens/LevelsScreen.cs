@@ -21,6 +21,7 @@ public class LevelsScreen : UIScreenBase
     private bool _isWaitingForStartupSequence = false;
     private bool _isBlockedByForegroundSignal = false;
     private bool _isForegroundVisible = true;
+    private bool _isStoreInfoForcedVisible = false;
     private Coroutine _pendingStarRevealRoutine;
     private bool _isStarRevealCancelled;
     private Coroutine _deferredBlockingRoutine;
@@ -305,8 +306,10 @@ public class LevelsScreen : UIScreenBase
 
     public void SetForegroundVisible(bool visible, string reason = null)
     {
+        bool effectiveInfoVisible = IsInfoRootVisibleForCurrentState(visible);
+
         if (_isForegroundVisible == visible
-            && (_infoRoot == null || _infoRoot.activeSelf == visible)
+            && (_infoRoot == null || _infoRoot.activeSelf == effectiveInfoVisible)
             && (_buttonsRoot == null || _buttonsRoot.activeSelf == visible))
         {
             return;
@@ -387,7 +390,7 @@ public class LevelsScreen : UIScreenBase
         ResolveForegroundCanvasGroups();
         KillForegroundTweens();
 
-        PlayForegroundRootTransition(_infoRoot, _infoRootCanvasGroup, visible);
+        PlayForegroundRootTransition(_infoRoot, _infoRootCanvasGroup, IsInfoRootVisibleForCurrentState(visible));
         PlayForegroundRootTransition(_buttonsRoot, _buttonsRootCanvasGroup, visible);
     }
 
@@ -472,8 +475,17 @@ public class LevelsScreen : UIScreenBase
         ResolveForegroundCanvasGroups();
         KillForegroundTweens();
         _isForegroundVisible = visible;
-        ApplyForegroundRootStateImmediate(_infoRoot, _infoRootCanvasGroup, visible);
+        ApplyForegroundRootStateImmediate(_infoRoot, _infoRootCanvasGroup, IsInfoRootVisibleForCurrentState(visible));
         ApplyForegroundRootStateImmediate(_buttonsRoot, _buttonsRootCanvasGroup, visible);
+    }
+
+    public void SetStoreInfoVisible(bool visible)
+    {
+        if (_isStoreInfoForcedVisible == visible)
+            return;
+
+        _isStoreInfoForcedVisible = visible;
+        ApplyForegroundRootStateImmediate(_infoRoot, _infoRootCanvasGroup, IsInfoRootVisibleForCurrentState(_isForegroundVisible));
     }
 
     private static void ApplyForegroundRootStateImmediate(GameObject root, CanvasGroup canvasGroup, bool visible)
@@ -489,6 +501,11 @@ public class LevelsScreen : UIScreenBase
         canvasGroup.alpha = visible ? 1f : 0f;
         canvasGroup.interactable = visible;
         canvasGroup.blocksRaycasts = visible;
+    }
+
+    private bool IsInfoRootVisibleForCurrentState(bool foregroundVisible)
+    {
+        return foregroundVisible || _isStoreInfoForcedVisible;
     }
 
     private bool ShouldPlayStartupReveal()

@@ -492,8 +492,17 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
         HideDailyWheelModal();
     }
 
-    private void ShowStoreModal() => RequestOpenModal(_storeModal);
-    private void HideStoreModal() => CloseModal(_storeModal);
+    private void ShowStoreModal()
+    {
+        _levelsScreen?.SetStoreInfoVisible(true);
+        RequestOpenModal(_storeModal);
+    }
+
+    private void HideStoreModal()
+    {
+        CloseModal(_storeModal);
+        _levelsScreen?.SetStoreInfoVisible(false);
+    }
     private void ToggleStoreModal() => ToggleModal(_storeModal);
 
     private void ShowStorePurchaseResult(StorePurchaseResultRequest request)
