@@ -88,6 +88,11 @@ public class UIPunchScaleFeedback : MonoBehaviour
             gameObject.SetActive(false);
     }
 
+    public void ClearImmediate()
+    {
+        HideImmediate();
+    }
+
     public void ResetImmediate()
     {
         CacheReferences();

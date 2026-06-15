@@ -33,6 +33,7 @@ public class ComboVisualFeedback : MonoBehaviour
         GameEvents.OnLevelStarted += HandleLevelStarted;
         GameEvents.OnLevelResultReady += HandleLevelResultReady;
         GameEvents.OnLevelSessionClosed += HandleLevelSessionClosed;
+        UIEvents.OnHideGameplayHUDRequested += HandleHideGameplayHUDRequested;
     }
 
     private void OnDisable()
@@ -41,7 +42,18 @@ public class ComboVisualFeedback : MonoBehaviour
         GameEvents.OnLevelStarted -= HandleLevelStarted;
         GameEvents.OnLevelResultReady -= HandleLevelResultReady;
         GameEvents.OnLevelSessionClosed -= HandleLevelSessionClosed;
+        UIEvents.OnHideGameplayHUDRequested -= HandleHideGameplayHUDRequested;
 
+        ClearImmediate();
+    }
+
+    private void HandleHideGameplayHUDRequested()
+    {
+        ClearImmediate();
+    }
+
+    public void ClearImmediate()
+    {
         ClearActiveFeedbacks();
     }
 

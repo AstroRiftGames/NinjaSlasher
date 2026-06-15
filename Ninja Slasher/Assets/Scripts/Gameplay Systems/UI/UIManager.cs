@@ -540,12 +540,20 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
     {
         _shouldGameplayHUDBeVisible = true;
         RefreshGameplayHUDVisibility();
+        if (_gameplayUIManager != null)
+        {
+            _gameplayUIManager.OnGameplayHUDShown();
+        }
     }
 
     private void HideGameplayHUD()
     {
         _shouldGameplayHUDBeVisible = false;
         ApplyGameplayHUDVisibility(force: true);
+        if (_gameplayUIManager != null)
+        {
+            _gameplayUIManager.OnGameplayHUDHidden();
+        }
     }
 
     public void SetGameplayHUDEnabled(bool enabled)

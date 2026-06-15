@@ -22,24 +22,46 @@ public class GameplayUIManager : MonoBehaviour
     {
         _audioContext = GetComponentInParent<UIAudioContext>();
         ResolveBonusTimeFeedback();
-        HideBonusTimeFeedbackImmediate();
+        ClearImmediate();
     }
 
     private void OnDisable()
     {
         UnsubscribeFromEvents();
-        HideBonusTimeFeedbackImmediate();
+        ClearImmediate();
     }
 
     public void Initialize()
     {
         UpdateLivesUI(LifeManager.Instance?.GetDisplayLives() ?? 0);
-        HideBonusTimeFeedbackImmediate();
+        ClearImmediate();
     }
 
     public void OnSceneLoaded()
     {
+        // Subscriptions are now managed dynamically when the HUD is shown/hidden
+    }
+
+    public void OnGameplayHUDShown()
+    {
         SubscribeToEvents();
+        UpdateLivesUI(LifeManager.Instance?.GetDisplayLives() ?? 0);
+        ClearImmediate();
+    }
+
+    public void OnGameplayHUDHidden()
+    {
+        UnsubscribeFromEvents();
+        ClearImmediate();
+    }
+
+    public void ClearImmediate()
+    {
+        HideBonusTimeFeedbackImmediate();
+        if (_bonusTimeText != null)
+        {
+            _bonusTimeText.text = string.Empty;
+        }
     }
 
     private void SubscribeToEvents()
@@ -150,7 +172,7 @@ public class GameplayUIManager : MonoBehaviour
 
     private void ShowBonusTimeText(float bonus)
     {
-        if (_bonusTimeText == null)
+        if (_bonusTimeText == null || !IsGameplaySessionRunning())
             return;
 
         _bonusTimeText.text = $"+{bonus:F0}s";
@@ -163,6 +185,11 @@ public class GameplayUIManager : MonoBehaviour
         }
 
         _bonusTimeText.gameObject.SetActive(true);
+    }
+
+    private bool IsGameplaySessionRunning()
+    {
+        return LevelSessionManager.Instance != null && LevelSessionManager.Instance.IsSessionRunning;
     }
 
     private void ResolveBonusTimeFeedback()
