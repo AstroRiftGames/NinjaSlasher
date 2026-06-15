@@ -50,6 +50,9 @@ public sealed class FirstTimeWelcomeView : UIOverlayBase
     private Camera _canvasCamera;
     private Sequence _messageCardSequence;
     private bool _isSubmitting;
+    private bool _isShowing;
+
+    public bool IsShowing => _isShowing && gameObject.activeInHierarchy;
 
     public event Action NextRequested;
     public event Action SkipRequested;
@@ -86,6 +89,7 @@ public sealed class FirstTimeWelcomeView : UIOverlayBase
         SetWelcomeMessageCardHidden(Vector2.zero);
         _isSubmitting = false;
         UnregisterButtonListeners();
+        _isShowing = false;
         base.OnDisable();
     }
 
@@ -131,8 +135,15 @@ public sealed class FirstTimeWelcomeView : UIOverlayBase
 
     public override void Show()
     {
+        _isShowing = true;
         ConfigureInteractionLayers();
         base.Show();
+    }
+
+    protected override void OnHideAnimationCompleted()
+    {
+        base.OnHideAnimationCompleted();
+        _isShowing = false;
     }
 
     protected override void AnimateShow()

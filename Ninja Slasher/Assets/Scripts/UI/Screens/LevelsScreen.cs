@@ -8,6 +8,7 @@ public class LevelsScreen : UIScreenBase
 {
     [SerializeField] private float _delayBeforeAnimation = 0.3f;
     [SerializeField] private float _postTransitionStarRevealDelay = 0.15f;
+    [SerializeField] private float _welcomeScreenTimeout = 5f;
     [SerializeField] private GameObject _infoRoot;
     [SerializeField] private GameObject _buttonsRoot;
     [SerializeField] private AreaSectionController[] _areaSections;
@@ -557,18 +558,26 @@ public class LevelsScreen : UIScreenBase
         if (!isActiveAndEnabled || !_isVisible || !_isForegroundVisible)
             yield break;
 
+        float startTime = Time.unscaledTime;
         while (IsFirstTimeWelcomeActive() && !_isStarRevealCancelled)
+        {
+            if (Time.unscaledTime - startTime >= _welcomeScreenTimeout)
+            {
+                break;
+            }
             yield return null;
+        }
 
         if (_isStarRevealCancelled)
+        {
             yield break;
+        }
 
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-        Debug.Log($"[LevelsScreen] t={Time.frameCount} StarReveal -> Triggered | Reason={reason}");
-#endif
         float completionFeedbackDuration = 0f;
         if (_buttonManager != null)
+        {
             _buttonManager.TryPlayPendingCompletionAnimations(out completionFeedbackDuration);
+        }
 
         if (completionFeedbackDuration > 0f)
             yield return WaitForSecondsUnscaled(completionFeedbackDuration);
@@ -576,8 +585,15 @@ public class LevelsScreen : UIScreenBase
         if (!isActiveAndEnabled || !_isVisible || !_isForegroundVisible)
             yield break;
 
+        float secondStartTime = Time.unscaledTime;
         while (IsFirstTimeWelcomeActive() && !_isStarRevealCancelled)
+        {
+            if (Time.unscaledTime - secondStartTime >= _welcomeScreenTimeout)
+            {
+                break;
+            }
             yield return null;
+        }
 
         if (_isStarRevealCancelled)
             yield break;
@@ -587,7 +603,8 @@ public class LevelsScreen : UIScreenBase
 
     private bool IsFirstTimeWelcomeActive()
     {
-        return GetComponentInChildren<FirstTimeWelcomeView>(false) != null;
+        FirstTimeWelcomeView welcomeView = GetComponentInChildren<FirstTimeWelcomeView>(false);
+        return welcomeView != null && welcomeView.IsShowing;
     }
 
     private void SyncExternalForegroundSignals(string reason)
