@@ -1,6 +1,15 @@
 using System;
 using UnityEngine;
 
+public sealed class StorePurchaseResultRequest
+{
+    public string Title;
+    public string Message;
+    public string ConfirmButtonText = "Aceptar";
+    public Sprite Icon;
+    public bool PlaySuccessAudio;
+}
+
 public static class UIEvents
 {
     #region PANEL NAVIGATION EVENTS
@@ -154,6 +163,7 @@ public static class UIEvents
     public static event Action OnShowStoreModalRequested;
     public static event Action OnHideStoreModalRequested;
     public static event Action OnToggleStoreModalRequested;
+    public static event Action<StorePurchaseResultRequest> OnStorePurchaseResultRequested;
 
     public static event Action OnShowVictoryModalRequested;
     public static event Action OnHideVictoryModalRequested;
@@ -314,6 +324,11 @@ public static class UIEvents
     public static void RequestToggleStoreModal()
     {
         OnToggleStoreModalRequested?.Invoke();
+    }
+
+    public static void RequestShowStorePurchaseResult(StorePurchaseResultRequest request)
+    {
+        OnStorePurchaseResultRequested?.Invoke(request);
     }
 
     public static void RequestShowVictoryModal()
@@ -601,6 +616,7 @@ public static class UIEvents
         OnShowStoreModalRequested = null;
         OnHideStoreModalRequested = null;
         OnToggleStoreModalRequested = null;
+        OnStorePurchaseResultRequested = null;
         OnShowVictoryModalRequested = null;
         OnHideVictoryModalRequested = null;
         OnToggleVictoryModalRequested = null;

@@ -34,6 +34,8 @@ public class StoreService : MonoBehaviourSingleton<StoreService>
 
         IAPManager.Instance.OnPurchaseCompleted -= OnPurchaseCompletedFallback;
         IAPManager.Instance.OnPurchaseCompleted += OnPurchaseCompletedFallback;
+        IAPManager.Instance.OnPurchaseFailedEvent -= OnPurchaseFailed;
+        IAPManager.Instance.OnPurchaseFailedEvent += OnPurchaseFailed;
     }
 
     private void OnDisable()
@@ -42,6 +44,7 @@ public class StoreService : MonoBehaviourSingleton<StoreService>
 
         IAPManager.Instance.OnIAPInitialized -= RegisterAll;
         IAPManager.Instance.OnPurchaseCompleted -= OnPurchaseCompletedFallback;
+        IAPManager.Instance.OnPurchaseFailedEvent -= OnPurchaseFailed;
     }
 
     private void OnDestroy()
@@ -52,6 +55,7 @@ public class StoreService : MonoBehaviourSingleton<StoreService>
 
         IAPManager.Instance.OnIAPInitialized -= RegisterAll;
         IAPManager.Instance.OnPurchaseCompleted -= OnPurchaseCompletedFallback;
+        IAPManager.Instance.OnPurchaseFailedEvent -= OnPurchaseFailed;
         UnregisterAll();
     }
 
@@ -83,6 +87,8 @@ public class StoreService : MonoBehaviourSingleton<StoreService>
 
         IAPManager.Instance.OnPurchaseCompleted -= OnPurchaseCompletedFallback;
         IAPManager.Instance.OnPurchaseCompleted += OnPurchaseCompletedFallback;
+        IAPManager.Instance.OnPurchaseFailedEvent -= OnPurchaseFailed;
+        IAPManager.Instance.OnPurchaseFailedEvent += OnPurchaseFailed;
 
         RecoverPendingPurchase();
     }
@@ -131,8 +137,19 @@ public class StoreService : MonoBehaviourSingleton<StoreService>
 
         string transactionId = args.purchasedProduct.transactionID ?? "";
 
-        RewardService.Instance?.Grant(product);
-        TryRaisePurchaseFeedback(product, productId);
+        bool rewardGranted = TryGrantReward(product, out string rewardError);
+
+        if (rewardGranted)
+        {
+            TryRaisePurchaseFeedback(product, productId);
+            UIEvents.RequestShowStorePurchaseResult(BuildSuccessResult(product));
+        }
+        else
+        {
+            Debug.LogError($"[StoreService] Purchase completed but reward application failed for '{productId}': {rewardError}");
+            UIEvents.RequestShowStorePurchaseResult(BuildRewardApplicationFailedResult(product));
+        }
+
         ClearPendingVisualFeedback();
         ClearPendingPurchase();
 
@@ -210,6 +227,7 @@ public class StoreService : MonoBehaviourSingleton<StoreService>
         if (product == null)
         {
             Debug.LogWarning($"[StoreService] Buy requested for unknown product id '{productId}'.");
+            UIEvents.RequestShowStorePurchaseResult(BuildUnavailableResult(null));
             return;
         }
 
@@ -218,6 +236,19 @@ public class StoreService : MonoBehaviourSingleton<StoreService>
             SaveManager.Instance != null &&
             SaveManager.Instance.GetAdsRemoved())
         {
+            return;
+        }
+
+        if (IAPManager.Instance == null || !IAPManager.Instance.IsInitialized)
+        {
+            UIEvents.RequestShowStorePurchaseResult(BuildUnavailableResult(product));
+            return;
+        }
+
+        Product storeProduct = IAPManager.Instance.GetProduct(resolvedProductId);
+        if (storeProduct == null || !storeProduct.availableToPurchase)
+        {
+            UIEvents.RequestShowStorePurchaseResult(BuildUnavailableResult(product));
             return;
         }
 
@@ -340,5 +371,119 @@ public class StoreService : MonoBehaviourSingleton<StoreService>
     {
         _pendingVisualProductId = null;
         _pendingRewardFeedbackOrigin = null;
+    }
+
+    private void OnPurchaseFailed(string productId, string reason)
+    {
+        StoreProductDefinition product = _catalog?.GetByProductId(productId);
+        StorePurchaseResultRequest request = IsCancelledPurchase(reason)
+            ? BuildCancelledResult(product)
+            : BuildFailedResult(product);
+
+        UIEvents.RequestShowStorePurchaseResult(request);
+        ClearPendingVisualFeedback();
+    }
+
+    private static bool IsCancelledPurchase(string reason)
+    {
+        return !string.IsNullOrWhiteSpace(reason) &&
+               reason.IndexOf("UserCancelled", StringComparison.OrdinalIgnoreCase) >= 0;
+    }
+
+    private static bool TryGrantReward(StoreProductDefinition product, out string error)
+    {
+        error = null;
+
+        if (product == null)
+        {
+            error = "Product definition is null.";
+            return false;
+        }
+
+        if (RewardService.Instance == null)
+        {
+            error = "RewardService instance is not available.";
+            return false;
+        }
+
+        try
+        {
+            RewardService.Instance.Grant(product);
+            return true;
+        }
+        catch (Exception exception)
+        {
+            error = exception.Message;
+            return false;
+        }
+    }
+
+    private static StorePurchaseResultRequest BuildSuccessResult(StoreProductDefinition product)
+    {
+        return new StorePurchaseResultRequest
+        {
+            Title = "Compra completada",
+            Message = BuildSuccessMessage(product),
+            ConfirmButtonText = "Aceptar",
+            Icon = product != null ? product.ConfirmationIcon : null,
+            PlaySuccessAudio = true
+        };
+    }
+
+    private static StorePurchaseResultRequest BuildCancelledResult(StoreProductDefinition product)
+    {
+        return new StorePurchaseResultRequest
+        {
+            Title = "Compra cancelada",
+            Message = "Compra cancelada.",
+            ConfirmButtonText = "Aceptar",
+            Icon = product != null ? product.ConfirmationIcon : null
+        };
+    }
+
+    private static StorePurchaseResultRequest BuildFailedResult(StoreProductDefinition product)
+    {
+        return new StorePurchaseResultRequest
+        {
+            Title = "Error de compra",
+            Message = "No se pudo completar la compra.",
+            ConfirmButtonText = "Aceptar",
+            Icon = product != null ? product.ConfirmationIcon : null
+        };
+    }
+
+    private static StorePurchaseResultRequest BuildUnavailableResult(StoreProductDefinition product)
+    {
+        return new StorePurchaseResultRequest
+        {
+            Title = "Producto no disponible",
+            Message = "Producto no disponible.",
+            ConfirmButtonText = "Aceptar",
+            Icon = product != null ? product.ConfirmationIcon : null
+        };
+    }
+
+    private static StorePurchaseResultRequest BuildRewardApplicationFailedResult(StoreProductDefinition product)
+    {
+        return new StorePurchaseResultRequest
+        {
+            Title = "Error al aplicar compra",
+            Message = "La compra se completó, pero no se pudo aplicar la recompensa.",
+            ConfirmButtonText = "Aceptar",
+            Icon = product != null ? product.ConfirmationIcon : null
+        };
+    }
+
+    private static string BuildSuccessMessage(StoreProductDefinition product)
+    {
+        if (product == null)
+            return "Se agregaron tus recompensas.";
+
+        return product.rewardType switch
+        {
+            RewardType.Coins when product.coinAmount > 0 => $"Se agregaron {product.coinAmount} monedas.",
+            RewardType.RemoveAds => "Los anuncios intersticiales fueron eliminados.",
+            _ => "Se agregaron tus recompensas."
+        };
     }
 }

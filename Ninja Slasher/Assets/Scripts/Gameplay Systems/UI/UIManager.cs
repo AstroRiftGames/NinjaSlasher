@@ -30,6 +30,7 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
     [SerializeField] private DailyWheelModal _dailyWheelModal;
     [SerializeField] private StoreModal _storeModal;
     [SerializeField] private VictoryModal _victoryModal;
+    [SerializeField] private StorePurchaseConfirmationPopUp _storePurchasePopUp;
 
     [Header("HUD")]
     [SerializeField] private GameplayHUD _gameplayHUD;
@@ -117,6 +118,7 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
         _gameplayUIManager = GetComponent<GameplayUIManager>();
         _preGameUIManager = GetComponent<PreGameUIManager>();
         _sceneTransitionManager = GetComponentInChildren<SceneTransitionManager>(true);
+        _storePurchasePopUp = GetComponentInChildren<StorePurchaseConfirmationPopUp>(true);
         ResolveTutorialOverlay();
 
         if (_buttonManager == null)
@@ -261,6 +263,7 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
         UIEvents.OnShowStoreModalRequested += ShowStoreModal;
         UIEvents.OnHideStoreModalRequested += HideStoreModal;
         UIEvents.OnToggleStoreModalRequested += ToggleStoreModal;
+        UIEvents.OnStorePurchaseResultRequested += ShowStorePurchaseResult;
 
         UIEvents.OnShowVictoryModalRequested += ShowVictoryModal;
         UIEvents.OnHideVictoryModalRequested += HideVictoryModal;
@@ -325,6 +328,7 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
         UIEvents.OnShowStoreModalRequested -= ShowStoreModal;
         UIEvents.OnHideStoreModalRequested -= HideStoreModal;
         UIEvents.OnToggleStoreModalRequested -= ToggleStoreModal;
+        UIEvents.OnStorePurchaseResultRequested -= ShowStorePurchaseResult;
 
         UIEvents.OnShowVictoryModalRequested -= ShowVictoryModal;
         UIEvents.OnHideVictoryModalRequested -= HideVictoryModal;
@@ -491,6 +495,23 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
     private void ShowStoreModal() => RequestOpenModal(_storeModal);
     private void HideStoreModal() => CloseModal(_storeModal);
     private void ToggleStoreModal() => ToggleModal(_storeModal);
+
+    private void ShowStorePurchaseResult(StorePurchaseResultRequest request)
+    {
+        if (request == null)
+            return;
+
+        if (_storePurchasePopUp == null)
+            _storePurchasePopUp = GetComponentInChildren<StorePurchaseConfirmationPopUp>(true);
+
+        if (_storePurchasePopUp == null)
+        {
+            Debug.LogWarning("[UIManager] StorePurchaseConfirmationPopUp not found for purchase result feedback.");
+            return;
+        }
+
+        _storePurchasePopUp.ShowResult(request);
+    }
 
     private void ShowVictoryModal()
     {
