@@ -603,6 +603,21 @@ public class LevelsScreen : UIScreenBase
 
     private bool IsFirstTimeWelcomeActive()
     {
+        bool hasSeen = false;
+        if (SaveManager.Instance != null && SaveManager.Instance.IsDataLoaded)
+        {
+            var data = SaveManager.Instance.GetGameData();
+            if (data != null)
+            {
+                hasSeen = data.hasSeenFirstTimeWelcome;
+            }
+        }
+        
+        if (hasSeen)
+        {
+            return false;
+        }
+
         FirstTimeWelcomeView welcomeView = GetComponentInChildren<FirstTimeWelcomeView>(false);
         return welcomeView != null && welcomeView.IsShowing;
     }

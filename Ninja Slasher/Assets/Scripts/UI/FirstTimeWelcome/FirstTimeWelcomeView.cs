@@ -52,7 +52,27 @@ public sealed class FirstTimeWelcomeView : UIOverlayBase
     private bool _isSubmitting;
     private bool _isShowing;
 
-    public bool IsShowing => _isShowing && gameObject.activeInHierarchy;
+    public bool IsShowing
+    {
+        get
+        {
+            bool hasSeen = false;
+            if (SaveManager.Instance != null && SaveManager.Instance.IsDataLoaded)
+            {
+                var data = SaveManager.Instance.GetGameData();
+                if (data != null)
+                {
+                    hasSeen = data.hasSeenFirstTimeWelcome;
+                }
+            }
+            if (hasSeen)
+            {
+                _isShowing = false;
+                return false;
+            }
+            return _isShowing && gameObject.activeInHierarchy;
+        }
+    }
 
     public event Action NextRequested;
     public event Action SkipRequested;
@@ -135,6 +155,22 @@ public sealed class FirstTimeWelcomeView : UIOverlayBase
 
     public override void Show()
     {
+        bool hasSeen = false;
+        if (SaveManager.Instance != null && SaveManager.Instance.IsDataLoaded)
+        {
+            var data = SaveManager.Instance.GetGameData();
+            if (data != null)
+            {
+                hasSeen = data.hasSeenFirstTimeWelcome;
+            }
+        }
+        if (hasSeen)
+        {
+            _isShowing = false;
+            gameObject.SetActive(false);
+            return;
+        }
+
         _isShowing = true;
         ConfigureInteractionLayers();
         base.Show();
