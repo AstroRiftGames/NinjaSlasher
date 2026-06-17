@@ -157,7 +157,7 @@ public class NoLivesModal : UIModalBase
         int minutes = timeUntilNextLife.Minutes;
         int seconds = timeUntilNextLife.Seconds;
 
-        _timerText.text = $"Próxima vida en: {minutes:00}:{seconds:00}";
+        _timerText.text = $"{minutes:00}:{seconds:00}";
     }
 
     private void UpdateButtons()
