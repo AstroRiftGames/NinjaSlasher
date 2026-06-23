@@ -1,13 +1,26 @@
 using System;
 using UnityEngine;
 
+public enum StorePurchaseResultType
+{
+    Success,
+    Cancelled,
+    Failed,
+    Unavailable,
+    ApplyRewardFailed
+}
+
 public sealed class StorePurchaseResultRequest
 {
+    public string ProductId;
+    public StorePurchaseResultType ResultType;
     public string Title;
     public string Message;
     public string ConfirmButtonText = "Aceptar";
     public Sprite Icon;
     public bool PlaySuccessAudio;
+
+    public bool IsNonSuccessDismissable => ResultType != StorePurchaseResultType.Success;
 }
 
 public static class UIEvents
@@ -164,6 +177,7 @@ public static class UIEvents
     public static event Action OnHideStoreModalRequested;
     public static event Action OnToggleStoreModalRequested;
     public static event Action<StorePurchaseResultRequest> OnStorePurchaseResultRequested;
+    public static event Action<StorePurchaseResultRequest> OnStorePurchaseResultDismissed;
 
     public static event Action OnShowVictoryModalRequested;
     public static event Action OnHideVictoryModalRequested;
@@ -329,6 +343,11 @@ public static class UIEvents
     public static void RequestShowStorePurchaseResult(StorePurchaseResultRequest request)
     {
         OnStorePurchaseResultRequested?.Invoke(request);
+    }
+
+    public static void RaiseStorePurchaseResultDismissed(StorePurchaseResultRequest request)
+    {
+        OnStorePurchaseResultDismissed?.Invoke(request);
     }
 
     public static void RequestShowVictoryModal()
@@ -617,6 +636,7 @@ public static class UIEvents
         OnHideStoreModalRequested = null;
         OnToggleStoreModalRequested = null;
         OnStorePurchaseResultRequested = null;
+        OnStorePurchaseResultDismissed = null;
         OnShowVictoryModalRequested = null;
         OnHideVictoryModalRequested = null;
         OnToggleVictoryModalRequested = null;

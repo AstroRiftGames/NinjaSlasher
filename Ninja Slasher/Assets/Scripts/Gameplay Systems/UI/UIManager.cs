@@ -46,6 +46,7 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
 
     private readonly Queue<UIModalBase> _pendingModals = new Queue<UIModalBase>();
     private Coroutine _modalQueueRoutine;
+    private bool _isStorePurchasePopupHooked;
 
     public bool IsUIBusy => _uiRequestLock || _uiFlowRoutine != null || _modalQueueRoutine != null;
 
@@ -110,6 +111,7 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
         _pendingModals.Clear();
 
         _uiRequestLock = false;
+        UnhookStorePurchasePopup();
     }
 
     private void InitializeManagers()
@@ -119,6 +121,7 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
         _preGameUIManager = GetComponent<PreGameUIManager>();
         _sceneTransitionManager = GetComponentInChildren<SceneTransitionManager>(true);
         _storePurchasePopUp = GetComponentInChildren<StorePurchaseConfirmationPopUp>(true);
+        HookStorePurchasePopupIfNeeded();
         ResolveTutorialOverlay();
 
         if (_buttonManager == null)
@@ -177,9 +180,15 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
 
     private void HandleAndroidBack()
     {
+        if (_storePurchasePopUp != null && _storePurchasePopUp.IsVisible)
+        {
+            _storePurchasePopUp.TryHandleBack();
+            return;
+        }
+
         if (_emergencyBundleModal != null && _emergencyBundleModal.IsVisible)
         {
-            UIEvents.RequestHideEmergencyBundleModal();
+            _emergencyBundleModal.TryHandleBack();
             return;
         }
 
@@ -264,6 +273,7 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
         UIEvents.OnHideStoreModalRequested += HideStoreModal;
         UIEvents.OnToggleStoreModalRequested += ToggleStoreModal;
         UIEvents.OnStorePurchaseResultRequested += ShowStorePurchaseResult;
+        UIEvents.OnStorePurchaseResultDismissed += OnStorePurchaseResultDismissed;
 
         UIEvents.OnShowVictoryModalRequested += ShowVictoryModal;
         UIEvents.OnHideVictoryModalRequested += HideVictoryModal;
@@ -329,6 +339,7 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
         UIEvents.OnHideStoreModalRequested -= HideStoreModal;
         UIEvents.OnToggleStoreModalRequested -= ToggleStoreModal;
         UIEvents.OnStorePurchaseResultRequested -= ShowStorePurchaseResult;
+        UIEvents.OnStorePurchaseResultDismissed -= OnStorePurchaseResultDismissed;
 
         UIEvents.OnShowVictoryModalRequested -= ShowVictoryModal;
         UIEvents.OnHideVictoryModalRequested -= HideVictoryModal;
@@ -423,7 +434,7 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
             && _uiFlowRoutine == null
             && _modalQueueRoutine == null
             && _pendingModals.Count == 0
-            && !HasActiveOrTransitioningMainModal();
+            && !HasBlockingTopLevelSurface();
     }
 
     #endregion
@@ -459,7 +470,22 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
         RequestOpenModal(_emergencyBundleModal);
     }
 
-    private void HideEmergencyBundleModal() => CloseModal(_emergencyBundleModal);
+    private void HideEmergencyBundleModal()
+    {
+        if (_emergencyBundleModal == null)
+            return;
+
+        if (EmergencyBundleService.Instance == null || !EmergencyBundleService.Instance.HasActiveOffer)
+        {
+            CloseModal(_emergencyBundleModal);
+            return;
+        }
+
+        if (_emergencyBundleModal.IsVisible && !_emergencyBundleModal.TryDismiss())
+            return;
+
+        CloseModal(_emergencyBundleModal);
+    }
 
     private void ShowCreditsModal() => RequestOpenModal(_creditsModal);
     private void HideCreditsModal() => CloseModal(_creditsModal);
@@ -513,13 +539,33 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
         if (_storePurchasePopUp == null)
             _storePurchasePopUp = GetComponentInChildren<StorePurchaseConfirmationPopUp>(true);
 
+        HookStorePurchasePopupIfNeeded();
+
         if (_storePurchasePopUp == null)
         {
             Debug.LogWarning("[UIManager] StorePurchaseConfirmationPopUp not found for purchase result feedback.");
             return;
         }
 
+        if (_emergencyBundleModal != null &&
+            _emergencyBundleModal.IsVisible &&
+            _emergencyBundleModal.IsShowingProduct(request.ProductId))
+        {
+            _emergencyBundleModal.PrepareForPurchaseResultClose();
+            CloseModal(_emergencyBundleModal);
+        }
+
         _storePurchasePopUp.ShowResult(request);
+    }
+
+    private void OnStorePurchaseResultDismissed(StorePurchaseResultRequest _)
+    {
+        TryProcessQueuedModalAfterBlockingSurfaceCleared();
+    }
+
+    private void OnStorePurchasePopupHiddenCompleted(UIPopupBase _)
+    {
+        TryProcessQueuedModalAfterBlockingSurfaceCleared();
     }
 
     private void ShowVictoryModal()
@@ -766,7 +812,7 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
         if (_uiRequestLock) return;
         if (modal.IsVisible || modal.IsOpening || IsModalAlreadyQueued(modal)) return;
 
-        if (HasActiveOrTransitioningMainModal())
+        if (HasBlockingTopLevelSurface())
         {
             _pendingModals.Enqueue(modal);
             return;
@@ -790,6 +836,37 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
         return false;
     }
 
+    private bool HasBlockingTopLevelSurface()
+    {
+        return HasActiveOrTransitioningMainModal() || IsStorePurchasePopupActive();
+    }
+
+    private bool IsStorePurchasePopupActive()
+    {
+        return _storePurchasePopUp != null && _storePurchasePopUp.IsActiveOrTransitioning;
+    }
+
+    private void HookStorePurchasePopupIfNeeded()
+    {
+        if (_isStorePurchasePopupHooked || _storePurchasePopUp == null)
+            return;
+
+        _storePurchasePopUp.HiddenCompleted += OnStorePurchasePopupHiddenCompleted;
+        _isStorePurchasePopupHooked = true;
+    }
+
+    private void UnhookStorePurchasePopup()
+    {
+        if (!_isStorePurchasePopupHooked || _storePurchasePopUp == null)
+        {
+            _isStorePurchasePopupHooked = false;
+            return;
+        }
+
+        _storePurchasePopUp.HiddenCompleted -= OnStorePurchasePopupHiddenCompleted;
+        _isStorePurchasePopupHooked = false;
+    }
+
     private bool IsModalAlreadyQueued(UIModalBase modal)
     {
         foreach (UIModalBase queued in _pendingModals)
@@ -809,10 +886,7 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
     {
         modal.HiddenCompleted -= OnModalHiddenCompleted;
 
-        if (_pendingModals.Count > 0 && _modalQueueRoutine == null && !_uiRequestLock)
-        {
-            _modalQueueRoutine = StartCoroutine(ProcessNextModalRoutine());
-        }
+        TryProcessQueuedModalAfterBlockingSurfaceCleared();
     }
 
     private IEnumerator ProcessNextModalRoutine()
@@ -824,11 +898,22 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
         if (_pendingModals.Count == 0)
             yield break;
 
-        if (HasActiveOrTransitioningMainModal())
+        if (HasBlockingTopLevelSurface())
             yield break;
 
         UIModalBase next = _pendingModals.Dequeue();
         OpenModalNow(next);
+    }
+
+    private void TryProcessQueuedModalAfterBlockingSurfaceCleared()
+    {
+        if (_pendingModals.Count == 0 || _modalQueueRoutine != null || _uiRequestLock)
+            return;
+
+        if (HasBlockingTopLevelSurface())
+            return;
+
+        _modalQueueRoutine = StartCoroutine(ProcessNextModalRoutine());
     }
 
     private bool ShouldIgnoreUIRequest()

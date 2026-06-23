@@ -1,15 +1,45 @@
 using System;
 using System.Collections.Generic;
+using System.Security.Cryptography;
+using System.Text;
 using UnityEngine;
 using Unity.Services.Core;
 using UnityEngine.Purchasing;
 using UnityEngine.Purchasing.Security;
 using System.Threading.Tasks;
 
+public static class PurchaseDedupeKeyUtility
+{
+    public static bool TryBuild(string transactionId, string receipt, out string dedupeKey)
+    {
+        if (!string.IsNullOrWhiteSpace(transactionId))
+        {
+            dedupeKey = $"tx:{transactionId}";
+            return true;
+        }
+
+        if (string.IsNullOrWhiteSpace(receipt))
+        {
+            dedupeKey = null;
+            return false;
+        }
+
+        using SHA256 sha256 = SHA256.Create();
+        byte[] hashBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(receipt));
+        StringBuilder builder = new StringBuilder(hashBytes.Length * 2 + 8);
+        builder.Append("rcpt:");
+        for (int i = 0; i < hashBytes.Length; i++)
+            builder.Append(hashBytes[i].ToString("x2"));
+
+        dedupeKey = builder.ToString();
+        return true;
+    }
+}
+
 public class IAPManager : MonoBehaviourSingleton<IAPManager>, IDetailedStoreListener
 {
     public event Action<string> OnPurchaseCompleted;
-    public event Action<string, string> OnPurchaseFailedEvent;
+    public event Action<string, PurchaseFailureReason> OnPurchaseFailedEvent;
     public event Action OnIAPInitialized;
     public event Action<string> OnIAPInitializationFailed;
 
@@ -19,7 +49,7 @@ public class IAPManager : MonoBehaviourSingleton<IAPManager>, IDetailedStoreList
     private bool _isInitializing = false;
     private PurchaseState _purchaseState = PurchaseState.Idle;
 
-    private readonly Dictionary<string, Action<PurchaseEventArgs>> _purchaseHandlers = new();
+    private readonly Dictionary<string, Func<PurchaseEventArgs, StorePurchaseProcessingResult>> _purchaseHandlers = new();
     private HashSet<string> _processedTransactions = new();
     public bool IsInitialized => _isInitialized;
     public PurchaseState PurchaseState => _purchaseState;
@@ -109,7 +139,7 @@ public class IAPManager : MonoBehaviourSingleton<IAPManager>, IDetailedStoreList
         OnIAPInitializationFailed?.Invoke(msg);
     }
 
-    public void RegisterPurchaseHandler(string productId, Action<PurchaseEventArgs> handler)
+    public void RegisterPurchaseHandler(string productId, Func<PurchaseEventArgs, StorePurchaseProcessingResult> handler)
     {
         _purchaseHandlers[productId] = handler;
     }
@@ -124,41 +154,59 @@ public class IAPManager : MonoBehaviourSingleton<IAPManager>, IDetailedStoreList
         var product = purchaseEvent.purchasedProduct;
         var productId = product.definition.id;
         var transactionId = product.transactionID;
+        var receipt = product.receipt;
+        PurchaseDedupeKeyUtility.TryBuild(transactionId, receipt, out string callbackDedupeKey);
 
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-        Debug.Log($"[IAPManager] ProcessPurchase: '{productId}' | tx={transactionId}");
-#endif
+        Debug.Log($"[IAPManager] ProcessPurchase received | productId='{productId}' | tx='{transactionId}' | hasReceipt={!string.IsNullOrEmpty(receipt)} | dedupeKey='{callbackDedupeKey}'");
 
-        if (_processedTransactions.Contains(transactionId))
+        if (!string.IsNullOrWhiteSpace(callbackDedupeKey) && _processedTransactions.Contains(callbackDedupeKey))
         {
-            Debug.LogWarning($"[IAPManager] Duplicate transaction ignored: {transactionId}");
+            Debug.LogWarning($"[IAPManager] Duplicate purchase ignored in-session: '{callbackDedupeKey}'");
             return PurchaseProcessingResult.Complete;
         }
-
-        _processedTransactions.Add(transactionId);
 
 #if UNITY_ANDROID && !UNITY_EDITOR
         if (!ValidateReceipt(purchaseEvent))
         {
             Debug.LogWarning($"[IAPManager] Receipt validation failed. Purchase blocked: '{productId}'");
             _purchaseState = PurchaseState.Idle;
-            SaveManager.Instance?.Modify(d => d.pendingPurchaseProductId = "");
+            SaveManager.Instance?.ClearPendingPurchaseProductId();
             return PurchaseProcessingResult.Complete;
         }
 #endif
 
+        StorePurchaseProcessingResult processingResult;
+
         if (_purchaseHandlers.TryGetValue(productId, out var handler))
         {
-            handler.Invoke(purchaseEvent);
+            processingResult = handler.Invoke(purchaseEvent);
         }
         else
         {
             OnPurchaseCompleted?.Invoke(productId);
+            processingResult = StorePurchaseProcessingResult.RejectAndComplete($"No registered purchase handler for '{productId}'.");
         }
 
-        _purchaseState = PurchaseState.Idle;
+        switch (processingResult.Decision)
+        {
+            case StorePurchaseProcessingDecision.Complete:
+                if (!string.IsNullOrWhiteSpace(processingResult.ProcessedPurchaseKey))
+                {
+                    _processedTransactions.Add(processingResult.ProcessedPurchaseKey);
+                    Debug.Log($"[IAPManager] Purchase completed durably | key='{processingResult.ProcessedPurchaseKey}'");
+                }
+                _purchaseState = PurchaseState.Idle;
+                return PurchaseProcessingResult.Complete;
 
-        return PurchaseProcessingResult.Complete;
+            case StorePurchaseProcessingDecision.Pending:
+                Debug.LogWarning($"[IAPManager] Purchase kept pending until durable persistence succeeds | productId='{productId}' | key='{processingResult.ProcessedPurchaseKey}'");
+                return PurchaseProcessingResult.Pending;
+
+            default:
+                _purchaseState = PurchaseState.Idle;
+                Debug.LogWarning($"[IAPManager] Purchase callback rejected and completed | productId='{productId}' | reason='{processingResult.Message}'");
+                return PurchaseProcessingResult.Complete;
+        }
     }
 
 #if UNITY_ANDROID && !UNITY_EDITOR
@@ -193,9 +241,9 @@ public class IAPManager : MonoBehaviourSingleton<IAPManager>, IDetailedStoreList
     public void OnPurchaseFailed(Product product, PurchaseFailureReason failureReason)
     {
         _purchaseState = PurchaseState.Idle;
-        SaveManager.Instance?.Modify(d => d.pendingPurchaseProductId = "");
-        Debug.LogError($"[IAPManager] Purchase failed: {product.definition.id}, reason: {failureReason}");
-        OnPurchaseFailedEvent?.Invoke(product.definition.id, failureReason.ToString());
+        SaveManager.Instance?.ClearPendingPurchaseProductId();
+        Debug.LogWarning($"[IAPManager] Purchase failed callback | productId='{product.definition.id}' | reason={failureReason}");
+        OnPurchaseFailedEvent?.Invoke(product.definition.id, failureReason);
         AnalyticsManager.Instance?.RecordPurchaseFailed(product.definition.id, failureReason.ToString());
     }
 
@@ -204,37 +252,34 @@ public class IAPManager : MonoBehaviourSingleton<IAPManager>, IDetailedStoreList
         OnPurchaseFailed(product, failureDescription.reason);
     }
 
-    public void PurchaseProduct(string productId)
+    public PurchaseStartResult PurchaseProduct(string productId)
     {
         if (_purchaseState == PurchaseState.Processing)
         {
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
             Debug.LogWarning($"[IAPManager] Purchase already in progress. Ignoring request for '{productId}'.");
 #endif
-            return;
+            return PurchaseStartResult.AlreadyProcessing;
         }
 
         if (!_isInitialized)
         {
             Debug.LogWarning($"[IAPManager] Purchase requested before initialization for '{productId}'.");
-            return;
+            return PurchaseStartResult.NotInitialized;
         }
 
         var product = _storeController.products.WithID(productId);
 
         if (product != null && product.availableToPurchase)
         {
-            var data = SaveManager.Instance.GetGameData();
-            data.pendingPurchaseProductId = productId;
-            SaveManager.Instance.SaveData();
-
             _purchaseState = PurchaseState.Processing;
+            Debug.Log($"[IAPManager] Initiating purchase | productId='{productId}'");
             _storeController.InitiatePurchase(product);
+            return PurchaseStartResult.Started;
         }
-        else
-        {
-            Debug.LogWarning($"[IAPManager] Product '{productId}' is missing from the store response or not available to purchase.");
-        }
+
+        Debug.LogWarning($"[IAPManager] Product '{productId}' is missing from the store response or not available to purchase.");
+        return PurchaseStartResult.ProductUnavailable;
     }
 
     public Product GetProduct(string productId)

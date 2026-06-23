@@ -44,3 +44,11 @@ public enum BundleTier { Small, Medium, Large }
 public enum RewardType { Bundle, Coins, RemoveAds }
 
 public enum PurchaseState { Idle, Processing, Completed, Failed }
+
+public enum PurchaseStartResult
+{
+    Started,
+    AlreadyProcessing,
+    NotInitialized,
+    ProductUnavailable
+}

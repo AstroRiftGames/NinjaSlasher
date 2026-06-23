@@ -8,14 +8,20 @@ public class EmergencyBundleService : MonoBehaviourSingleton<EmergencyBundleServ
     private StoreProductDefinition _activeProduct;
     private BundleTier             _activeTier;
     private bool                   _offerActive;
+    private bool                   _purchasePending;
+    private bool                   _awaitingPurchaseResultDismiss;
+    private bool                   _resumeGameplayFlowAfterResultDismiss;
+    private string                 _pendingResultProductId;
 
     public bool HasActiveOffer => _offerActive;
+    public bool IsPurchasePending => _purchasePending;
 
     private void OnEnable()
     {
         GameEvents.OnLevelFailed    += OnLevelFailed;
         GameEvents.OnLevelCompleted += OnLevelCompleted;
         GameEvents.OnRewardGranted  += OnRewardGranted;
+        UIEvents.OnStorePurchaseResultDismissed += OnStorePurchaseResultDismissed;
     }
 
     private void OnDisable()
@@ -23,24 +29,67 @@ public class EmergencyBundleService : MonoBehaviourSingleton<EmergencyBundleServ
         GameEvents.OnLevelFailed    -= OnLevelFailed;
         GameEvents.OnLevelCompleted -= OnLevelCompleted;
         GameEvents.OnRewardGranted  -= OnRewardGranted;
+        UIEvents.OnStorePurchaseResultDismissed -= OnStorePurchaseResultDismissed;
     }
 
     public void OnOfferDismissed()
     {
-        if (!_offerActive) return;
+        if (!_offerActive || _purchasePending) return;
         CloseOffer(PaywallOutcome.Dismissed);
     }
 
     public void OnOfferExpired()
     {
-        if (!_offerActive) return;
+        if (!_offerActive || _purchasePending) return;
         CloseOffer(PaywallOutcome.Expired);
     }
 
     public void OnOfferClosedForTransition()
     {
-        if (!_offerActive) return;
+        if (!_offerActive || _purchasePending || _awaitingPurchaseResultDismiss) return;
         ClearActiveOffer();
+    }
+
+    public bool TryBeginPurchase(string productId)
+    {
+        if (!_offerActive || _activeProduct == null || _purchasePending)
+            return false;
+
+        if (!IsTrackedProduct(productId))
+            return false;
+
+        _purchasePending = true;
+        _awaitingPurchaseResultDismiss = false;
+        _resumeGameplayFlowAfterResultDismiss = false;
+        _pendingResultProductId = null;
+        return true;
+    }
+
+    public void OnStorePurchaseResultShown(StorePurchaseResultRequest request)
+    {
+        if (request == null || !_offerActive || !IsTrackedProduct(request.ProductId))
+            return;
+
+        _purchasePending = false;
+        _pendingResultProductId = request.ProductId;
+
+        switch (request.ResultType)
+        {
+            case StorePurchaseResultType.Cancelled:
+            case StorePurchaseResultType.Failed:
+            case StorePurchaseResultType.Unavailable:
+                _awaitingPurchaseResultDismiss = true;
+                _resumeGameplayFlowAfterResultDismiss = true;
+                break;
+            case StorePurchaseResultType.ApplyRewardFailed:
+                _awaitingPurchaseResultDismiss = true;
+                _resumeGameplayFlowAfterResultDismiss = false;
+                break;
+            default:
+                _awaitingPurchaseResultDismiss = false;
+                _resumeGameplayFlowAfterResultDismiss = false;
+                break;
+        }
     }
 
     private void OnLevelFailed(LevelFailedContext ctx)
@@ -109,6 +158,10 @@ public class EmergencyBundleService : MonoBehaviourSingleton<EmergencyBundleServ
 #endif
 
         AutoSaveManager.Instance?.OnEmergencyBundleActivated();
+        _purchasePending = false;
+        _awaitingPurchaseResultDismiss = false;
+        _resumeGameplayFlowAfterResultDismiss = false;
+        _pendingResultProductId = null;
         CloseOffer(PaywallOutcome.Purchased);
     }
 
@@ -174,6 +227,32 @@ public class EmergencyBundleService : MonoBehaviourSingleton<EmergencyBundleServ
         _offerActive   = false;
         _activeProduct = null;
         _activeTier    = BundleTier.Small;
+        _purchasePending = false;
+        _awaitingPurchaseResultDismiss = false;
+        _resumeGameplayFlowAfterResultDismiss = false;
+        _pendingResultProductId = null;
+    }
+
+    private void OnStorePurchaseResultDismissed(StorePurchaseResultRequest request)
+    {
+        if (request == null || !_offerActive || !_awaitingPurchaseResultDismiss)
+            return;
+
+        if (!IsTrackedProduct(request.ProductId) || request.ProductId != _pendingResultProductId)
+            return;
+
+        bool shouldResumeGameplayFlow = _resumeGameplayFlowAfterResultDismiss;
+        ClearActiveOffer();
+
+        if (shouldResumeGameplayFlow)
+            ShowDefeatUI();
+    }
+
+    private bool IsTrackedProduct(string productId)
+    {
+        return _activeProduct != null &&
+               !string.IsNullOrEmpty(productId) &&
+               string.Equals(_activeProduct.PrimaryProductId, productId, System.StringComparison.Ordinal);
     }
 
     private static string BundleTierToString(BundleTier tier) => tier switch

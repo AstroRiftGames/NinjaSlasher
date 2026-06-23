@@ -137,12 +137,17 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
 
     public void SaveData()
     {
-        if (isSaving) return;
+        TrySaveData();
+    }
+
+    public bool TrySaveData()
+    {
+        if (isSaving) return false;
 
         if (gameData == null)
         {
             Debug.LogWarning("[SaveManager] Attempted to save null gameData");
-            return;
+            return false;
         }
 
         isSaving = true;
@@ -173,10 +178,12 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
                 File.Move(tempPath, saveFilePath);
 
             OnDataSaved?.Invoke(gameData);
+            return true;
         }
         catch (Exception e)
         {
             Debug.LogError($"[SaveManager] Failed to save data: {e.Message}");
+            return false;
         }
         finally
         {
@@ -233,6 +240,11 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
         if (gameData.tutorialStepIndices == null)
         {
             gameData.tutorialStepIndices = new Dictionary<string, int>();
+        }
+
+        if (gameData.grantedPurchaseTransactionIds == null)
+        {
+            gameData.grantedPurchaseTransactionIds = new List<string>();
         }
 
         RepairLifeDataIfNeeded();
@@ -695,10 +707,269 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
         SaveData();
     }
 
+    public bool HasGrantedPurchaseTransaction(string transactionId)
+    {
+        if (string.IsNullOrWhiteSpace(transactionId))
+            return false;
+
+        return GetGameData().grantedPurchaseTransactionIds.Contains(transactionId);
+    }
+
+    public void RecordGrantedPurchaseTransaction(string transactionId)
+    {
+        if (string.IsNullOrWhiteSpace(transactionId))
+            return;
+
+        var data = GetGameData();
+        data.grantedPurchaseTransactionIds ??= new List<string>();
+
+        if (data.grantedPurchaseTransactionIds.Contains(transactionId))
+            return;
+
+        data.grantedPurchaseTransactionIds.Add(transactionId);
+        SaveData();
+    }
+
+    public void ClearPendingPurchaseProductId()
+    {
+        var data = GetGameData();
+        if (string.IsNullOrEmpty(data.pendingPurchaseProductId))
+            return;
+
+        data.pendingPurchaseProductId = "";
+        SaveData();
+    }
+
+    public bool TryApplyIapGrant(StoreProductDefinition product, string purchaseKey, out IapGrantRuntimeEffects runtimeEffects, out string error)
+    {
+        runtimeEffects = default;
+        error = null;
+
+        if (product == null)
+        {
+            error = "Product definition is null.";
+            return false;
+        }
+
+        if (string.IsNullOrWhiteSpace(purchaseKey))
+        {
+            error = "Purchase key is required for durable IAP grant.";
+            return false;
+        }
+
+        GameData data = GetGameData();
+        data.grantedPurchaseTransactionIds ??= new List<string>();
+
+        if (data.grantedPurchaseTransactionIds.Contains(purchaseKey))
+        {
+            runtimeEffects = new IapGrantRuntimeEffects(false, false, false, false);
+            return true;
+        }
+
+        int previousCoins = data.coins;
+        bool previousAdsRemoved = data.adsRemoved;
+        int previousLives = data.currentLives;
+        string previousLifeRegenTime = data.lastLifeRegenTime;
+        bool previousCanRegenLives = data.canRegenLives;
+        long previousUnlimitedLivesStartUtc = data.unlimitedLivesStartUtc;
+        long previousUnlimitedLivesEndUtc = data.unlimitedLivesEndUtc;
+        string previousPendingPurchaseProductId = data.pendingPurchaseProductId;
+        List<PowerUpInventoryItem> previousPowerUpInventory = ClonePowerUpInventory(data.powerUpInventory);
+        List<string> previousGrantedPurchaseKeys = new List<string>(data.grantedPurchaseTransactionIds);
+
+        bool coinsChanged = false;
+        bool adsRemovedChanged = false;
+        bool powerUpsChanged = false;
+        bool livesChanged = false;
+
+        try
+        {
+            switch (product.rewardType)
+            {
+                case RewardType.Bundle:
+                    ApplyBundleIapGrant(data, product.bundleReward, ref coinsChanged, ref powerUpsChanged, ref livesChanged);
+                    break;
+
+                case RewardType.Coins:
+                    if (product.coinAmount > 0)
+                    {
+                        data.coins += product.coinAmount;
+                        coinsChanged = true;
+                    }
+                    break;
+
+                case RewardType.RemoveAds:
+                    if (!data.adsRemoved)
+                    {
+                        data.adsRemoved = true;
+                        adsRemovedChanged = true;
+                    }
+                    break;
+            }
+
+            data.grantedPurchaseTransactionIds.Add(purchaseKey);
+            data.pendingPurchaseProductId = "";
+
+            if (!TrySaveData())
+            {
+                RestoreFailedIapGrantState(
+                    data,
+                    previousCoins,
+                    previousAdsRemoved,
+                    previousLives,
+                    previousLifeRegenTime,
+                    previousCanRegenLives,
+                    previousUnlimitedLivesStartUtc,
+                    previousUnlimitedLivesEndUtc,
+                    previousPendingPurchaseProductId,
+                    previousPowerUpInventory,
+                    previousGrantedPurchaseKeys);
+
+                error = $"Failed to persist IAP grant for '{product.PrimaryProductId}'.";
+                return false;
+            }
+
+            runtimeEffects = new IapGrantRuntimeEffects(coinsChanged, adsRemovedChanged, powerUpsChanged, livesChanged);
+            return true;
+        }
+        catch (Exception exception)
+        {
+            RestoreFailedIapGrantState(
+                data,
+                previousCoins,
+                previousAdsRemoved,
+                previousLives,
+                previousLifeRegenTime,
+                previousCanRegenLives,
+                previousUnlimitedLivesStartUtc,
+                previousUnlimitedLivesEndUtc,
+                previousPendingPurchaseProductId,
+                previousPowerUpInventory,
+                previousGrantedPurchaseKeys);
+
+            error = exception.Message;
+            return false;
+        }
+    }
+
     public void SaveOnApplicationEvent()
     {
         if (_resetInProgress) return;
         SaveData();
+    }
+
+    private void ApplyBundleIapGrant(GameData data, BundleRewardData reward, ref bool coinsChanged, ref bool powerUpsChanged, ref bool livesChanged)
+    {
+        if (data == null || reward == null)
+            return;
+
+        if (reward.unlimitedLives && reward.unlimitedLivesDurationMinutes > 0f)
+        {
+            long nowUtc = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+            long currentEndUtc = data.unlimitedLivesEndUtc > nowUtc ? data.unlimitedLivesEndUtc : nowUtc;
+            long extendedEndUtc = currentEndUtc + Mathf.RoundToInt(reward.unlimitedLivesDurationMinutes * 60f);
+
+            data.unlimitedLivesStartUtc = nowUtc;
+            data.unlimitedLivesEndUtc = extendedEndUtc;
+            livesChanged = true;
+        }
+        else if (reward.regularLivesCount > 0)
+        {
+            int maxLives = GetConfiguredMaxLives();
+            int updatedLives = Mathf.Clamp(data.currentLives + reward.regularLivesCount, 0, maxLives);
+            if (updatedLives != data.currentLives)
+            {
+                data.currentLives = updatedLives;
+                if (updatedLives >= maxLives)
+                {
+                    data.lastLifeRegenTime = string.Empty;
+                    data.canRegenLives = false;
+                }
+
+                livesChanged = true;
+            }
+        }
+
+        if (reward.powerUps != null)
+        {
+            data.powerUpInventory ??= new List<PowerUpInventoryItem>();
+
+            foreach (var entry in reward.powerUps)
+            {
+                if (entry.quantity <= 0)
+                    continue;
+
+                PowerUpInventoryItem existingItem = data.powerUpInventory.Find(item => item.type == entry.type);
+                if (existingItem != null)
+                {
+                    existingItem.quantity += entry.quantity;
+                    existingItem.lastUpdated = DateTime.Now;
+                }
+                else
+                {
+                    data.powerUpInventory.Add(new PowerUpInventoryItem(entry.type, entry.quantity));
+                }
+
+                powerUpsChanged = true;
+            }
+        }
+
+        if (reward.coins > 0)
+        {
+            data.coins += reward.coins;
+            coinsChanged = true;
+        }
+    }
+
+    private static void RestoreFailedIapGrantState(
+        GameData data,
+        int previousCoins,
+        bool previousAdsRemoved,
+        int previousLives,
+        string previousLifeRegenTime,
+        bool previousCanRegenLives,
+        long previousUnlimitedLivesStartUtc,
+        long previousUnlimitedLivesEndUtc,
+        string previousPendingPurchaseProductId,
+        List<PowerUpInventoryItem> previousPowerUpInventory,
+        List<string> previousGrantedPurchaseKeys)
+    {
+        if (data == null)
+            return;
+
+        data.coins = previousCoins;
+        data.adsRemoved = previousAdsRemoved;
+        data.currentLives = previousLives;
+        data.lastLifeRegenTime = previousLifeRegenTime;
+        data.canRegenLives = previousCanRegenLives;
+        data.unlimitedLivesStartUtc = previousUnlimitedLivesStartUtc;
+        data.unlimitedLivesEndUtc = previousUnlimitedLivesEndUtc;
+        data.pendingPurchaseProductId = previousPendingPurchaseProductId;
+        data.powerUpInventory = ClonePowerUpInventory(previousPowerUpInventory);
+        data.grantedPurchaseTransactionIds = previousGrantedPurchaseKeys ?? new List<string>();
+    }
+
+    private static List<PowerUpInventoryItem> ClonePowerUpInventory(List<PowerUpInventoryItem> source)
+    {
+        List<PowerUpInventoryItem> clonedInventory = new List<PowerUpInventoryItem>();
+        if (source == null)
+            return clonedInventory;
+
+        for (int i = 0; i < source.Count; i++)
+        {
+            PowerUpInventoryItem item = source[i];
+            if (item == null)
+                continue;
+
+            clonedInventory.Add(new PowerUpInventoryItem
+            {
+                type = item.type,
+                quantity = item.quantity,
+                lastUpdated = item.lastUpdated
+            });
+        }
+
+        return clonedInventory;
     }
 
     private void InitializeLifeDataForNewSave()

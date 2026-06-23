@@ -85,6 +85,12 @@ public class GameData
     public string pendingPurchaseProductId = "";
 
     /// <summary>
+    /// Transaction ids de compras ya otorgadas. Evita grants duplicados de consumibles
+    /// cuando Unity IAP reenvia ProcessPurchase o la app se reinicia tras una compra real.
+    /// </summary>
+    public List<string> grantedPurchaseTransactionIds = new List<string>();
+
+    /// <summary>
     /// Unix epoch (segundos UTC) en que expiran las vidas ilimitadas.
     /// 0 = sin vidas ilimitadas activas.
     /// </summary>

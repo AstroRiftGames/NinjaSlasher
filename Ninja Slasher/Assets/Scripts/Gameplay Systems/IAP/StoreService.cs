@@ -2,6 +2,36 @@ using System;
 using UnityEngine;
 using UnityEngine.Purchasing;
 
+public enum StorePurchaseProcessingDecision
+{
+    Complete,
+    Pending,
+    RejectAndComplete
+}
+
+public readonly struct StorePurchaseProcessingResult
+{
+    public readonly StorePurchaseProcessingDecision Decision;
+    public readonly string ProcessedPurchaseKey;
+    public readonly string Message;
+
+    public StorePurchaseProcessingResult(StorePurchaseProcessingDecision decision, string processedPurchaseKey, string message)
+    {
+        Decision = decision;
+        ProcessedPurchaseKey = processedPurchaseKey;
+        Message = message;
+    }
+
+    public static StorePurchaseProcessingResult Complete(string processedPurchaseKey, string message = null)
+        => new StorePurchaseProcessingResult(StorePurchaseProcessingDecision.Complete, processedPurchaseKey, message);
+
+    public static StorePurchaseProcessingResult Pending(string processedPurchaseKey, string message)
+        => new StorePurchaseProcessingResult(StorePurchaseProcessingDecision.Pending, processedPurchaseKey, message);
+
+    public static StorePurchaseProcessingResult RejectAndComplete(string message)
+        => new StorePurchaseProcessingResult(StorePurchaseProcessingDecision.RejectAndComplete, null, message);
+}
+
 public class StoreService : MonoBehaviourSingleton<StoreService>
 {
     [SerializeField] private StoreCatalog _catalog;
@@ -32,8 +62,6 @@ public class StoreService : MonoBehaviourSingleton<StoreService>
             IAPManager.Instance.OnIAPInitialized += RegisterAll;
         }
 
-        IAPManager.Instance.OnPurchaseCompleted -= OnPurchaseCompletedFallback;
-        IAPManager.Instance.OnPurchaseCompleted += OnPurchaseCompletedFallback;
         IAPManager.Instance.OnPurchaseFailedEvent -= OnPurchaseFailed;
         IAPManager.Instance.OnPurchaseFailedEvent += OnPurchaseFailed;
     }
@@ -43,7 +71,6 @@ public class StoreService : MonoBehaviourSingleton<StoreService>
         if (IAPManager.Instance == null) return;
 
         IAPManager.Instance.OnIAPInitialized -= RegisterAll;
-        IAPManager.Instance.OnPurchaseCompleted -= OnPurchaseCompletedFallback;
         IAPManager.Instance.OnPurchaseFailedEvent -= OnPurchaseFailed;
     }
 
@@ -54,7 +81,6 @@ public class StoreService : MonoBehaviourSingleton<StoreService>
         if (IAPManager.Instance == null) return;
 
         IAPManager.Instance.OnIAPInitialized -= RegisterAll;
-        IAPManager.Instance.OnPurchaseCompleted -= OnPurchaseCompletedFallback;
         IAPManager.Instance.OnPurchaseFailedEvent -= OnPurchaseFailed;
         UnregisterAll();
     }
@@ -85,12 +111,10 @@ public class StoreService : MonoBehaviourSingleton<StoreService>
             IAPManager.Instance.Initialize(_catalog);
         }
 
-        IAPManager.Instance.OnPurchaseCompleted -= OnPurchaseCompletedFallback;
-        IAPManager.Instance.OnPurchaseCompleted += OnPurchaseCompletedFallback;
         IAPManager.Instance.OnPurchaseFailedEvent -= OnPurchaseFailed;
         IAPManager.Instance.OnPurchaseFailedEvent += OnPurchaseFailed;
 
-        RecoverPendingPurchase();
+        ClearStalePendingPurchaseRequest();
     }
 
     private void RegisterAll()
@@ -123,90 +147,56 @@ public class StoreService : MonoBehaviourSingleton<StoreService>
             IAPManager.Instance.UnregisterPurchaseHandler(id);
     }
 
-    private void OnPurchaseCompleted(PurchaseEventArgs args)
+    private StorePurchaseProcessingResult OnPurchaseCompleted(PurchaseEventArgs args)
     {
-        string productId = args.purchasedProduct.definition.id;
+        if (!TryValidateSuccessfulPurchase(args, out StoreProductDefinition product, out string productId, out string transactionId, out string dedupeKey, out string validationError))
+        {
+            Debug.LogError($"[StoreService] Purchase success callback rejected: {validationError}");
+            ShowPurchaseResult(BuildFailedResult(null));
+            ClearPendingVisualFeedback();
+            ClearPendingPurchase();
+            return StorePurchaseProcessingResult.RejectAndComplete(validationError);
+        }
 
-        var product = _catalog.GetByProductId(productId);
-        if (product == null)
-            return;
+        if (!string.IsNullOrWhiteSpace(dedupeKey) && SaveManager.Instance != null && SaveManager.Instance.HasGrantedPurchaseTransaction(dedupeKey))
+        {
+            Debug.LogWarning($"[StoreService] Duplicate purchase ignored across sessions: '{dedupeKey}' for '{productId}'.");
+            ClearPendingVisualFeedback();
+            ClearPendingPurchase();
+            return StorePurchaseProcessingResult.Complete(dedupeKey, "Purchase was already granted previously.");
+        }
 
         string source = (!string.IsNullOrEmpty(_pendingVisualProductId) && _pendingVisualProductId == productId)
             ? "shop"
             : "paywall";
 
-        string transactionId = args.purchasedProduct.transactionID ?? "";
-
-        bool rewardGranted = TryGrantReward(product, out string rewardError);
+        bool rewardGranted = TryGrantReward(product, productId, dedupeKey, out string rewardError);
 
         if (rewardGranted)
         {
             TryRaisePurchaseFeedback(product, productId);
-            UIEvents.RequestShowStorePurchaseResult(BuildSuccessResult(product));
-        }
-        else
-        {
-            Debug.LogError($"[StoreService] Purchase completed but reward application failed for '{productId}': {rewardError}");
-            UIEvents.RequestShowStorePurchaseResult(BuildRewardApplicationFailedResult(product));
+            ShowPurchaseResult(BuildSuccessResult(product));
+            AnalyticsManager.Instance?.RecordPurchaseCompleted(
+                productId,
+                AnalyticsManager.ProductCategoryStr(product.category),
+                source,
+                transactionId
+            );
+
+            ClearPendingVisualFeedback();
+            ClearPendingPurchase();
+            return StorePurchaseProcessingResult.Complete(dedupeKey, "Purchase granted durably.");
         }
 
+        Debug.LogError($"[StoreService] Purchase completed but reward persistence failed for '{productId}': {rewardError}");
+        ShowPurchaseResult(BuildRewardApplicationFailedResult(product));
         ClearPendingVisualFeedback();
-        ClearPendingPurchase();
-
-        AnalyticsManager.Instance?.RecordPurchaseCompleted(
-            productId,
-            AnalyticsManager.ProductCategoryStr(product.category),
-            source,
-            transactionId
-        );
-    }
-
-    private void OnPurchaseCompletedFallback(string productId)
-    {
-        if (_catalog == null) return;
-
-        var product = _catalog.GetByProductId(productId);
-
-        if (product != null)
-            return;
-
-        var data = SaveManager.Instance?.GetGameData();
-        if (data == null) return;
-
-        if (string.IsNullOrEmpty(data.pendingPurchaseProductId))
-            return;
-
-        if (data.pendingPurchaseProductId != productId)
-            return;
-
-        RewardService.Instance?.Grant(product);
-        ClearPendingPurchase();
-    }
-
-    private void RecoverPendingPurchase()
-    {
-        if (_catalog == null || SaveManager.Instance == null) return;
-        
-        if (IAPManager.Instance.PurchaseState == PurchaseState.Processing)
-            return;
-        var data = SaveManager.Instance.GetGameData();
-        if (string.IsNullOrEmpty(data.pendingPurchaseProductId)) return;
-
-        var product = _catalog.GetByProductId(data.pendingPurchaseProductId);
-        if (product == null) return;
-
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-        Debug.Log($"[StoreService] Recovering pending purchase: '{data.pendingPurchaseProductId}'");
-#endif
-
-        RewardService.Instance?.Grant(product);
-        ClearPendingPurchase();
+        return StorePurchaseProcessingResult.Pending(dedupeKey, rewardError);
     }
 
     private void ClearPendingPurchase()
     {
-        if (SaveManager.Instance == null) return;
-        SaveManager.Instance.Modify(d => d.pendingPurchaseProductId = "");
+        SaveManager.Instance?.ClearPendingPurchaseProductId();
     }
 
     public void Buy(string productId)
@@ -227,7 +217,7 @@ public class StoreService : MonoBehaviourSingleton<StoreService>
         if (product == null)
         {
             Debug.LogWarning($"[StoreService] Buy requested for unknown product id '{productId}'.");
-            UIEvents.RequestShowStorePurchaseResult(BuildUnavailableResult(null));
+            ShowPurchaseResult(BuildUnavailableResult(null));
             return;
         }
 
@@ -241,24 +231,30 @@ public class StoreService : MonoBehaviourSingleton<StoreService>
 
         if (IAPManager.Instance == null || !IAPManager.Instance.IsInitialized)
         {
-            UIEvents.RequestShowStorePurchaseResult(BuildUnavailableResult(product));
+            ShowPurchaseResult(BuildUnavailableResult(product));
             return;
         }
 
         Product storeProduct = IAPManager.Instance.GetProduct(resolvedProductId);
         if (storeProduct == null || !storeProduct.availableToPurchase)
         {
-            UIEvents.RequestShowStorePurchaseResult(BuildUnavailableResult(product));
+            ShowPurchaseResult(BuildUnavailableResult(product));
             return;
         }
 
         _pendingVisualProductId = resolvedProductId;
         _pendingRewardFeedbackOrigin = feedbackOrigin;
+        Debug.Log($"[StoreService] Purchase start requested | productId='{resolvedProductId}' | source='shop' | hasFeedbackOrigin={feedbackOrigin != null}");
 
         string category = AnalyticsManager.ProductCategoryStr(product.category);
         AnalyticsManager.Instance?.RecordPurchaseStarted(resolvedProductId, category, "shop");
 
-        IAPManager.Instance?.PurchaseProduct(resolvedProductId);
+        PurchaseStartResult startResult = IAPManager.Instance.PurchaseProduct(resolvedProductId);
+        if (startResult != PurchaseStartResult.Started)
+        {
+            ClearPendingVisualFeedback();
+            ShowPurchaseResult(BuildPurchaseStartRejectedResult(product, startResult));
+        }
     }
 
     public string GetPrice(string productId)
@@ -373,24 +369,24 @@ public class StoreService : MonoBehaviourSingleton<StoreService>
         _pendingRewardFeedbackOrigin = null;
     }
 
-    private void OnPurchaseFailed(string productId, string reason)
+    private void OnPurchaseFailed(string productId, PurchaseFailureReason reason)
     {
         StoreProductDefinition product = _catalog?.GetByProductId(productId);
-        StorePurchaseResultRequest request = IsCancelledPurchase(reason)
-            ? BuildCancelledResult(product)
-            : BuildFailedResult(product);
+        StorePurchaseResultRequest request = reason switch
+        {
+            PurchaseFailureReason.UserCancelled => BuildCancelledResult(product),
+            PurchaseFailureReason.ProductUnavailable => BuildUnavailableResult(product),
+            PurchaseFailureReason.PurchasingUnavailable => BuildUnavailableResult(product),
+            _ => BuildFailedResult(product)
+        };
 
-        UIEvents.RequestShowStorePurchaseResult(request);
+        Debug.LogWarning($"[StoreService] Purchase failed result | productId='{productId}' | reason={reason} | mappedResult={request.ResultType}");
+        ShowPurchaseResult(request);
         ClearPendingVisualFeedback();
+        ClearPendingPurchase();
     }
 
-    private static bool IsCancelledPurchase(string reason)
-    {
-        return !string.IsNullOrWhiteSpace(reason) &&
-               reason.IndexOf("UserCancelled", StringComparison.OrdinalIgnoreCase) >= 0;
-    }
-
-    private static bool TryGrantReward(StoreProductDefinition product, out string error)
+    private static bool TryGrantReward(StoreProductDefinition product, string productId, string purchaseKey, out string error)
     {
         error = null;
 
@@ -408,8 +404,8 @@ public class StoreService : MonoBehaviourSingleton<StoreService>
 
         try
         {
-            RewardService.Instance.Grant(product);
-            return true;
+            Debug.Log($"[StoreService] Granting purchase reward durably | productId='{productId}' | purchaseKey='{purchaseKey}' | rewardType={product.rewardType}");
+            return RewardService.Instance.TryGrantDurably(product, purchaseKey, out error);
         }
         catch (Exception exception)
         {
@@ -422,6 +418,8 @@ public class StoreService : MonoBehaviourSingleton<StoreService>
     {
         return new StorePurchaseResultRequest
         {
+            ProductId = product != null ? product.PrimaryProductId : null,
+            ResultType = StorePurchaseResultType.Success,
             Title = "Compra completada",
             Message = BuildSuccessMessage(product),
             ConfirmButtonText = "Aceptar",
@@ -434,6 +432,8 @@ public class StoreService : MonoBehaviourSingleton<StoreService>
     {
         return new StorePurchaseResultRequest
         {
+            ProductId = product != null ? product.PrimaryProductId : null,
+            ResultType = StorePurchaseResultType.Cancelled,
             Title = "Compra cancelada",
             Message = "Compra cancelada.",
             ConfirmButtonText = "Aceptar",
@@ -445,6 +445,8 @@ public class StoreService : MonoBehaviourSingleton<StoreService>
     {
         return new StorePurchaseResultRequest
         {
+            ProductId = product != null ? product.PrimaryProductId : null,
+            ResultType = StorePurchaseResultType.Failed,
             Title = "Error de compra",
             Message = "No se pudo completar la compra.",
             ConfirmButtonText = "Aceptar",
@@ -456,6 +458,8 @@ public class StoreService : MonoBehaviourSingleton<StoreService>
     {
         return new StorePurchaseResultRequest
         {
+            ProductId = product != null ? product.PrimaryProductId : null,
+            ResultType = StorePurchaseResultType.Unavailable,
             Title = "Producto no disponible",
             Message = "Producto no disponible.",
             ConfirmButtonText = "Aceptar",
@@ -467,10 +471,31 @@ public class StoreService : MonoBehaviourSingleton<StoreService>
     {
         return new StorePurchaseResultRequest
         {
+            ProductId = product != null ? product.PrimaryProductId : null,
+            ResultType = StorePurchaseResultType.ApplyRewardFailed,
             Title = "Error al aplicar compra",
             Message = "La compra se completó, pero no se pudo aplicar la recompensa.",
             ConfirmButtonText = "Aceptar",
             Icon = product != null ? product.ConfirmationIcon : null
+        };
+    }
+
+    private static StorePurchaseResultRequest BuildPurchaseStartRejectedResult(StoreProductDefinition product, PurchaseStartResult startResult)
+    {
+        return startResult switch
+        {
+            PurchaseStartResult.NotInitialized => BuildUnavailableResult(product),
+            PurchaseStartResult.ProductUnavailable => BuildUnavailableResult(product),
+            PurchaseStartResult.AlreadyProcessing => new StorePurchaseResultRequest
+            {
+                ProductId = product != null ? product.PrimaryProductId : null,
+                ResultType = StorePurchaseResultType.Failed,
+                Title = "Compra en curso",
+                Message = "Ya hay una compra en curso.",
+                ConfirmButtonText = "Aceptar",
+                Icon = product != null ? product.ConfirmationIcon : null
+            },
+            _ => BuildFailedResult(product)
         };
     }
 
@@ -485,5 +510,97 @@ public class StoreService : MonoBehaviourSingleton<StoreService>
             RewardType.RemoveAds => "Los anuncios intersticiales fueron eliminados.",
             _ => "Se agregaron tus recompensas."
         };
+    }
+
+    private static void ShowPurchaseResult(StorePurchaseResultRequest request)
+    {
+        if (request == null)
+            return;
+
+        EmergencyBundleService.Instance?.OnStorePurchaseResultShown(request);
+        UIEvents.RequestShowStorePurchaseResult(request);
+    }
+
+    private void ClearStalePendingPurchaseRequest()
+    {
+        if (SaveManager.Instance == null)
+            return;
+
+        GameData data = SaveManager.Instance.GetGameData();
+        if (data == null || string.IsNullOrEmpty(data.pendingPurchaseProductId))
+            return;
+
+        Debug.LogWarning($"[StoreService] Clearing stale pending purchase request without granting reward | productId='{data.pendingPurchaseProductId}'");
+        ClearPendingPurchase();
+    }
+
+    private bool TryValidateSuccessfulPurchase(
+        PurchaseEventArgs args,
+        out StoreProductDefinition product,
+        out string productId,
+        out string transactionId,
+        out string dedupeKey,
+        out string error)
+    {
+        product = null;
+        productId = null;
+        transactionId = null;
+        dedupeKey = null;
+        error = null;
+
+        if (args?.purchasedProduct == null)
+        {
+            error = "PurchaseEventArgs or purchased product is null.";
+            return false;
+        }
+
+        productId = args.purchasedProduct.definition?.id;
+        transactionId = args.purchasedProduct.transactionID;
+        string receipt = args.purchasedProduct.receipt;
+
+        if (string.IsNullOrWhiteSpace(productId))
+        {
+            error = "Successful purchase callback arrived without product id.";
+            return false;
+        }
+
+        product = _catalog?.GetByProductId(productId);
+        if (product == null)
+        {
+            error = $"Unknown purchased product '{productId}'.";
+            return false;
+        }
+
+        if (string.IsNullOrWhiteSpace(receipt))
+        {
+            error = $"Purchase '{productId}' has no receipt.";
+            return false;
+        }
+
+        bool hasUsableDedupeKey = PurchaseDedupeKeyUtility.TryBuild(transactionId, receipt, out dedupeKey);
+        if (!hasUsableDedupeKey)
+        {
+            error = $"Purchase '{productId}' has no usable dedupe key.";
+            return false;
+        }
+
+        if (product.productType == ProductType.Consumable && string.IsNullOrWhiteSpace(dedupeKey))
+        {
+            error = $"Consumable purchase '{productId}' has no usable dedupe key.";
+            return false;
+        }
+
+        Debug.Log($"[StoreService] Purchase success callback validated | productId='{productId}' | tx='{transactionId}' | purchaseKey='{dedupeKey}' | hasReceipt=true");
+        return true;
+    }
+
+    private void OnApplicationPause(bool pauseStatus)
+    {
+        Debug.Log($"[StoreService] OnApplicationPause | paused={pauseStatus} | pendingVisualProductId='{_pendingVisualProductId}' | purchaseState={IAPManager.Instance?.PurchaseState}");
+    }
+
+    private void OnApplicationFocus(bool hasFocus)
+    {
+        Debug.Log($"[StoreService] OnApplicationFocus | hasFocus={hasFocus} | pendingVisualProductId='{_pendingVisualProductId}' | purchaseState={IAPManager.Instance?.PurchaseState}");
     }
 }

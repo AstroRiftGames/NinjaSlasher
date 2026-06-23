@@ -10,7 +10,6 @@ public class StorePurchaseConfirmationPopUp : UIPopupBase
     [SerializeField] private TextMeshProUGUI _descriptionText;
     [SerializeField] private Button _buyButton;
     [SerializeField] private Button _cancelButton;
-    [SerializeField] private UIAudioContext _audioContext;
 
     private string _pendingProductId;
     private RectTransform _pendingFeedbackOrigin;
@@ -21,6 +20,9 @@ public class StorePurchaseConfirmationPopUp : UIPopupBase
     private TextMeshProUGUI _cancelButtonLabel;
     private string _defaultBuyButtonText;
     private string _defaultCancelButtonText;
+    private StorePurchaseResultRequest _currentResultRequest;
+    private StorePurchaseResultRequest _activeResultDismissRequest;
+    private bool _hasCompletedActiveResultDismissal;
 
     protected override void Awake()
     {
@@ -47,6 +49,9 @@ public class StorePurchaseConfirmationPopUp : UIPopupBase
 
         _pendingProductId = productId;
         _pendingFeedbackOrigin = feedbackOrigin;
+        _currentResultRequest = null;
+        _activeResultDismissRequest = null;
+        _hasCompletedActiveResultDismissal = false;
 
         ApplyProduct(product);
         Show();
@@ -61,6 +66,9 @@ public class StorePurchaseConfirmationPopUp : UIPopupBase
 
         _isResultMode = true;
         _playSuccessAudioOnConfirm = request.PlaySuccessAudio;
+        _currentResultRequest = request;
+        _activeResultDismissRequest = request;
+        _hasCompletedActiveResultDismissal = false;
 
         ApplyResult(request);
         Show();
@@ -68,14 +76,25 @@ public class StorePurchaseConfirmationPopUp : UIPopupBase
 
     public override void HideImmediate()
     {
+        CompleteDismissalOnce();
         ResetViewState();
         base.HideImmediate();
     }
 
     protected override void OnHidden()
     {
+        CompleteDismissalOnce();
         ResetViewState();
         base.OnHidden();
+    }
+
+    public bool TryHandleBack()
+    {
+        if (!IsVisible)
+            return false;
+
+        Hide();
+        return true;
     }
 
     private void SetupButtons()
@@ -221,6 +240,7 @@ public class StorePurchaseConfirmationPopUp : UIPopupBase
         _pendingFeedbackOrigin = null;
         _isResultMode = false;
         _playSuccessAudioOnConfirm = false;
+        _currentResultRequest = null;
 
         if (_purchaseNameText != null)
             _purchaseNameText.text = string.Empty;
@@ -239,6 +259,34 @@ public class StorePurchaseConfirmationPopUp : UIPopupBase
 
         if (_cancelButton != null)
             _cancelButton.gameObject.SetActive(true);
+    }
+
+    private static void RaiseResultDismissedIfNeeded(StorePurchaseResultRequest request)
+    {
+        if (request == null)
+            return;
+
+        UIEvents.RaiseStorePurchaseResultDismissed(request);
+    }
+
+    private void CompleteDismissalOnce()
+    {
+        if (_hasCompletedActiveResultDismissal || _activeResultDismissRequest == null)
+            return;
+
+        StorePurchaseResultRequest dismissedRequest = _activeResultDismissRequest;
+        _hasCompletedActiveResultDismissal = true;
+        _activeResultDismissRequest = null;
+        RaiseResultDismissedIfNeeded(dismissedRequest);
+    }
+
+    protected override void OnDisable()
+    {
+        base.OnDisable();
+        _isVisible = false;
+        SetPanelInputEnabled(false);
+        CompleteDismissalOnce();
+        ResetViewState();
     }
 
     private void OnDestroy()

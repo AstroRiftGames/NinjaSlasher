@@ -1,8 +1,25 @@
 using UnityEngine;
 
+public readonly struct IapGrantRuntimeEffects
+{
+    public readonly bool CoinsChanged;
+    public readonly bool AdsRemoved;
+    public readonly bool PowerUpsChanged;
+    public readonly bool LivesChanged;
+
+    public IapGrantRuntimeEffects(bool coinsChanged, bool adsRemoved, bool powerUpsChanged, bool livesChanged)
+    {
+        CoinsChanged = coinsChanged;
+        AdsRemoved = adsRemoved;
+        PowerUpsChanged = powerUpsChanged;
+        LivesChanged = livesChanged;
+    }
+}
+
 public class RewardService : MonoBehaviourSingleton<RewardService>
 {
     private int _grantCounter = 0;
+
     public void Grant(StoreProductDefinition product)
     {
         _grantCounter++;
@@ -29,6 +46,30 @@ public class RewardService : MonoBehaviourSingleton<RewardService>
         }
 
         GameEvents.RaiseRewardGranted(product);
+    }
+
+    public bool TryGrantDurably(StoreProductDefinition product, string purchaseKey, out string error)
+    {
+        error = null;
+
+        if (product == null)
+        {
+            error = "Product definition is null.";
+            return false;
+        }
+
+        if (SaveManager.Instance == null)
+        {
+            error = "SaveManager instance is not available.";
+            return false;
+        }
+
+        if (!SaveManager.Instance.TryApplyIapGrant(product, purchaseKey, out IapGrantRuntimeEffects runtimeEffects, out error))
+            return false;
+
+        ApplyRuntimeEffects(product, runtimeEffects);
+        GameEvents.RaiseRewardGranted(product);
+        return true;
     }
 
     private void GrantBundleReward(BundleRewardData reward)
@@ -89,5 +130,22 @@ public class RewardService : MonoBehaviourSingleton<RewardService>
 
         SaveManager.Instance.SetAdsRemoved(true);
         GameEvents.RaiseAdsRemoved();
+    }
+
+    private static void ApplyRuntimeEffects(StoreProductDefinition product, IapGrantRuntimeEffects runtimeEffects)
+    {
+        if (runtimeEffects.CoinsChanged && SaveManager.Instance != null)
+            GameEvents.RaiseCoinsChanged(SaveManager.Instance.GetCoins());
+
+        if (runtimeEffects.AdsRemoved)
+            GameEvents.RaiseAdsRemoved();
+
+        if (runtimeEffects.PowerUpsChanged)
+            PowerUpManager.Instance?.ReloadFromSave();
+
+        if (runtimeEffects.LivesChanged)
+            LifeManager.Instance?.ReloadFromSaveForExternalGrant();
+
+        Debug.Log($"[RewardService] Durable IAP reward applied | productId='{product?.PrimaryProductId}' | coinsChanged={runtimeEffects.CoinsChanged} | adsRemoved={runtimeEffects.AdsRemoved} | powerUpsChanged={runtimeEffects.PowerUpsChanged} | livesChanged={runtimeEffects.LivesChanged}");
     }
 }

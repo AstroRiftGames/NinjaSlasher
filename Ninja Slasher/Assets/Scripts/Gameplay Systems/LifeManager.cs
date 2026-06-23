@@ -511,6 +511,15 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
         }
     }
 
+    public void ReloadFromSaveForExternalGrant()
+    {
+        if (SaveManager.Instance == null)
+            return;
+
+        InitializeFromSave();
+        EmitDisplayLivesChanged();
+    }
+
     public void ActivateUnlimitedLives(float durationMinutes)
     {
         DateTime currentUtc = GetCurrentUtcNowOrFallback();

@@ -64,6 +64,9 @@ public class GameDataDTO
     /// <summary>Product ID de compra IAP pendiente de entrega de recompensa.</summary>
     public string pendingPurchaseProductId;
 
+    /// <summary>Transaction ids de compras ya otorgadas.</summary>
+    public List<string> grantedPurchaseTransactionIds = new();
+
     /// <summary>Unix epoch (segundos UTC) en que expiran las vidas ilimitadas. 0 = inactivo.</summary>
     public long unlimitedLivesStartUtc;
 
@@ -152,6 +155,7 @@ public static class GameDataMapper
             consecutiveBossLosses = d.consecutiveBossLosses,
             consecutiveLosses = d.consecutiveLosses,
             pendingPurchaseProductId = d.pendingPurchaseProductId,
+            grantedPurchaseTransactionIds = new List<string>(d.grantedPurchaseTransactionIds ?? new List<string>()),
             unlimitedLivesStartUtc = d.unlimitedLivesStartUtc,
             unlimitedLivesEndUtc = d.unlimitedLivesEndUtc,
             coins = d.coins,
@@ -245,6 +249,7 @@ public static class GameDataMapper
             consecutiveBossLosses = dto.consecutiveBossLosses,
             consecutiveLosses = dto.consecutiveLosses,
             pendingPurchaseProductId = dto.pendingPurchaseProductId ?? "",
+            grantedPurchaseTransactionIds = SanitizeGrantedPurchaseTransactionIds(dto.grantedPurchaseTransactionIds),
             unlimitedLivesStartUtc = dto.unlimitedLivesStartUtc,
             unlimitedLivesEndUtc = dto.unlimitedLivesEndUtc,
             coins = dto.coins,
@@ -283,5 +288,23 @@ public static class GameDataMapper
                     d.tutorialStepIndices[kv.key] = kv.value;
 
         return d;
+    }
+
+    private static List<string> SanitizeGrantedPurchaseTransactionIds(List<string> purchaseKeys)
+    {
+        List<string> sanitizedKeys = new List<string>();
+        if (purchaseKeys == null)
+            return sanitizedKeys;
+
+        for (int i = 0; i < purchaseKeys.Count; i++)
+        {
+            string purchaseKey = purchaseKeys[i];
+            if (string.IsNullOrWhiteSpace(purchaseKey) || sanitizedKeys.Contains(purchaseKey))
+                continue;
+
+            sanitizedKeys.Add(purchaseKey);
+        }
+
+        return sanitizedKeys;
     }
 }

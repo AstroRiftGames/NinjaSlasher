@@ -11,6 +11,16 @@ public abstract class UIPopupBase : UIPanel
 
     protected override bool BlocksUnderlyingUI => true;
 
+    public event System.Action<UIPopupBase> HiddenCompleted;
+
+    protected bool _isOpening;
+    protected bool _isClosing;
+
+    public bool IsOpening => _isOpening;
+    public bool IsClosing => _isClosing;
+    public bool IsTransitioning => _isOpening || _isClosing;
+    public bool IsActiveOrTransitioning => _isVisible || _isOpening || _isClosing;
+
     protected override void Awake()
     {
         base.Awake();
@@ -23,9 +33,11 @@ public abstract class UIPopupBase : UIPanel
 
     public override void Show()
     {
-        if (_isVisible) return;
+        if (_isVisible || _isOpening) return;
 
         gameObject.SetActive(true);
+        _isOpening = true;
+        _isClosing = false;
         _isVisible = true;
 
         NotifyPanelShown();
@@ -36,8 +48,10 @@ public abstract class UIPopupBase : UIPanel
 
     public override void Hide()
     {
-        if (!_isVisible) return;
+        if (!_isVisible || _isClosing) return;
 
+        _isOpening = false;
+        _isClosing = true;
         _isVisible = false;
 
         SetPanelInputEnabled(false);
@@ -50,6 +64,12 @@ public abstract class UIPopupBase : UIPanel
     {
         DOTween.Kill(_panelTransform);
 
+        if (!_isVisible && !_isOpening && !_isClosing && !gameObject.activeSelf)
+            return;
+
+        bool wasTransitioning = _isVisible || _isOpening || _isClosing;
+        _isOpening = false;
+        _isClosing = false;
         _isVisible = false;
         SetPanelInputEnabled(false);
 
@@ -60,6 +80,9 @@ public abstract class UIPopupBase : UIPanel
             _panelTransform.localScale = Vector3.one;
 
         gameObject.SetActive(false);
+
+        if (wasTransitioning)
+            CompleteHide();
     }
 
     protected virtual void AnimateShow()
@@ -79,6 +102,10 @@ public abstract class UIPopupBase : UIPanel
         showSequence.Append(_panelTransform.DOScale(1f, _animationDuration * 0.3f)
             .SetEase(Ease.InOutQuad));
 
+        showSequence.OnComplete(() =>
+        {
+            _isOpening = false;
+        });
         showSequence.SetUpdate(true);
 
         if (_audioContext != null && _audioContext.Audio != null)
@@ -95,12 +122,14 @@ public abstract class UIPopupBase : UIPanel
             .SetEase(_closeEase)
             .OnComplete(() =>
             {
+                _isClosing = false;
                 gameObject.SetActive(false);
 
                 if (_canvasGroup != null)
                     _canvasGroup.alpha = 1f;
 
                 _panelTransform.localScale = Vector3.one;
+                CompleteHide();
             })
             .SetUpdate(true);
     }
@@ -109,5 +138,18 @@ public abstract class UIPopupBase : UIPanel
     {
         base.OnDisable();
         DOTween.Kill(_panelTransform);
+
+        bool wasTransitioning = _isVisible || _isOpening || _isClosing;
+        _isVisible = false;
+        _isOpening = false;
+        _isClosing = false;
+
+        if (wasTransitioning)
+            CompleteHide();
+    }
+
+    private void CompleteHide()
+    {
+        HiddenCompleted?.Invoke(this);
     }
 }

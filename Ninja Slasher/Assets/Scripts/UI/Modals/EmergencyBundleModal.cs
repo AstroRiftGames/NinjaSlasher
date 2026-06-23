@@ -21,6 +21,9 @@ public class EmergencyBundleModal : UIModalBase
     private EmergencyBundleOffer _currentOffer;
     private Coroutine _countdownCoroutine;
     private bool _suppressDismissOnHide;
+    private bool _isPurchasePending;
+
+    public bool IsPurchasePending => _isPurchasePending;
 
     #region ENABLE / DISABLE
 
@@ -33,6 +36,7 @@ public class EmergencyBundleModal : UIModalBase
 
     protected override void OnDisable()
     {
+        ResetRuntimeStateForReuse();
         base.OnDisable();
         _buyBtn?.onClick.RemoveListener(OnBuyClicked);
         _dismissBtn?.onClick.RemoveListener(OnDismissClicked);
@@ -44,9 +48,10 @@ public class EmergencyBundleModal : UIModalBase
 
     public void ShowWithOffer(EmergencyBundleOffer offer)
     {
-        _suppressDismissOnHide = false;
+        ResetRuntimeStateForReuse();
         _currentOffer = offer;
         PopulateUI(offer);
+        UpdateButtonStates();
     }
 
     protected override void OnShown()
@@ -58,13 +63,13 @@ public class EmergencyBundleModal : UIModalBase
 
     protected override void OnHidden()
     {
+        bool wasSuppressingDismissOnHide = _suppressDismissOnHide;
+        ResetRuntimeStateForReuse();
         base.OnHidden();
-        StopCountdown();
         _currentOffer = null;
 
-        if (_suppressDismissOnHide)
+        if (wasSuppressingDismissOnHide)
         {
-            _suppressDismissOnHide = false;
             EmergencyBundleService.Instance?.OnOfferClosedForTransition();
             return;
         }
@@ -75,6 +80,34 @@ public class EmergencyBundleModal : UIModalBase
     public void PrepareForFlowTransitionClose()
     {
         _suppressDismissOnHide = true;
+    }
+
+    public void PrepareForPurchaseResultClose()
+    {
+        _suppressDismissOnHide = true;
+        _isPurchasePending = false;
+        UpdateButtonStates();
+    }
+
+    public bool TryDismiss()
+    {
+        if (_isPurchasePending)
+            return false;
+
+        DismissOffer();
+        return true;
+    }
+
+    public bool TryHandleBack()
+    {
+        return TryDismiss();
+    }
+
+    public bool IsShowingProduct(string productId)
+    {
+        return _currentOffer?.Product != null &&
+               !string.IsNullOrEmpty(productId) &&
+               string.Equals(_currentOffer.Product.PrimaryProductId, productId, System.StringComparison.Ordinal);
     }
 
     #endregion
@@ -182,6 +215,9 @@ public class EmergencyBundleModal : UIModalBase
 
     private void OnCountdownExpired()
     {
+        if (_isPurchasePending)
+            return;
+
         if (EmergencyBundleService.Instance != null)
             EmergencyBundleService.Instance.OnOfferExpired();
         else
@@ -208,8 +244,28 @@ public class EmergencyBundleModal : UIModalBase
         string productId = _currentOffer.Product.PrimaryProductId;
         if (string.IsNullOrEmpty(productId)) return;
 
-        if (_buyBtn != null)
-            _buyBtn.interactable = false;
+        IAPManager iapManager = IAPManager.Instance;
+        if (iapManager == null)
+        {
+            Debug.LogWarning("[EmergencyBundleModal] IAPManager no disponible.");
+            return;
+        }
+
+        if (!iapManager.IsInitialized)
+        {
+            ShowPurchaseUnavailableResult(productId);
+            return;
+        }
+
+        var storeProduct = iapManager.GetProduct(productId);
+        if (storeProduct == null || !storeProduct.availableToPurchase)
+        {
+            ShowPurchaseUnavailableResult(productId);
+            return;
+        }
+
+        if (EmergencyBundleService.Instance != null && !EmergencyBundleService.Instance.TryBeginPurchase(productId))
+            return;
 
         AnalyticsManager.Instance?.RecordPurchaseStarted(
             productId,
@@ -217,13 +273,22 @@ public class EmergencyBundleModal : UIModalBase
             "paywall"
         );
 
-        if (IAPManager.Instance != null)
-            IAPManager.Instance.PurchaseProduct(productId);
-        else
-            Debug.LogWarning("[EmergencyBundleModal] IAPManager no disponible.");
+        _isPurchasePending = true;
+        UpdateButtonStates();
+
+        PurchaseStartResult startResult = iapManager.PurchaseProduct(productId);
+        if (startResult == PurchaseStartResult.Started)
+            return;
+
+        _isPurchasePending = false;
+        UpdateButtonStates();
+        ShowPurchaseStartRejectedResult(productId, startResult);
     }
 
-    private void OnDismissClicked() => DismissOffer();
+    private void OnDismissClicked()
+    {
+        TryDismiss();
+    }
 
     private void DismissOffer()
     {
@@ -231,6 +296,90 @@ public class EmergencyBundleModal : UIModalBase
             EmergencyBundleService.Instance.OnOfferDismissed();
         else
             UIEvents.RequestHideEmergencyBundleModal();
+    }
+
+    protected override void RequestCloseFromOutsideClick()
+    {
+        TryDismiss();
+    }
+
+    private void UpdateButtonStates()
+    {
+        if (_buyBtn != null)
+            _buyBtn.interactable = !_isPurchasePending;
+
+        if (_dismissBtn != null)
+            _dismissBtn.interactable = !_isPurchasePending;
+    }
+
+    private void ResetRuntimeStateForReuse()
+    {
+        _isPurchasePending = false;
+        _suppressDismissOnHide = false;
+        StopCountdown();
+        SetPanelInputEnabled(true);
+        UpdateButtonStates();
+    }
+
+    private void ShowPurchaseUnavailableResult(string productId)
+    {
+        StoreProductDefinition product = StoreService.Instance?.GetProduct(productId);
+        var request = new StorePurchaseResultRequest
+        {
+            ProductId = productId,
+            ResultType = StorePurchaseResultType.Unavailable,
+            Title = "Producto no disponible",
+            Message = "Producto no disponible.",
+            ConfirmButtonText = "Aceptar",
+            Icon = product != null ? product.ConfirmationIcon : null
+        };
+
+        EmergencyBundleService.Instance?.OnStorePurchaseResultShown(request);
+        UIEvents.RequestShowStorePurchaseResult(request);
+    }
+
+    private void ShowPurchaseStartRejectedResult(string productId, PurchaseStartResult startResult)
+    {
+        StoreProductDefinition product = StoreService.Instance?.GetProduct(productId);
+        StorePurchaseResultRequest request = startResult switch
+        {
+            PurchaseStartResult.NotInitialized => BuildUnavailableRequest(productId, product),
+            PurchaseStartResult.ProductUnavailable => BuildUnavailableRequest(productId, product),
+            PurchaseStartResult.AlreadyProcessing => new StorePurchaseResultRequest
+            {
+                ProductId = productId,
+                ResultType = StorePurchaseResultType.Failed,
+                Title = "Compra en curso",
+                Message = "Ya hay una compra en curso.",
+                ConfirmButtonText = "Aceptar",
+                Icon = product != null ? product.ConfirmationIcon : null
+            },
+            _ => new StorePurchaseResultRequest
+            {
+                ProductId = productId,
+                ResultType = StorePurchaseResultType.Failed,
+                Title = "Error de compra",
+                Message = "No se pudo completar la compra.",
+                ConfirmButtonText = "Aceptar",
+                Icon = product != null ? product.ConfirmationIcon : null
+            }
+        };
+
+        EmergencyBundleService.Instance?.OnStorePurchaseResultShown(request);
+        UIEvents.RequestShowStorePurchaseResult(request);
+    }
+
+    private static StorePurchaseResultRequest BuildUnavailableRequest(string productId, StoreProductDefinition product)
+    {
+        return new StorePurchaseResultRequest
+        {
+            ProductId = productId,
+            ResultType = StorePurchaseResultType.Unavailable,
+            Title = "Producto no disponible",
+            Message = "Producto no disponible.",
+            ConfirmButtonText = "Aceptar",
+            Icon = product != null ? product.ConfirmationIcon : null
+        };
     }
 
     #endregion
