@@ -5,7 +5,7 @@ using UnityEngine;
 [Serializable]
 public class GameDataDTO
 {
-    public int saveVersion = 1;
+    public int saveVersion = 2;
 
     public int highestUnlockedLevel;
     public int highestUnlockedArea;
@@ -26,6 +26,7 @@ public class GameDataDTO
     public string lastTimeValidationUtc;
     public bool trustedTimeAvailable;
     public bool suspiciousTimeDetected;
+    public ActiveLevelAttemptData activeLevelAttempt = new ActiveLevelAttemptData();
 
     public int consecutiveLevelWins;
     public int lastCompletedLevel;
@@ -122,6 +123,13 @@ public static class GameDataMapper
             lastTimeValidationUtc = d.lastTimeValidationUtc,
             trustedTimeAvailable = d.trustedTimeAvailable,
             suspiciousTimeDetected = d.suspiciousTimeDetected,
+            activeLevelAttempt = new ActiveLevelAttemptData
+            {
+                attemptId = d.activeLevelAttempt?.attemptId ?? "",
+                levelId = d.activeLevelAttempt?.levelId ?? 0,
+                isActive = d.activeLevelAttempt?.isActive ?? false,
+                startedAtUtc = d.activeLevelAttempt?.startedAtUtc ?? "",
+            },
 
             activePowerUps = d.activePowerUps.ConvertAll(p => new PowerUpDataDTO
             {
@@ -215,6 +223,7 @@ public static class GameDataMapper
             lastTimeValidationUtc = dto.lastTimeValidationUtc ?? "",
             trustedTimeAvailable = dto.trustedTimeAvailable,
             suspiciousTimeDetected = dto.suspiciousTimeDetected,
+            activeLevelAttempt = dto.activeLevelAttempt ?? new ActiveLevelAttemptData(),
 
             activePowerUps = dto.activePowerUps?.ConvertAll(p =>
             {

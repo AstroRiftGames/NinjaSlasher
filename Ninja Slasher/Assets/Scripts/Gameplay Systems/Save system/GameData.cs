@@ -27,6 +27,7 @@ public class GameData
     public string lastTimeValidationUtc = "";
     public bool trustedTimeAvailable = false;
     public bool suspiciousTimeDetected = false;
+    public ActiveLevelAttemptData activeLevelAttempt = new ActiveLevelAttemptData();
 
     // Sistema de Power-ups
     public List<PowerUpData> activePowerUps = new List<PowerUpData>();
@@ -223,6 +224,23 @@ public class GameData
 
         tutorialStates[tutorialId] = state;
         tutorialStepIndices[tutorialId] = Math.Max(0, stepIndex);
+    }
+}
+
+[Serializable]
+public class ActiveLevelAttemptData
+{
+    public string attemptId = "";
+    public int levelId = 0;
+    public bool isActive = false;
+    public string startedAtUtc = "";
+
+    public void Clear()
+    {
+        attemptId = "";
+        levelId = 0;
+        isActive = false;
+        startedAtUtc = "";
     }
 }
 

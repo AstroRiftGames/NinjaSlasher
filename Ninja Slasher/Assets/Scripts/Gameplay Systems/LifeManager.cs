@@ -134,6 +134,11 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
             : CurrentLives;
     }
 
+    private string GetActiveAttemptId()
+    {
+        return SaveManager.Instance?.GetGameData()?.activeLevelAttempt?.attemptId ?? string.Empty;
+    }
+
     private void UpdateRechargeAnchorAfterLifeSpent(int previousLives, DateTime currentUtc)
     {
         if (CurrentLives >= MaxLives)
@@ -650,6 +655,7 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
     {
         if (GameConfigManager.IsTrailerCaptureModeEnabled())
         {
+            SaveManager.Instance?.TryClearLevelAttempt(GetActiveAttemptId(), "levelFailedTrailerMode");
             _hasVirtualDeduction = false;
             _levelInProgress = false;
             EmitDisplayLivesChanged();
@@ -659,11 +665,8 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
         var context = PowerUpManager.Instance?.context;
         if (context != null && context.SecondChanceActive)
         {
-            if (_hasVirtualDeduction)
-            {
-                _hasVirtualDeduction = false;
-                _levelInProgress = false;
-            }
+            PowerUpManager.Instance?.DeactivatePowerUpByType(PowerUpType.SecondChance);
+            Debug.Log($"[LifeManager] Second Chance blocked life spend; active attempt remains active | attemptId={GetActiveAttemptId()} | levelInProgress={_levelInProgress} | hasVirtualDeduction={_hasVirtualDeduction}");
             EmitDisplayLivesChanged();
             return;
         }
@@ -671,6 +674,7 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
         if (HasTimedUnlimitedLives)
         {
             Debug.Log($"[LifeManager] UseLife BLOCKED — unlimited lives active. Remaining={GetUnlimitedLivesRemainingTime():mm\\:ss}");
+            SaveManager.Instance?.TryClearLevelAttempt(GetActiveAttemptId(), "levelFailedUnlimitedLives");
             EmitDisplayLivesChanged();
             return;
         }
@@ -678,12 +682,30 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
         if (_hasVirtualDeduction)
         {
             int previousLives = CurrentLives;
+            DateTime previousLifeUsedUtc = _lastLifeUsedUtc;
+            int previousVirtualLives = _virtualLives;
+            bool previousHasVirtualDeduction = _hasVirtualDeduction;
+            bool previousLevelInProgress = _levelInProgress;
+
             CurrentLives = Mathf.Clamp(_virtualLives, 0, MaxLives);
             DateTime currentUtc = GetCurrentUtcNowOrFallback();
             UpdateRechargeAnchorAfterLifeSpent(previousLives, currentUtc);
 
             _hasVirtualDeduction = false;
             _levelInProgress = false;
+
+            if (SaveManager.Instance != null &&
+                !SaveManager.Instance.TryResolveLevelAttemptWithLifeSpend(GetActiveAttemptId(), CurrentLives, _lastLifeUsedUtc, CurrentLives < MaxLives, "levelFailed"))
+            {
+                CurrentLives = previousLives;
+                _lastLifeUsedUtc = previousLifeUsedUtc;
+                _virtualLives = previousVirtualLives;
+                _hasVirtualDeduction = previousHasVirtualDeduction;
+                _levelInProgress = previousLevelInProgress;
+                Debug.LogError("[LifeManager] Failed to persist level defeat resolution. Runtime life deduction reverted.");
+                EmitDisplayLivesChanged();
+                return;
+            }
 
             totalLivesLostThisSession++;
             if (AnalyticsManager.Instance != null)
@@ -696,8 +718,6 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
             }
 
             IncrementLossCounter();
-
-            Persist("Vida perdida (confirmada)");
             EmitDisplayLivesChanged();
 
             if (CurrentLives == 0 && !_lifeWallActive)
@@ -712,10 +732,25 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
             if (CurrentLives <= 0) return;
 
             int previousLives = CurrentLives;
+            DateTime previousLifeUsedUtc = _lastLifeUsedUtc;
+            int previousVirtualLives = _virtualLives;
+
             CurrentLives = Mathf.Max(0, CurrentLives - 1);
             DateTime currentUtc = GetCurrentUtcNowOrFallback();
             UpdateRechargeAnchorAfterLifeSpent(previousLives, currentUtc);
             UpdateVirtualLivesFromCurrentLives();
+
+            if (SaveManager.Instance != null &&
+                !SaveManager.Instance.TryResolveLevelAttemptWithLifeSpend(GetActiveAttemptId(), CurrentLives, _lastLifeUsedUtc, CurrentLives < MaxLives, "directLifeUse"))
+            {
+                CurrentLives = previousLives;
+                _lastLifeUsedUtc = previousLifeUsedUtc;
+                _virtualLives = previousVirtualLives;
+                UpdateVirtualLivesFromCurrentLives();
+                Debug.LogError("[LifeManager] Failed to persist direct life use resolution. Runtime life deduction reverted.");
+                EmitDisplayLivesChanged();
+                return;
+            }
 
             totalLivesLostThisSession++;
             if (AnalyticsManager.Instance != null)
@@ -728,8 +763,6 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
             }
 
             IncrementLossCounter();
-
-            Persist("Vida perdida (directa)");
             EmitDisplayLivesChanged();
 
             if (CurrentLives == 0 && !_lifeWallActive)
@@ -743,6 +776,13 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
 
     public void OnLevelCompleted()
     {
+        if (SaveManager.Instance != null &&
+            !SaveManager.Instance.TryClearLevelAttempt(GetActiveAttemptId(), "levelCompleted"))
+        {
+            Debug.LogError("[LifeManager] Failed to clear active attempt on victory.");
+            return;
+        }
+
         if (_hasVirtualDeduction)
         {
             _virtualLives = CurrentLives;
@@ -752,13 +792,17 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
             ResetLossCounter();
 
             EmitDisplayLivesChanged();
+            return;
         }
+
+        _levelInProgress = false;
     }
 
     public void OnLevelExit()
     {
         if (GameConfigManager.IsTrailerCaptureModeEnabled())
         {
+            SaveManager.Instance?.TryClearLevelAttempt(GetActiveAttemptId(), "levelExitTrailerMode");
             _virtualLives = CurrentLives;
             _hasVirtualDeduction = false;
             _levelInProgress = false;
@@ -770,6 +814,7 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
         {
             if (HasTimedUnlimitedLives)
             {
+                SaveManager.Instance?.TryClearLevelAttempt(GetActiveAttemptId(), "levelExitUnlimitedLives");
                 _virtualLives = CurrentLives;
                 _hasVirtualDeduction = false;
                 _levelInProgress = false;
@@ -778,6 +823,11 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
             else
             {
                 int previousLives = CurrentLives;
+                DateTime previousLifeUsedUtc = _lastLifeUsedUtc;
+                int previousVirtualLives = _virtualLives;
+                bool previousHasVirtualDeduction = _hasVirtualDeduction;
+                bool previousLevelInProgress = _levelInProgress;
+
                 CurrentLives = Mathf.Clamp(_virtualLives, 0, MaxLives);
                 DateTime currentUtc = GetCurrentUtcNowOrFallback();
                 UpdateRechargeAnchorAfterLifeSpent(previousLives, currentUtc);
@@ -785,9 +835,26 @@ public class LifeManager : MonoBehaviourSingleton<LifeManager>
                 _hasVirtualDeduction = false;
                 _levelInProgress = false;
 
-                Persist("Vida perdida por abandono");
+                if (SaveManager.Instance != null &&
+                    !SaveManager.Instance.TryResolveLevelAttemptWithLifeSpend(GetActiveAttemptId(), CurrentLives, _lastLifeUsedUtc, CurrentLives < MaxLives, "levelExit"))
+                {
+                    CurrentLives = previousLives;
+                    _lastLifeUsedUtc = previousLifeUsedUtc;
+                    _virtualLives = previousVirtualLives;
+                    _hasVirtualDeduction = previousHasVirtualDeduction;
+                    _levelInProgress = previousLevelInProgress;
+                    Debug.LogError("[LifeManager] Failed to persist active attempt abandonment.");
+                    EmitDisplayLivesChanged();
+                    return;
+                }
+
                 EmitDisplayLivesChanged();
             }
+        }
+        else
+        {
+            SaveManager.Instance?.TryClearLevelAttempt(GetActiveAttemptId(), "levelExitWithoutLifeCost");
+            _levelInProgress = false;
         }
     }
 

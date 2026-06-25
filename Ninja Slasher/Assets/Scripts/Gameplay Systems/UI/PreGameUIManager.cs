@@ -370,9 +370,20 @@ public class PreGameUIManager : MonoBehaviour
         }
 
         _isPlaying = true;
+        string startedAttemptId = string.Empty;
+        int pendingLevelId = GetLevelIdFromSceneName(_pendingSceneName);
+
+        if (SaveManager.Instance == null ||
+            !SaveManager.Instance.TryBeginLevelAttempt(pendingLevelId, out startedAttemptId))
+        {
+            Debug.LogError($"[PreGameUIManager] Failed to persist active attempt. Level start aborted | levelId={pendingLevelId}");
+            _isPlaying = false;
+            return;
+        }
 
         if (!TryConsumeSelectedPowerUps())
         {
+            SaveManager.Instance?.TryClearLevelAttempt(startedAttemptId, "pregamePowerUpActivationFailed");
             _isPlaying = false;
             return;
         }

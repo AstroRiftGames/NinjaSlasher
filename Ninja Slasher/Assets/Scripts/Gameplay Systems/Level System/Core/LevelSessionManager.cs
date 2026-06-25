@@ -532,6 +532,10 @@ public class LevelSessionManager : MonoBehaviourSingleton<LevelSessionManager>
             return;
 
         CloseSessionForSceneChange();
+
+        if (!TryPersistNextAttemptForCurrentScene("retry"))
+            return;
+
         UIEvents.RequestSceneTransition(SceneManager.GetActiveScene().name);
     }
 
@@ -547,6 +551,9 @@ public class LevelSessionManager : MonoBehaviourSingleton<LevelSessionManager>
             return;
 
         CloseSessionForSceneChange();
+
+        if (!TryPersistNextAttemptForCurrentScene("restart"))
+            return;
 
         UIEvents.RequestSceneTransition(SceneManager.GetActiveScene().name);
     }
@@ -599,6 +606,19 @@ public class LevelSessionManager : MonoBehaviourSingleton<LevelSessionManager>
             _pendingVictory = false;
             _playerController = null;
         }
+    }
+
+    private bool TryPersistNextAttemptForCurrentScene(string reason)
+    {
+        if (SaveManager.Instance == null)
+            return false;
+
+        int levelId = ExtractLevelId(SceneManager.GetActiveScene().name);
+        if (SaveManager.Instance.TryBeginLevelAttempt(levelId, out _))
+            return true;
+
+        Debug.LogError($"[LevelSessionManager] Failed to persist active attempt before {reason}. Scene transition aborted | levelId={levelId}");
+        return false;
     }
 
     private void ResolvePlayerControllerReference()

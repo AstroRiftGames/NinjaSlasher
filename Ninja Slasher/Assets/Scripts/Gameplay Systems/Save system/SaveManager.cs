@@ -26,6 +26,7 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
     public bool ResetInProgress => _resetInProgress;
 
     private bool isSaving;
+    private bool _startupAttemptRecoveryProcessed;
 
     public static event Action<GameData> OnDataLoaded;
     public static event Action<GameData> OnDataSaved;
@@ -56,6 +57,7 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
 
         if (TryLoadFromCurrentPath())
         {
+            RecoverAbandonedAttemptIfNeeded();
             isDataLoaded = true;
             OnDataLoaded?.Invoke(gameData);
             PowerUpManager.Instance?.ReloadFromSave();
@@ -193,8 +195,27 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
 
     public void Modify(Action<GameData> mutation)
     {
-        mutation(GetGameData());
-        SaveData();
+        TryModify(mutation);
+    }
+
+    public bool TryModify(Action<GameData> mutation)
+    {
+        GameData data = GetGameData();
+        GameData snapshot = CloneGameData(data);
+
+        try
+        {
+            mutation(data);
+            if (TrySaveData())
+                return true;
+        }
+        catch (Exception exception)
+        {
+            Debug.LogError($"[SaveManager] TryModify failed: {exception.Message}");
+        }
+
+        gameData = snapshot;
+        return false;
     }
 
     private void ValidateAndInitializeProgressionData()
@@ -245,6 +266,11 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
         if (gameData.grantedPurchaseTransactionIds == null)
         {
             gameData.grantedPurchaseTransactionIds = new List<string>();
+        }
+
+        if (gameData.activeLevelAttempt == null)
+        {
+            gameData.activeLevelAttempt = new ActiveLevelAttemptData();
         }
 
         RepairLifeDataIfNeeded();
@@ -707,6 +733,103 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
         SaveData();
     }
 
+    public bool TryBeginLevelAttempt(int levelId, out string attemptId)
+    {
+        string newAttemptId = Guid.NewGuid().ToString("N");
+        DateTime startedAtUtc = DateTime.UtcNow;
+
+        bool saved = TryModify(data =>
+        {
+            data.activeLevelAttempt ??= new ActiveLevelAttemptData();
+            data.activeLevelAttempt.attemptId = newAttemptId;
+            data.activeLevelAttempt.levelId = levelId;
+            data.activeLevelAttempt.isActive = true;
+            data.activeLevelAttempt.startedAtUtc = startedAtUtc.ToString("o");
+        });
+
+        if (!saved)
+        {
+            Debug.LogError($"[SaveManager] Failed to persist active attempt start | levelId={levelId} | attemptId={newAttemptId}");
+            attemptId = string.Empty;
+            return false;
+        }
+
+        attemptId = newAttemptId;
+        Debug.Log($"[SaveManager] Active attempt started | levelId={levelId} | attemptId={attemptId} | startedAtUtc={startedAtUtc:O}");
+        return true;
+    }
+
+    public bool TryClearLevelAttempt(string expectedAttemptId, string reason)
+    {
+        GameData data = GetGameData();
+        ActiveLevelAttemptData activeAttempt = data.activeLevelAttempt;
+        if (activeAttempt == null || !activeAttempt.isActive)
+        {
+            Debug.Log($"[SaveManager] Active attempt already cleared; duplicate clear prevented | reason={reason} | expectedAttemptId={expectedAttemptId}");
+            return true;
+        }
+
+        if (!string.IsNullOrEmpty(expectedAttemptId) &&
+            !string.Equals(activeAttempt.attemptId, expectedAttemptId, StringComparison.Ordinal))
+        {
+            Debug.LogWarning($"[SaveManager] Active attempt clear skipped due to id mismatch | reason={reason} | expectedAttemptId={expectedAttemptId} | actualAttemptId={activeAttempt.attemptId}");
+            return false;
+        }
+
+        string attemptId = activeAttempt.attemptId;
+        int levelId = activeAttempt.levelId;
+        bool saved = TryModify(d => d.activeLevelAttempt?.Clear());
+        if (!saved)
+        {
+            Debug.LogError($"[SaveManager] Failed to clear active attempt | reason={reason} | levelId={levelId} | attemptId={attemptId}");
+            return false;
+        }
+
+        Debug.Log($"[SaveManager] Active attempt cleared | reason={reason} | levelId={levelId} | attemptId={attemptId}");
+        return true;
+    }
+
+    public bool TryResolveLevelAttemptWithLifeSpend(string expectedAttemptId, int lives, DateTime lastRegenUtc, bool canRegen, string reason)
+    {
+        GameData data = GetGameData();
+        ActiveLevelAttemptData activeAttempt = data.activeLevelAttempt;
+        if (activeAttempt == null || !activeAttempt.isActive)
+        {
+            Debug.Log($"[SaveManager] Active attempt already resolved; duplicate recovery prevented | reason={reason} | expectedAttemptId={expectedAttemptId}");
+            return true;
+        }
+
+        if (!string.IsNullOrEmpty(expectedAttemptId) &&
+            !string.Equals(activeAttempt.attemptId, expectedAttemptId, StringComparison.Ordinal))
+        {
+            Debug.LogWarning($"[SaveManager] Active attempt resolution skipped due to id mismatch | reason={reason} | expectedAttemptId={expectedAttemptId} | actualAttemptId={activeAttempt.attemptId}");
+            return false;
+        }
+
+        string attemptId = activeAttempt.attemptId;
+        int levelId = activeAttempt.levelId;
+        bool hasActiveTimer = canRegen && lives < GetConfiguredMaxLives();
+
+        bool saved = TryModify(d =>
+        {
+            d.currentLives = lives;
+            d.lastLifeRegenTime = hasActiveTimer
+                ? (lastRegenUtc.Kind == DateTimeKind.Utc ? lastRegenUtc : lastRegenUtc.ToUniversalTime()).ToString("o")
+                : string.Empty;
+            d.canRegenLives = hasActiveTimer;
+            d.activeLevelAttempt?.Clear();
+        });
+
+        if (!saved)
+        {
+            Debug.LogError($"[SaveManager] Failed to persist active attempt resolution | reason={reason} | levelId={levelId} | attemptId={attemptId}");
+            return false;
+        }
+
+        Debug.Log($"[SaveManager] Active attempt resolved with life update | reason={reason} | levelId={levelId} | attemptId={attemptId} | lives={lives}");
+        return true;
+    }
+
     public bool HasGrantedPurchaseTransaction(string transactionId)
     {
         if (string.IsNullOrWhiteSpace(transactionId))
@@ -980,6 +1103,7 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
         gameData.currentLives = startingLives;
         gameData.lastLifeRegenTime = string.Empty;
         gameData.canRegenLives = startingLives < maxLives;
+        gameData.activeLevelAttempt = new ActiveLevelAttemptData();
     }
 
     private void RepairLifeDataIfNeeded()
@@ -1012,6 +1136,69 @@ public class SaveManager : MonoBehaviourSingleton<SaveManager>
 
         gameData.lastLifeRegenTime = parsedUtc.ToString("o");
         gameData.canRegenLives = true;
+    }
+
+    private void RecoverAbandonedAttemptIfNeeded()
+    {
+        if (_startupAttemptRecoveryProcessed)
+        {
+            Debug.Log("[SaveManager] Startup attempt recovery already processed; duplicate recovery prevented.");
+            return;
+        }
+
+        _startupAttemptRecoveryProcessed = true;
+
+        GameData data = GetGameData();
+        ActiveLevelAttemptData activeAttempt = data.activeLevelAttempt;
+        if (activeAttempt == null || !activeAttempt.isActive)
+            return;
+
+        string attemptId = activeAttempt.attemptId ?? string.Empty;
+        int levelId = activeAttempt.levelId;
+        bool consumeLife = ShouldConsumeLifeForAbandonedAttempt(data);
+
+        int previousLives = data.currentLives;
+
+        if (!TryModify(d =>
+            {
+                if (ShouldConsumeLifeForAbandonedAttempt(d))
+                {
+                    d.currentLives = Mathf.Max(0, d.currentLives - 1);
+                    if (d.currentLives >= GetConfiguredMaxLives())
+                    {
+                        d.lastLifeRegenTime = string.Empty;
+                        d.canRegenLives = false;
+                    }
+                    else
+                    {
+                        d.lastLifeRegenTime = DateTime.UtcNow.ToString("o");
+                        d.canRegenLives = true;
+                    }
+                }
+
+                d.activeLevelAttempt?.Clear();
+            }))
+        {
+            Debug.LogError($"[SaveManager] Failed abandoned attempt recovery | levelId={levelId} | attemptId={attemptId}");
+            return;
+        }
+
+        Debug.Log($"[SaveManager] Abandoned active attempt recovered on startup | levelId={levelId} | attemptId={attemptId} | lifeConsumed={consumeLife} | previousLives={previousLives} | currentLives={data.currentLives}");
+    }
+
+    private bool ShouldConsumeLifeForAbandonedAttempt(GameData data)
+    {
+        if (data == null || data.currentLives <= 0)
+            return false;
+
+        long nowUtc = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+        bool hasUnlimitedLives = data.unlimitedLivesEndUtc > nowUtc;
+        return !hasUnlimitedLives;
+    }
+
+    private static GameData CloneGameData(GameData source)
+    {
+        return GameDataMapper.FromDto(GameDataMapper.ToDto(source));
     }
 
     private bool TryParseLifeTimestampUtc(string value, out DateTime parsedUtc)
