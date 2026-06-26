@@ -10,6 +10,10 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
     [SerializeField] private string _rewardedAdUnitId = "yaociswpoabh9k1w";
     [SerializeField] private string _interstitialAdUnitId = "pqtjob97lz95hfyr";
 
+    [Header("Interstitial Eligibility")]
+    [Tooltip("Primer nivel visible al jugador, base 1, que puede mostrar interstitials forzados.")]
+    [SerializeField, Min(1)] private int firstLevelThatAllowsInterstitials = 3;
+
     private LevelPlayRewardedAd _rewardedAd;
     private LevelPlayInterstitialAd _interstitialAd;
 
@@ -181,6 +185,11 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
 
         int levelId = LevelSessionManager.Instance?.CurrentSession?.LevelId ?? -1;
 
+        if (!CanShowForcedInterstitialForLevel(levelId, placement, "request"))
+        {
+            return;
+        }
+
         AnalyticsManager.Instance?.RecordInterstitialOpportunity(placement, levelId);
 
         if (_interstitialAd == null || !_interstitialAd.IsAdReady())
@@ -225,6 +234,10 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
         if (_sessionGamesSinceLastInterstitial < GamesRequiredForInterstitialAd)
             return;
 
+        int levelId = LevelSessionManager.Instance?.CurrentSession?.LevelId ?? -1;
+        if (!CanShowForcedInterstitialForLevel(levelId, placement, "session_gate"))
+            return;
+
         _sessionGamesSinceLastInterstitial = 0;
         ShowInterstitialAd(placement);
     }
@@ -247,6 +260,12 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
     private void ShowInterstitialAdNow()
     {
         if (AreAdsRemoved()) return;
+
+        if (!CanShowForcedInterstitialForLevel(_pendingInterstitialLevelId, _pendingInterstitialPlacement, "show"))
+        {
+            ClearPendingInterstitial();
+            return;
+        }
 
         if (_interstitialAd != null && _interstitialAd.IsAdReady())
         {
@@ -276,6 +295,18 @@ public class AdsManager : MonoBehaviourSingleton<AdsManager>
     public bool IsInterstitialAdReady()
     {
         return !AreAdsRemoved() && _interstitialAd != null && _interstitialAd.IsAdReady();
+    }
+
+    private bool CanShowForcedInterstitialForLevel(int levelId, string placement, string stage)
+    {
+        int firstAllowedLevel = Mathf.Max(1, firstLevelThatAllowsInterstitials);
+        if (levelId >= firstAllowedLevel)
+            return true;
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        Debug.Log($"[AdsManager] Interstitial blocked by level gate | placement={placement} | stage={stage} | level={levelId} | firstAllowedLevel={firstAllowedLevel}");
+#endif
+        return false;
     }
 
     private void ShowRewardedAd(System.Action onRewarded, string context)
